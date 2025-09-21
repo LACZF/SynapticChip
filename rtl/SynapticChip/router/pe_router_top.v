@@ -51,7 +51,7 @@ module pe_router_top (
     );
 
     // 实例化路由核心
-    router_core core_inst (
+    pe_router_core core_inst (
         .clk(clk),
         .rst_n(rst_n),
         .cfg_valid(route_cfg_valid),

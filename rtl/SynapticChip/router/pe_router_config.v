@@ -1,5 +1,5 @@
-// pe_router_config.v
-// 路由配置接口实现
+// router_config.v
+// 路由配置接口实现（纯Verilog）
 
 `include "pe_router_params.v"
 
@@ -25,7 +25,22 @@ module router_config (
 );
 
     // 配置寄存器
-    reg [`DATA_WIDTH-1:0] config_registers [0:15];
+    reg [`DATA_WIDTH-1:0] config_registers_0;
+    reg [`DATA_WIDTH-1:0] config_registers_1;
+    reg [`DATA_WIDTH-1:0] config_registers_2;
+    reg [`DATA_WIDTH-1:0] config_registers_3;
+    reg [`DATA_WIDTH-1:0] config_registers_4;
+    reg [`DATA_WIDTH-1:0] config_registers_5;
+    reg [`DATA_WIDTH-1:0] config_registers_6;
+    reg [`DATA_WIDTH-1:0] config_registers_7;
+    reg [`DATA_WIDTH-1:0] config_registers_8;
+    reg [`DATA_WIDTH-1:0] config_registers_9;
+    reg [`DATA_WIDTH-1:0] config_registers_10;
+    reg [`DATA_WIDTH-1:0] config_registers_11;
+    reg [`DATA_WIDTH-1:0] config_registers_12;
+    reg [`DATA_WIDTH-1:0] config_registers_13;
+    reg [`DATA_WIDTH-1:0] config_registers_14;
+    reg [`DATA_WIDTH-1:0] config_registers_15;
 
     // 状态机
     reg [1:0] state;
@@ -33,6 +48,7 @@ module router_config (
     // 配置接口处理
     assign cfg_ack = (state == `STATE_ACK);
 
+    // 配置接口状态机
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= `STATE_IDLE;
@@ -42,9 +58,22 @@ module router_config (
             status_out <= 0;
 
             // 初始化配置寄存器
-            for (integer i = 0; i < 16; i = i + 1) begin
-                config_registers[i] <= 0;
-            end
+            config_registers_0 <= 0;
+            config_registers_1 <= 0;
+            config_registers_2 <= 0;
+            config_registers_3 <= 0;
+            config_registers_4 <= 0;
+            config_registers_5 <= 0;
+            config_registers_6 <= 0;
+            config_registers_7 <= 0;
+            config_registers_8 <= 0;
+            config_registers_9 <= 0;
+            config_registers_10 <= 0;
+            config_registers_11 <= 0;
+            config_registers_12 <= 0;
+            config_registers_13 <= 0;
+            config_registers_14 <= 0;
+            config_registers_15 <= 0;
         end else begin
             case (state)
                 `STATE_IDLE: begin
@@ -53,7 +82,24 @@ module router_config (
                     if (cfg_valid) begin
                         if (cfg_addr < 16) begin
                             // 本地配置寄存器访问
-                            config_registers[cfg_addr] <= cfg_data;
+                            case (cfg_addr)
+                                0: config_registers_0 <= cfg_data;
+                                1: config_registers_1 <= cfg_data;
+                                2: config_registers_2 <= cfg_data;
+                                3: config_registers_3 <= cfg_data;
+                                4: config_registers_4 <= cfg_data;
+                                5: config_registers_5 <= cfg_data;
+                                6: config_registers_6 <= cfg_data;
+                                7: config_registers_7 <= cfg_data;
+                                8: config_registers_8 <= cfg_data;
+                                9: config_registers_9 <= cfg_data;
+                                10: config_registers_10 <= cfg_data;
+                                11: config_registers_11 <= cfg_data;
+                                12: config_registers_12 <= cfg_data;
+                                13: config_registers_13 <= cfg_data;
+                                14: config_registers_14 <= cfg_data;
+                                15: config_registers_15 <= cfg_data;
+                            endcase
                             state <= `STATE_ACK;
                         end else begin
                             // 路由核心配置访问

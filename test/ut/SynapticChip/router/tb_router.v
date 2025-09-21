@@ -1,5 +1,5 @@
 // tb_router.v
-// 路由模块测试平台
+// 路由模块测试平台（纯Verilog）
 
 `include "pe_router_params.v"
 `timescale 1ns/1ps
@@ -55,13 +55,13 @@ module tb_router;
         input [`DATA_WIDTH-1:0] data;
         begin
             @(posedge clk);
-            cfg_valid <= 1'b1;
-            cfg_addr <= addr;
-            cfg_data <= data;
+            cfg_valid = 1'b1;
+            cfg_addr = addr;
+            cfg_data = data;
 
             wait(cfg_ack);
             @(posedge clk);
-            cfg_valid <= 1'b0;
+            cfg_valid = 1'b0;
         end
     endtask
 
@@ -71,12 +71,12 @@ module tb_router;
         input [`DATA_WIDTH-1:0] data;
         begin
             @(posedge clk);
-            data_in_valid[port] <= 1'b1;
-            data_in[port*`DATA_WIDTH +: `DATA_WIDTH] <= data;
+            data_in_valid[port] = 1'b1;
+            data_in[port*`DATA_WIDTH +: `DATA_WIDTH] = data;
 
             wait(data_in_ready[port]);
             @(posedge clk);
-            data_in_valid[port] <= 1'b0;
+            data_in_valid[port] = 1'b0;
         end
     endtask
 
@@ -88,9 +88,9 @@ module tb_router;
             wait(data_out_valid[port]);
             data = data_out[port*`DATA_WIDTH +: `DATA_WIDTH];
             @(posedge clk);
-            data_out_ready[port] <= 1'b1;
+            data_out_ready[port] = 1'b1;
             @(posedge clk);
-            data_out_ready[port] <= 1'b0;
+            data_out_ready[port] = 1'b0;
         end
     endtask
 
@@ -104,9 +104,9 @@ module tb_router;
         cfg_valid = 0;
         cfg_addr = 0;
         cfg_data = 0;
-        data_in_valid = 0;
+        data_in_valid = 5'b00000;
         data_in = 0;
-        data_out_ready = 0;
+        data_out_ready = 5'b11111; // 默认所有输出端口就绪
 
         // 复位
         #20 rst_n = 1;
@@ -121,7 +121,7 @@ module tb_router;
         // 测试2: 配置路由表
         $display("Test 2: Configure routing table");
         // 设置路由表: 本地端口 -> 北端口
-        send_config(`REG_ROUTE_TABLE, {5'b00001, 5'b00000, 5'b00000, 5'b00000, 5'b00000});
+        send_config(`REG_ROUTE_TABLE, 25'b0000100000000000000000000);
         $display("Routing table configured");
 
         // 测试3: 发送数据从本地到北
@@ -146,7 +146,7 @@ module tb_router;
         $display("Test 4: Test backpressure mechanism");
 
         // 先填满北端口的输出缓冲区
-        data_out_ready[0] <= 1'b0; // 不让北端口接收数据
+        data_out_ready[0] = 1'b0; // 不让北端口接收数据
 
         // 发送多个数据包
         send_data(4, 32'h11223344);
@@ -162,7 +162,7 @@ module tb_router;
         end
 
         // 释放北端口
-        data_out_ready[0] <= 1'b1;
+        data_out_ready[0] = 1'b1;
 
         // 接收所有数据
         receive_data(0, received_data);

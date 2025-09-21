@@ -32,10 +32,6 @@
 `define REG_PORT_CTRL  16'h0008  // 端口控制
 `define REG_PORT_STAT  16'h000C  // 端口状态
 
-// 总线参数
-`define NODES 8
-`define NODE_ID_WIDTH 3
-
 // 状态定义
 `define STATE_IDLE 2'b00
 `define STATE_ARB  2'b01
