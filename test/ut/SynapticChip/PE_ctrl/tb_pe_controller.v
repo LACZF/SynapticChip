@@ -190,9 +190,9 @@ module tb_pe_controller;
         ring_in_we = 0;
         ring_in_be = 0;
         ring_in_ack = 0;
-        pe_status = 0;
-        pe_outputs = 0;
-        pe_busy = 0;
+        // pe_status = 0;
+        // pe_outputs = 0;
+        // pe_busy = 0;
 
         // 复位
         #20 rst_n = 1;
@@ -244,8 +244,8 @@ module tb_pe_controller;
         $display("Test 4: Read PE status");
 
         // 设置一些测试状态
-        pe_outputs[15:0] = 16'hABCD;
-        pe_busy[0] = 1'b1;
+        // pe_outputs[15:0] = 16'hABCD;
+        // pe_busy[0] = 1'b1;
 
         send_read(1, `REG_PE_STAT, read_data);
         $display("PE status: 0x%h", read_data);

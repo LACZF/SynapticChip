@@ -32,6 +32,7 @@ TOP_MODULE_ARG :=
 else
 TOP_MODULE_ARG := TOP_MODULE=$(TOP_MODULE)
 endif
+READ_RTL_ARGS += -sv
 endif
 
 .PHONY: test $(COMPLETE_TEST_TARGET) yosys_synthesis top_yosys_synthesis
