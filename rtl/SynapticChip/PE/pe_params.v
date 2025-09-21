@@ -1,0 +1,43 @@
+// pe_params.v
+// PE参数配置
+
+// 数据宽度
+`define DATA_WIDTH 16
+`define ADDR_WIDTH 8
+
+// 指令宽度和字段
+`define INST_WIDTH 32
+`define OPCODE_WIDTH 6
+`define REG_ADDR_WIDTH 4
+
+// 操作码定义
+`define OP_NOP   6'b000000
+`define OP_ADD   6'b000001
+`define OP_SUB   6'b000010
+`define OP_MUL   6'b000011
+`define OP_AND   6'b000100
+`define OP_OR    6'b000101
+`define OP_XOR   6'b000110
+`define OP_NOT   6'b000111
+`define OP_SHL   6'b001000
+`define OP_SHR   6'b001001
+`define OP_LOAD  6'b001010
+`define OP_STORE 6'b001011
+`define OP_MOVE  6'b001100
+`define OP_JUMP  6'b001101
+`define OP_BEQ   6'b001110
+`define OP_BNE   6'b001111
+`define OP_BLT   6'b010000
+`define OP_BGT   6'b010001
+
+// PE模式
+`define MODE_COMPUTE 2'b00
+`define MODE_MEMORY  2'b01
+`define MODE_COMM    2'b10
+`define MODE_IDLE    2'b11
+
+// 寄存器数量
+`define NUM_REGS 16
+
+// 存储器深度
+`define MEM_DEPTH 256

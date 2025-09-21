@@ -1,0 +1,10 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := PE_node
+TEST_ARGS ?=
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/PE
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_params.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_core.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_node.v
+TEST_SRC += $(CUR_DIR)/tb_pe.v

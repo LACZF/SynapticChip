@@ -1,0 +1,11 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := riscv_system
+TEST_ARGS ?=
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_core.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_bus_interface.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_system.v
+TEST_SRC += $(CUR_DIR)/tb_riscv_system.v
