@@ -1,0 +1,79 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := top_system
+TEST_ARGS ?=
+
+# bus
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring_bus_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring_bus.v
+
+# core
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_core.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_bus_interface.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv_system.v
+
+# ram
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/ram
+TEST_SRC += $(TOP_DIR)/rtl/ram/ram_module.v
+TEST_SRC += $(TOP_DIR)/rtl/ram/ram_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/ram/ram_node.v
+
+# rom
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/rom
+TEST_SRC += $(TOP_DIR)/rtl/rom/flash_controller.v
+TEST_SRC += $(TOP_DIR)/rtl/rom/rom_module.v
+TEST_SRC += $(TOP_DIR)/rtl/rom/rom_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/rom/rom_node.v
+
+# PE
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/PE
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_params.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_core.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_node.v
+
+# PE controller
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/PE_ctrl
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE_ctrl/pe_ctrl_params.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE_ctrl/pe_ctrl.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE_ctrl/pe_ctrl_route_config.v
+
+# PE router
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/router
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/router/pe_router_core.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/router/pe_router_config.v
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/router/pe_router_top.v
+
+# uart
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/uart
+TEST_SRC += $(TOP_DIR)/rtl/uart/uart_params.v
+TEST_SRC += $(TOP_DIR)/rtl/uart/uart_core.v
+TEST_SRC += $(TOP_DIR)/rtl/uart/uart_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/uart/uart_node.v
+
+# gpio
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/gpio
+TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_params.v
+TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_module.v
+TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_node.v
+
+# jtag
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/jtag
+TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_params.v
+TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_tap.v
+TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_node.v
+
+# Synaptic Core
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/top
+TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/top/synaptic_core.v
+
+# top
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/top
+TEST_SRC += $(TOP_DIR)/rtl/top/top_system.v
+
+TEST_SRC += $(CUR_DIR)/tb_top_system.v
