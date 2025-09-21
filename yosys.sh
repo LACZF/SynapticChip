@@ -61,6 +61,7 @@ function env_log() { # do_not_function_help
 	args+="ENV list:\n"
 	args+="\t export EXCEPT_LIST=\"$EXCEPT_LIST\"\n"
 	args+="\t export TOP_MODULE=\"$TOP_MODULE\"\n"
+	args+="\t export READ_RTL_ARGS=\"$READ_RTL_ARGS\"\n"
 	args+="\t export OUTPUT_PNG=$OUTPUT_PNG\n"
 	args+="\t export OUTPUT_SVG=$OUTPUT_SVG\n"
 	args+="\t export OUTPUT_PS=$OUTPUT_PS\n"
@@ -132,7 +133,7 @@ function gen_read_verilog_ys() { # do_not_function_help
 	local args=""
 
 	if [ "$READ_RTL_ARGS"x != ""x ]; then
-		args+=" -I$READ_RTL_ARGS"
+		args+=" $READ_RTL_ARGS"
 	fi
 
 	args+=" -I$SRC_DIR"
