@@ -61,9 +61,10 @@ all_ut:
 		make test M=$$M; \
 	done
 
+YOSYS_ENV ?= OUTPUT_SVG=1
 yosys_synthesis:
 	READ_RTL_ARGS="$(READ_RTL_ARGS) -I$(shell realpath $$(dirname $(M)))" \
-		$(TOP_MODULE_ARG) $(TOP_DIR)/yosys.sh synth $(M)
+		$(YOSYS_ENV) $(TOP_MODULE_ARG) $(TOP_DIR)/yosys.sh synth $(M)
 
 help:
 	@echo "Usage: make [target] [options]"

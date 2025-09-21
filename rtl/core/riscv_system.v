@@ -59,7 +59,8 @@ module riscv_system (
 
     // 指令存储器（简单ROM）
     reg [`INST_WIDTH-1:0] inst_rom [0:255];
-    initial $readmemh("program.hex", inst_rom);
+    /* TODO : 从flash读取指令 */
+    // initial $readmemh("program.hex", inst_rom);
 
     assign core_inst_data = inst_rom[core_inst_addr[9:2]];
     assign core_inst_ack = core_inst_req;
