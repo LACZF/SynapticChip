@@ -105,40 +105,16 @@ module top_system (
         .local_ack(ring_ack)
     );
 
-    // 实例化RISC-V核心
-    riscv_core riscv (
+    riscv_system riscv (
         .clk(clk),
         .rst_n(rst_n),
-        .data_req(riscv_mem_req),
-        .data_we(riscv_mem_we),
-        .data_addr(riscv_mem_addr),
-        .data_out(riscv_mem_data_out),
-        .data_in(riscv_mem_data_in),
-        .data_ack(riscv_mem_ack),
-        .data_be(riscv_mem_be),
-        .inst_req(ext_int)
-    );
-
-    // RISC-V总线接口
-    riscv_bus_interface riscv_if (
-        .clk(clk),
-        .rst_n(rst_n),
-        .core_req(riscv_mem_req),
-        .core_we(riscv_mem_we),
-        .core_addr(riscv_mem_addr),
-        .core_data_out(riscv_mem_data_out),
-        .core_data_in(riscv_mem_data_in),
-        .core_ack(riscv_mem_ack),
-        .core_be(riscv_mem_be),
-        .ring_req(ring_valid[`NODE_RISCV]),
-        .ring_src(ring_src[`NODE_RISCV*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
-        .ring_dest(ring_dest[`NODE_RISCV*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
-        .ring_addr(ring_addr[`NODE_RISCV*`ADDR_WIDTH +: `ADDR_WIDTH]),
-        .ring_data_in(ring_data_in[`NODE_RISCV*`DATA_WIDTH +: `DATA_WIDTH]),
-        .ring_data_out(ring_data_out[`NODE_RISCV*`DATA_WIDTH +: `DATA_WIDTH]),
-        .ring_we(ring_we[`NODE_RISCV]),
-        .ring_be(ring_be[`NODE_RISCV*4 +: 4]),
-        .ring_ack(ring_ack[`NODE_RISCV])
+        .mem_we(riscv_mem_we),
+        .mem_addr(riscv_mem_addr),
+        .mem_data_out(riscv_mem_data_out),
+        .mem_data_in(riscv_mem_data_in),
+        .mem_ack(riscv_mem_ack),
+        .mem_be(riscv_mem_be),
+        .ext_int(ext_int)
     );
 
     // 实例化RAM模块

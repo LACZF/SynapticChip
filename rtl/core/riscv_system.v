@@ -7,6 +7,8 @@ module riscv_system (
     input clk,
     input rst_n,
 
+    input ext_int,
+
     // 内存接口（用于测试）
     output [`ADDR_WIDTH-1:0] mem_addr,
     output [`DATA_WIDTH-1:0] mem_data_out,
