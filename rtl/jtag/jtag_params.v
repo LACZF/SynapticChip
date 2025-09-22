@@ -3,7 +3,7 @@
 
 // JTAG参数
 `define DATA_WIDTH 32
-`define ADDR_WIDTH 16
+`define ADDR_WIDTH 32
 `define INSTR_WIDTH 4
 
 // JTAG TAP状态机状态定义
@@ -36,8 +36,8 @@
 `define REG_JTAG_STAT  16'h0008  // JTAG状态寄存器
 
 // 总线参数
-`define NODES 8
-`define NODE_ID_WIDTH 3
+`define NODES 16
+`define NODE_ID_WIDTH 5
 
 // 操作类型定义
 `define OP_READ  1'b0

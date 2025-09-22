@@ -3,7 +3,7 @@
 
 // UART参数
 `define DATA_WIDTH 32      // 数据宽度
-`define ADDR_WIDTH 8       // 地址宽度
+`define ADDR_WIDTH 32      // 地址宽度
 
 // 寄存器地址偏移
 `define REG_RBR 8'h00      // 接收缓冲寄存器 (只读)
@@ -27,8 +27,8 @@
 `define INT_MS   4'b0000   // Modem状态 (通常不使用)
 
 // 总线参数
-`define NODES 4            // 总线节点数量
-`define NODE_ID_WIDTH 2    // 节点ID宽度
+`define NODES 16            // 总线节点数量
+`define NODE_ID_WIDTH 5    // 节点ID宽度
 
 // 总线状态定义
 `define STATE_IDLE 2'b00

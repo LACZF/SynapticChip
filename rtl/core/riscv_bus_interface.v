@@ -18,12 +18,15 @@ module riscv_bus_interface (
 
     // Ring总线节点接口
     output reg ring_req,
+    output reg [`NODE_ID_WIDTH-1:0] ring_src,
     output reg [`NODE_ID_WIDTH-1:0] ring_dest,
     output reg [`ADDR_WIDTH-1:0] ring_addr,
     output reg [`DATA_WIDTH-1:0] ring_data_out,
     input [`DATA_WIDTH-1:0] ring_data_in,
     input ring_ack,
-    input ring_we_ack
+    input ring_we_ack,
+    input ring_we,
+    input [3:0] ring_be
 );
 
     // 地址解码

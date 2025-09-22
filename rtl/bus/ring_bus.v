@@ -9,16 +9,20 @@ module ring_bus (
 
     // 节点接口
     input [`NODES-1:0] local_req,
+    input [`NODES*`NODE_ID_WIDTH-1:0] ring_src,
+    output [`NODES*`NODE_ID_WIDTH-1:0] ring_dest,
     input [`NODES*`ADDR_WIDTH-1:0] local_addr,
     input [`NODES*`DATA_WIDTH-1:0] local_data_in,
     output [`NODES-1:0] local_ack,
-    output [`NODES*`DATA_WIDTH-1:0] local_data_out
+    output [`NODES*`DATA_WIDTH-1:0] local_data_out,
+    output [`NODES-1:0] ring_we,
+    output [(`NODES*4)-1:0] ring_be
 );
 
     // 节点间连接信号
     wire [`NODES-1:0] ring_valid;
-    wire [`NODES*`NODE_ID_WIDTH-1:0] ring_src;
-    wire [`NODES*`NODE_ID_WIDTH-1:0] ring_dest;
+    // wire [`NODES*`NODE_ID_WIDTH-1:0] ring_src;
+    // wire [`NODES*`NODE_ID_WIDTH-1:0] ring_dest;
     wire [`NODES*`ADDR_WIDTH-1:0] ring_addr;
     wire [`NODES*`DATA_WIDTH-1:0] ring_data;
     wire [`NODES-1:0] ring_ack;
@@ -30,7 +34,7 @@ module ring_bus (
             ring_node node_inst (
                 .clk(clk),
                 .rst_n(rst_n),
-                .node_id(i),
+                .node_id(`NODE_ID_WIDTH'(i)),
 
                 // 本地接口
                 .local_req(local_req[i]),

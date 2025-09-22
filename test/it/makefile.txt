@@ -2,7 +2,7 @@
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 TEST_TARGET := top_system
-TEST_ARGS ?=
+TEST_ARGS ?= -g2005-sv
 
 # bus
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus

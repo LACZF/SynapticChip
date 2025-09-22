@@ -2,8 +2,8 @@
 // GPIO和总线参数配置
 
 // GPIO参数
-`define GPIO_WIDTH 16      // GPIO引脚数量
-`define ADDR_WIDTH 8       // 地址宽度
+`define GPIO_WIDTH 32      // GPIO引脚数量
+`define ADDR_WIDTH 32      // 地址宽度
 `define DATA_WIDTH 32      // 数据宽度
 
 // 寄存器地址偏移
@@ -16,8 +16,8 @@
 `define REG_DEBOUNCE 8'h18 // 去抖周期寄存器
 
 // 总线参数
-`define NODES 4            // 总线节点数量
-`define NODE_ID_WIDTH 2    // 节点ID宽度
+`define NODES 16            // 总线节点数量
+`define NODE_ID_WIDTH 5    // 节点ID宽度
 
 // 总线状态定义
 `define STATE_IDLE 2'b00

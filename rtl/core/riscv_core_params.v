@@ -8,10 +8,10 @@
 `define OPCODE_WIDTH 7
 
 // 总线参数
-`define NODES 4
+`define NODES 16
 `define DATA_WIDTH 32
 `define ADDR_WIDTH 32
-`define NODE_ID_WIDTH 2
+`define NODE_ID_WIDTH 5
 
 // 指令类型定义
 `define OPCODE_LOAD     7'b0000011

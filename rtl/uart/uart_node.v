@@ -29,8 +29,8 @@ module uart_node (
     output ring_out_ack,
 
     // 串行接口
-    output txd,            // 发送数据线
-    input rxd,             // 接收数据线
+    output uart_txd,            // 发送数据线
+    input uart_rxd,             // 接收数据线
     output rts,            // 请求发送 (可选)
     input cts,             // 清除发送 (可选)
 
@@ -57,8 +57,8 @@ module uart_node (
         .data_in(uart_data_out),
         .data_out(uart_data_in),
         .ack(uart_ack),
-        .txd(txd),
-        .rxd(rxd),
+        .txd(uart_txd),
+        .rxd(uart_rxd),
         .rts(rts),
         .cts(cts),
         .int_out(uart_int)

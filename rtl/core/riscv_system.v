@@ -65,6 +65,9 @@ module riscv_system (
     assign core_inst_data = inst_rom[core_inst_addr[9:2]];
     assign core_inst_ack = core_inst_req;
 
+    wire [`DATA_WIDTH-1:0] ring_data_out;
+    wire [`DATA_WIDTH-1:0] ring_data_in;
+
     // 数据总线接口
     riscv_bus_interface data_if (
         .clk(clk),
@@ -89,7 +92,7 @@ module riscv_system (
     riscv_ring_node node0 (
         .clk(clk),
         .rst_n(rst_n),
-        .node_id(0),
+        .node_id(5'd0),
         .local_req(ring_req),
         .local_addr(ring_addr),
         .local_data_out(ring_data_out),

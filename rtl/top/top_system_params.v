@@ -6,14 +6,14 @@
 `define ADDR_WIDTH 32
 
 // Ring总线参数
-`define NODES 8
-`define NODE_ID_WIDTH 3
+`define NODES 16
+`define NODE_ID_WIDTH 5
 
 // PE阵列参数
 `define PE_ARRAY_ROWS 2
 `define PE_ARRAY_COLS 2
-`define NUM_PES 4
-`define PE_ID_WIDTH 2
+`define NUM_PES 16
+`define PE_ID_WIDTH 4
 
 // 指令宽度
 `define INST_WIDTH 32
@@ -35,12 +35,12 @@
 `define FABRIC_END  32'h4000_FFFF
 
 // 节点ID分配
-`define NODE_RISCV 3'd0
-`define NODE_RAM   3'd1
-`define NODE_ROM   3'd2
-`define NODE_GPIO  3'd3
-`define NODE_UART  3'd4
-`define NODE_FABRIC 3'd5
+`define NODE_RISCV 5'd0
+`define NODE_RAM   5'd1
+`define NODE_ROM   5'd2
+`define NODE_GPIO  5'd3
+`define NODE_UART  5'd4
+`define NODE_FABRIC 5'd5
 
 // 路由参数
 `define NUM_PORTS 5

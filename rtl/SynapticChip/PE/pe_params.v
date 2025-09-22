@@ -2,8 +2,8 @@
 // PE参数配置
 
 // 数据宽度
-`define DATA_WIDTH 16
-`define ADDR_WIDTH 8
+`define DATA_WIDTH 32
+`define ADDR_WIDTH 32
 
 // 指令宽度和字段
 `define INST_WIDTH 32

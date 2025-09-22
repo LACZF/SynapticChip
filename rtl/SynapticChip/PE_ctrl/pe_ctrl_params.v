@@ -3,7 +3,7 @@
 
 // 系统参数
 `define DATA_WIDTH 32
-`define ADDR_WIDTH 16
+`define ADDR_WIDTH 32
 `define PE_ID_WIDTH 4
 
 // PE阵列尺寸
@@ -33,8 +33,8 @@
 `define REG_PE_DATA 16'h0010   // PE数据寄存器
 
 // Ring总线参数
-`define NODES 8
-`define NODE_ID_WIDTH 3
+`define NODES 16
+`define NODE_ID_WIDTH 5
 
 // 总线状态定义
 `define STATE_IDLE 2'b00

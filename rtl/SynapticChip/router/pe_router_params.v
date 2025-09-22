@@ -3,7 +3,7 @@
 
 // 数据宽度
 `define DATA_WIDTH 32
-`define ADDR_WIDTH 16
+`define ADDR_WIDTH 32
 
 // 路由参数
 `define NUM_PORTS 5

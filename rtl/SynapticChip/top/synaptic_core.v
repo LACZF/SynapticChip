@@ -118,7 +118,7 @@ module synaptic_core (
                     .west_valid(pe_west_valid[pe_idx]),
                     .west_data(pe_west_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
                     .west_ready(pe_west_ready[pe_idx]),
-                    .data_out(pe_outputs[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
+                    .out_data(pe_outputs[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
                     .out_valid(),
                     .busy(pe_busy[pe_idx]),
                     .status(pe_status[pe_idx*`DATA_WIDTH +: `DATA_WIDTH])
