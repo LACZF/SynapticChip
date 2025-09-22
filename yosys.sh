@@ -197,6 +197,8 @@ abc
 # Cleanup
 opt
 
+stat
+
 # Write results to output file
 write_verilog $prefix.v
 # write_spice $prefix.sp
@@ -236,6 +238,8 @@ stat -liberty $TOP_DIR/lib/cells.lib
 # http://vlsiarch.ecen.okstate.edu/flows/MOSIS_SCMOS/latest/cadence/lib/tsmc025/signalstorm/osu025_stdcells.lib
 # dfflibmap -liberty osu025_stdcells.lib
 # abc -liberty osu025_stdcells.lib;;
+
+stat
 
 write_verilog $prefix.v
 write_spice $top $prefix.sp
