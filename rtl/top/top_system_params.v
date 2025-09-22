@@ -41,6 +41,7 @@
 `define NODE_GPIO  5'd3
 `define NODE_UART  5'd4
 `define NODE_FABRIC 5'd5
+`define NODE_JTAG 5'd6
 
 // 路由参数
 `define NUM_PORTS 5

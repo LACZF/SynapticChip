@@ -18,7 +18,18 @@ module top_system (
     input ext_int,
 
     // 状态输出
-    output [`DATA_WIDTH-1:0] system_status
+    output [`DATA_WIDTH-1:0] system_status,
+
+    // JTAG接口
+    input jtag_tck,
+    input jtag_tms,
+    input jtag_tdi,
+    output jtag_tdo,
+    output jtag_tdo_en,
+
+    // JTAG调试输出
+    output [`DATA_WIDTH-1:0] jtag_debug_data,
+    output jtag_debug_valid
 );
 
     // Ring总线信号
@@ -223,6 +234,36 @@ module top_system (
         .ring_out_ack(ring_ack[(`NODE_UART+1)%`NODES]),
         .uart_txd(uart_txd),
         .uart_rxd(uart_rxd)
+    );
+
+    // 实例化DUT
+    jtag_node dut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .node_id(`NODE_JTAG),
+        .ring_in_valid(ring_valid[`NODE_JTAG]),
+        .ring_in_src(ring_src[`NODE_JTAG*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_in_dest(ring_dest[`NODE_JTAG*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_in_addr(ring_addr[`NODE_JTAG*`ADDR_WIDTH +: `ADDR_WIDTH]),
+        .ring_in_data(ring_data_in[`NODE_JTAG*`DATA_WIDTH +: `DATA_WIDTH]),
+        .ring_in_we(ring_we[`NODE_JTAG]),
+        .ring_in_be(ring_be[`NODE_JTAG*4 +: 4]),
+        .ring_in_ack(ring_ack[`NODE_JTAG]),
+        .ring_out_valid(ring_valid[(`NODE_JTAG+1)%`NODES]),
+        .ring_out_src(ring_src[(`NODE_JTAG+1)%`NODES*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_out_dest(ring_dest[(`NODE_JTAG+1)%`NODES*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_out_addr(ring_addr[(`NODE_JTAG+1)%`NODES*`ADDR_WIDTH +: `ADDR_WIDTH]),
+        .ring_out_data(ring_data_out[(`NODE_JTAG+1)%`NODES*`DATA_WIDTH +: `DATA_WIDTH]),
+        .ring_out_we(ring_we[(`NODE_JTAG+1)%`NODES]),
+        .ring_out_be(ring_be[(`NODE_JTAG+1)%`NODES*4 +: 4]),
+        .ring_out_ack(ring_ack[(`NODE_JTAG+1)%`NODES]),
+        .tck(jtag_tck),
+        .tms(jtag_tms),
+        .tdi(jtag_tdi),
+        .tdo(jtag_tdo),
+        .tdo_en(jtag_tdo_en),
+        .debug_data(jtag_debug_data),
+        .debug_valid(jtag_debug_valid)
     );
 
     // 实例化Fabric模块
