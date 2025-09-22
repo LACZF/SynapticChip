@@ -42,7 +42,7 @@ module tb_uart_node;
     uart_node dut (
         .clk(clk),
         .rst_n(rst_n),
-        .node_id(4),  // 假设UART节点ID为4
+        .node_id(5'd4),  // 假设UART节点ID为4
         .ring_in_valid(ring_in_valid),
         .ring_in_src(ring_in_src),
         .ring_in_dest(ring_in_dest),

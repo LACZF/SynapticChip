@@ -47,7 +47,7 @@ module tb_rom_node;
     rom_node dut (
         .clk(clk),
         .rst_n(rst_n),
-        .node_id(2),  // 假设ROM节点ID为2
+        .node_id(5'd2),  // 假设ROM节点ID为2
         .ring_in_valid(ring_in_valid),
         .ring_in_src(ring_in_src),
         .ring_in_dest(ring_in_dest),

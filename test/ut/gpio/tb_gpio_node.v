@@ -41,7 +41,7 @@ module tb_gpio_node;
     gpio_node dut (
         .clk(clk),
         .rst_n(rst_n),
-        .node_id(3),  // 假设GPIO节点ID为3
+        .node_id(5'd3),  // 假设GPIO节点ID为3
         .ring_in_valid(ring_in_valid),
         .ring_in_src(ring_in_src),
         .ring_in_dest(ring_in_dest),

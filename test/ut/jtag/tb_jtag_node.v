@@ -44,7 +44,7 @@ module tb_jtag_node;
     jtag_node dut (
         .clk(clk),
         .rst_n(rst_n),
-        .node_id(3'd6),  // JTAG节点ID设为6
+        .node_id(5'd6),  // JTAG节点ID设为6
         .ring_in_valid(ring_in_valid),
         .ring_in_src(ring_in_src),
         .ring_in_dest(ring_in_dest),

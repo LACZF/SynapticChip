@@ -33,7 +33,7 @@ module tb_ram_node;
     ram_node dut (
         .clk(clk),
         .rst_n(rst_n),
-        .node_id(1),  // 假设RAM节点ID为1
+        .node_id(5'd1),  // 假设RAM节点ID为1
         .ring_in_valid(ring_in_valid),
         .ring_in_src(ring_in_src),
         .ring_in_dest(ring_in_dest),
