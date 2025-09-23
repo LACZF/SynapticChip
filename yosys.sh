@@ -6,10 +6,7 @@ MODULE_NAME=""
 BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
 SRC_DIR=$BUILD_DIR/src
 LOG_DIR=$BUILD_DIR/log
-# INSTALL_PATH=$TOP_DIR/output/$OSTYPE
-INSTALL_PATH=/Volumes/work/git/digital_chip_script/output/$OSTYPE
-YOSYS_DIR=$INSTALL_PATH/yosys
-YOSYS=$YOSYS_DIR/bin/yosys
+YOSYS=${YOSYS:-/usr/local/bin/yosys}
 
 function get_vulue() { # do_not_function_help
 	local prefix="$1"
@@ -197,7 +194,7 @@ abc
 # Cleanup
 opt
 
-stat
+stat $top
 
 # Write results to output file
 write_verilog $prefix.v
@@ -239,7 +236,7 @@ stat -liberty $TOP_DIR/lib/cells.lib
 # dfflibmap -liberty osu025_stdcells.lib
 # abc -liberty osu025_stdcells.lib;;
 
-stat
+stat $top
 
 write_verilog $prefix.v
 write_spice $top $prefix.sp

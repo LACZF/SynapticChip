@@ -1,7 +1,6 @@
 
-INSTALL_PATH ?= /Volumes/work/git/digital_chip_script/output/darwin24
-IVERILOG ?= $(INSTALL_PATH)/bin/iverilog
-VVP ?= $(INSTALL_PATH)/bin/vvp
+IVERILOG ?= /usr/bin/iverilog
+VVP ?= /usr/bin/vvp
 TOP_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 ifeq ($(V),1)
@@ -25,8 +24,7 @@ ifeq ($(M),)
 M=$(TOP_DIR)/rtl
 TOP_MODULE_ARG := TOP_MODULE=top_system
 $(warning "M is not set, synth for $(M).")
-endif
-ifeq ($(TOP_MODULE),)
+else ifeq ($(TOP_MODULE),)
 $(warning "TOP_MODULE is not set.")
 TOP_MODULE_ARG :=
 else
