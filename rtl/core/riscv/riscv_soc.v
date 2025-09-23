@@ -10,7 +10,7 @@ module riscv_soc (
     output wire [31:0] debug_pc,
     output wire [31:0] debug_instruction,
     output wire [4:0] debug_state,
-    output wire [31:0] debug_registers [0:31],
+    // output wire [31:0] debug_registers [0:31],
 
     // 外部存储器接口（可选）
     output wire [31:0] ext_mem_addr,
@@ -114,8 +114,8 @@ module riscv_soc (
         // 调试输出
         .debug_pc(cpu_debug_pc),
         .debug_instruction(cpu_debug_instruction),
-        .debug_state(cpu_debug_state),
-        .debug_registers(cpu_debug_registers)
+        // .debug_registers(cpu_debug_registers),
+        .debug_state(cpu_debug_state)
     );
 
     // 缓存系统
@@ -278,12 +278,12 @@ module riscv_soc (
     assign debug_state = {2'b00, cpu_debug_state[2:0]};
 
     // 寄存器文件调试输出
-    genvar i;
-    generate
-        for (i = 0; i < 32; i = i + 1) begin : reg_debug
-            assign debug_registers[i] = cpu_debug_registers[i];
-        end
-    endgenerate
+    // genvar i;
+    // generate
+    //     for (i = 0; i < 32; i = i + 1) begin : reg_debug
+    //         assign debug_registers[i] = cpu_debug_registers[i];
+    //     end
+    // endgenerate
 
     // ==================== 外部存储器接口（可选） ====================
 

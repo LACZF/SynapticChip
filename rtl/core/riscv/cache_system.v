@@ -187,41 +187,8 @@ module cache_system (
         .dcache_busy(dcache_miss)
     );
 
-    // L2共享缓存
-    l2_cache #(
-        .CACHE_SIZE(L2CACHE_SIZE),
-        .LINE_SIZE(L2CACHE_LINE_SIZE),
-        .ASSOCIATIVITY(L2CACHE_ASSOC)
-    ) l2_cache_mem_inst (
-        .clk(clk),
-        .rst_n(rst_n),
-
-        // L1缓存接口
-        .l1_req_addr(l2_req_addr),
-        .l1_req_data(l2_req_data),
-        .l1_resp_data(l2_resp_data),
-        .l1_req_we(l2_req_we),
-        .l1_req_sel(l2_req_sel),
-        .l1_req_valid(l2_req_valid),
-        .l1_resp_valid(l2_resp_valid),
-        .l1_busy(l2_busy),
-
-        // 主存接口
-        .mem_addr(mem_addr),
-        .mem_data_out(mem_data_out),
-        .mem_data_in(mem_data_in),
-        .mem_we(mem_we),
-        .mem_sel(mem_sel),
-        .mem_req(mem_req),
-        .mem_ack(mem_ack),
-
-        // 性能统计
-        .cache_hits(perf_l2cache_hits),
-        .cache_misses(perf_l2cache_misses)
-    );
-
     // L2共享缓存（支持外部Flash）
-    l2_cache_external_flash #(
+    l2_cache #(
         .CACHE_SIZE(L2CACHE_SIZE),
         .LINE_SIZE(L2CACHE_LINE_SIZE),
         .ASSOCIATIVITY(L2CACHE_ASSOC)

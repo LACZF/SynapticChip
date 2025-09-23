@@ -23,8 +23,8 @@ module flash (
     reg [31:0] erase_buffer [0:255];  // 擦除块缓冲区
 
     // 内部信号
-    reg [ADDR_WIDTH-1:0] word_addr;
-    reg [ADDR_WIDTH-1:0] block_addr;
+    wire [ADDR_WIDTH-1:0] word_addr;
+    wire [ADDR_WIDTH-1:0] block_addr;
     reg ack_delay;
     reg [3:0] write_timer;
     reg [3:0] erase_timer;

@@ -34,8 +34,8 @@ module tb_external_flash_cache;
     wire [31:0] perf_dcache_misses;
     wire [31:0] perf_l2cache_hits;
     wire [31:0] perf_l2cache_misses;
-    wire [31:0] perf_flash_reads;
-    wire [31:0] perf_flash_writes;
+    // wire [31:0] perf_flash_reads;
+    // wire [31:0] perf_flash_writes;
 
     // 调试信号
     wire [3:0] cache_state;
@@ -48,7 +48,7 @@ module tb_external_flash_cache;
     always #5 clk = ~clk;
 
     // 实例化带外部Flash接口的缓存系统
-    cache_system_external_flash uut (
+    cache_system uut (
         .clk(clk),
         .rst_n(rst_n),
         .cpu_imem_addr(cpu_imem_addr),
@@ -75,8 +75,8 @@ module tb_external_flash_cache;
         .perf_dcache_misses(perf_dcache_misses),
         .perf_l2cache_hits(perf_l2cache_hits),
         .perf_l2cache_misses(perf_l2cache_misses),
-        .perf_flash_reads(perf_flash_reads),
-        .perf_flash_writes(perf_flash_writes),
+        // .perf_flash_reads(perf_flash_reads),
+        // .perf_flash_writes(perf_flash_writes),
         .cache_state(cache_state),
         .flash_state(flash_state)
     );
@@ -250,7 +250,7 @@ module tb_external_flash_cache;
                 perf_l2cache_hits, perf_l2cache_misses,
                 (perf_l2cache_hits * 100.0) / (perf_l2cache_hits + perf_l2cache_misses));
 
-        $display("Flash操作: 读取=%d, 写入=%d", perf_flash_reads, perf_flash_writes);
+        // $display("Flash操作: 读取=%d, 写入=%d", perf_flash_reads, perf_flash_writes);
 
         $display("=== 测试完成 ===");
         $finish;

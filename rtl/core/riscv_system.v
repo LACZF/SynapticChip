@@ -72,7 +72,7 @@ module riscv_system (
         .debug_pc(debug_pc),
         .debug_instruction(debug_instruction),
         .debug_state(debug_state),
-        .debug_registers(debug_registers),
+        // .debug_registers(debug_registers),
         .ext_mem_addr(mem_addr),
         .ext_mem_data_out(mem_data_out),
         .ext_mem_data_in(mem_data_in),

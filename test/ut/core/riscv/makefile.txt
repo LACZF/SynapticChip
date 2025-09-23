@@ -23,6 +23,8 @@ TEST_MEMORY_SRC += $(TOP_DIR)/rtl/core/riscv/flash.v
 TEST_MEMORY_SRC += $(TOP_DIR)/rtl/core/riscv/memory_system.v
 
 TEST_TIMER_SRC += $(TOP_DIR)/rtl/core/riscv/csr_timer.v
+TEST_TIMER_SRC += $(TOP_DIR)/rtl/core/riscv/memory_mapped_timer.v
+TEST_TIMER_SRC += $(TOP_DIR)/rtl/core/riscv/timer_core.v
 
 TEST_SOC_SRC += $(TOP_DIR)/rtl/core/riscv/riscv_soc.v
 
@@ -31,7 +33,6 @@ TEST_CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/cache_system.v
 TEST_CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l1_icache.v
 TEST_CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l1_dcache.v
 TEST_CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l2_cache.v
-TEST_CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l2_cache_external_flash.v
 TEST_CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/flash_interface.v
 
 TEST_SRC += $(TEST_CPU_SRC) $(TEST_CACHE_SRC) $(TEST_MEMORY_SRC) $(TEST_TIMER_SRC) $(TEST_SOC_SRC)

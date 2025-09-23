@@ -17,18 +17,21 @@ module l2_cache #(
     output reg l1_resp_valid,
     output reg l1_busy,
 
-    // 主存接口
-    output reg [31:0] mem_addr,
-    output reg [31:0] mem_data_out,
-    input wire [31:0] mem_data_in,
-    output reg mem_we,
-    output reg [3:0] mem_sel,
-    output reg mem_req,
-    input wire mem_ack,
+    // 外部Flash接口
+    output reg [31:0] flash_addr,
+    output reg [31:0] flash_data_out,
+    input wire [31:0] flash_data_in,
+    output reg flash_req,
+    output reg flash_we,
+    input wire flash_ack,
+    input wire flash_busy,
 
     // 性能统计
     output reg [31:0] cache_hits,
-    output reg [31:0] cache_misses
+    output reg [31:0] cache_misses,
+
+    // 调试信号
+    output reg [3:0] state_out
 );
 
     // ==================== 缓存参数计算 ====================
@@ -64,13 +67,16 @@ module l2_cache #(
     reg [7:0] way_select;
     wire cache_hit;
 
-    reg [2:0] state;
-    localparam STATE_IDLE = 3'b000;
-    localparam STATE_CHECK = 3'b001;
-    localparam STATE_READ_MISS = 3'b010;
-    localparam STATE_WRITE_HIT = 3'b011;
-    localparam STATE_FILL = 3'b100;
-    localparam STATE_WRITE_BACK = 3'b101;
+    // 状态机
+    reg [3:0] state;
+    localparam STATE_IDLE = 4'b0000;
+    localparam STATE_CHECK = 4'b0001;
+    localparam STATE_READ_MISS = 4'b0010;
+    localparam STATE_WRITE_HIT = 4'b0011;
+    localparam STATE_FLASH_READ = 4'b0100;
+    localparam STATE_FLASH_WRITE = 4'b0101;
+    localparam STATE_FILL = 4'b0110;
+    localparam STATE_WRITE_BACK = 4'b0111;
 
     reg [31:0] saved_addr;
     reg [31:0] saved_data;
@@ -80,6 +86,7 @@ module l2_cache #(
     reg [7:0] writeback_count;
 
     // ==================== 缓存查找逻辑 ====================
+
     genvar i, j;
     generate
         for (i = 0; i < ASSOCIATIVITY; i = i + 1) begin : cache_ways
@@ -100,18 +107,20 @@ module l2_cache #(
         end
     end
 
-    // ==================== 主状态机 ====================
+    // ==================== 主状态机（支持外部Flash） ====================
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= STATE_IDLE;
             l1_resp_valid <= 1'b0;
             l1_busy <= 1'b0;
-            mem_req <= 1'b0;
+            flash_req <= 1'b0;
+            flash_we <= 1'b0;
             cache_hits <= 32'h0;
             cache_misses <= 32'h0;
             fill_count <= 8'h0;
             writeback_count <= 8'h0;
+            state_out <= 4'b0;
 
             for (integer i = 0; i < NUM_LINES; i = i + 1) begin
                 valid_mem[i] <= 1'b0;
@@ -126,10 +135,13 @@ module l2_cache #(
                 lru_counter[i] <= 32'h0;
             end
         end else begin
+            state_out <= state;
+
             case (state)
                 STATE_IDLE: begin
                     l1_resp_valid <= 1'b0;
                     l1_busy <= 1'b0;
+                    flash_req <= 1'b0;
 
                     if (l1_req_valid) begin
                         saved_addr <= l1_req_addr;
@@ -164,20 +176,14 @@ module l2_cache #(
                         cache_misses <= cache_misses + 32'h1;
 
                         if (saved_we) begin
-                            // 写未命中：直接写入内存（非写分配）
-                            mem_req <= 1'b1;
-                            mem_we <= 1'b1;
-                            mem_addr <= saved_addr;
-                            mem_data_out <= saved_data;
-                            mem_sel <= saved_sel;
-
-                            if (mem_ack) begin
-                                l1_resp_valid <= 1'b1;
-                                state <= STATE_IDLE;
-                                l1_busy <= 1'b0;
-                            end
+                            // 写未命中：直接写入外部Flash
+                            state <= STATE_FLASH_WRITE;
+                            flash_addr <= saved_addr;
+                            flash_data_out <= saved_data;
+                            flash_we <= 1'b1;
+                            flash_req <= 1'b1;
                         end else begin
-                            // 读未命中：从内存加载
+                            // 读未命中：从外部Flash加载
                             state <= STATE_READ_MISS;
                         end
                     end
@@ -192,18 +198,12 @@ module l2_cache #(
 
                     dirty_mem[index * ASSOCIATIVITY + way_select] <= 1'b1;
 
-                    // 同时写入内存（写直达）
-                    mem_req <= 1'b1;
-                    mem_we <= 1'b1;
-                    mem_addr <= saved_addr;
-                    mem_data_out <= saved_data;
-                    mem_sel <= saved_sel;
-
-                    if (mem_ack) begin
-                        l1_resp_valid <= 1'b1;
-                        state <= STATE_IDLE;
-                        l1_busy <= 1'b0;
-                    end
+                    // 同时写入外部Flash（写直达）
+                    flash_addr <= saved_addr;
+                    flash_data_out <= saved_data;
+                    flash_we <= 1'b1;
+                    flash_req <= 1'b1;
+                    state <= STATE_FLASH_WRITE;
                 end
 
                 STATE_READ_MISS: begin
@@ -212,29 +212,28 @@ module l2_cache #(
                         state <= STATE_WRITE_BACK;
                         writeback_count <= 8'h0;
                     end else begin
-                        mem_req <= 1'b1;
-                        mem_we <= 1'b0;
-                        mem_addr <= {saved_addr[31:OFFSET_BITS], {OFFSET_BITS{1'b0}}};
-
-                        if (mem_ack) begin
-                            state <= STATE_FILL;
-                            fill_count <= 8'h0;
-                        end
+                        // 从外部Flash读取数据
+                        flash_addr <= {saved_addr[31:OFFSET_BITS], {OFFSET_BITS{1'b0}}};
+                        flash_we <= 1'b0;
+                        flash_req <= 1'b1;
+                        state <= STATE_FLASH_READ;
+                        fill_count <= 8'h0;
                     end
                 end
 
-                STATE_FILL: begin
-                    if (mem_ack) begin
-                        // 填充缓存行
-                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4]   <= mem_data_in[7:0];
-                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4+1] <= mem_data_in[15:8];
-                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4+2] <= mem_data_in[23:16];
-                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4+3] <= mem_data_in[31:24];
+                STATE_FLASH_READ: begin
+                    if (flash_ack) begin
+                        // 从外部Flash读取一个字
+                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4]   <= flash_data_in[7:0];
+                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4+1] <= flash_data_in[15:8];
+                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4+2] <= flash_data_in[23:16];
+                        data_mem[index * ASSOCIATIVITY + way_select][fill_count*4+3] <= flash_data_in[31:24];
 
                         fill_count <= fill_count + 1;
 
                         if (fill_count == (LINE_SIZE/4 - 1)) begin
                             // 填充完成
+                            flash_req <= 1'b0;
                             tag_mem[index * ASSOCIATIVITY + way_select] <= tag;
                             valid_mem[index * ASSOCIATIVITY + way_select] <= 1'b1;
 
@@ -248,36 +247,43 @@ module l2_cache #(
                             l1_resp_valid <= 1'b1;
                             state <= STATE_IDLE;
                             l1_busy <= 1'b0;
-                            mem_req <= 1'b0;
                         end else begin
-                            // 继续填充
-                            mem_addr <= mem_addr + 4;
+                            // 继续读取下一个字
+                            flash_addr <= flash_addr + 4;
                         end
                     end
                 end
 
+                STATE_FLASH_WRITE: begin
+                    if (flash_ack) begin
+                        flash_req <= 1'b0;
+                        flash_we <= 1'b0;
+                        l1_resp_valid <= 1'b1;
+                        state <= STATE_IDLE;
+                        l1_busy <= 1'b0;
+                    end
+                end
+
                 STATE_WRITE_BACK: begin
-                    // 写回脏缓存行
-                    mem_req <= 1'b1;
-                    mem_we <= 1'b1;
-                    mem_addr <= {tag_mem[index * ASSOCIATIVITY + way_select], index, {OFFSET_BITS{1'b0}}} + (writeback_count * 4);
-                    mem_data_out <= {
+                    // 写回脏缓存行到外部Flash
+                    flash_addr <= {tag_mem[index * ASSOCIATIVITY + way_select], index, {OFFSET_BITS{1'b0}}} + (writeback_count * 4);
+                    flash_data_out <= {
                         data_mem[index * ASSOCIATIVITY + way_select][writeback_count*4+3],
                         data_mem[index * ASSOCIATIVITY + way_select][writeback_count*4+2],
                         data_mem[index * ASSOCIATIVITY + way_select][writeback_count*4+1],
                         data_mem[index * ASSOCIATIVITY + way_select][writeback_count*4]
                     };
-                    mem_sel <= 4'b1111;
+                    flash_we <= 1'b1;
+                    flash_req <= 1'b1;
 
-                    if (mem_ack) begin
+                    if (flash_ack) begin
                         writeback_count <= writeback_count + 1;
+                        flash_req <= 1'b0;
 
                         if (writeback_count == (LINE_SIZE/4 - 1)) begin
                             // 写回完成，清除脏位
                             dirty_mem[index * ASSOCIATIVITY + way_select] <= 1'b0;
                             state <= STATE_READ_MISS;
-                        end else begin
-                            mem_addr <= mem_addr + 4;
                         end
                     end
                 end

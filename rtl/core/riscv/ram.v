@@ -24,7 +24,7 @@ module ram (
     reg [7:0] memory_3 [0:SIZE/4-1];  // 字节3
 
     // 内部信号
-    reg [ADDR_WIDTH-1:0] word_addr;
+    wire [ADDR_WIDTH-1:0] word_addr;
     reg ack_delay;
 
     // 地址计算（字地址）

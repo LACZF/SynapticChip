@@ -26,8 +26,9 @@ module riscv_cpu (
     // 调试输出
     output reg [31:0] debug_pc,
     output reg [31:0] debug_instruction,
-    output reg [4:0] debug_state,
-    output wire [31:0] debug_registers [0:31]
+    /* TODO */
+    // output wire [31:0] debug_registers [0:31],
+    output reg [4:0] debug_state
 );
 
     // 流水线寄存器
@@ -379,5 +380,5 @@ module riscv_cpu (
     end
 
     // 寄存器文件调试访问
-    assign debug_registers = reg_file.registers;
+    // assign debug_registers = reg_file.registers;
 endmodule

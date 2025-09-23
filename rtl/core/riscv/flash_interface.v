@@ -14,7 +14,7 @@ module flash_interface (
 
     // 外部Flash物理接口
     output reg flash_cs_n,      // Flash片选
-    output reg flash_clk,       // Flash时钟
+    output wire flash_clk,       // Flash时钟
     output reg flash_mosi,      // Master Out Slave In
     input wire flash_miso,      // Master In Slave Out
     output reg [3:0] flash_dq_o, // 数据线输出（QSPI模式）
@@ -22,7 +22,7 @@ module flash_interface (
     output reg flash_dq_oe,     // 数据线输出使能
 
     // 状态指示
-    output reg [2:0] state_out
+    output wire [2:0] state_out
 );
 
     // Flash命令定义

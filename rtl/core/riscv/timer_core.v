@@ -11,8 +11,8 @@ module timer_core (
     input wire [1:0] timer_mode,        // 定时器模式
 
     // 输出
-    output reg [63:0] mtime_o,          // 定时器当前值（读）
-    output reg [63:0] timecmp_o,        // 定时器比较值（读）
+    output wire [63:0] mtime_o,          // 定时器当前值（读）
+    output wire [63:0] timecmp_o,        // 定时器比较值（读）
     output reg timer_interrupt          // 定时器中断信号
 );
 

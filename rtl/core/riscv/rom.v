@@ -18,7 +18,7 @@ module rom (
     reg [31:0] memory [0:SIZE/4-1];
 
     // 内部信号
-    reg [ADDR_WIDTH-1:0] word_addr;
+    wire [ADDR_WIDTH-1:0] word_addr;
     reg ack_delay;
 
     // 地址计算

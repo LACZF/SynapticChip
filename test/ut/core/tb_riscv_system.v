@@ -77,8 +77,8 @@ module tb_riscv_system;
 
         // 检查结果
         $display("Test completed at time %0t", $time);
-        $display("Register x1 value: %h", dut.core.reg_file[1]);
-        $display("Register x2 value: %h", dut.core.reg_file[2]);
+        // $display("Register x1 value: %h", dut.core.reg_file[1]);
+        // $display("Register x2 value: %h", dut.core.reg_file[2]);
 
         // 检查内存中的结果
         $display("Memory[0]: %h", memory[0]);

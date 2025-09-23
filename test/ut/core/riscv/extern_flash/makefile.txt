@@ -5,10 +5,10 @@ TEST_TARGET := riscv_extern_flash
 TEST_ARGS ?= -g2005-sv
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/riscv
 
-CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/cache_system_external_flash.v
+CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/cache_system.v
 CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l1_icache.v
 CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l1_dcache.v
-CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l2_cache_external_flash.v
+CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/l2_cache.v
 CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/cache_arbiter.v
 CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/flash_interface.v
 

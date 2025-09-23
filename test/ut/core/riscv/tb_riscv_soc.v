@@ -9,7 +9,7 @@ module tb_riscv_soc;
     wire [31:0] debug_pc;
     wire [31:0] debug_instruction;
     wire [4:0] debug_state;
-    wire [31:0] debug_registers [0:31];
+    // wire [31:0] debug_registers [0:31];
 
     // 外部存储器接口（未使用）
     wire [31:0] ext_mem_addr;
@@ -30,7 +30,7 @@ module tb_riscv_soc;
         .debug_pc(debug_pc),
         .debug_instruction(debug_instruction),
         .debug_state(debug_state),
-        .debug_registers(debug_registers),
+        // .debug_registers(debug_registers),
         .ext_mem_addr(ext_mem_addr),
         .ext_mem_data_out(ext_mem_data_out),
         .ext_mem_data_in(ext_mem_data_in),
@@ -108,10 +108,10 @@ module tb_riscv_soc;
 
         // 显示关键寄存器值
         $display("寄存器状态:");
-        $display("x1 (ra): 0x%h", debug_registers[1]);
-        $display("x2 (sp): 0x%h", debug_registers[2]);
-        $display("x8 (s0): 0x%h", debug_registers[8]);
-        $display("x9 (s1): 0x%h", debug_registers[9]);
+        // $display("x1 (ra): 0x%h", debug_registers[1]);
+        // $display("x2 (sp): 0x%h", debug_registers[2]);
+        // $display("x8 (s0): 0x%h", debug_registers[8]);
+        // $display("x9 (s1): 0x%h", debug_registers[9]);
 
         $finish;
     end

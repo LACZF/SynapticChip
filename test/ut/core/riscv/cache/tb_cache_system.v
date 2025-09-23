@@ -5,17 +5,17 @@ module tb_cache_system;
     reg rst_n;
 
     // CPU接口信号
-    reg [31:0] cpu_imem_addr;
+    wire [31:0] cpu_imem_addr;
     wire [31:0] cpu_imem_data;
-    reg cpu_imem_req;
+    wire cpu_imem_req;
     wire cpu_imem_ack;
 
-    reg [31:0] cpu_dmem_addr;
-    reg [31:0] cpu_dmem_data_out;
+    wire [31:0] cpu_dmem_addr;
+    wire [31:0] cpu_dmem_data_out;
     wire [31:0] cpu_dmem_data_in;
-    reg cpu_dmem_we;
-    reg [3:0] cpu_dmem_sel;
-    reg cpu_dmem_req;
+    wire cpu_dmem_we;
+    wire [3:0] cpu_dmem_sel;
+    wire cpu_dmem_req;
     wire cpu_dmem_ack;
 
     // 性能统计
@@ -29,21 +29,45 @@ module tb_cache_system;
     // 时钟生成
     always #5 clk = ~clk;
 
-    // 实例化带缓存的CPU
-    riscv_cpu_with_cache uut (
+    riscv_cpu cpu_core (
         .clk(clk),
         .rst_n(rst_n),
-        // .imem_addr(cpu_imem_addr),
+        .imem_addr(cpu_imem_addr),
         .imem_data(cpu_imem_data),
-        // .imem_req(cpu_imem_req),
+        .imem_req(cpu_imem_req),
         .imem_ack(cpu_imem_ack),
-        // .dmem_addr(cpu_dmem_addr),
-        // .dmem_data_out(cpu_dmem_data_out),
+        .dmem_addr(cpu_dmem_addr),
+        .dmem_data_out(cpu_dmem_data_out),
         .dmem_data_in(cpu_dmem_data_in),
-        // .dmem_we(cpu_dmem_we),
-        // .dmem_sel(cpu_dmem_sel),
-        // .dmem_req(cpu_dmem_req),
+        .dmem_we(cpu_dmem_we),
+        .dmem_sel(cpu_dmem_sel),
+        .dmem_req(cpu_dmem_req),
         .dmem_ack(cpu_dmem_ack),
+        .ext_interrupt(ext_interrupt),
+        .timer_interrupt(timer_interrupt),
+        .soft_interrupt(soft_interrupt)
+    );
+
+    // 缓存系统
+    cache_system cache_sys (
+        .clk(clk),
+        .rst_n(rst_n),
+
+        // CPU接口
+        .cpu_imem_addr(cpu_imem_addr),
+        .cpu_imem_data(cpu_imem_data),
+        .cpu_imem_req(cpu_imem_req),
+        .cpu_imem_ack(cpu_imem_ack),
+
+        .cpu_dmem_addr(cpu_dmem_addr),
+        .cpu_dmem_data_out(cpu_dmem_data_out),
+        .cpu_dmem_data_in(cpu_dmem_data_in),
+        .cpu_dmem_we(cpu_dmem_we),
+        .cpu_dmem_sel(cpu_dmem_sel),
+        .cpu_dmem_req(cpu_dmem_req),
+        .cpu_dmem_ack(cpu_dmem_ack),
+
+        // 性能统计
         .perf_icache_hits(perf_icache_hits),
         .perf_icache_misses(perf_icache_misses),
         .perf_dcache_hits(perf_dcache_hits),
@@ -57,11 +81,11 @@ module tb_cache_system;
         input [31:0] address;
         begin
             @(posedge clk);
-            cpu_imem_addr = address;
-            cpu_imem_req = 1'b1;
+            // cpu_imem_addr = address;
+            // cpu_imem_req = 1'b1;
             @(posedge clk);
             wait(cpu_imem_ack);
-            cpu_imem_req = 1'b0;
+            // cpu_imem_req = 1'b0;
             @(posedge clk);
         end
     endtask
@@ -71,12 +95,12 @@ module tb_cache_system;
         input [31:0] address;
         begin
             @(posedge clk);
-            cpu_dmem_addr = address;
-            cpu_dmem_we = 1'b0;
-            cpu_dmem_req = 1'b1;
+            // cpu_dmem_addr = address;
+            // cpu_dmem_we = 1'b0;
+            // cpu_dmem_req = 1'b1;
             @(posedge clk);
             wait(cpu_dmem_ack);
-            cpu_dmem_req = 1'b0;
+            // cpu_dmem_req = 1'b0;
             @(posedge clk);
         end
     endtask
@@ -87,14 +111,14 @@ module tb_cache_system;
         input [31:0] data;
         begin
             @(posedge clk);
-            cpu_dmem_addr = address;
-            cpu_dmem_data_out = data;
-            cpu_dmem_we = 1'b1;
-            cpu_dmem_sel = 4'b1111;
-            cpu_dmem_req = 1'b1;
+            // cpu_dmem_addr = address;
+            // cpu_dmem_data_out = data;
+            // cpu_dmem_we = 1'b1;
+            // cpu_dmem_sel = 4'b1111;
+            // cpu_dmem_req = 1'b1;
             @(posedge clk);
             wait(cpu_dmem_ack);
-            cpu_dmem_req = 1'b0;
+            // cpu_dmem_req = 1'b0;
             @(posedge clk);
         end
     endtask
@@ -103,13 +127,13 @@ module tb_cache_system;
         // 初始化
         clk = 0;
         rst_n = 0;
-        cpu_imem_addr = 32'h0;
-        cpu_imem_req = 1'b0;
-        cpu_dmem_addr = 32'h0;
-        cpu_dmem_data_out = 32'h0;
-        cpu_dmem_we = 1'b0;
-        cpu_dmem_sel = 4'h0;
-        cpu_dmem_req = 1'b0;
+        // cpu_imem_addr = 32'h0;
+        // cpu_imem_req = 1'b0;
+        // cpu_dmem_addr = 32'h0;
+        // cpu_dmem_data_out = 32'h0;
+        // cpu_dmem_we = 1'b0;
+        // cpu_dmem_sel = 4'h0;
+        // cpu_dmem_req = 1'b0;
 
         // 创建VCD文件
         $dumpfile("cache_system.vcd");
@@ -168,18 +192,18 @@ module tb_cache_system;
         if (cpu_imem_ack) begin
             $display("时间: %t - 指令读取: 地址=0x%h, 数据=0x%h, 命中=%s",
                     $time, cpu_imem_addr, cpu_imem_data,
-                    uut.cache_sys.l1_icache_inst.cache_hit ? "是" : "否");
+                    cache_sys.l1_icache_inst.cache_hit ? "是" : "否");
         end
 
         if (cpu_dmem_ack) begin
             if (cpu_dmem_we) begin
                 $display("时间: %t - 数据写入: 地址=0x%h, 数据=0x%h, 命中=%s",
                         $time, cpu_dmem_addr, cpu_dmem_data_out,
-                        uut.cache_sys.l1_dcache_inst.cache_hit ? "是" : "否");
+                        cache_sys.l1_dcache_inst.cache_hit ? "是" : "否");
             end else begin
                 $display("时间: %t - 数据读取: 地址=0x%h, 数据=0x%h, 命中=%s",
                         $time, cpu_dmem_addr, cpu_dmem_data_in,
-                        uut.cache_sys.l1_dcache_inst.cache_hit ? "是" : "否");
+                        cache_sys.l1_dcache_inst.cache_hit ? "是" : "否");
             end
         end
     end
