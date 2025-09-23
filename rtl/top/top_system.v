@@ -114,7 +114,25 @@ module top_system (
         .mem_data_in(riscv_mem_data_in),
         .mem_ack(riscv_mem_ack),
         .mem_be(riscv_mem_be),
-        .ext_int(ext_int)
+        .ext_int(ext_int),
+
+        .node_id(`NODE_RISCV),
+        .ring_in_valid(ring_valid[`NODE_RISCV]),
+        .ring_in_src(ring_src[`NODE_RISCV*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_in_dest(ring_dest[`NODE_RISCV*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_in_addr(ring_addr[`NODE_RISCV*`ADDR_WIDTH +: `ADDR_WIDTH]),
+        .ring_in_data(ring_data_in[`NODE_RISCV*`DATA_WIDTH +: `DATA_WIDTH]),
+        .ring_in_we(ring_we[`NODE_RISCV]),
+        .ring_in_be(ring_be[`NODE_RISCV*4 +: 4]),
+        .ring_in_ack(ring_ack[`NODE_RISCV]),
+        .ring_out_valid(ring_valid[(`NODE_RISCV+1)%`NODES]),
+        .ring_out_src(ring_src[(`NODE_RISCV+1)%`NODES*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_out_dest(ring_dest[(`NODE_RISCV+1)%`NODES*`NODE_ID_WIDTH +: `NODE_ID_WIDTH]),
+        .ring_out_addr(ring_addr[(`NODE_RISCV+1)%`NODES*`ADDR_WIDTH +: `ADDR_WIDTH]),
+        .ring_out_data(ring_data_out[(`NODE_RISCV+1)%`NODES*`DATA_WIDTH +: `DATA_WIDTH]),
+        .ring_out_we(ring_we[(`NODE_RISCV+1)%`NODES]),
+        .ring_out_be(ring_be[(`NODE_RISCV+1)%`NODES*4 +: 4]),
+        .ring_out_ack(ring_ack[(`NODE_RISCV+1)%`NODES])
     );
 
     // 实例化RAM模块

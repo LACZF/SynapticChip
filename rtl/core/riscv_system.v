@@ -15,7 +15,29 @@ module riscv_system (
     input [`DATA_WIDTH-1:0] mem_data_in,
     output mem_we,
     output [3:0] mem_be,
-    input mem_ack
+    input mem_ack,
+
+    input [`NODE_ID_WIDTH-1:0] node_id,
+
+    // Ring接口 - 输入
+    input ring_in_valid,
+    input [`NODE_ID_WIDTH-1:0] ring_in_src,
+    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [`ADDR_WIDTH-1:0] ring_in_addr,
+    input [`DATA_WIDTH-1:0] ring_in_data,
+    input ring_in_we,
+    input [3:0] ring_in_be,
+    input ring_in_ack,
+
+    // Ring接口 - 输出
+    output ring_out_valid,
+    output [`NODE_ID_WIDTH-1:0] ring_out_src,
+    output [`NODE_ID_WIDTH-1:0] ring_out_dest,
+    output [`ADDR_WIDTH-1:0] ring_out_addr,
+    output [`DATA_WIDTH-1:0] ring_out_data,
+    output ring_out_we,
+    output [3:0] ring_out_be,
+    output ring_out_ack
 );
 
     // RISC-V核心信号
@@ -41,23 +63,6 @@ module riscv_system (
     wire ring_we;
     wire [3:0] ring_be;
     wire ring_ack;
-
-    // 实例化RISC-V核心
-    riscv_core core (
-        .clk(clk),
-        .rst_n(rst_n),
-        .inst_addr(core_inst_addr),
-        .inst_data(core_inst_data),
-        .inst_req(core_inst_req),
-        .inst_ack(core_inst_ack),
-        .data_req(core_data_req),
-        .data_addr(core_data_addr),
-        .data_out(core_data_out),
-        .data_in(core_data_in),
-        .data_ack(core_data_ack),
-        .data_we(core_data_we),
-        .data_be(core_data_be)
-    );
 
     // 实例化SoC
     riscv_soc soc (
