@@ -59,6 +59,23 @@ module riscv_system (
         .data_be(core_data_be)
     );
 
+    // 实例化SoC
+    riscv_soc soc (
+        .clk(clk),
+        .rst_n(rst_n),
+        .ext_int(ext_int),
+        .debug_pc(debug_pc),
+        .debug_instruction(debug_instruction),
+        .debug_state(debug_state),
+        .debug_registers(debug_registers),
+        .ext_mem_addr(mem_addr),
+        .ext_mem_data_out(mem_data_out),
+        .ext_mem_data_in(mem_data_in),
+        .ext_mem_we(mem_we),
+        .ext_mem_re(mem_re),
+        .ext_mem_ack(mem_ack)
+    );
+
     // 指令存储器（简单ROM）
     reg [`INST_WIDTH-1:0] inst_rom [0:255];
     /* TODO : 从flash读取指令 */

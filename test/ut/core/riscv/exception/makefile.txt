@@ -1,0 +1,11 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := riscv_interrupt
+TEST_ARGS ?=
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/riscv
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv/interrupt_controller.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv/exception_detect.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv/csr_registers.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv/exception_handler.v
+TEST_SRC += $(CUR_DIR)/tb_exception_handler.v
