@@ -1,0 +1,148 @@
+// write_back_enhanced.v
+module write_back_enhanced (
+    input wire clk,
+    input wire rst_n,
+    input wire stall,
+
+    // 来自内存访问阶段
+    input wire [63:0] pc_in,
+    input wire [31:0] instr_in,
+    input wire [63:0] alu_result,
+    input wire [63:0] mem_result,
+    input wire [15:0] ctrl_in,
+
+    // 输出到寄存器文件
+    output reg [4:0] rd,
+    output reg reg_we,
+    output reg [63:0] reg_wdata,
+
+    // 调试输出
+    output reg [63:0] pc_out,
+    output reg [31:0] instr_out,
+    output reg wb_valid
+);
+
+    // 控制信号
+    wire reg_write = ctrl_in[10];
+    wire mem_to_reg = ctrl_in[4];
+    wire pc_to_reg = ctrl_in[3];
+    wire alu_src_pc = ctrl_in[2];
+    wire [2:0] alu_op = ctrl_in[14:12];
+
+    // 指令字段
+    wire [4:0] instr_rd = instr_in[11:7];
+    wire [6:0] opcode = instr_in[6:0];
+    wire [2:0] funct3 = instr_in[14:12];
+    wire [6:0] funct7 = instr_in[31:25];
+
+    // 内部信号
+    reg [63:0] computed_result;
+
+    // 结果选择函数
+    function [63:0] select_result;
+        input [63:0] alu_val;
+        input [63:0] mem_val;
+        input [63:0] pc_val;
+        input mem_to_reg;
+        input pc_to_reg;
+        input alu_src_pc;
+        begin
+            if (pc_to_reg) begin
+                select_result = pc_val;
+            end else if (mem_to_reg) begin
+                select_result = mem_val;
+            end else if (alu_src_pc) begin
+                select_result = alu_val;
+            end else begin
+                select_result = alu_val;
+            end
+        end
+    endfunction
+
+    // 特殊指令结果计算
+    function [63:0] compute_special_result;
+        input [63:0] alu_val;
+        input [63:0] pc_val;
+        input [31:0] instr;
+        input [6:0] opcode;
+        reg [63:0] result;
+        begin
+            case (opcode)
+                7'b0110111: begin // LUI
+                    result = {instr[31:12], 12'b0};
+                end
+                7'b0010111: begin // AUIPC
+                    result = pc_val + {instr[31:12], 12'b0};
+                end
+                7'b1101111: begin // JAL
+                    result = pc_val + 4;
+                end
+                7'b1100111: begin // JALR
+                    result = pc_val + 4;
+                end
+                default: begin
+                    result = alu_val;
+                end
+            endcase
+            compute_special_result = result;
+        end
+    endfunction
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            rd <= 5'b0;
+            reg_we <= 1'b0;
+            reg_wdata <= 64'b0;
+            pc_out <= 64'b0;
+            instr_out <= 32'h00000013;
+            wb_valid <= 1'b0;
+        end else if (!stall) begin
+            // 传递流水线寄存器
+            pc_out <= pc_in;
+            instr_out <= instr_in;
+            wb_valid <= 1'b1;
+
+            // 计算写回数据
+            computed_result = select_result(alu_result, mem_result, pc_in + 4,
+                                          mem_to_reg, pc_to_reg, alu_src_pc);
+
+            // 处理特殊指令
+            reg_wdata <= compute_special_result(computed_result, pc_in, instr_in, opcode);
+
+            // 设置写回地址和使能
+            rd <= instr_rd;
+
+            // 确定是否写寄存器
+            case (opcode)
+                7'b0110111, 7'b0010111, 7'b1101111, 7'b1100111: begin
+                    // LUI, AUIPC, JAL, JALR 总是写寄存器（除了x0）
+                    reg_we <= (instr_rd != 5'b0);
+                end
+                7'b0110011, 7'b0010011, 7'b0000011: begin
+                    // 算术、立即数、加载指令：根据控制信号
+                    reg_we <= reg_write && (instr_rd != 5'b0);
+                end
+                7'b0100011: begin
+                    // 存储指令：不写寄存器
+                    reg_we <= 1'b0;
+                end
+                7'b1100011: begin
+                    // 分支指令：不写寄存器
+                    reg_we <= 1'b0;
+                end
+                default: begin
+                    reg_we <= 1'b0;
+                end
+            endcase
+
+            // 调试信息输出
+            if (reg_we && (instr_rd != 5'b0)) begin
+                $display("WB: PC=%h, Instr=%h, RD=x%0d, Value=%h",
+                         pc_in, instr_in, instr_rd, reg_wdata);
+            end
+        end else begin
+            wb_valid <= 1'b0;
+        end
+    end
+
+endmodule
