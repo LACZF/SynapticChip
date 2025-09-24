@@ -5,8 +5,8 @@ module tb_riscv64_multicore;
     reg rst_n;
     reg [1:0] ipi_interrupt;
     wire [63:0] mem_addr;
-    wire [63:0] mem_wdata;
-    reg [63:0] mem_rdata;
+    wire [511:0] mem_wdata;
+    reg [511:0] mem_rdata;
     wire mem_we;
     wire [7:0] mem_byte_en;
     wire mem_req;
@@ -24,7 +24,7 @@ module tb_riscv64_multicore;
         .mem_wdata(mem_wdata),
         .mem_rdata(mem_rdata),
         .mem_we(mem_we),
-        .mem_byte_en(mem_byte_en),
+        // .mem_byte_en(mem_byte_en),
         .mem_req(mem_req),
         .mem_ready(mem_ready),
         .ipi_interrupt(ipi_interrupt),

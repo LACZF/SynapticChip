@@ -260,10 +260,10 @@ module shared_l2_cache #(
                         // 读独占请求，升级为独占状态
                         mesi[index][way_hit] <= `MOESI_E;
                         shared[index][way_hit] <= (1 << current_core);
-                    end else if (mesi[index][way_hit] == `MOESI_S) {
+                    end else if (mesi[index][way_hit] == `MOESI_S) begin
                         // 共享状态，添加共享者
                         shared[index][way_hit] <= shared[index][way_hit] | (1 << current_core);
-                    }
+                    end
 
                     // 更新LRU
                     for (integer i = 0; i < `L2_CACHE_NUM_WAYS; i = i + 1) begin
