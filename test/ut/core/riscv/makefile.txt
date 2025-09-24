@@ -18,9 +18,6 @@ TEST_CPU_SRC += $(TOP_DIR)/rtl/core/riscv/interrupt_controller.v
 
 TEST_MEMORY_SRC += $(TOP_DIR)/rtl/core/riscv/memory_controller.v
 TEST_MEMORY_SRC += $(TOP_DIR)/rtl/core/riscv/ram.v
-TEST_MEMORY_SRC += $(TOP_DIR)/rtl/core/riscv/rom.v
-TEST_MEMORY_SRC += $(TOP_DIR)/rtl/core/riscv/flash.v
-TEST_MEMORY_SRC += $(TOP_DIR)/rtl/core/riscv/memory_system.v
 
 TEST_TIMER_SRC += $(TOP_DIR)/rtl/core/riscv/csr_timer.v
 TEST_TIMER_SRC += $(TOP_DIR)/rtl/core/riscv/memory_mapped_timer.v

@@ -146,53 +146,6 @@ module riscv_soc (
         .perf_l2cache_misses(perf_l2cache_misses)
     );
 
-    // 存储器系统
-    memory_system mem_system (
-        .clk(clk),
-        .rst_n(rst_n),
-
-        // CPU接口
-        .imem_addr(cpu_imem_addr),
-        .imem_data(cpu_imem_data),
-        .imem_req(cpu_imem_req),
-        .imem_ack(cpu_imem_ack),
-
-        .dmem_addr(cpu_dmem_addr),
-        .dmem_data_out(cpu_dmem_data_out),
-        .dmem_data_in(cpu_dmem_data_in),
-        .dmem_we(cpu_dmem_we),
-        .dmem_sel(cpu_dmem_sel),
-        .dmem_req(cpu_dmem_req),
-        .dmem_ack(cpu_dmem_ack),
-
-/*
-        // TODO
-        // 内部存储器接口（连接到具体存储器）
-        .ram_addr(ram_addr),
-        .ram_data_out(ram_data_out),
-        .ram_data_in(ram_data_in),
-        .ram_we(ram_we),
-        .ram_sel(ram_sel),
-        .ram_req(ram_req),
-        .ram_ack(ram_ack),
-
-        .rom_addr(rom_addr),
-        .rom_data(rom_data),
-        .rom_req(rom_req),
-        .rom_ack(rom_ack),
-
-        .flash_addr(flash_addr),
-        .flash_data(flash_data),
-        .flash_req(flash_req),
-        .flash_ack(flash_ack),
-        .flash_we(flash_we),
-        .flash_data_out(flash_data_out),
-*/
-
-        // 状态输出
-        .mem_state(debug_state[2:0])
-    );
-
     // RAM模块（64KB）
     ram #(
         .SIZE(65536)
@@ -206,32 +159,6 @@ module riscv_soc (
         .sel(ram_sel),
         .req(ram_req),
         .ack(ram_ack)
-    );
-
-    // ROM模块（1MB - 存放启动代码）
-    rom #(
-        .SIZE(1048576)
-    ) system_rom (
-        .clk(clk),
-        .rst_n(rst_n),
-        .addr(rom_addr),
-        .data_out(rom_data),
-        .req(rom_req),
-        .ack(rom_ack)
-    );
-
-    // Flash模块（16MB - 存放应用程序）
-    flash #(
-        .SIZE(16777216)
-    ) system_flash (
-        .clk(clk),
-        .rst_n(rst_n),
-        .addr(flash_addr),
-        .data_in(flash_data_out),
-        .data_out(flash_data),
-        .we(flash_we),
-        .req(flash_req),
-        .ack(flash_ack)
     );
 
     // 定时器模块（CSR接口）
