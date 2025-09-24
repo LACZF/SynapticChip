@@ -1,0 +1,23 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := riscv_system
+TEST_ARGS ?=
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core
+
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv/hazard_detection.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_alu.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_branch_unit.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_control_unit.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_cpu.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_mem_sel.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_regfile.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_cpu_with_cache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_l1_icache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_memory_interface_adapter.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_cache_system.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_l1_dcache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_l2_cache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64/riscv64_cache_arbiter.v
+
+TEST_SRC += $(CUR_DIR)/tb_riscv64_cpu_with_cache.v
