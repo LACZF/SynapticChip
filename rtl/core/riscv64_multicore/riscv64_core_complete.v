@@ -113,7 +113,7 @@ module riscv64_core_complete #(
     );
 
     // 内存访问阶段
-    memory_access_with_cache u_mem (
+    memory_access u_mem (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_mem),

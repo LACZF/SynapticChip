@@ -15,10 +15,10 @@ module memory_access (
     input wire [15:0] ctrl_in,
 
     // 缓存接口
-    output reg cache_req,
     output reg [63:0] cache_addr,
     output reg [63:0] cache_wdata,
     input wire [63:0] cache_rdata,
+    output reg cache_req,
     output reg cache_we,
     output reg [7:0] cache_byte_en,
     input wire cache_ready,
@@ -30,103 +30,147 @@ module memory_access (
     output reg [15:0] ctrl_out
 );
 
-    // 控制信号解码
-    wire mem_read = ctrl_in[9];  // 内存读使能
-    wire mem_write = ctrl_in[8]; // 内存写使能
-    wire [2:0] mem_width = ctrl_in[7:5]; // 内存访问宽度
-    wire is_load = ctrl_in[9];
-    wire is_store = ctrl_in[8];
+    // 控制信号
+    wire mem_read = ctrl_in[9];
+    wire mem_write = ctrl_in[8];
+    wire [2:0] mem_width = ctrl_in[7:5];
     wire [6:0] opcode = instr_in[6:0];
+    wire [2:0] funct3 = instr_in[14:12];
 
-    // 内部状态机
+    // 内部状态
     reg [2:0] state;
     reg [63:0] saved_alu_result;
     reg [63:0] saved_rs2_data;
     reg [2:0] saved_mem_width;
-    reg is_load_saved;
-    reg is_store_saved;
+    reg saved_is_load;
+    reg saved_is_store;
 
     localparam STATE_IDLE = 3'b000;
-    localparam STATE_READ_REQ = 3'b001;
-    localparam STATE_READ_WAIT = 3'b010;
-    localparam STATE_WRITE_REQ = 3'b011;
-    localparam STATE_WRITE_WAIT = 3'b100;
-    localparam STATE_COMPLETE = 3'b101;
+    localparam STATE_CACHE_ACCESS = 3'b001;
+    localparam STATE_WAIT_CACHE = 3'b010;
+    localparam STATE_COMPLETE = 3'b011;
 
-    // 字节使能生成
-    function [7:0] generate_byte_en;
+    // 字节使能生成函数
+    function [7:0] gen_byte_enable;
         input [2:0] width;
-        input [2:0] offset;
+        input [2:0] addr_low;
         begin
             case (width)
-                3'b000: generate_byte_en = 8'b00000001 << offset; // 字节访问
-                3'b001: generate_byte_en = 8'b00000011 << offset; // 半字访问
-                3'b010: generate_byte_en = 8'b00001111 << offset; // 字访问
-                3'b011: generate_byte_en = 8'b11111111;          // 双字访问
-                default: generate_byte_en = 8'b11111111;
+                3'b000: begin // 字节 (8位)
+                    case (addr_low)
+                        3'b000: gen_byte_enable = 8'b00000001;
+                        3'b001: gen_byte_enable = 8'b00000010;
+                        3'b010: gen_byte_enable = 8'b00000100;
+                        3'b011: gen_byte_enable = 8'b00001000;
+                        3'b100: gen_byte_enable = 8'b00010000;
+                        3'b101: gen_byte_enable = 8'b00100000;
+                        3'b110: gen_byte_enable = 8'b01000000;
+                        3'b111: gen_byte_enable = 8'b10000000;
+                        default: gen_byte_enable = 8'b00000001;
+                    endcase
+                end
+                3'b001: begin // 半字 (16位)
+                    case (addr_low[2:1])
+                        2'b00: gen_byte_enable = 8'b00000011;
+                        2'b01: gen_byte_enable = 8'b00001100;
+                        2'b10: gen_byte_enable = 8'b00110000;
+                        2'b11: gen_byte_enable = 8'b11000000;
+                        default: gen_byte_enable = 8'b00000011;
+                    endcase
+                end
+                3'b010: begin // 字 (32位)
+                    case (addr_low[2])
+                        1'b0: gen_byte_enable = 8'b00001111;
+                        1'b1: gen_byte_enable = 8'b11110000;
+                        default: gen_byte_enable = 8'b00001111;
+                    endcase
+                end
+                3'b011: begin // 双字 (64位)
+                    gen_byte_enable = 8'b11111111;
+                end
+                default: gen_byte_enable = 8'b11111111;
             endcase
         end
     endfunction
 
-    // 数据对齐和符号扩展
-    function [63:0] align_and_extend;
+    // 加载数据对齐和符号扩展
+    function [63:0] load_data_align;
         input [63:0] data;
         input [2:0] width;
-        input [2:0] offset;
+        input [2:0] addr_low;
         input is_signed;
-        reg [63:0] aligned_data;
+        reg [63:0] aligned;
         begin
-            // 根据偏移量对齐数据
-            aligned_data = data >> (offset * 8);
+            // 根据地址低3位选择数据
+            case (addr_low)
+                3'b000: aligned = data;
+                3'b001: aligned = data >> 8;
+                3'b010: aligned = data >> 16;
+                3'b011: aligned = data >> 24;
+                3'b100: aligned = data >> 32;
+                3'b101: aligned = data >> 40;
+                3'b110: aligned = data >> 48;
+                3'b111: aligned = data >> 56;
+                default: aligned = data;
+            endcase
 
             case (width)
-                3'b000: begin // LB, LBU
+                3'b000: begin // LB/LBU
                     if (is_signed) begin
-                        align_and_extend = {{56{aligned_data[7]}}, aligned_data[7:0]};
+                        load_data_align = {{56{aligned[7]}}, aligned[7:0]};
                     end else begin
-                        align_and_extend = {56'b0, aligned_data[7:0]};
+                        load_data_align = {56'b0, aligned[7:0]};
                     end
                 end
-                3'b001: begin // LH, LHU
+                3'b001: begin // LH/LHU
                     if (is_signed) begin
-                        align_and_extend = {{48{aligned_data[15]}}, aligned_data[15:0]};
+                        load_data_align = {{48{aligned[15]}}, aligned[15:0]};
                     end else begin
-                        align_and_extend = {48'b0, aligned_data[15:0]};
+                        load_data_align = {48'b0, aligned[15:0]};
                     end
                 end
-                3'b010: begin // LW, LWU
+                3'b010: begin // LW/LWU
                     if (is_signed) begin
-                        align_and_extend = {{32{aligned_data[31]}}, aligned_data[31:0]};
+                        load_data_align = {{32{aligned[31]}}, aligned[31:0]};
                     end else begin
-                        align_and_extend = {32'b0, aligned_data[31:0]};
+                        load_data_align = {32'b0, aligned[31:0]};
                     end
                 end
                 3'b011: begin // LD
-                    align_and_extend = aligned_data;
+                    load_data_align = aligned;
                 end
-                default: align_and_extend = aligned_data;
+                default: load_data_align = aligned;
             endcase
         end
     endfunction
 
     // 存储数据对齐
-    function [63:0] align_store_data;
+    function [63:0] store_data_align;
         input [63:0] data;
         input [2:0] width;
-        input [2:0] offset;
-        reg [63:0] aligned_data;
+        input [2:0] addr_low;
+        reg [63:0] aligned;
         begin
-            aligned_data = data;
             case (width)
-                3'b000: aligned_data = {56'b0, data[7:0]}; // 字节
-                3'b001: aligned_data = {48'b0, data[15:0]}; // 半字
-                3'b010: aligned_data = {32'b0, data[31:0]}; // 字
-                3'b011: aligned_data = data; // 双字
-                default: aligned_data = data;
+                3'b000: aligned = {56'b0, data[7:0]}; // 字节
+                3'b001: aligned = {48'b0, data[15:0]}; // 半字
+                3'b010: aligned = {32'b0, data[31:0]}; // 字
+                3'b011: aligned = data; // 双字
+                default: aligned = data;
             endcase
 
-            // 左移到位
-            align_store_data = aligned_data << (offset * 8);
+            // 根据地址偏移左移
+            case (addr_low)
+                3'b000: store_data_align = aligned;
+                3'b001: store_data_align = aligned << 8;
+                3'b010: store_data_align = aligned << 16;
+                3'b011: store_data_align = aligned << 24;
+                3'b100: store_data_align = aligned << 32;
+                3'b101: store_data_align = aligned << 40;
+                3'b110: store_data_align = aligned << 48;
+                3'b111: store_data_align = aligned << 56;
+                default: store_data_align = aligned;
+            endcase
         end
     endfunction
 
@@ -139,40 +183,47 @@ module memory_access (
             instr_out <= 32'h00000013; // NOP
             mem_result <= 64'b0;
             ctrl_out <= 16'b0;
+            cache_addr <= 64'b0;
+            cache_wdata <= 64'b0;
+            cache_byte_en <= 8'b0;
         end else if (flush) begin
             state <= STATE_IDLE;
             cache_req <= 1'b0;
             cache_we <= 1'b0;
-            instr_out <= 32'h00000013; // 插入NOP
+            instr_out <= 32'h00000013;
             ctrl_out <= 16'b0;
         end else if (stall) begin
             // 保持状态
         end else begin
             case (state)
                 STATE_IDLE: begin
+                    // 传递流水线寄存器
                     pc_out <= pc_in;
                     instr_out <= instr_in;
                     ctrl_out <= ctrl_in;
 
-                    if (is_load || is_store) begin
+                    if (mem_read || mem_write) begin
+                        // 内存访问指令
                         saved_alu_result <= alu_result;
                         saved_rs2_data <= rs2_data;
                         saved_mem_width <= mem_width;
-                        is_load_saved <= is_load;
-                        is_store_saved <= is_store;
+                        saved_is_load <= mem_read;
+                        saved_is_store <= mem_write;
 
                         cache_addr <= alu_result;
-                        cache_byte_en <= generate_byte_en(mem_width, alu_result[2:0]);
+                        cache_byte_en <= gen_byte_enable(mem_width, alu_result[2:0]);
 
-                        if (is_load) begin
-                            state <= STATE_READ_REQ;
-                            cache_req <= 1'b1;
+                        if (mem_read) begin
+                            // 加载指令
                             cache_we <= 1'b0;
-                        end else begin // is_store
-                            state <= STATE_WRITE_REQ;
                             cache_req <= 1'b1;
+                            state <= STATE_CACHE_ACCESS;
+                        end else begin
+                            // 存储指令
                             cache_we <= 1'b1;
-                            cache_wdata <= align_store_data(rs2_data, mem_width, alu_result[2:0]);
+                            cache_wdata <= store_data_align(rs2_data, mem_width, alu_result[2:0]);
+                            cache_req <= 1'b1;
+                            state <= STATE_CACHE_ACCESS;
                         end
                     end else begin
                         // 非内存指令，直接传递ALU结果
@@ -181,46 +232,34 @@ module memory_access (
                     end
                 end
 
-                STATE_READ_REQ: begin
+                STATE_CACHE_ACCESS: begin
                     if (cache_ready) begin
-                        // 缓存就绪，处理读取数据
-                        mem_result <= align_and_extend(cache_rdata, saved_mem_width,
-                                                     saved_alu_result[2:0],
-                                                     instr_out[14:12] != 3'b100); // 有符号扩展判断
+                        if (saved_is_load) begin
+                            // 加载完成
+                            mem_result <= load_data_align(cache_rdata, saved_mem_width,
+                                                        saved_alu_result[2:0],
+                                                        funct3 != 3'b100); // 有符号扩展
+                        end else begin
+                            // 存储完成，返回存储地址
+                            mem_result <= saved_alu_result;
+                        end
                         cache_req <= 1'b0;
                         state <= STATE_COMPLETE;
                     end else begin
-                        state <= STATE_READ_WAIT;
+                        state <= STATE_WAIT_CACHE;
                     end
                 end
 
-                STATE_READ_WAIT: begin
+                STATE_WAIT_CACHE: begin
                     if (cache_ready) begin
-                        mem_result <= align_and_extend(cache_rdata, saved_mem_width,
-                                                     saved_alu_result[2:0],
-                                                     instr_out[14:12] != 3'b100);
+                        if (saved_is_load) begin
+                            mem_result <= load_data_align(cache_rdata, saved_mem_width,
+                                                        saved_alu_result[2:0],
+                                                        funct3 != 3'b100);
+                        end else begin
+                            mem_result <= saved_alu_result;
+                        end
                         cache_req <= 1'b0;
-                        state <= STATE_COMPLETE;
-                    end
-                end
-
-                STATE_WRITE_REQ: begin
-                    if (cache_ready) begin
-                        // 存储完成
-                        mem_result <= saved_alu_result; // 存储指令返回地址
-                        cache_req <= 1'b0;
-                        cache_we <= 1'b0;
-                        state <= STATE_COMPLETE;
-                    end else begin
-                        state <= STATE_WRITE_WAIT;
-                    end
-                end
-
-                STATE_WRITE_WAIT: begin
-                    if (cache_ready) begin
-                        mem_result <= saved_alu_result;
-                        cache_req <= 1'b0;
-                        cache_we <= 1'b0;
                         state <= STATE_COMPLETE;
                     end
                 end

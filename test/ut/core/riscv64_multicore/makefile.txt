@@ -15,5 +15,7 @@ TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/riscv64_multicore.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/memory_access.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/write_back.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/l1_dcache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/l1_icache.v
 
 TEST_SRC += $(CUR_DIR)/tb_riscv64_multicore.v

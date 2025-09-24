@@ -61,12 +61,71 @@ module riscv64_core #(
 
     reg [63:0] if_mem_addr;
 
+    reg l2_req;
+    reg [63:0] l2_icache_addr;
+    reg [63:0] l2_dcache_addr;
+    reg [511:0] l2_dcache_wdata;
+    wire [511:0] l2_icache_data;
+    wire [511:0] l2_dcache_data;
+    reg l2_we;
+    wire l2_ready;
+    wire snoop_valid;
+    wire [63:0] snoop_addr;
+    wire snoop_we;
+    reg snoop_hit;
+    reg [511:0] snoop_data;
+    wire [31:0] if_instr;
+    wire [63:0] if_pc;
+
     // 冒险检测信号
     wire data_hazard, control_hazard;
     wire stall_if, stall_id, stall_ex, stall_mem, stall_wb;
     wire flush_if, flush_id, flush_ex, flush_mem;
 
-    // 模块实例化
+    // 指令缓存实例
+    l1_icache u_icache (
+        .clk(clk),
+        .rst_n(rst_n),
+        .cpu_addr(if_pc),
+        .cpu_req(if_req),
+        .cpu_data(if_instr),
+        .cpu_ready(if_ready),
+        .cache_hit(),
+        .l2_req(l2_icache_req),
+        .l2_addr(l2_icache_addr),
+        .l2_data(l2_icache_data),
+        .l2_ready(l2_icache_ready),
+        .l2_read(),
+        .snoop_valid(snoop_valid),
+        .snoop_addr(snoop_addr),
+        .snoop_hit()
+    );
+
+    // 数据缓存实例
+    l1_dcache u_dcache (
+        .clk(clk),
+        .rst_n(rst_n),
+        .cpu_addr(mem_addr),
+        .cpu_wdata(mem_wdata),
+        .cpu_req(mem_req),
+        .cpu_we(mem_we),
+        .cpu_byte_en(mem_byte_en),
+        .cpu_rdata(mem_rdata),
+        .cpu_ready(mem_ready),
+        .cache_hit(),
+        .l2_req(l2_dcache_req),
+        .l2_addr(l2_dcache_addr),
+        .l2_wdata(l2_dcache_wdata),
+        .l2_rdata(l2_dcache_data),
+        .l2_we(l2_dcache_we),
+        .l2_ready(l2_dcache_ready),
+        .snoop_valid(snoop_valid),
+        .snoop_addr(snoop_addr),
+        .snoop_we(snoop_we),
+        .snoop_hit(snoop_hit),
+        .snoop_data(snoop_data)
+    );
+
     instruction_fetch u_if (
         .clk(clk),
         .rst_n(rst_n),
@@ -76,10 +135,8 @@ module riscv64_core #(
         .branch_taken(branch_taken),
         .pc(pc_if),
         .instr(instr_if),
-        .mem_req(if_mem_req),
-        .mem_addr(if_mem_addr),
-        .mem_rdata(mem_rdata),
-        .mem_ready(mem_ready)
+        .cache_req(if_req),
+        .cache_ready(if_ready)
     );
 
     instruction_decode u_id (
@@ -118,7 +175,6 @@ module riscv64_core #(
         .ctrl_out(ctrl_ex)
     );
 
-    /* TODO */
     memory_access u_mem (
         .clk(clk),
         .rst_n(rst_n),
@@ -129,13 +185,13 @@ module riscv64_core #(
         .alu_result(alu_result),
         .rs2_data(rs2_data),
         .ctrl_in(ctrl_ex),
-        // .mem_req(mem_req),
-        // .mem_addr(mem_addr),
-        // .mem_wdata(mem_wdata),
-        // .mem_we(mem_we),
-        // .mem_byte_en(mem_byte_en),
-        // .mem_rdata(mem_rdata),
-        // .mem_ready(mem_ready),
+        .cache_addr(mem_addr),
+        .cache_wdata(mem_wdata),
+        .cache_rdata(mem_rdata),
+        .cache_req(mem_req),
+        .cache_we(mem_we),
+        .cache_byte_en(mem_byte_en),
+        .cache_ready(mem_ready),
         .pc_out(pc_mem),
         .instr_out(instr_mem),
         .mem_result(mem_result),
