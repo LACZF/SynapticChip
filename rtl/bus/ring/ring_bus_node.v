@@ -376,7 +376,7 @@ module rx_fifo #(
 
 endmodule
 
-// 业务模块接口包装器 - 简化业务模块的接口
+// 简化的总线接口包装器 - 直接信号传递，不添加额外逻辑
 module bus_interface_wrapper #(
     parameter NUM_RINGS = 2,
     parameter ADDR_WIDTH = 32,
@@ -386,12 +386,12 @@ module bus_interface_wrapper #(
     input  wire                         clk,
     input  wire                         rst_n,
 
-    // 简化的业务模块接口
+    // 应用接口
     input  wire                         app_req_valid,
     input  wire [ADDR_WIDTH-1:0]        app_req_addr,
     input  wire [DATA_WIDTH-1:0]        app_req_data,
     input  wire [NODE_ID_WIDTH-1:0]     app_req_target_id,
-    input  wire                         app_req_use_id_match, // 1: ID匹配, 0: 地址匹配
+    input  wire                         app_req_use_id_match,
     input  wire [NUM_RINGS-1:0]         app_req_ring_select,
     output wire                         app_req_ready,
 
@@ -400,7 +400,7 @@ module bus_interface_wrapper #(
     output wire [NODE_ID_WIDTH-1:0]     app_rsp_src_id,
     input  wire                         app_rsp_ready,
 
-    // Ring总线节点接口
+    // 总线接口
     output wire                         bus_req_valid,
     output wire [ADDR_WIDTH-1:0]        bus_req_addr,
     output wire [1:0]                   bus_req_match_type,
@@ -416,14 +416,10 @@ module bus_interface_wrapper #(
     output wire                         bus_rsp_ready
 );
 
-    // 匹配类型生成
-    wire [1:0] match_type;
-    assign match_type = app_req_use_id_match ? 2'b01 : 2'b00;
-
-    // 直接连接接口
+    // 直接连接所有信号 - 这个包装器只是接口转换
     assign bus_req_valid = app_req_valid;
     assign bus_req_addr = app_req_addr;
-    assign bus_req_match_type = match_type;
+    assign bus_req_match_type = app_req_use_id_match ? 2'b01 : 2'b00;
     assign bus_req_target_id = app_req_target_id;
     assign bus_req_data = app_req_data;
     assign bus_req_ring_select = app_req_ring_select;
