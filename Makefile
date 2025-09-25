@@ -38,25 +38,25 @@ endif
 default: help
 
 $(COMPLETE_TEST_TARGET):
-	$(QUIET)echo "test : $(M)"
-	$(QUIET)mkdir -p $(TEST_BUILD_DIR)
-	$(QUIET)cp -rf $(M)/* $(TEST_BUILD_DIR)
-	$(QUIET)cd $(TEST_BUILD_DIR) && $(IVERILOG) -o $(COMPLETE_TEST_TARGET) \
+	$(QUITE)echo "test : $(M)"
+	$(QUITE)mkdir -p $(TEST_BUILD_DIR)
+	$(QUITE)cp -rf $(M)/* $(TEST_BUILD_DIR)
+	$(QUITE)cd $(TEST_BUILD_DIR) && $(IVERILOG) -o $(COMPLETE_TEST_TARGET) \
 		$(TEST_ARGS) $(TEST_INCLUDE_DIR) $(TEST_SRC)
 
 $(COMPLETE_TEST_TARGET).vvp: $(COMPLETE_TEST_TARGET)
-	$(QUIET)cd $(TEST_BUILD_DIR) && \
-		($(VVP) $(COMPLETE_TEST_TARGET) > $(COMPLETE_TEST_TARGET).log)
+	$(QUITE)cd $(TEST_BUILD_DIR) && \
+		$(VVP) $(COMPLETE_TEST_TARGET) -l $(COMPLETE_TEST_TARGET).log
 
 test: $(COMPLETE_TEST_TARGET).vvp
 
 all_it:
-	$(QUIET)cd $(TOP_DIR) && for M in $(shell find test/it -name makefile.txt | xargs dirname); do \
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/it -name makefile.txt | xargs dirname); do \
 		make test M=$$M; \
 	done
 
 all_ut:
-	$(QUIET)cd $(TOP_DIR) && for M in $(shell find test/ut -name makefile.txt | xargs dirname); do \
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/ut -name makefile.txt | xargs dirname); do \
 		make test M=$$M; \
 	done
 
