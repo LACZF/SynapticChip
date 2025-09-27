@@ -1,0 +1,18 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := ring_bus_multi
+TEST_ARGS ?= -g2012
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
+
+TEST_SRC += $(CUR_DIR)/memory_request_node.v
+TEST_SRC += $(CUR_DIR)/memory_response_node.v
+TEST_SRC += $(CUR_DIR)/node_interface.v
+TEST_SRC += $(CUR_DIR)/ring_bus_core.v
+TEST_SRC += $(CUR_DIR)/ring_bus_system_tb.v
+TEST_SRC += $(CUR_DIR)/ring_bus_system.v
+TEST_SRC += $(CUR_DIR)/ring_bus.v
+TEST_SRC += $(CUR_DIR)/ring_node.v
+TEST_SRC += $(CUR_DIR)/round_robin_arbiter.v
+TEST_SRC += $(CUR_DIR)/uart_request_node.v
+TEST_SRC += $(CUR_DIR)/uart_response_node.v
