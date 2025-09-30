@@ -6,7 +6,7 @@ MODULE_NAME=""
 BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
 SRC_DIR=$BUILD_DIR/src
 LOG_DIR=$BUILD_DIR/log
-YOSYS=${YOSYS:-/usr/local/bin/yosys}
+YOSYS=${YOSYS:-$(which yosys)}
 
 function get_vulue() { # do_not_function_help
 	local prefix="$1"
