@@ -53,9 +53,9 @@ module simple_fifo #(
     end
 
     // Output assignments
-    assign data_out = (rd_en && !empty) ? fifo[rd_ptr] : DATA_WIDTH`b0;
+    assign data_out = (rd_en && !empty) ? fifo[rd_ptr] : {DATA_WIDTH{1'b0}};
     assign full = (count == FIFO_DEPTH);
     assign empty = (count == 0);
-    assign rd_done = (rd_en && !empty) ? 1`b1 : 1`b0;
+    assign rd_done = (rd_en && !empty) ? 1'b1 : 1'b0;
 
 endmodule

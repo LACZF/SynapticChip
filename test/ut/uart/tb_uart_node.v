@@ -59,8 +59,8 @@ module tb_uart_node;
         .ring_out_we(ring_out_we),
         .ring_out_be(ring_out_be),
         .ring_out_ack(ring_out_ack),
-        .txd(txd),
-        .rxd(rxd),
+        .uart_txd(txd),
+        .uart_rxd(rxd),
         .rts(rts),
         .cts(cts),
         .int_out(int_out)

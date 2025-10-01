@@ -1,9 +1,0 @@
-
-CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-
-TEST_TARGET := ring_bus
-TEST_ARGS ?= -g2005-sv
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
-TEST_SRC += $(CUR_DIR)/tb_ring_bus_node.v

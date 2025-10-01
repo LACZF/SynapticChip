@@ -2,8 +2,18 @@
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 TEST_TARGET := ring_bus
-TEST_ARGS ?= -g2005-sv
+TEST_ARGS ?= -g2012
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
+
+TEST_SRC += $(TOP_DIR)/rtl/common/simple_fifo.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
-TEST_SRC += $(CUR_DIR)/tb_ring_bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
+
+TEST_SRC += $(CUR_DIR)/memory_request_node.v
+TEST_SRC += $(CUR_DIR)/memory_response_node.v
+TEST_SRC += $(CUR_DIR)/ring_bus_system_tb.v
+TEST_SRC += $(CUR_DIR)/ring_bus_system.v
+TEST_SRC += $(CUR_DIR)/uart_request_node.v
+TEST_SRC += $(CUR_DIR)/uart_response_node.v
