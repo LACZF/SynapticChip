@@ -22,10 +22,10 @@ module ring_arbiter #(
     // Ring总线接口
     output reg  [NUM_RINGS-1:0]         ring_req_valid,
     input  wire [NUM_RINGS-1:0]         ring_req_ready,
-    output reg  [ADDR_WIDTH-1:0]        ring_req_addr [NUM_RINGS-1:0],
-    output reg  [MATCH_TYPE_WIDTH-1:0]  ring_req_match_type [NUM_RINGS-1:0],
-    output reg  [NODE_ID_WIDTH-1:0]     ring_req_target_id [NUM_RINGS-1:0],
-    output reg  [DATA_WIDTH-1:0]        ring_req_data [NUM_RINGS-1:0],
+    output reg  [NUM_RINGS*ADDR_WIDTH-1:0]         ring_req_addr,
+    output reg  [NUM_RINGS*MATCH_TYPE_WIDTH-1:0]   ring_req_match_type,
+    output reg  [NUM_RINGS*NODE_ID_WIDTH-1:0]      ring_req_target_id,
+    output reg  [NUM_RINGS*DATA_WIDTH-1:0]         ring_req_data,
 
     // 状态输出
     output wire [NUM_RINGS-1:0]         ring_busy
@@ -34,26 +34,27 @@ module ring_arbiter #(
     reg [NUM_RINGS-1:0] ring_priority; // 轮询优先级指针
     reg [NUM_RINGS-1:0] valid_rings;   // 有效的总线
     wire [NUM_RINGS-1:0] available_rings; // 可用的总线
-    reg [2:0] load_count [NUM_RINGS-1:0]; // 各总线负载计数
+    reg [NUM_RINGS*3-1:0] load_count; // 各总线负载计数，一维数组格式
 
     // 计算可用的Ring总线
     assign available_rings = ring_req_ready & ~req_ring_disable;
 
+    // 循环变量声明
+    integer i;
+
     // 负载监控计数器
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            for (integer i = 0; i < NUM_RINGS; i = i + 1) begin
-                load_count[i] <= 0;
-            end
+            load_count <= {NUM_RINGS*3{1'b0}};
         end else begin
-            for (integer i = 0; i < NUM_RINGS; i = i + 1) begin
+            for (i = 0; i < NUM_RINGS; i = i + 1) begin
                 // 增加负载计数
                 if (ring_req_valid[i] && ring_req_ready[i]) begin
-                    load_count[i] <= load_count[i] + 1;
+                    load_count[i*3 +: 3] <= load_count[i*3 +: 3] + 1;
                 end
                 // 定期减少负载计数（模拟负载衰减）
-                if (load_count[i] > 0 && (load_count[i] % 4) == 0) begin
-                    load_count[i] <= load_count[i] - 1;
+                if (load_count[i*3 +: 3] > 0 && (load_count[i*3 +: 3] % 4) == 0) begin
+                    load_count[i*3 +: 3] <= load_count[i*3 +: 3] - 1;
                 end
             end
         end
@@ -78,8 +79,8 @@ module ring_arbiter #(
             // 如果有指定的总线掩码，优先从掩码中选择负载最轻的
             if (|valid_rings) begin
                 for (i = 0; i < NUM_RINGS; i = i + 1) begin
-                    if (valid_rings[i] && (load_count[i] < min_load)) begin
-                        min_load = load_count[i];
+                    if (valid_rings[i] && (load_count[i*3 +: 3] < min_load)) begin
+                        min_load = load_count[i*3 +: 3];
                         best_ring = i;
                     end
                 end
@@ -87,8 +88,8 @@ module ring_arbiter #(
             end else if (|available) begin
                 // 如果没有指定掩码或指定的掩码都不可用，则从所有可用总线中选择
                 for (i = 0; i < NUM_RINGS; i = i + 1) begin
-                    if (available[i] && (load_count[i] < min_load)) begin
-                        min_load = load_count[i];
+                    if (available[i] && (load_count[i*3 +: 3] < min_load)) begin
+                        min_load = load_count[i*3 +: 3];
                         best_ring = i;
                     end
                 end
@@ -109,11 +110,11 @@ module ring_arbiter #(
 
     // 输出数据到选中的Ring总线
     always @(*) begin
-        for (integer i = 0; i < NUM_RINGS; i = i + 1) begin
-            ring_req_addr[i] = req_addr;
-            ring_req_match_type[i] = req_match_type;
-            ring_req_target_id[i] = req_target_id;
-            ring_req_data[i] = req_data;
+        for (i = 0; i < NUM_RINGS; i = i + 1) begin
+            ring_req_addr[i*ADDR_WIDTH +: ADDR_WIDTH] = req_addr;
+            ring_req_match_type[i*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] = req_match_type;
+            ring_req_target_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = req_target_id;
+            ring_req_data[i*DATA_WIDTH +: DATA_WIDTH] = req_data;
         end
     end
 

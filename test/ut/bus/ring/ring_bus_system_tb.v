@@ -153,7 +153,9 @@ module ring_bus_system_tb;
         // 测试1: 内存读写
         $display("=== Test 1: Memory Operations ===");
         test_memory_operation(32'h0000_1000, 64'h1234_5678_9ABC_DEF0, 1'b1);
+        $display("=== Test 1: Memory write Operations done ===");
         test_memory_operation(32'h0000_1000, 64'h0, 1'b0);
+        $display("=== Test 1: Memory read Operations done ===");
 
         #100;
 

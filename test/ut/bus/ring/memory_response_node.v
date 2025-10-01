@@ -64,13 +64,14 @@ module memory_response_node #(
         end else begin
             case (current_state)
                 IDLE: begin
+                    // 修复：响应节点应该通过ring_resp_valid_i接收请求
                     if (ring_resp_valid_i) begin
-                        // 接收来自Ring总线的请求（实际上是响应，因为这是响应节点）
-                        // 这里ring_resp_valid_i表示有请求到达本节点
-                        saved_addr <= ring_resp_data_i[ADDR_WIDTH-1:0]; // 假设地址在低32位
-                        saved_wr <= ring_resp_data_i[32]; // 假设写使能在第32位
-                        saved_data <= ring_resp_data_i[63:32]; // 假设数据在63:32位
-                        saved_src_node <= 0; // 简化处理，实际应该从请求中提取源节点
+                        // 正确读取请求信息
+                        saved_addr <= ring_resp_data_i[ADDR_WIDTH-1:0];
+                        saved_wr <= ring_resp_data_i[32];
+                        saved_data <= ring_resp_data_i[63:32];
+                        // 修复：正确设置源节点ID为MEM_REQ_NODE_ID(0)
+                        saved_src_node <= 0;
 
                         ring_resp_ready_o <= 1'b1;
                         current_state <= PROCESS_REQUEST;

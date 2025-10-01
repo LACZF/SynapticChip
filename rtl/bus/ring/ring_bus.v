@@ -30,6 +30,7 @@ module ring_bus #(
     input  wire [NUM_NODES*NODE_ID_WIDTH-1:0]     tx_req_target_id_i,
     input  wire [NUM_NODES*ADDR_WIDTH-1:0]        tx_req_addr_i,
     input  wire [NUM_NODES*DATA_WIDTH-1:0]        tx_req_data_i,
+    output wire [NUM_NODES-1:0]                   tx_req_ready_o,
 
     // 接受请求
     output wire [NUM_NODES-1:0]                   rx_req_valid_o,
@@ -55,6 +56,8 @@ module ring_bus #(
     // 内部信号定义
     wire [NUM_RINGS-1:0]                             ring_req_valid;
     wire [NUM_RINGS-1:0]                             ring_req_ready;
+    // 驱动ring_req_ready信号始终为1'b1，确保mem_req_ready信号正常工作
+    assign ring_req_ready = {NUM_RINGS{1'b1}};
     wire [NUM_RINGS*ADDR_WIDTH-1:0]                  ring_req_addr;
     wire [NUM_RINGS*MATCH_TYPE_WIDTH-1:0]            ring_req_match_type;
     wire [NUM_RINGS*NODE_ID_WIDTH-1:0]               ring_req_source_id;
@@ -81,7 +84,7 @@ module ring_bus #(
 
     // 每个节点的仲裁器实例化
     generate
-        genvar j, r;
+        genvar j, r, p;
         for (j = 0; j < NUM_NODES; j = j + 1) begin : node_arbiter_gen
             // 为每个节点创建临时信号，用于连接仲裁器的2D数组端口
             wire [NUM_RINGS-1:0]          node_ring_req_valid;
@@ -111,15 +114,15 @@ module ring_bus #(
                 .req_data(tx_req_data_i[j*DATA_WIDTH +: DATA_WIDTH]),
                 .req_ring_mask(tx_req_ring_mask_i[j*NUM_RINGS +: NUM_RINGS]),
                 .req_ring_disable(tx_req_ring_disable_i[j*NUM_RINGS +: NUM_RINGS]),
-                .req_ready(/* 预留 */),
+                .req_ready(tx_req_ready_o[j]),
 
                 // Ring总线接口
                 .ring_req_valid(node_ring_req_valid),
                 .ring_req_ready(node_ring_req_ready),
-                .ring_req_addr(node_ring_req_addr),
-                .ring_req_match_type(node_ring_req_match_type),
-                .ring_req_target_id(node_ring_req_target_id),
-                .ring_req_data(node_ring_req_data),
+                .ring_req_addr(ring_req_addr),
+                .ring_req_match_type(ring_req_match_type),
+                .ring_req_target_id(ring_req_target_id),
+                .ring_req_data(ring_req_data),
 
                 // 状态输出
                 .ring_busy(node_ring_busy)
@@ -127,15 +130,19 @@ module ring_bus #(
 
             // 将节点仲裁器的2D数组端口转换为1D向量信号
             for (r = 0; r < NUM_RINGS; r = r + 1) begin : ring_signal_gen
-                // 使用逻辑OR合并来自所有节点的请求有效信号
-                assign ring_req_valid[r] = ring_req_valid[r] | node_ring_req_valid[r];
+                // 连接ring_req_ready信号到节点仲裁器
+                assign node_ring_req_ready[r] = ring_req_ready[r];
                 // 将2D数组端口数据映射到1D向量
                 assign ring_req_addr[r*ADDR_WIDTH +: ADDR_WIDTH] = node_ring_req_addr[r];
                 assign ring_req_match_type[r*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] = node_ring_req_match_type[r];
                 assign ring_req_target_id[r*NODE_ID_WIDTH +: NODE_ID_WIDTH] = node_ring_req_target_id[r];
                 assign ring_req_data[r*DATA_WIDTH +: DATA_WIDTH] = node_ring_req_data[r];
-                // 总线忙状态也需要合并
-                assign ring_busy_int[r] = ring_busy_int[r] | node_ring_busy[r];
+                // 修复：连接ring_req_valid信号
+                assign ring_req_valid[r] = node_ring_req_valid[r];
+
+                // 收集ring_busy状态
+                assign ring_busy_int[r] = node_ring_busy[r];
+                assign ring_id[r*RING_ID_WIDTH +: RING_ID_WIDTH] = node_ring_id[r];
             end
         end
     endgenerate
@@ -166,7 +173,7 @@ module ring_bus #(
                 .tx_req_opcode_i({{(NUM_NODES-1)*OPCODE_WIDTH{1'b0}}, {OPCODE_WIDTH{1'b0}}}),  // 全部设置为0
                 .tx_req_match_type_i({{(NUM_NODES-1)*MATCH_TYPE_WIDTH{1'b0}}, {MATCH_TYPE_WIDTH{1'b0}}}),  // 全部设置为0
                 .tx_req_source_id_i({{(NUM_NODES-1)*NODE_ID_WIDTH{1'b0}}, {NODE_ID_WIDTH{1'b0}}}),  // 全部设置为0
-                .tx_req_target_id_i({{(NUM_NODES-1)*NODE_ID_WIDTH{1'b0}}, {NODE_ID_WIDTH{1'b0}}}),  // 全部设置为0
+                .tx_req_target_id_i({{(NUM_NODES-1)*NODE_ID_WIDTH{1'b0}}, ring_req_target_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH]}),  // 修复：正确设置目标节点ID
                 .tx_req_addr_i({{(NUM_NODES-1)*ADDR_WIDTH{1'b0}}, ring_req_addr[i*ADDR_WIDTH +: ADDR_WIDTH]}),  // 仅第一个节点有地址
                 .tx_req_data_i({{(NUM_NODES-1)*DATA_WIDTH{1'b0}}, ring_req_data[i*DATA_WIDTH +: DATA_WIDTH]}),  // 仅第一个节点有数据,
 
@@ -195,11 +202,15 @@ module ring_bus #(
     // 修正genvar定义位置
     genvar k;
     genvar m;
+    genvar n; // 使用不同的变量名避免冲突
 
     // 在node_cache_gen generate块外部定义rsp_fifo_rd_en信号
     generate
         // 先定义共享信号
         wire [NUM_NODES-1:0][NUM_RINGS-1:0] rsp_fifo_rd_en;
+        // 定义全局的found信号数组，避免Yosys无法检测宽度的问题
+        reg [NUM_NODES-1:0] rx_fifo_found;
+        reg [NUM_NODES-1:0] rsp_fifo_found;
 
         for (k = 0; k < NUM_NODES; k = k + 1) begin : node_cache_gen
             // 定义FIFO输入输出信号
@@ -225,25 +236,58 @@ module ring_bus #(
             // 响应FIFO的读取控制逻辑
             reg [RING_ID_WIDTH-1:0] selected_rsp_fifo;
 
-            // 提取当前节点来自各总线的有效信号
-            for (m = 0; m < NUM_RINGS; m = m + 1) begin : node_valid_gen
+            // 在always块外部声明循环变量，避免SystemVerilog模式错误
+            integer loop_m;
+            integer loop_n;
+
+            // 创建中间信号数组用于存储提取的字段值
+            wire [OPCODE_WIDTH-1:0] extracted_opcode [NUM_RINGS-1:0];
+            wire [MATCH_TYPE_WIDTH-1:0] extracted_match_type [NUM_RINGS-1:0];
+            wire [NODE_ID_WIDTH-1:0] extracted_source_id [NUM_RINGS-1:0];
+            wire [NODE_ID_WIDTH-1:0] extracted_target_id [NUM_RINGS-1:0];
+            wire [ADDR_WIDTH-1:0] extracted_addr [NUM_RINGS-1:0];
+            wire [DATA_WIDTH-1:0] extracted_data [NUM_RINGS-1:0];
+
+            // 提取当前节点来自各总线的有效信号和字段值
+            for (m = 0; m < NUM_RINGS; m = m + 1) begin : node_valid_and_extract_gen
                 assign node_ring_rx_valid[m] = ring_rx_req_valid[m*NUM_NODES + k];
                 assign node_ring_rsp_valid[m] = ring_rsp_valid[m*NUM_NODES + k];
                 // 当FIFO未满且有有效数据时，写入FIFO
                 assign rx_fifo_wr_en[m] = node_ring_rx_valid[m] && !rx_fifo_full[m];
                 assign rsp_fifo_wr_en[m] = node_ring_rsp_valid[m] && !rsp_fifo_full[m];
+
+                // 逐位复制字段值，避免复杂的位切片表达式
+                for (p = 0; p < OPCODE_WIDTH; p = p + 1) begin : extract_opcode_bits
+                    assign extracted_opcode[m][p] = ring_rx_req_opcode[(m*NUM_NODES + k)*OPCODE_WIDTH + p];
+                end
+                for (p = 0; p < MATCH_TYPE_WIDTH; p = p + 1) begin : extract_match_type_bits
+                    assign extracted_match_type[m][p] = ring_rx_req_match_type[(m*NUM_NODES + k)*MATCH_TYPE_WIDTH + p];
+                end
+                for (p = 0; p < NODE_ID_WIDTH; p = p + 1) begin : extract_source_id_bits
+                    assign extracted_source_id[m][p] = ring_rx_req_source_id[(m*NUM_NODES + k)*NODE_ID_WIDTH + p];
+                end
+                for (p = 0; p < NODE_ID_WIDTH; p = p + 1) begin : extract_target_id_bits
+                    assign extracted_target_id[m][p] = ring_rx_req_target_id[(m*NUM_NODES + k)*NODE_ID_WIDTH + p];
+                end
+                for (p = 0; p < ADDR_WIDTH; p = p + 1) begin : extract_addr_bits
+                    assign extracted_addr[m][p] = ring_rx_req_addr[(m*NUM_NODES + k)*ADDR_WIDTH + p];
+                end
+                for (p = 0; p < DATA_WIDTH; p = p + 1) begin : extract_data_bits
+                    assign extracted_data[m][p] = ring_rx_req_data[(m*NUM_NODES + k)*DATA_WIDTH + p];
+                end
             end
 
             for (m = 0; m < NUM_RINGS; m = m + 1) begin : rx_fifo_gen
                 // 组合请求数据信号
                 wire [OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH-1:0] rx_req_combined;
+
                 assign rx_req_combined = {
-                    ring_rx_req_opcode[m*NUM_NODES*OPCODE_WIDTH + k*OPCODE_WIDTH +: OPCODE_WIDTH],
-                    ring_rx_req_match_type[m*NUM_NODES*MATCH_TYPE_WIDTH + k*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH],
-                    ring_rx_req_source_id[m*NUM_NODES*NODE_ID_WIDTH + k*NODE_ID_WIDTH +: NODE_ID_WIDTH],
-                    ring_rx_req_target_id[m*NUM_NODES*NODE_ID_WIDTH + k*NODE_ID_WIDTH +: NODE_ID_WIDTH],
-                    ring_rx_req_addr[m*NUM_NODES*ADDR_WIDTH + k*ADDR_WIDTH +: ADDR_WIDTH],
-                    ring_rx_req_data[m*NUM_NODES*DATA_WIDTH + k*DATA_WIDTH +: DATA_WIDTH]
+                    extracted_opcode[m],
+                    extracted_match_type[m],
+                    extracted_source_id[m],
+                    extracted_target_id[m],
+                    extracted_addr[m],
+                    extracted_data[m]
                 };
 
                 // 实例化请求FIFO
@@ -257,20 +301,45 @@ module ring_bus #(
                     .data_in(rx_req_combined),
                     .full(rx_fifo_full[m]),
                     .rd_en(rx_fifo_rd_en[m]),
-                    .data_out(rx_fifo_data[m*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) +:
-                             OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH]),
+                    .data_out(rx_fifo_data[m*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) +
+                             (OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) - 1 :
+                             m*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH)]),
                     .empty(rx_fifo_empty[m])
                 );
+            end
+
+            // 创建中间信号数组用于存储响应字段值
+            wire [NODE_ID_WIDTH-1:0] extracted_rsp_source_id [NUM_RINGS-1:0];
+            wire [NODE_ID_WIDTH-1:0] extracted_rsp_target_id [NUM_RINGS-1:0];
+            wire [ADDR_WIDTH-1:0] extracted_rsp_addr [NUM_RINGS-1:0];
+            wire [DATA_WIDTH-1:0] extracted_rsp_data [NUM_RINGS-1:0];
+
+            // 提取响应字段值
+            for (m = 0; m < NUM_RINGS; m = m + 1) begin : extract_rsp_fields_gen
+                // 逐位复制响应字段值，避免复杂的位切片表达式
+                for (p = 0; p < NODE_ID_WIDTH; p = p + 1) begin : extract_rsp_source_id_bits
+                    assign extracted_rsp_source_id[m][p] = ring_rsp_source_id[(m*NUM_NODES + k)*NODE_ID_WIDTH + p];
+                end
+                for (p = 0; p < NODE_ID_WIDTH; p = p + 1) begin : extract_rsp_target_id_bits
+                    assign extracted_rsp_target_id[m][p] = ring_rsp_target_id[(m*NUM_NODES + k)*NODE_ID_WIDTH + p];
+                end
+                for (p = 0; p < ADDR_WIDTH; p = p + 1) begin : extract_rsp_addr_bits
+                    assign extracted_rsp_addr[m][p] = ring_rsp_addr[(m*NUM_NODES + k)*ADDR_WIDTH + p];
+                end
+                for (p = 0; p < DATA_WIDTH; p = p + 1) begin : extract_rsp_data_bits
+                    assign extracted_rsp_data[m][p] = ring_rsp_data[(m*NUM_NODES + k)*DATA_WIDTH + p];
+                end
             end
 
             for (m = 0; m < NUM_RINGS; m = m + 1) begin : rsp_fifo_gen
                 // 组合响应数据信号
                 wire [2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH-1:0] rsp_combined;
+
                 assign rsp_combined = {
-                    ring_rsp_source_id[m*NUM_NODES*NODE_ID_WIDTH + k*NODE_ID_WIDTH +: NODE_ID_WIDTH],
-                    ring_rsp_target_id[m*NUM_NODES*NODE_ID_WIDTH + k*NODE_ID_WIDTH +: NODE_ID_WIDTH],
-                    ring_rsp_addr[m*NUM_NODES*ADDR_WIDTH + k*ADDR_WIDTH +: ADDR_WIDTH],
-                    ring_rsp_data[m*NUM_NODES*DATA_WIDTH + k*DATA_WIDTH +: DATA_WIDTH]
+                    extracted_rsp_source_id[m],
+                    extracted_rsp_target_id[m],
+                    extracted_rsp_addr[m],
+                    extracted_rsp_data[m]
                 };
 
                 // 实例化响应FIFO
@@ -285,7 +354,7 @@ module ring_bus #(
                     .full(rsp_fifo_full[m]),
                     // 使用正确的作用域路径
                     .rd_en(rsp_fifo_rd_en[k][m]),
-                    .data_out(rsp_fifo_data[m*(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) +: 2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH]),
+                    .data_out(rsp_fifo_data[m*(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + (2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) - 1 : m*(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH)]),
                     .empty(rsp_fifo_empty[m])
                 );
 
@@ -296,10 +365,11 @@ module ring_bus #(
                     selected_rx_fifo <= 0;
                 end else begin
                     // 轮询查找非空的FIFO
-                    for (integer m = 0; m < NUM_RINGS; m = m + 1) begin
-                        if (!rx_fifo_empty[(selected_rx_fifo + m) % NUM_RINGS]) begin
-                            selected_rx_fifo <= (selected_rx_fifo + m) % NUM_RINGS;
-                            break;
+                    rx_fifo_found[k] = 0;
+                    for (loop_m = 0; loop_m < NUM_RINGS; loop_m = loop_m + 1) begin
+                        if (!rx_fifo_found[k] && !rx_fifo_empty[(selected_rx_fifo + loop_m) % NUM_RINGS]) begin
+                            selected_rx_fifo <= (selected_rx_fifo + loop_m) % NUM_RINGS;
+                            rx_fifo_found[k] = 1;
                         end
                     end
                 end
@@ -310,35 +380,51 @@ module ring_bus #(
                     selected_rsp_fifo <= 0;
                 end else begin
                     // 轮询查找非空的FIFO
-                    for (integer m = 0; m < NUM_RINGS; m = m + 1) begin
-                        if (!rsp_fifo_empty[(selected_rsp_fifo + m) % NUM_RINGS]) begin
-                            selected_rsp_fifo <= (selected_rsp_fifo + m) % NUM_RINGS;
-                            break;
+                    rsp_fifo_found[k] = 0;
+                    for (loop_n = 0; loop_n < NUM_RINGS; loop_n = loop_n + 1) begin
+                        if (!rsp_fifo_found[k] && !rsp_fifo_empty[(selected_rsp_fifo + loop_n) % NUM_RINGS]) begin
+                            selected_rsp_fifo <= (selected_rsp_fifo + loop_n) % NUM_RINGS;
+                            rsp_fifo_found[k] = 1;
                         end
                     end
                 end
             end
 
+            // 定义selected_node信号，确保在使用前定义
+            reg [$clog2(NUM_NODES)-1:0] selected_node;
+
             // 生成读取使能信号
             assign rx_fifo_rd_en = (1 << selected_rx_fifo) & {NUM_RINGS{!rx_fifo_empty[selected_rx_fifo]}};
-            // 修复：使用正确的二维数组索引
-            assign rsp_fifo_rd_en[k] = (1 << selected_rsp_fifo) & {NUM_RINGS{!rsp_fifo_empty[selected_rsp_fifo]}};
+            // 修复：rsp_fifo_rd_en应该是单比特信号，与rx_fifo_rd_en保持一致
+            assign rsp_fifo_rd_en = (1 << selected_rsp_fifo) & {NUM_RINGS{!rsp_fifo_empty[selected_rsp_fifo]}};
 
-            // 输出请求数据
-            assign rx_req_valid_o[k] = !rx_fifo_empty[selected_rx_fifo];
-            assign rx_req_is_order_o[k] = ring_rx_req_is_order[selected_rx_fifo*NUM_NODES + k];
-            assign rx_req_opcode_o[k*OPCODE_WIDTH +: OPCODE_WIDTH] =
-                rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) +: OPCODE_WIDTH];
-            assign rx_req_match_type_o[k*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] =
-                rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH +: MATCH_TYPE_WIDTH];
-            assign rx_req_source_id_o[k*NODE_ID_WIDTH +: NODE_ID_WIDTH] =
-                rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH +: NODE_ID_WIDTH];
-            assign rx_req_target_id_o[k*NODE_ID_WIDTH +: NODE_ID_WIDTH] =
-                rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH + NODE_ID_WIDTH +: NODE_ID_WIDTH];
-            assign rx_req_addr_o[k*ADDR_WIDTH +: ADDR_WIDTH] =
-                rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH + 2*NODE_ID_WIDTH +: ADDR_WIDTH];
-            assign rx_req_data_o[k*DATA_WIDTH +: DATA_WIDTH] =
-                rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH + 2*NODE_ID_WIDTH + ADDR_WIDTH +: DATA_WIDTH];
+            // 输出请求数据 - 使用generate块为每个节点生成输出
+            for (n = 0; n < NUM_NODES; n = n + 1) begin : node_output_gen
+                assign rx_req_valid_o[n] = (n == selected_node) ? !rx_fifo_empty[selected_rx_fifo] : 1'b0;
+                assign rx_req_is_order_o[n] = (n == selected_node) ? ring_rx_req_is_order[selected_rx_fifo*NUM_NODES + n] : 1'b0;
+                assign rx_req_opcode_o[n*OPCODE_WIDTH +: OPCODE_WIDTH] =
+                    (n == selected_node) ? rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) +: OPCODE_WIDTH] : {OPCODE_WIDTH{1'b0}};
+                assign rx_req_match_type_o[n*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] =
+                    (n == selected_node) ? rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH +: MATCH_TYPE_WIDTH] : {MATCH_TYPE_WIDTH{1'b0}};
+                assign rx_req_source_id_o[n*NODE_ID_WIDTH +: NODE_ID_WIDTH] =
+                    (n == selected_node) ? rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH +: NODE_ID_WIDTH] : {NODE_ID_WIDTH{1'b0}};
+                assign rx_req_target_id_o[n*NODE_ID_WIDTH +: NODE_ID_WIDTH] =
+                    (n == selected_node) ? rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH + NODE_ID_WIDTH +: NODE_ID_WIDTH] : {NODE_ID_WIDTH{1'b0}};
+                assign rx_req_addr_o[n*ADDR_WIDTH +: ADDR_WIDTH] =
+                    (n == selected_node) ? rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH + 2*NODE_ID_WIDTH +: ADDR_WIDTH] : {ADDR_WIDTH{1'b0}};
+                assign rx_req_data_o[n*DATA_WIDTH +: DATA_WIDTH] =
+                    (n == selected_node) ? rx_fifo_data[selected_rx_fifo*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + OPCODE_WIDTH + MATCH_TYPE_WIDTH + 2*NODE_ID_WIDTH + ADDR_WIDTH +: DATA_WIDTH] : {DATA_WIDTH{1'b0}};
+            end
+
+            // selected_node信号的轮询逻辑
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    selected_node <= 0;
+                end else begin
+                    // 简单轮询选择节点，实际应用中可能需要更复杂的逻辑
+                    selected_node <= (selected_node + 1) % NUM_NODES;
+                end
+            end
 
             // 输出响应数据
             assign rsp_valid_o[k] = !rsp_fifo_empty[selected_rsp_fifo];
