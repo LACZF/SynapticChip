@@ -4,10 +4,16 @@ CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TEST_TARGET := top_system
 TEST_ARGS ?= -g2005-sv
 
+# common
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/common
+TEST_SRC += $(TOP_DIR)/rtl/common/simple_fifo.v
+
 # bus
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring_bus_node.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring_bus.v
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
 
 # core
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core

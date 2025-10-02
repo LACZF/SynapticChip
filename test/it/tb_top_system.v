@@ -26,7 +26,13 @@ module tb_top_system;
     wire [`DATA_WIDTH-1:0] system_status;
 
     // 实例化DUT
-    top_system dut (
+    top_system #(
+        .NUM_RINGS(2),
+        .NUM_NODES(`NODES),
+        .ADDR_WIDTH(`ADDR_WIDTH),
+        .NODE_ID_WIDTH(`NODE_ID_WIDTH),
+        .DATA_WIDTH(`DATA_WIDTH)
+    ) dut (
         .clk(clk),
         .rst_n(rst_n),
         .uart_txd(uart_txd),
