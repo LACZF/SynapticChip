@@ -187,6 +187,9 @@ module cache_system (
         .dcache_busy(dcache_miss)
     );
 
+    reg [31:0] flash_ctrl_addr;
+    reg [31:0] flash_ctrl_data_out;
+    reg [31:0] flash_ctrl_data_in;
     // L2共享缓存（支持外部Flash）
     l2_cache #(
         .CACHE_SIZE(L2CACHE_SIZE),

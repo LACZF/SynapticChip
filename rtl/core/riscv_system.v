@@ -3,7 +3,15 @@
 
 `include "riscv_core_params.v"
 
-module riscv_system (
+module riscv_system #(
+    parameter NUM_RINGS         = 2,
+    parameter ADDR_WIDTH        = 32,
+    parameter DATA_WIDTH        = 64,
+    parameter NODE_ID_WIDTH     = 8,
+    parameter NODE_ID           = 0,
+    parameter OPCODE_WIDTH      = 8,
+    parameter MATCH_TYPE_WIDTH  = 2
+) (
     input clk,
     input rst_n,
 
@@ -37,7 +45,36 @@ module riscv_system (
     output [`DATA_WIDTH-1:0] ring_out_data,
     output ring_out_we,
     output [3:0] ring_out_be,
-    output ring_out_ack
+    output ring_out_ack,
+
+    // 发送请求
+    input  wire [NUM_RINGS-1:0]         tx_req_ring_mask_i,      // 指定使用的Ring
+    input  wire [NUM_RINGS-1:0]         tx_req_ring_disable_i,   // 禁用的Ring
+    input  wire                         tx_req_valid_i,
+    input  wire                         tx_req_is_order_i,
+    input  wire [OPCODE_WIDTH-1:0]      tx_req_opcode_i,
+    input  wire [MATCH_TYPE_WIDTH-1:0]  tx_req_match_type_i,
+    input  wire [NODE_ID_WIDTH-1:0]     tx_req_source_id_i,
+    input  wire [NODE_ID_WIDTH-1:0]     tx_req_target_id_i,
+    input  wire [ADDR_WIDTH-1:0]        tx_req_addr_i,
+    input  wire [DATA_WIDTH-1:0]        tx_req_data_i,
+
+    // 接受请求
+    output wire                         rx_req_valid_o,
+    output wire                         rx_req_is_order_o,
+    output wire [OPCODE_WIDTH-1:0]      rx_req_opcode_o,
+    output wire [MATCH_TYPE_WIDTH-1:0]  rx_req_match_type_o,
+    output wire [NODE_ID_WIDTH-1:0]     rx_req_source_id_o,
+    output wire [NODE_ID_WIDTH-1:0]     rx_req_target_id_o,
+    output wire [ADDR_WIDTH-1:0]        rx_req_addr_o,
+    output wire [DATA_WIDTH-1:0]        rx_req_data_o,
+
+    // 接收响应
+    output wire                         rsp_valid_o,
+    output wire [NODE_ID_WIDTH-1:0]     rsp_source_id_o,
+    output wire [NODE_ID_WIDTH-1:0]     rsp_target_id_o,
+    output wire [ADDR_WIDTH-1:0]        rsp_addr_o,
+    output wire [DATA_WIDTH-1:0]        rsp_data_o
 );
 
     // RISC-V核心信号
@@ -64,6 +101,9 @@ module riscv_system (
     wire [3:0] ring_be;
     wire ring_ack;
 
+    reg [4:0] debug_state;
+    reg [31:0] debug_pc;
+    reg [31:0] debug_instruction;
     // 实例化SoC
     riscv_soc soc (
         .clk(clk),
