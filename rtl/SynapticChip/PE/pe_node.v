@@ -3,58 +3,66 @@
 
 `include "pe_params.v"
 
-module pe_node (
+module pe_node #(
+    parameter ADDR_WIDTH        = 32,
+    parameter DATA_WIDTH        = 64,
+    parameter NUM_PES           = 4,
+    parameter INST_WIDTH        = 128,
+    parameter PE_ID_WIDTH       = 3,
+    parameter PE_ARRAY_ROWS     = 2,
+    parameter PE_ARRAY_COLS     = 2
+) (
     input clk,
     input rst_n,
     input enable,
 
     // 指令接口
-    input [`INST_WIDTH-1:0] instruction,
+    input [INST_WIDTH-1:0] instruction,
     input inst_valid,
 
     // 数据存储器接口（连接到共享内存或上级存储器）
     output ext_mem_req,
     output ext_mem_we,
-    output [`ADDR_WIDTH-1:0] ext_mem_addr,
-    output [`DATA_WIDTH-1:0] ext_mem_data_out,
-    input [`DATA_WIDTH-1:0] ext_mem_data_in,
+    output [ADDR_WIDTH-1:0] ext_mem_addr,
+    output [DATA_WIDTH-1:0] ext_mem_data_out,
+    input [DATA_WIDTH-1:0] ext_mem_data_in,
     input ext_mem_ack,
 
     // 邻居PE通信接口
     input north_valid,
-    input [`DATA_WIDTH-1:0] north_data,
+    input [DATA_WIDTH-1:0] north_data,
     output north_ready,
 
     input south_valid,
-    input [`DATA_WIDTH-1:0] south_data,
+    input [DATA_WIDTH-1:0] south_data,
     output south_ready,
 
     input east_valid,
-    input [`DATA_WIDTH-1:0] east_data,
+    input [DATA_WIDTH-1:0] east_data,
     output east_ready,
 
     input west_valid,
-    input [`DATA_WIDTH-1:0] west_data,
+    input [DATA_WIDTH-1:0] west_data,
     output west_ready,
 
     output out_valid,
-    output [`DATA_WIDTH-1:0] out_data,
+    output [DATA_WIDTH-1:0] out_data,
 
     // 状态输出
-    output [`DATA_WIDTH-1:0] status,
+    output [DATA_WIDTH-1:0] status,
     output busy
 );
 
     // 本地存储器
-    reg [`DATA_WIDTH-1:0] local_mem [0:`MEM_DEPTH-1];
+    reg [DATA_WIDTH-1:0] local_mem [0:`MEM_DEPTH-1];
     reg local_mem_ack;
 
     // 存储器接口信号
     wire mem_req;
     wire mem_we;
-    wire [`ADDR_WIDTH-1:0] mem_addr;
-    wire [`DATA_WIDTH-1:0] mem_data_out;
-    wire [`DATA_WIDTH-1:0] mem_data_in;
+    wire [ADDR_WIDTH-1:0] mem_addr;
+    wire [DATA_WIDTH-1:0] mem_data_out;
+    wire [DATA_WIDTH-1:0] mem_data_in;
     wire mem_ack;
 
     // 地址解码
@@ -92,7 +100,15 @@ module pe_node (
     assign ext_mem_data_out = mem_data_out;
 
     // PE核心实例化
-    pe_core core_inst (
+    pe_core #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .NUM_PES(NUM_PES),
+        .INST_WIDTH(INST_WIDTH),
+        .PE_ID_WIDTH(PE_ID_WIDTH),
+        .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(PE_ARRAY_COLS)
+    ) core_inst (
         .clk(clk),
         .rst_n(rst_n),
         .enable(enable),

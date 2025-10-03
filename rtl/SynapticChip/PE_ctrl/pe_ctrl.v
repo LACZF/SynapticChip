@@ -3,60 +3,67 @@
 
 `include "pe_ctrl_params.v"
 
-module pe_controller (
+module pe_controller #(
+    parameter NODE_ID_WIDTH = 5,
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32,
+    parameter NUM_PES = 4,
+    parameter INST_WIDTH = 128,
+    parameter PE_ID_WIDTH = 3
+) (
     input clk,
     input rst_n,
 
     // Ring总线接口
     input ring_in_valid,
-    input [`NODE_ID_WIDTH-1:0] ring_in_src,
-    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [`ADDR_WIDTH-1:0] ring_in_addr,
-    input [`DATA_WIDTH-1:0] ring_in_data,
+    input [NODE_ID_WIDTH-1:0] ring_in_src,
+    input [NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [ADDR_WIDTH-1:0] ring_in_addr,
+    input [DATA_WIDTH-1:0] ring_in_data,
     input ring_in_we,
     input [3:0] ring_in_be,
     input ring_in_ack,
 
     output reg ring_out_valid,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_src,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_dest,
-    output reg [`ADDR_WIDTH-1:0] ring_out_addr,
-    output reg [`DATA_WIDTH-1:0] ring_out_data,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_src,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_dest,
+    output reg [ADDR_WIDTH-1:0] ring_out_addr,
+    output reg [DATA_WIDTH-1:0] ring_out_data,
     output reg ring_out_we,
     output reg [3:0] ring_out_be,
     output reg ring_out_ack,
 
     // PE阵列控制接口
-    output reg [`NUM_PES-1:0] pe_enable,
-    output reg [`NUM_PES-1:0] pe_reset,
-    output reg [(`NUM_PES*`INST_WIDTH)-1:0] pe_instructions,
+    output reg [NUM_PES-1:0] pe_enable,
+    output reg [NUM_PES-1:0] pe_reset,
+    output reg [(NUM_PES*INST_WIDTH)-1:0] pe_instructions,
     output reg pe_inst_valid,
 
     // PE状态输入
-    input [(`NUM_PES*`DATA_WIDTH)-1:0] pe_status,
-    input [(`NUM_PES*`DATA_WIDTH)-1:0] pe_outputs,
-    input [`NUM_PES-1:0] pe_busy,
+    input [(NUM_PES*DATA_WIDTH)-1:0] pe_status,
+    input [(NUM_PES*DATA_WIDTH)-1:0] pe_outputs,
+    input [NUM_PES-1:0] pe_busy,
 
     // 路由配置接口
-    output reg [(`NUM_PES*4*`PE_ID_WIDTH)-1:0] route_config, // 每个PE有4个方向的路由配置
+    output reg [(NUM_PES*4*PE_ID_WIDTH)-1:0] route_config, // 每个PE有4个方向的路由配置
     output reg route_cfg_valid
 );
 
     // 内部寄存器
-    reg [`DATA_WIDTH-1:0] control_reg;
-    reg [`DATA_WIDTH-1:0] status_reg;
-    reg [(`NUM_PES*`INST_WIDTH)-1:0] inst_buffer;
-    reg [(`NUM_PES*4*`PE_ID_WIDTH)-1:0] route_buffer;
+    reg [DATA_WIDTH-1:0] control_reg;
+    reg [DATA_WIDTH-1:0] status_reg;
+    reg [(NUM_PES*INST_WIDTH)-1:0] inst_buffer;
+    reg [(NUM_PES*4*PE_ID_WIDTH)-1:0] route_buffer;
 
     // 状态机
     reg [1:0] state;
-    reg [`DATA_WIDTH-1:0] data_buffer;
-    reg [`ADDR_WIDTH-1:0] addr_buffer;
-    reg [`NODE_ID_WIDTH-1:0] src_buffer;
+    reg [DATA_WIDTH-1:0] data_buffer;
+    reg [ADDR_WIDTH-1:0] addr_buffer;
+    reg [NODE_ID_WIDTH-1:0] src_buffer;
     reg we_buffer;
 
     // 判断是否为本节点数据
-    wire is_for_me = (ring_in_dest == `NODE_ID_WIDTH'd0) && ring_in_valid; // 假设控制器节点ID为0
+    wire is_for_me = (ring_in_dest == {NODE_ID_WIDTH{1'b0}}) && ring_in_valid; // 假设控制器节点ID为0
 
     // 状态机
     always @(posedge clk or negedge rst_n) begin

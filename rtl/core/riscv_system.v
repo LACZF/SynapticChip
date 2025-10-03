@@ -10,7 +10,8 @@ module riscv_system #(
     parameter NODE_ID_WIDTH     = 8,
     parameter NODE_ID           = 0,
     parameter OPCODE_WIDTH      = 8,
-    parameter MATCH_TYPE_WIDTH  = 2
+    parameter MATCH_TYPE_WIDTH  = 2,
+    parameter INST_WIDTH        = 32  // 指令宽度
 ) (
     input clk,
     input rst_n,
@@ -18,31 +19,31 @@ module riscv_system #(
     input ext_int,
 
     // 内存接口（用于测试）
-    output [`ADDR_WIDTH-1:0] mem_addr,
-    output [`DATA_WIDTH-1:0] mem_data_out,
-    input [`DATA_WIDTH-1:0] mem_data_in,
+    output [ADDR_WIDTH-1:0] mem_addr,
+    output [DATA_WIDTH-1:0] mem_data_out,
+    input [DATA_WIDTH-1:0] mem_data_in,
     output mem_we,
     output [3:0] mem_be,
     input mem_ack,
 
-    input [`NODE_ID_WIDTH-1:0] node_id,
+    input [NODE_ID_WIDTH-1:0] node_id,
 
     // Ring接口 - 输入
     input ring_in_valid,
-    input [`NODE_ID_WIDTH-1:0] ring_in_src,
-    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [`ADDR_WIDTH-1:0] ring_in_addr,
-    input [`DATA_WIDTH-1:0] ring_in_data,
+    input [NODE_ID_WIDTH-1:0] ring_in_src,
+    input [NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [ADDR_WIDTH-1:0] ring_in_addr,
+    input [DATA_WIDTH-1:0] ring_in_data,
     input ring_in_we,
     input [3:0] ring_in_be,
     input ring_in_ack,
 
     // Ring接口 - 输出
     output ring_out_valid,
-    output [`NODE_ID_WIDTH-1:0] ring_out_src,
-    output [`NODE_ID_WIDTH-1:0] ring_out_dest,
-    output [`ADDR_WIDTH-1:0] ring_out_addr,
-    output [`DATA_WIDTH-1:0] ring_out_data,
+    output [NODE_ID_WIDTH-1:0] ring_out_src,
+    output [NODE_ID_WIDTH-1:0] ring_out_dest,
+    output [ADDR_WIDTH-1:0] ring_out_addr,
+    output [DATA_WIDTH-1:0] ring_out_data,
     output ring_out_we,
     output [3:0] ring_out_be,
     output ring_out_ack,
@@ -79,24 +80,24 @@ module riscv_system #(
 
     // RISC-V核心信号
     wire core_inst_req;
-    wire [`ADDR_WIDTH-1:0] core_inst_addr;
-    wire [`INST_WIDTH-1:0] core_inst_data;
+    wire [ADDR_WIDTH-1:0] core_inst_addr;
+    wire [INST_WIDTH-1:0] core_inst_data;
     wire core_inst_ack;
 
     wire core_data_req;
-    wire [`ADDR_WIDTH-1:0] core_data_addr;
-    wire [`DATA_WIDTH-1:0] core_data_out;
-    wire [`DATA_WIDTH-1:0] core_data_in;
+    wire [ADDR_WIDTH-1:0] core_data_addr;
+    wire [DATA_WIDTH-1:0] core_data_out;
+    wire [DATA_WIDTH-1:0] core_data_in;
     wire core_data_ack;
     wire core_data_we;
     wire [3:0] core_data_be;
 
     // Ring总线信号
     wire ring_valid;
-    wire [`NODE_ID_WIDTH-1:0] ring_src;
-    wire [`NODE_ID_WIDTH-1:0] ring_dest;
-    wire [`ADDR_WIDTH-1:0] ring_addr;
-    wire [`DATA_WIDTH-1:0] ring_data;
+    wire [NODE_ID_WIDTH-1:0] ring_src;
+    wire [NODE_ID_WIDTH-1:0] ring_dest;
+    wire [ADDR_WIDTH-1:0] ring_addr;
+    wire [DATA_WIDTH-1:0] ring_data;
     wire ring_we;
     wire [3:0] ring_be;
     wire ring_ack;

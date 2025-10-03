@@ -3,39 +3,47 @@
 
 `include "pe_router_params.v"
 
-module pe_router_top (
+module pe_router_top #(
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32,
+    parameter NUM_PORTS = 4
+) (
     input clk,
     input rst_n,
 
     // 配置接口
     input cfg_valid,
-    input [`ADDR_WIDTH-1:0] cfg_addr,
-    input [`DATA_WIDTH-1:0] cfg_data,
+    input [ADDR_WIDTH-1:0] cfg_addr,
+    input [DATA_WIDTH-1:0] cfg_data,
     output cfg_ack,
 
     // 数据输入接口
-    input [`NUM_PORTS-1:0] data_in_valid,
-    input [(`NUM_PORTS*`DATA_WIDTH)-1:0] data_in,
-    output [`NUM_PORTS-1:0] data_in_ready,
+    input [NUM_PORTS-1:0] data_in_valid,
+    input [(NUM_PORTS*DATA_WIDTH)-1:0] data_in,
+    output [NUM_PORTS-1:0] data_in_ready,
 
     // 数据输出接口
-    output [`NUM_PORTS-1:0] data_out_valid,
-    output [(`NUM_PORTS*`DATA_WIDTH)-1:0] data_out,
-    input [`NUM_PORTS-1:0] data_out_ready,
+    output [NUM_PORTS-1:0] data_out_valid,
+    output [(NUM_PORTS*DATA_WIDTH)-1:0] data_out,
+    input [NUM_PORTS-1:0] data_out_ready,
 
     // 状态输出
-    output [`DATA_WIDTH-1:0] status
+    output [DATA_WIDTH-1:0] status
 );
 
     // 内部信号
     wire route_cfg_valid;
-    wire [`ADDR_WIDTH-1:0] route_cfg_addr;
-    wire [`DATA_WIDTH-1:0] route_cfg_data;
+    wire [ADDR_WIDTH-1:0] route_cfg_addr;
+    wire [DATA_WIDTH-1:0] route_cfg_data;
     wire route_cfg_ack;
-    wire [`DATA_WIDTH-1:0] route_status;
+    wire [DATA_WIDTH-1:0] route_status;
 
     // 实例化路由配置接口
-    router_config config_inst (
+    router_config #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .NUM_PORTS(NUM_PORTS)
+    ) config_inst (
         .clk(clk),
         .rst_n(rst_n),
         .cfg_valid(cfg_valid),
@@ -51,7 +59,11 @@ module pe_router_top (
     );
 
     // 实例化路由核心
-    pe_router_core core_inst (
+    pe_router_core #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .NUM_PORTS(NUM_PORTS)
+    ) core_inst (
         .clk(clk),
         .rst_n(rst_n),
         .cfg_valid(route_cfg_valid),

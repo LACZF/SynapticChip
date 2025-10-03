@@ -3,16 +3,21 @@
 
 `include "uart_params.v"
 
-module uart_core (
+module uart_core #(
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32,
+    parameter FIFO_DEPTH = 16,
+    parameter FIFO_ADDR_WIDTH = 4
+) (
     input clk,
     input rst_n,
 
     // 控制接口
     input req,
     input we,
-    input [`ADDR_WIDTH-1:0] addr,
-    input [`DATA_WIDTH-1:0] data_in,
-    output reg [`DATA_WIDTH-1:0] data_out,
+    input [ADDR_WIDTH-1:0] addr,
+    input [DATA_WIDTH-1:0] data_in,
+    output reg [DATA_WIDTH-1:0] data_out,
     output reg ack,
 
     // 串行接口
@@ -56,10 +61,10 @@ module uart_core (
     reg rxd_sync;
 
     // FIFO缓冲区
-    reg [7:0] rx_fifo [0:`FIFO_DEPTH-1];
-    reg [7:0] tx_fifo [0:`FIFO_DEPTH-1];
-    reg [`FIFO_ADDR_WIDTH-1:0] rx_head, rx_tail;
-    reg [`FIFO_ADDR_WIDTH-1:0] tx_head, tx_tail;
+    reg [7:0] rx_fifo [0:FIFO_DEPTH-1];
+    reg [7:0] tx_fifo [0:FIFO_DEPTH-1];
+    reg [FIFO_ADDR_WIDTH-1:0] rx_head, rx_tail;
+    reg [FIFO_ADDR_WIDTH-1:0] tx_head, tx_tail;
     reg rx_full, rx_empty;
     reg tx_full, tx_empty;
 

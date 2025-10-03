@@ -3,44 +3,48 @@
 
 `include "pe_router_params.v"
 
-module router_config (
+module router_config #(
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32,
+    parameter NUM_PORTS = 4
+) (
     input clk,
     input rst_n,
 
     // 配置总线接口
     input cfg_valid,
-    input [`ADDR_WIDTH-1:0] cfg_addr,
-    input [`DATA_WIDTH-1:0] cfg_data,
+    input [ADDR_WIDTH-1:0] cfg_addr,
+    input [DATA_WIDTH-1:0] cfg_data,
     output cfg_ack,
 
     // 到路由核心的配置输出
     output reg route_cfg_valid,
-    output reg [`ADDR_WIDTH-1:0] route_cfg_addr,
-    output reg [`DATA_WIDTH-1:0] route_cfg_data,
+    output reg [ADDR_WIDTH-1:0] route_cfg_addr,
+    output reg [DATA_WIDTH-1:0] route_cfg_data,
     input route_cfg_ack,
 
     // 状态输入
-    input [`DATA_WIDTH-1:0] route_status,
-    output reg [`DATA_WIDTH-1:0] status_out
+    input [DATA_WIDTH-1:0] route_status,
+    output reg [DATA_WIDTH-1:0] status_out
 );
 
     // 配置寄存器
-    reg [`DATA_WIDTH-1:0] config_registers_0;
-    reg [`DATA_WIDTH-1:0] config_registers_1;
-    reg [`DATA_WIDTH-1:0] config_registers_2;
-    reg [`DATA_WIDTH-1:0] config_registers_3;
-    reg [`DATA_WIDTH-1:0] config_registers_4;
-    reg [`DATA_WIDTH-1:0] config_registers_5;
-    reg [`DATA_WIDTH-1:0] config_registers_6;
-    reg [`DATA_WIDTH-1:0] config_registers_7;
-    reg [`DATA_WIDTH-1:0] config_registers_8;
-    reg [`DATA_WIDTH-1:0] config_registers_9;
-    reg [`DATA_WIDTH-1:0] config_registers_10;
-    reg [`DATA_WIDTH-1:0] config_registers_11;
-    reg [`DATA_WIDTH-1:0] config_registers_12;
-    reg [`DATA_WIDTH-1:0] config_registers_13;
-    reg [`DATA_WIDTH-1:0] config_registers_14;
-    reg [`DATA_WIDTH-1:0] config_registers_15;
+    reg [DATA_WIDTH-1:0] config_registers_0;
+    reg [DATA_WIDTH-1:0] config_registers_1;
+    reg [DATA_WIDTH-1:0] config_registers_2;
+    reg [DATA_WIDTH-1:0] config_registers_3;
+    reg [DATA_WIDTH-1:0] config_registers_4;
+    reg [DATA_WIDTH-1:0] config_registers_5;
+    reg [DATA_WIDTH-1:0] config_registers_6;
+    reg [DATA_WIDTH-1:0] config_registers_7;
+    reg [DATA_WIDTH-1:0] config_registers_8;
+    reg [DATA_WIDTH-1:0] config_registers_9;
+    reg [DATA_WIDTH-1:0] config_registers_10;
+    reg [DATA_WIDTH-1:0] config_registers_11;
+    reg [DATA_WIDTH-1:0] config_registers_12;
+    reg [DATA_WIDTH-1:0] config_registers_13;
+    reg [DATA_WIDTH-1:0] config_registers_14;
+    reg [DATA_WIDTH-1:0] config_registers_15;
 
     // 状态机
     reg [1:0] state;

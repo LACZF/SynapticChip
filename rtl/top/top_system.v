@@ -136,7 +136,8 @@ module top_system #(
         .NODE_ID_WIDTH(NODE_ID_WIDTH),
         .NODE_ID(`NODE_RISCV),
         .OPCODE_WIDTH(OPCODE_WIDTH),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
+        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
+        .INST_WIDTH(32)
     ) riscv (
         .clk(clk),
         .rst_n(rst_n),
@@ -392,7 +393,12 @@ module top_system #(
         .NODE_ID_WIDTH(NODE_ID_WIDTH),
         .NODE_ID(`NODE_FABRIC),
         .OPCODE_WIDTH(OPCODE_WIDTH),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
+        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
+        .NUM_PES(4),
+        .INST_WIDTH(128),
+        .PE_ID_WIDTH(3),
+        .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(`PE_ARRAY_COLS)
     ) fabric (
         .clk(clk),
         .rst_n(rst_n),

@@ -3,27 +3,31 @@
 
 `include "ram_params.v"
 
-module ram_ring_node (
+module ram_ring_node #(
+    parameter NODE_ID_WIDTH = 5,
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32
+) (
     input clk,
     input rst_n,
-    input [`NODE_ID_WIDTH-1:0] node_id,
+    input [NODE_ID_WIDTH-1:0] node_id,
 
     // Ring接口 - 输入
     input ring_in_valid,
-    input [`NODE_ID_WIDTH-1:0] ring_in_src,
-    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [`ADDR_WIDTH-1:0] ring_in_addr,
-    input [`DATA_WIDTH-1:0] ring_in_data,
+    input [NODE_ID_WIDTH-1:0] ring_in_src,
+    input [NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [ADDR_WIDTH-1:0] ring_in_addr,
+    input [DATA_WIDTH-1:0] ring_in_data,
     input ring_in_we,
     input [3:0] ring_in_be,
     input ring_in_ack,
 
     // Ring接口 - 输出
     output reg ring_out_valid,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_src,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_dest,
-    output reg [`ADDR_WIDTH-1:0] ring_out_addr,
-    output reg [`DATA_WIDTH-1:0] ring_out_data,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_src,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_dest,
+    output reg [ADDR_WIDTH-1:0] ring_out_addr,
+    output reg [DATA_WIDTH-1:0] ring_out_data,
     output reg ring_out_we,
     output reg [3:0] ring_out_be,
     output reg ring_out_ack,
@@ -31,18 +35,18 @@ module ram_ring_node (
     // RAM接口
     output reg ram_req,
     output reg ram_we,
-    output reg [`ADDR_WIDTH-1:0] ram_addr,
-    output reg [`DATA_WIDTH-1:0] ram_data_in,
+    output reg [ADDR_WIDTH-1:0] ram_addr,
+    output reg [DATA_WIDTH-1:0] ram_data_in,
     output reg [3:0] ram_be,
-    input [`DATA_WIDTH-1:0] ram_data_out,
+    input [DATA_WIDTH-1:0] ram_data_out,
     input ram_ack
 );
 
     // 内部状态寄存器
     reg [1:0] state;
-    reg [`DATA_WIDTH-1:0] data_buffer;
-    reg [`ADDR_WIDTH-1:0] addr_buffer;
-    reg [`NODE_ID_WIDTH-1:0] src_buffer;
+    reg [DATA_WIDTH-1:0] data_buffer;
+    reg [ADDR_WIDTH-1:0] addr_buffer;
+    reg [NODE_ID_WIDTH-1:0] src_buffer;
     reg we_buffer;
     reg [3:0] be_buffer;
 

@@ -3,22 +3,26 @@
 
 `include "ram_params.v"
 
-module ram_module (
+module ram_module #(
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32,
+    parameter RAM_DEPTH = 2048
+) (
     input clk,
     input rst_n,
 
     // 控制接口
     input req,
     input we,
-    input [`ADDR_WIDTH-1:0] addr,
-    input [`DATA_WIDTH-1:0] data_in,
+    input [ADDR_WIDTH-1:0] addr,
+    input [DATA_WIDTH-1:0] data_in,
     input [3:0] be,  // 字节使能
-    output reg [`DATA_WIDTH-1:0] data_out,
+    output reg [DATA_WIDTH-1:0] data_out,
     output reg ack
 );
 
     // RAM存储阵列
-    reg [`DATA_WIDTH-1:0] memory [0:`RAM_DEPTH-1];
+    reg [DATA_WIDTH-1:0] memory [0:RAM_DEPTH-1];
 
     // 内部状态
     reg [1:0] state;
@@ -34,7 +38,7 @@ module ram_module (
         if (!rst_n) begin
             state <= `STATE_IDLE;
             ack <= 1'b0;
-            data_out <= {`DATA_WIDTH{1'b0}};
+            data_out <= {DATA_WIDTH{1'b0}};
         end else begin
             case (state)
                 `STATE_IDLE: begin

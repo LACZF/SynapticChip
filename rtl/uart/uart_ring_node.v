@@ -3,27 +3,31 @@
 
 `include "uart_params.v"
 
-module uart_ring_node (
+module uart_ring_node #(
+    parameter NODE_ID_WIDTH = 5,
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32
+) (
     input clk,
     input rst_n,
-    input [`NODE_ID_WIDTH-1:0] node_id,
+    input [NODE_ID_WIDTH-1:0] node_id,
 
     // Ring接口 - 输入
     input ring_in_valid,
-    input [`NODE_ID_WIDTH-1:0] ring_in_src,
-    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [`ADDR_WIDTH-1:0] ring_in_addr,
-    input [`DATA_WIDTH-1:0] ring_in_data,
+    input [NODE_ID_WIDTH-1:0] ring_in_src,
+    input [NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [ADDR_WIDTH-1:0] ring_in_addr,
+    input [DATA_WIDTH-1:0] ring_in_data,
     input ring_in_we,
     input [3:0] ring_in_be,
     input ring_in_ack,
 
     // Ring接口 - 输出
     output reg ring_out_valid,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_src,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_dest,
-    output reg [`ADDR_WIDTH-1:0] ring_out_addr,
-    output reg [`DATA_WIDTH-1:0] ring_out_data,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_src,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_dest,
+    output reg [ADDR_WIDTH-1:0] ring_out_addr,
+    output reg [DATA_WIDTH-1:0] ring_out_data,
     output reg ring_out_we,
     output reg [3:0] ring_out_be,
     output reg ring_out_ack,
@@ -31,9 +35,9 @@ module uart_ring_node (
     // UART接口
     output reg uart_req,
     output reg uart_we,
-    output reg [`ADDR_WIDTH-1:0] uart_addr,
-    output reg [`DATA_WIDTH-1:0] uart_data_out,
-    input [`DATA_WIDTH-1:0] uart_data_in,
+    output reg [ADDR_WIDTH-1:0] uart_addr,
+    output reg [DATA_WIDTH-1:0] uart_data_out,
+    input [DATA_WIDTH-1:0] uart_data_in,
     input uart_ack,
 
     // 中断接口
@@ -43,9 +47,9 @@ module uart_ring_node (
 
     // 内部状态寄存器
     reg [1:0] state;
-    reg [`DATA_WIDTH-1:0] data_buffer;
-    reg [`ADDR_WIDTH-1:0] addr_buffer;
-    reg [`NODE_ID_WIDTH-1:0] src_buffer;
+    reg [DATA_WIDTH-1:0] data_buffer;
+    reg [ADDR_WIDTH-1:0] addr_buffer;
+    reg [NODE_ID_WIDTH-1:0] src_buffer;
     reg we_buffer;
 
     // 判断是否为本节点数据
@@ -77,7 +81,7 @@ module uart_ring_node (
                         ring_out_src <= node_id;
                         ring_out_dest <= 0; // 发送给主控制器
                         ring_out_addr <= `REG_IIR;
-                        ring_out_data <= {`DATA_WIDTH{1'b1}}; // 中断标识
+                        ring_out_data <= {DATA_WIDTH{1'b1}}; // 中断标识
                         ring_out_we <= 1'b1;
                         int_pending <= 1'b0;
                     end else if (ring_in_valid) begin

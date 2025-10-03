@@ -3,20 +3,24 @@
 
 `include "rom_params.v"
 
-module rom_module (
+module rom_module #(
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32,
+    parameter ROM_DEPTH = 2048
+) (
     input clk,
     input rst_n,
 
     // 控制接口
     input req,
-    input [`ADDR_WIDTH-1:0] addr,
-    output reg [`DATA_WIDTH-1:0] data_out,
+    input [ADDR_WIDTH-1:0] addr,
+    output reg [DATA_WIDTH-1:0] data_out,
     output reg ack,
 
     // 初始化接口
     input init_req,
-    input [`ADDR_WIDTH-1:0] init_addr,
-    input [`DATA_WIDTH-1:0] init_data,
+    input [ADDR_WIDTH-1:0] init_addr,
+    input [DATA_WIDTH-1:0] init_data,
     output reg init_ack,
 
     // 状态输出
@@ -24,7 +28,7 @@ module rom_module (
 );
 
     // ROM存储阵列
-    reg [`DATA_WIDTH-1:0] memory [0:`ROM_DEPTH-1];
+    reg [DATA_WIDTH-1:0] memory [0:ROM_DEPTH-1];
 
     // 内部状态
     reg [1:0] state;
@@ -41,7 +45,7 @@ module rom_module (
             state <= `STATE_IDLE;
             ack <= 1'b0;
             init_ack <= 1'b0;
-            data_out <= {`DATA_WIDTH{1'b0}};
+            data_out <= {DATA_WIDTH{1'b0}};
             initialized <= 1'b0;
         end else begin
             case (state)
