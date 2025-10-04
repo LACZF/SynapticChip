@@ -25,7 +25,7 @@ module tb_riscv64_l2_cache_system;
     always #5 clk = ~clk;
 
     // 完整系统实例
-    riscv64_multicore_with_l2_cache #(
+    riscv64_multicore #(
         .NUM_CORES(NUM_CORES),
         .CORE_ID_WIDTH(2)
     ) u_system (

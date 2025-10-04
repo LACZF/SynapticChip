@@ -94,7 +94,7 @@ module riscv64_soc (
     );
 
     // 多核CPU子系统
-    riscv64_multicore_with_l2_cache #(
+    riscv64_multicore #(
         .NUM_CORES(`NUM_CORES),
         .CORE_ID_WIDTH(`CORE_ID_WIDTH)
     ) u_multicore (
@@ -111,8 +111,6 @@ module riscv64_soc (
 
         // 中断接口
         .ipi_interrupt(software_irq),
-        .timer_interrupt(timer_irq),
-        .external_interrupt(external_irq),
 
         // 调试接口
         .core_halted()
@@ -209,19 +207,6 @@ module riscv64_soc (
         .flash_we_n(flash_we_n),
         .flash_wp_n(flash_wp_n),
         .flash_ready(flash_ready)
-    );
-
-    // SRAM控制器
-    sram_controller u_sram_ctrl (
-        .clk(soc_clk),
-        .rst_n(soc_rst_n),
-
-        .sys_req(sram_ctrl_req),
-        .sys_addr(sram_ctrl_addr),
-        .sys_wdata(sram_ctrl_wdata[63:0]),
-        .sys_rdata(sram_ctrl_rdata[63:0]),
-        .sys_we(sram_ctrl_we),
-        .sys_ready(sram_ctrl_ready)
     );
 
     // MMIO子系统

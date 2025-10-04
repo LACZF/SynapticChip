@@ -7,7 +7,7 @@ module tb_cache_coherence_l2;
     parameter NUM_CORES = 4;
 
     // 系统实例
-    riscv64_multicore_with_l2_cache u_system (
+    riscv64_multicore u_system (
         // ... 端口连接
     );
 

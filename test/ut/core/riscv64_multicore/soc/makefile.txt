@@ -2,16 +2,31 @@
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 TEST_TARGET := riscv_system
-TEST_ARGS ?=
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core
+TEST_ARGS ?= -g2012
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core/riscv64_multicore
 
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/execution.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/hazard_detection.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/instruction_decode.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/instruction_fetch.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/memory_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/memory_access.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/riscv64_multicore.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/riscv64_soc.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/shared_l2_cache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/write_back.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/l1_icache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/l1_dcache.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/cache_params.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/l2_cache_params.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/soc_params.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/address_decoder.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/clock_reset_gen.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/flash_controller.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/mmio_subsystem.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/system_bus_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/core/riscv64_multicore/uart.v
 
 TEST_SRC += $(CUR_DIR)/tb_riscv64_soc.v
