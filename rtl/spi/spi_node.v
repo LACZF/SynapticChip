@@ -13,8 +13,6 @@ module spi_node #(
 
     // Ring总线接口
     input wire [NODE_ID_WIDTH-1:0] node_id,
-    input wire [ADDR_WIDTH-1:0] node_start_addr,
-    input wire [ADDR_WIDTH-1:0] node_end_addr,
 
     // 请求接口
     input wire req_valid,

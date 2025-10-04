@@ -94,6 +94,12 @@ TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_node.v
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/top
 TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/top/synaptic_core.v
 
+# spi
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/spi
+TEST_SRC += $(TOP_DIR)/rtl/spi/spi_core.v
+TEST_SRC += $(TOP_DIR)/rtl/spi/spi_node.v
+TEST_SRC += $(TOP_DIR)/rtl/spi/spi_ring_node.v
+
 # top
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/top
 TEST_SRC += $(TOP_DIR)/rtl/top/top_system.v

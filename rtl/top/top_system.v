@@ -41,7 +41,13 @@ module top_system #(
 
     // JTAG调试输出
     output [DATA_WIDTH-1:0] jtag_debug_data,
-    output jtag_debug_valid
+    output jtag_debug_valid,
+
+    // SPI物理接口
+    output spi_cs_n,
+    output spi_clk,
+    output spi_mosi,
+    input spi_miso
 );
     reg [NUM_NODES*ADDR_WIDTH-1:0]        node_start_addr;
     reg [NUM_NODES*ADDR_WIDTH-1:0]        node_end_addr;
@@ -350,6 +356,55 @@ module top_system #(
         .rsp_data_o(rsp_data[`NODE_FABRIC*DATA_WIDTH +: DATA_WIDTH]),
 
         .fabric_status(fabric_status)
+    );
+
+    // 实例化SPI模块
+    spi_ring_node #(
+        .NUM_RINGS(NUM_RINGS),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .NODE_ID_WIDTH(NODE_ID_WIDTH),
+        .NODE_ID(`NODE_SPI),
+        .OPCODE_WIDTH(OPCODE_WIDTH),
+        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
+        .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
+        .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
+        .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH)
+    ) spi (
+        .clk(clk),
+        .rst_n(rst_n),
+
+        .tx_req_ring_mask_i(tx_req_ring_mask[`NODE_SPI*NUM_RINGS +: NUM_RINGS]),
+        .tx_req_ring_disable_i(tx_req_ring_disable[`NODE_SPI*NUM_RINGS +: NUM_RINGS]),
+        .tx_req_valid_i(tx_req_valid[`NODE_SPI]),
+        .tx_req_is_order_i(tx_req_is_order[`NODE_SPI]),
+        .tx_req_opcode_i(tx_req_opcode[`NODE_SPI*OPCODE_WIDTH +: OPCODE_WIDTH]),
+        .tx_req_match_type_i(tx_req_match_type[`NODE_SPI*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
+        .tx_req_source_id_i(tx_req_source_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
+        .tx_req_target_id_i(tx_req_target_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
+        .tx_req_addr_i(tx_req_addr[`NODE_SPI*ADDR_WIDTH +: ADDR_WIDTH]),
+        .tx_req_data_i(tx_req_data[`NODE_SPI*DATA_WIDTH +: DATA_WIDTH]),
+
+        .rx_req_valid_o(rx_req_valid[`NODE_SPI]),
+        .rx_req_is_order_o(rx_req_is_order[`NODE_SPI]),
+        .rx_req_opcode_o(rx_req_opcode[`NODE_SPI*OPCODE_WIDTH +: OPCODE_WIDTH]),
+        .rx_req_match_type_o(rx_req_match_type[`NODE_SPI*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
+        .rx_req_source_id_o(rx_req_source_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
+        .rx_req_target_id_o(rx_req_target_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
+        .rx_req_addr_o(rx_req_addr[`NODE_SPI*ADDR_WIDTH +: ADDR_WIDTH]),
+        .rx_req_data_o(rx_req_data[`NODE_SPI*DATA_WIDTH +: DATA_WIDTH]),
+
+        .rsp_valid_o(rsp_valid[`NODE_SPI]),
+        .rsp_source_id_o(rsp_source_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
+        .rsp_target_id_o(rsp_target_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
+        .rsp_addr_o(rsp_addr[`NODE_SPI*ADDR_WIDTH +: ADDR_WIDTH]),
+        .rsp_data_o(rsp_data[`NODE_SPI*DATA_WIDTH +: DATA_WIDTH]),
+
+        // SPI物理接口
+        .spi_cs_n(spi_cs_n),
+        .spi_clk(spi_clk),
+        .spi_mosi(spi_mosi),
+        .spi_miso(spi_miso)
     );
 
 endmodule

@@ -37,33 +37,33 @@ module jtag_node #(
     output ring_out_ack,
 
     // 发送请求
-    input  wire [NUM_RINGS-1:0]         tx_req_ring_mask_i,      // 指定使用的Ring
-    input  wire [NUM_RINGS-1:0]         tx_req_ring_disable_i,   // 禁用的Ring
-    input  wire                         tx_req_valid_i,
-    input  wire                         tx_req_is_order_i,
-    input  wire [OPCODE_WIDTH-1:0]      tx_req_opcode_i,
-    input  wire [MATCH_TYPE_WIDTH-1:0]  tx_req_match_type_i,
-    input  wire [NODE_ID_WIDTH-1:0]     tx_req_source_id_i,
-    input  wire [NODE_ID_WIDTH-1:0]     tx_req_target_id_i,
-    input  wire [ADDR_WIDTH-1:0]        tx_req_addr_i,
-    input  wire [DATA_WIDTH-1:0]        tx_req_data_i,
+    output wire [NUM_RINGS-1:0]         tx_req_ring_mask_i,      // 指定使用的Ring
+    output wire [NUM_RINGS-1:0]         tx_req_ring_disable_i,   // 禁用的Ring
+    output wire                         tx_req_valid_i,
+    output wire                         tx_req_is_order_i,
+    output wire [OPCODE_WIDTH-1:0]      tx_req_opcode_i,
+    output wire [MATCH_TYPE_WIDTH-1:0]  tx_req_match_type_i,
+    output wire [NODE_ID_WIDTH-1:0]     tx_req_target_id_i,
+    output wire [ADDR_WIDTH-1:0]        tx_req_addr_i,
+    output wire [DATA_WIDTH-1:0]        tx_req_data_i,
 
     // 接受请求
-    output wire                         rx_req_valid_o,
-    output wire                         rx_req_is_order_o,
-    output wire [OPCODE_WIDTH-1:0]      rx_req_opcode_o,
-    output wire [MATCH_TYPE_WIDTH-1:0]  rx_req_match_type_o,
-    output wire [NODE_ID_WIDTH-1:0]     rx_req_source_id_o,
-    output wire [NODE_ID_WIDTH-1:0]     rx_req_target_id_o,
-    output wire [ADDR_WIDTH-1:0]        rx_req_addr_o,
-    output wire [DATA_WIDTH-1:0]        rx_req_data_o,
+    input  wire                         rx_req_valid_o,
+    input  wire                         rx_req_is_order_o,
+    input  wire [OPCODE_WIDTH-1:0]      rx_req_opcode_o,
+    input  wire [MATCH_TYPE_WIDTH-1:0]  rx_req_match_type_o,
+    input  wire [NODE_ID_WIDTH-1:0]     rx_req_source_id_o,
+    input  wire [NODE_ID_WIDTH-1:0]     tx_req_source_id_i,
+    input  wire [NODE_ID_WIDTH-1:0]     rx_req_target_id_o,
+    input  wire [ADDR_WIDTH-1:0]        rx_req_addr_o,
+    input  wire [DATA_WIDTH-1:0]        rx_req_data_o,
 
     // 接收响应
-    output wire                         rsp_valid_o,
-    output wire [NODE_ID_WIDTH-1:0]     rsp_source_id_o,
-    output wire [NODE_ID_WIDTH-1:0]     rsp_target_id_o,
-    output wire [ADDR_WIDTH-1:0]        rsp_addr_o,
-    output wire [DATA_WIDTH-1:0]        rsp_data_o,
+    input  wire                         rsp_valid_o,
+    input  wire [NODE_ID_WIDTH-1:0]     rsp_source_id_o,
+    input  wire [NODE_ID_WIDTH-1:0]     rsp_target_id_o,
+    input  wire [ADDR_WIDTH-1:0]        rsp_addr_o,
+    input  wire [DATA_WIDTH-1:0]        rsp_data_o,
 
     // JTAG接口
     input tck,
