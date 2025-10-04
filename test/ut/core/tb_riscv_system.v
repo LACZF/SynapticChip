@@ -21,8 +21,11 @@ module tb_riscv_system;
     // 内存模型
     reg [`DATA_WIDTH-1:0] memory [0:1023];
 
-    // 实例化DUT
-    riscv_system dut (
+    // 实例化DUT，显式指定参数值
+    riscv_system #(
+        .DATA_WIDTH(32),
+        .NODE_ID_WIDTH(5)
+    ) dut (
         .clk(clk),
         .rst_n(rst_n),
         .mem_addr(mem_addr),

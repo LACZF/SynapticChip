@@ -103,8 +103,8 @@ module riscv_system #(
     wire ring_ack;
 
     reg [4:0] debug_state;
-    reg [31:0] debug_pc;
-    reg [31:0] debug_instruction;
+    wire [31:0] debug_pc;
+    wire [31:0] debug_instruction;
     // 实例化SoC
     riscv_soc soc (
         .clk(clk),
@@ -165,22 +165,22 @@ module riscv_system #(
         .local_ack(ring_ack),
         .local_we(core_data_we),
         .local_be(core_data_be),
-        .ring_in_valid(ring_valid),
-        .ring_in_src(ring_src),
-        .ring_in_dest(ring_dest),
-        .ring_in_addr(ring_addr),
-        .ring_in_data(ring_data),
-        .ring_in_we(ring_we),
-        .ring_in_be(ring_be),
-        .ring_in_ack(ring_ack),
-        .ring_out_valid(ring_valid),
-        .ring_out_src(ring_src),
-        .ring_out_dest(ring_dest),
-        .ring_out_addr(ring_addr),
-        .ring_out_data(ring_data),
-        .ring_out_we(ring_we),
-        .ring_out_be(ring_be),
-        .ring_out_ack(ring_ack),
+        .ring_in_valid(ring_in_valid),
+        .ring_in_src(ring_in_src),
+        .ring_in_dest(ring_in_dest),
+        .ring_in_addr(ring_in_addr),
+        .ring_in_data(ring_in_data),
+        .ring_in_we(ring_in_we),
+        .ring_in_be(ring_in_be),
+        .ring_in_ack(ring_in_ack),
+        .ring_out_valid(ring_out_valid),
+        .ring_out_src(ring_out_src),
+        .ring_out_dest(ring_out_dest),
+        .ring_out_addr(ring_out_addr),
+        .ring_out_data(ring_out_data),
+        .ring_out_we(ring_out_we),
+        .ring_out_be(ring_out_be),
+        .ring_out_ack(ring_out_ack),
         .mem_req(mem_req),
         .mem_addr(mem_addr),
         .mem_data_out(mem_data_out),

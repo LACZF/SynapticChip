@@ -2,7 +2,7 @@
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 TEST_TARGET := riscv_system
-TEST_ARGS ?=
+TEST_ARGS ?= -DDATA_WIDTH=32
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core
 
 TEST_CPU_SRC += $(TOP_DIR)/rtl/core/riscv/riscv_cpu.v
