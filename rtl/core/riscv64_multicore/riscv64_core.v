@@ -59,8 +59,8 @@ module riscv64_core #(
     wire [4:0] rd_ex;
 
     wire [63:0] reg_wdata;
-    reg [63:0] rs1_data;
-    reg [63:0] rs2_data;
+    wire [63:0] rs1_data;
+    wire [63:0] rs2_data;
 
     // wire [63:0] mem_result;
     // wire [15:0] ctrl_mem;
@@ -73,19 +73,19 @@ module riscv64_core #(
 
     reg [63:0] if_mem_addr;
 
-    reg l2_req;
-    reg [63:0] l2_icache_addr;
-    reg [63:0] l2_dcache_addr;
-    reg [511:0] l2_dcache_wdata;
+    wire l2_req;
+    wire [63:0] l2_icache_addr;
+    wire [63:0] l2_dcache_addr;
+    wire [511:0] l2_dcache_wdata;
     wire [511:0] l2_icache_data;
     wire [511:0] l2_dcache_data;
-    reg l2_we;
+    wire l2_we;
     wire l2_ready;
     wire snoop_valid;
     wire [63:0] snoop_addr;
     wire snoop_we;
-    reg snoop_hit;
-    reg [511:0] snoop_data;
+    wire snoop_hit;
+    wire [511:0] snoop_data;
     wire [31:0] if_instr;
     wire [63:0] if_pc;
 
@@ -109,7 +109,7 @@ module riscv64_core #(
     wire [63:0] mem_addr;
     wire [63:0] mem_wdata;
     wire [7:0] mem_byte_en;
-    reg [63:0] mem_rdata;
+    wire [63:0] mem_rdata;
 
     // 指令缓存实例
     l1_icache u_icache (

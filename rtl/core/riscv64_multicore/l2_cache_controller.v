@@ -54,20 +54,20 @@ module l2_cache_controller #(
                     // 优先级仲裁：数据缓存优先于指令缓存
                     current_core = -1;
 
+                    // 寻找活跃的数据缓存请求
                     for (integer i = 0; i < NUM_CORES; i = i + 1) begin
-                        if (l1_dcache_req[i]) begin
+                        if (l1_dcache_req[i] && current_core == -1) begin
                             current_core = i;
                             current_master = (1 << i);
-                            break;
                         end
                     end
 
+                    // 如果没有数据缓存请求，寻找活跃的指令缓存请求
                     if (current_core == -1) begin
                         for (integer i = 0; i < NUM_CORES; i = i + 1) begin
-                            if (l1_icache_req[i]) begin
+                            if (l1_icache_req[i] && current_core == -1) begin
                                 current_core = i;
                                 current_master = (1 << i);
-                                break;
                             end
                         end
                     end

@@ -63,7 +63,7 @@ module memory_arbiter #(
                             mem_we <= master_we[j];
                             mem_byte_en <= master_byte_en[j*8 +: 8];
                             mem_req <= 1'b1;
-                            break;
+                            j = NUM_MASTERS; // 跳出循环的替代方法
                         end
                     end
                 end
