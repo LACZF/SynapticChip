@@ -1,5 +1,6 @@
 // riscv64_core.v
 `include "cache_params.v"
+`include "cache_system_params.v"
 
 module riscv64_core #(
     parameter CORE_ID = 0
@@ -22,6 +23,29 @@ module riscv64_core #(
     output wire [7:0] dcache_byte_en,
     input wire dcache_ready,
 
+    // L1-L2缓存接口
+    output wire l1_icache_req,
+    output wire [63:0] l1_icache_addr,
+    input wire [511:0] l1_icache_data,
+    input wire l1_icache_ready,
+
+    output wire l1_dcache_req,
+    output wire [63:0] l1_dcache_addr,
+    output wire [511:0] l1_dcache_wdata,
+    input wire [511:0] l1_dcache_data,
+    output wire l1_dcache_we,
+    output wire [1:0] l1_dcache_req_type,
+    input wire l1_dcache_ready,
+
+    // 监听接口
+    input wire snoop_valid,
+    input wire [63:0] snoop_addr,
+    input wire [1:0] snoop_req_type,
+    output wire snoop_ready,
+    output wire snoop_hit,
+    output wire [1:0] snoop_state,
+    output wire [511:0] snoop_data,
+
     // 中断接口
     input wire timer_interrupt,
     input wire external_interrupt,
@@ -34,6 +58,12 @@ module riscv64_core #(
     output wire [4:0] debug_wb_rd,
     output wire [63:0] debug_wb_value
 );
+
+    // 中间信号用于缓存一致性状态
+    wire [2:0] icache_coh_rsp_state;
+    wire [2:0] dcache_coh_rsp_state;
+    wire icache_mem_req_rw;  // 指令缓存内存请求读写信号
+    assign icache_mem_req_rw = 1'b0;  // 指令缓存始终是读操作
 
     // 流水线寄存器
     wire [63:0] pc_if, pc_id, pc_ex, pc_mem, pc_wb;
@@ -81,11 +111,7 @@ module riscv64_core #(
     wire [511:0] l2_dcache_data;
     wire l2_we;
     wire l2_ready;
-    wire snoop_valid;
-    wire [63:0] snoop_addr;
     wire snoop_we;
-    wire snoop_hit;
-    wire [511:0] snoop_data;
     wire [31:0] if_instr;
     wire [63:0] if_pc;
 
@@ -111,49 +137,98 @@ module riscv64_core #(
     wire [7:0] mem_byte_en;
     wire [63:0] mem_rdata;
 
-    // 指令缓存实例
-    l1_icache u_icache (
+    // L1-L2接口信号
+    wire l1_l2_req;
+    wire [63:0] l1_l2_addr;
+    wire [511:0] l1_l2_wdata;
+    wire [511:0] l1_l2_rdata;
+    wire l1_l2_we;
+    wire l1_l2_ready;
+
+    // 指令缓存实例（使用通用cache模块）
+    cache #(
+        .CACHE_LINE_SIZE(`L1_ICACHE_LINE_SIZE),
+        .CACHE_SIZE(`L1_ICACHE_SIZE),
+        .ASSOCIATIVITY(`L1_ICACHE_ASSOCIATIVITY),
+        .ADDR_WIDTH(`L1_ICACHE_ADDR_WIDTH),
+        .DATA_WIDTH(`L1_ICACHE_DATA_WIDTH),
+        .SUPPORT_COHERENCY(1),
+        .CACHE_LEVEL(`CACHE_LEVEL_L1),
+        .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+    ) u_l1_icache (
         .clk(clk),
         .rst_n(rst_n),
-        .cpu_addr(if_pc),
-        .cpu_req(if_req),
-        .cpu_data(if_instr),
-        .cpu_ready(if_ready),
-        .cache_hit(),
-        .l2_req(l2_icache_req),
-        .l2_addr(l2_icache_addr),
-        .l2_data(l2_icache_data),
-        .l2_ready(l2_icache_ready),
-        .l2_read(),
-        .snoop_valid(snoop_valid),
-        .snoop_addr(snoop_addr),
-        .snoop_hit()
+
+        // CPU接口
+        .cpu_req_valid(icache_req),
+        .cpu_req_addr(icache_addr),
+        .cpu_req_rw(1'b0),
+        .cpu_req_data(32'd0),
+        .cpu_req_strb(4'hF),
+        .cpu_rsp_valid(icache_ready),
+        .cpu_rsp_data(icache_data),
+        .cpu_rsp_error(),
+
+        // 内存接口（连接L2）
+        .mem_req_valid(l1_icache_req),
+        .mem_req_addr(l1_icache_addr),
+        .mem_req_rw(icache_mem_req_rw),
+        .mem_req_data(l1_dcache_wdata[0*64 +: 64]),
+        .mem_rsp_valid(l1_icache_ready),
+        .mem_rsp_data(l1_icache_data[0*64 +: 64]),
+        .mem_rsp_error(),
+
+        // 一致性接口
+        .coh_req_addr(snoop_addr),
+        .coh_req_valid(snoop_valid),
+        .coh_req_type(3'd0),
+        .coh_rsp_valid(),
+        .coh_rsp_state(icache_coh_rsp_state)
     );
 
-    // 数据缓存实例
-    l1_dcache u_dcache (
+    // 数据缓存实例（使用通用cache模块）
+    cache #(
+        .CACHE_LINE_SIZE(`L1_DCACHE_LINE_SIZE),
+        .CACHE_SIZE(`L1_DCACHE_SIZE),
+        .ASSOCIATIVITY(`L1_DCACHE_ASSOCIATIVITY),
+        .ADDR_WIDTH(`L1_DCACHE_ADDR_WIDTH),
+        .DATA_WIDTH(`L1_DCACHE_DATA_WIDTH),
+        .SUPPORT_COHERENCY(1),
+        .CACHE_LEVEL(`CACHE_LEVEL_L1),
+        .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+    ) u_l1_dcache (
         .clk(clk),
         .rst_n(rst_n),
-        .cpu_addr(mem_addr),
-        .cpu_wdata(mem_wdata),
-        .cpu_req(mem_req),
-        .cpu_we(mem_we),
-        .cpu_byte_en(mem_byte_en),
-        .cpu_rdata(mem_rdata),
-        .cpu_ready(mem_ready),
-        .cache_hit(),
-        .l2_req(l2_dcache_req),
-        .l2_addr(l2_dcache_addr),
-        .l2_wdata(l2_dcache_wdata),
-        .l2_rdata(l2_dcache_data),
-        .l2_we(l2_dcache_we),
-        .l2_ready(l2_dcache_ready),
-        .snoop_valid(snoop_valid),
-        .snoop_addr(snoop_addr),
-        // .snoop_we(snoop_we),
-        .snoop_hit(snoop_hit),
-        .snoop_data(snoop_data)
+
+        // CPU接口
+        .cpu_req_valid(dcache_req),
+        .cpu_req_addr(dcache_addr),
+        .cpu_req_rw(dcache_we),
+        .cpu_req_data(dcache_wdata),
+        .cpu_req_strb(dcache_byte_en),
+        .cpu_rsp_valid(dcache_ready),
+        .cpu_rsp_data(dcache_rdata),
+        .cpu_rsp_error(),
+
+        // 内存接口（连接L2）
+        .mem_req_valid(l1_dcache_req),
+        .mem_req_addr(l1_dcache_addr),
+        .mem_req_rw(l1_dcache_we),
+        .mem_req_data(l1_dcache_wdata[0*64 +: 64]),
+        .mem_rsp_valid(l1_dcache_ready),
+        .mem_rsp_data(l1_dcache_data[0*64 +: 64]),
+        .mem_rsp_error(),
+
+        // 一致性接口
+        .coh_req_addr(snoop_addr),
+        .coh_req_valid(snoop_valid),
+        .coh_req_type({1'b0, snoop_req_type}),
+        .coh_rsp_valid(snoop_ready),
+        .coh_rsp_state(dcache_coh_rsp_state)
     );
+
+    // 将缓存一致性状态转换为2位宽
+    assign snoop_state = dcache_coh_rsp_state[1:0];
 
     // 取指阶段
     instruction_fetch u_if (
