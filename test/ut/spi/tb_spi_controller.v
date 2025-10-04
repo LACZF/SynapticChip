@@ -52,8 +52,6 @@ module tb_spi_controller;
         .clk(clk),
         .rst_n(rst_n),
         .node_id(5'h01),
-        .node_start_addr(32'h0),
-        .node_end_addr(32'hFFFF),
         .req_valid(test_start),
         .req_source_id(5'h00),
         .req_target_id(5'h01),

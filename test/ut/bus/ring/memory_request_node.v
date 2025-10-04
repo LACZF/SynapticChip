@@ -43,6 +43,10 @@ module memory_request_node #(
     reg [DATA_WIDTH-1:0] saved_data;
     reg saved_wr;
 
+    // 超时计数器
+    reg [31:0] timeout_counter;
+    localparam TIMEOUT_CYCLES = 1000; // 1000个时钟周期超时
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             current_state <= IDLE;
@@ -50,9 +54,11 @@ module memory_request_node #(
             ext_req_ready_o <= 1'b1;
             ring_resp_ready_o <= 1'b0;
             ext_req_data_o <= {DATA_WIDTH{1'b0}};
+            timeout_counter <= 0;
         end else begin
             case (current_state)
                 IDLE: begin
+                    timeout_counter <= 0;
                     if (ext_req_enable_i && ext_req_ready_o) begin
                         // 保存请求信息
                         saved_addr <= ext_req_addr_i;
@@ -75,14 +81,25 @@ module memory_request_node #(
                     if (ring_req_ready_i) begin
                         ring_req_valid_o <= 1'b0;
                         ring_resp_ready_o <= 1'b1;
+                        timeout_counter <= 0;
                         current_state <= WAIT_RESPONSE;
                     end
                 end
 
                 WAIT_RESPONSE: begin
+                    // 增加超时计数
+                    timeout_counter <= timeout_counter + 1;
+
                     if (ring_resp_valid_i) begin
                         // 接收响应并返回给CPU
                         ext_req_data_o <= ring_resp_data_i;
+                        ext_req_ready_o <= 1'b1;
+                        ring_resp_ready_o <= 1'b0;
+                        current_state <= IDLE;
+                    end else if (timeout_counter >= TIMEOUT_CYCLES) begin
+                        // 超时处理
+                        $display("Memory Request Node: Timeout waiting for response!");
+                        ext_req_data_o <= {DATA_WIDTH{1'b1}}; // 超时标记
                         ext_req_ready_o <= 1'b1;
                         ring_resp_ready_o <= 1'b0;
                         current_state <= IDLE;

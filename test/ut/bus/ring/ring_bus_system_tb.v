@@ -147,47 +147,60 @@ module ring_bus_system_tb;
         mem_resp_ready = 1'b1;
         uart_resp_ready = 1'b1;
 
-        // 复位
-        #100 rst_n = 1;
-
-        // 测试1: 内存读写
-        $display("=== Test 1: Memory Operations ===");
-        test_memory_operation(32'h0000_1000, 64'h1234_5678_9ABC_DEF0, 1'b1);
-        $display("=== Test 1: Memory write Operations done ===");
-        test_memory_operation(32'h0000_1000, 64'h0, 1'b0);
-        $display("=== Test 1: Memory read Operations done ===");
-
-        #100;
-
-        // 测试2: UART操作
-        $display("=== Test 2: UART Operations ===");
-        test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0041, 1'b1); // 发送字符'A'
-        test_uart_operation(32'h4000_0008, 64'h0, 1'b0); // 读取状态
-
-        #200;
-
-        // 测试3: 并发操作
-        $display("=== Test 3: Concurrent Operations ===");
+        // 启动全局超时监控
         fork
             begin
-                test_memory_operation(32'h0000_2000, 64'hAAAA_BBBB_CCCC_DDDD, 1'b1);
+                // 主测试流程
+                // 复位
+                #100 rst_n = 1;
+
+                // 测试1: 内存读写
+                $display("=== Test 1: Memory Operations ===");
+                test_memory_operation(32'h0000_1000, 64'h1234_5678_9ABC_DEF0, 1'b1);
+                $display("=== Test 1: Memory write Operations done ===");
+                test_memory_operation(32'h0000_1000, 64'h0, 1'b0);
+                $display("=== Test 1: Memory read Operations done ===");
+
+                #100;
+
+                // 测试2: UART操作
+                $display("=== Test 2: UART Operations ===");
+                test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0041, 1'b1); // 发送字符'A'
+                test_uart_operation(32'h4000_0008, 64'h0, 1'b0); // 读取状态
+
+                #200;
+
+                // 测试3: 并发操作
+                $display("=== Test 3: Concurrent Operations ===");
+                fork
+                    begin
+                        test_memory_operation(32'h0000_2000, 64'hAAAA_BBBB_CCCC_DDDD, 1'b1);
+                    end
+                    begin
+                        #50 test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0042, 1'b1); // 发送字符'B'
+                    end
+                join
+
+                #100;
+
+                // 显示系统状态
+                $display("=== System Status ===");
+                $display("Ring 0: Busy=%b, Load=%d", debug_ring_busy[0], ring0_load);
+                $display("Ring 1: Busy=%b, Load=%d", debug_ring_busy[1], ring1_load);
+                $display("UART IRQ: %b, UART TX: %b", uart_irq, uart_tx);
+
+                #100;
+                $display("All tests completed successfully!");
+                $finish;
             end
+
+            // 全局超时机制
             begin
-                #50 test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0042, 1'b1); // 发送字符'B'
+                #1000000; // 1ms超时时间
+                $display("ERROR: Global test timeout reached! Forcing test termination.");
+                $finish;
             end
         join
-
-        #100;
-
-        // 显示系统状态
-        $display("=== System Status ===");
-        $display("Ring 0: Busy=%b, Load=%d", debug_ring_busy[0], ring0_load);
-        $display("Ring 1: Busy=%b, Load=%d", debug_ring_busy[1], ring1_load);
-        $display("UART IRQ: %b, UART TX: %b", uart_irq, uart_tx);
-
-        #100;
-        $display("All tests completed successfully!");
-        $finish;
     end
 
     // 波形记录
