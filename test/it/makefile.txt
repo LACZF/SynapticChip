@@ -51,19 +51,6 @@ TEST_CACHE_SRC += $(TOP_DIR)/rtl/core/riscv/flash_interface.v
 
 TEST_SRC += $(TEST_CPU_SRC) $(TEST_CACHE_SRC) $(TEST_MEMORY_SRC) $(TEST_TIMER_SRC) $(TEST_SOC_SRC)
 
-# ram
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/ram
-TEST_SRC += $(TOP_DIR)/rtl/ram/ram_module.v
-TEST_SRC += $(TOP_DIR)/rtl/ram/ram_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/ram/ram_node.v
-
-# rom
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/rom
-TEST_SRC += $(TOP_DIR)/rtl/rom/flash_controller.v
-TEST_SRC += $(TOP_DIR)/rtl/rom/rom_module.v
-TEST_SRC += $(TOP_DIR)/rtl/rom/rom_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/rom/rom_node.v
-
 # PE
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/PE
 TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_params.v
