@@ -1,6 +1,5 @@
 // riscv64_soc.v
 `include "soc_params.v"
-`include "l2_cache_params.v"
 
 module riscv64_soc (
     input wire clk,

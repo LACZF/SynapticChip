@@ -1,5 +1,4 @@
 // riscv64_multicore.v
-`include "l2_cache_params.v"
 `include "cache_system_params.v"
 
 module riscv64_multicore #(
