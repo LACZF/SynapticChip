@@ -67,9 +67,19 @@ $(COMPLETE_TEST_TARGET).vvp: $(COMPLETE_TEST_TARGET)
 
 test: $(COMPLETE_TEST_TARGET).vvp
 
+all_it_list:
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/it -name makefile.txt | xargs dirname); do \
+		echo "make test M=$$M"; \
+	done
+
 all_it:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/it -name makefile.txt | xargs dirname); do \
 		make test M=$$M; \
+	done
+
+all_ut_list:
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/ut -name makefile.txt | xargs dirname); do \
+		echo "make test M=$$M"; \
 	done
 
 all_ut:
