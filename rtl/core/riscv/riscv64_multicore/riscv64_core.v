@@ -92,14 +92,7 @@ module riscv64_core #(
     wire [63:0] rs1_data;
     wire [63:0] rs2_data;
 
-    // wire [63:0] mem_result;
-    // wire [15:0] ctrl_mem;
-
-    // wire [15:0] ctrl_ex;
-    // wire [63:0] alu_result;
-
     wire [63:0] imm_id;
-    // wire [15:0] ctrl_id;
 
     reg [63:0] if_mem_addr;
 

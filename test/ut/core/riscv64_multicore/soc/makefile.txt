@@ -23,7 +23,6 @@ TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/cache_params.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/soc_params.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/address_decoder.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/clock_reset_gen.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/flash_controller.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/mmio_subsystem.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/system_bus_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/uart.v

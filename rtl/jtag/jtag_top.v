@@ -1,9 +1,9 @@
-// jtag_tap.v
+// jtag_top.v
 // JTAG TAP控制器实现
 
 `include "jtag_params.v"
 
-module jtag_tap (
+module jtag_top (
     input clk,
     input rst_n,
 

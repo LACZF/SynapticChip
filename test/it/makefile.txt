@@ -24,7 +24,6 @@ TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/address_decoder.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/cache_params.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/clock_reset_gen.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/execution.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/flash_controller.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/hazard_detection.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/instruction_decode.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/instruction_fetch.v
@@ -78,7 +77,7 @@ TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_node.v
 # jtag
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/jtag
 TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_params.v
-TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_tap.v
+TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_top.v
 TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_ring_node.v
 TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_node.v
 

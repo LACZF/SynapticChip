@@ -88,7 +88,7 @@ module jtag_node #(
     wire jtag_debug_valid;
 
     // 实例化JTAG TAP控制器
-    jtag_tap tap_inst (
+    jtag_top tap_inst (
         .clk(clk),
         .rst_n(rst_n),
         .tck(tck),

@@ -184,30 +184,6 @@ module riscv64_soc (
         .mmio_ready(mmio_ready)
     );
 
-    // Flash控制器
-    flash_controller u_flash_ctrl (
-        .clk(soc_clk),
-        .rst_n(soc_rst_n),
-
-        // 系统接口
-        .sys_req(flash_ctrl_req),
-        .sys_addr(flash_ctrl_addr),
-        .sys_wdata(flash_ctrl_wdata[63:0]),
-        .sys_rdata(flash_ctrl_rdata[63:0]),
-        .sys_we(flash_ctrl_we),
-        .sys_ready(flash_ctrl_ready),
-
-        // Flash物理接口
-        .flash_addr(flash_addr),
-        .flash_data_in(flash_data_in),
-        .flash_data_out(flash_data_out),
-        .flash_ce_n(flash_ce_n),
-        .flash_oe_n(flash_oe_n),
-        .flash_we_n(flash_we_n),
-        .flash_wp_n(flash_wp_n),
-        .flash_ready(flash_ready)
-    );
-
     // MMIO子系统
     mmio_subsystem u_mmio (
         .clk(soc_clk),
