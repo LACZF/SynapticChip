@@ -87,6 +87,9 @@ all_ut:
 		make test M=$$M; \
 	done
 
+all_test: all_ut all_it
+	$(QUITE)echo "All tests done."
+
 YOSYS_ENV ?= OUTPUT_SVG=1
 yosys_synthesis:
 	READ_RTL_ARGS="$(READ_RTL_ARGS) -I$(shell realpath $$(dirname $(M)))" \
