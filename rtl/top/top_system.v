@@ -135,7 +135,7 @@ module top_system #(
         .ring_busy(ring_busy)
     );
 
-    riscv_system #(
+    cpu_top #(
         .NUM_RINGS(NUM_RINGS),
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -143,8 +143,9 @@ module top_system #(
         .NODE_ID(`NODE_RISCV),
         .OPCODE_WIDTH(OPCODE_WIDTH),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
-        .INST_WIDTH(32)
-    ) riscv (
+        .INST_WIDTH(32),
+        .CPU_TYPE(0)  // 0: RISC-V, 预留其他CPU类型
+    ) cpu_top (
         .clk(clk),
         .rst_n(rst_n),
 
