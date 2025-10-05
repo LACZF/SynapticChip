@@ -16,31 +16,31 @@ TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
 
-# core
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core/riscv
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/core/riscv/riscv64_multicore
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/address_decoder.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/cache_params.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/clock_reset_gen.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/execution.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/hazard_detection.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/instruction_decode.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/instruction_fetch.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/memory_access.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/memory_arbiter.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/mmio_subsystem.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/register_file.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/riscv64_core.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/riscv64_multicore.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/riscv64_soc.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/soc_params.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/system_bus_arbiter.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/uart.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv64_multicore/write_back.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv_bus_interface.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv_system.v
+# cpu
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/address_decoder.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/cache_params.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/clock_reset_gen.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/execution.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/hazard_detection.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/instruction_decode.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/instruction_fetch.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/memory_access.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/memory_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/mmio_subsystem.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/register_file.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/riscv64_core.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/riscv64_multicore.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/riscv64_soc.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/soc_params.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/system_bus_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/uart.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64_multicore/write_back.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv_bus_interface.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv_system.v
 
 # PE
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE
