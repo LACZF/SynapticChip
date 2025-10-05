@@ -554,116 +554,115 @@ module tb_cache;
         fork
             // 主测试线程
             begin
+                // 创建VCD文件
+                $dumpfile("tb_cache.vcd");
+                $dumpvars(0, tb_cache);
 
-        // 创建VCD文件
-        $dumpfile("tb_cache.vcd");
-        $dumpvars(0, tb_cache);
+                // 复位
+                #20;
+                rst_n = 1;
 
-        // 复位
-        #20;
-        rst_n = 1;
+                $display("=== 缓存模块测试开始 ===");
 
-        $display("=== 缓存模块测试开始 ===");
+                // 测试1: 基本读取测试
+                $display("测试1: 基本读取测试");
+                read_data(32'h00000000);  // 第一次读取，应该未命中
+                read_data(32'h00000000);  // 第二次读取，应该命中
 
-        // 测试1: 基本读取测试
-        $display("测试1: 基本读取测试");
-        read_data(32'h00000000);  // 第一次读取，应该未命中
-        read_data(32'h00000000);  // 第二次读取，应该命中
+                // 测试2: 缓存行填充测试
+                $display("测试2: 缓存行填充测试");
+                read_data(32'h00000010);  // 同一缓存行，应该命中
+                read_data(32'h00000020);  // 同一缓存行，应该命中
 
-        // 测试2: 缓存行填充测试
-        $display("测试2: 缓存行填充测试");
-        read_data(32'h00000010);  // 同一缓存行，应该命中
-        read_data(32'h00000020);  // 同一缓存行，应该命中
+                // 测试3: 基本写入测试
+                $display("测试3: 基本写入测试");
+                write_data(32'h00001000, 32'h12345678, 4'b1111);  // 写未命中
+                read_data(32'h00001000);  // 读取刚才写入的数据，应该命中
 
-        // 测试3: 基本写入测试
-        $display("测试3: 基本写入测试");
-        write_data(32'h00001000, 32'h12345678, 4'b1111);  // 写未命中
-        read_data(32'h00001000);  // 读取刚才写入的数据，应该命中
+                // 测试4: 部分写入测试
+                $display("测试4: 部分写入测试");
+                write_data(32'h00001000, 32'hFF00FF00, 4'b1010);  // 只写字节0和2
+                read_data(32'h00001000);  // 读取验证部分写入
 
-        // 测试4: 部分写入测试
-        $display("测试4: 部分写入测试");
-        write_data(32'h00001000, 32'hFF00FF00, 4'b1010);  // 只写字节0和2
-        read_data(32'h00001000);  // 读取验证部分写入
+                // 测试5: 缓存替换测试
+                $display("测试5: 缓存替换测试");
+                // 由于我们的缓存大小为1KB，4路组相联，每行64字节，总共有 (1024/64)/4 = 4 组
+                // 访问足够多的不同组，触发替换
+                for (integer i = 0; i < 8; i = i + 1) begin
+                    read_data(32'h00002000 + i*64);
+                end
+                // 验证最早的行已被替换
+                read_data(32'h00002000);  // 应该未命中
 
-        // 测试5: 缓存替换测试
-        $display("测试5: 缓存替换测试");
-        // 由于我们的缓存大小为1KB，4路组相联，每行64字节，总共有 (1024/64)/4 = 4 组
-        // 访问足够多的不同组，触发替换
-        for (integer i = 0; i < 8; i = i + 1) begin
-            read_data(32'h00002000 + i*64);
-        end
-        // 验证最早的行已被替换
-        read_data(32'h00002000);  // 应该未命中
+                // 测试6: MESI协议一致性操作测试
+                $display("测试6: MESI协议一致性操作测试");
+                if (dut.SUPPORT_COHERENCY) begin
+                    // 先写入一个地址，让其进入MODIFIED状态
+                    write_data(32'h00001000, 32'h12345678, 4'b1111);
+                    read_data(32'h00001000);  // 确认数据已写入
 
-        // 测试6: MESI协议一致性操作测试
-        $display("测试6: MESI协议一致性操作测试");
-        if (dut.SUPPORT_COHERENCY) begin
-            // 先写入一个地址，让其进入MODIFIED状态
-            write_data(32'h00001000, 32'h12345678, 4'b1111);
-            read_data(32'h00001000);  // 确认数据已写入
+                    // 测试MODIFIED -> SHARED转换
+                    $display("测试6.1: MODIFIED -> SHARED状态转换 (读请求)");
+                    coherency_op(32'h00001000, COH_READ, "读请求");
 
-            // 测试MODIFIED -> SHARED转换
-            $display("测试6.1: MODIFIED -> SHARED状态转换 (读请求)");
-            coherency_op(32'h00001000, COH_READ, "读请求");
+                    // 写入另一个地址，让其进入EXCLUSIVE状态
+                    read_data(32'h00001040);  // 首次读取，应该进入EXCLUSIVE状态
 
-            // 写入另一个地址，让其进入EXCLUSIVE状态
-            read_data(32'h00001040);  // 首次读取，应该进入EXCLUSIVE状态
+                    // 测试EXCLUSIVE -> SHARED转换
+                    $display("测试6.2: EXCLUSIVE -> SHARED状态转换 (读请求)");
+                    coherency_op(32'h00001040, COH_READ, "读请求");
 
-            // 测试EXCLUSIVE -> SHARED转换
-            $display("测试6.2: EXCLUSIVE -> SHARED状态转换 (读请求)");
-            coherency_op(32'h00001040, COH_READ, "读请求");
+                    // 测试SHARED -> INVALID转换
+                    $display("测试6.3: SHARED -> INVALID状态转换 (写请求)");
+                    coherency_op(32'h00001040, COH_WRITE, "写请求");
 
-            // 测试SHARED -> INVALID转换
-            $display("测试6.3: SHARED -> INVALID状态转换 (写请求)");
-            coherency_op(32'h00001040, COH_WRITE, "写请求");
+                    // 测试无效化操作
+                    $display("测试6.4: 直接无效化操作 (使无效请求)");
+                    write_data(32'h00001080, 32'h87654321, 4'b1111);
+                    coherency_op(32'h00001080, COH_INVALIDATE, "使无效请求");
 
-            // 测试无效化操作
-            $display("测试6.4: 直接无效化操作 (使无效请求)");
-            write_data(32'h00001080, 32'h87654321, 4'b1111);
-            coherency_op(32'h00001080, COH_INVALIDATE, "使无效请求");
+                    // 验证无效化后的读取行为
+                    $display("测试6.5: 验证无效化后的读取行为");
+                    read_data(32'h00001080);  // 应该重新从内存加载
+                end else begin
+                    $display("一致性功能未开启，跳过MESI协议测试");
+                end
 
-            // 验证无效化后的读取行为
-            $display("测试6.5: 验证无效化后的读取行为");
-            read_data(32'h00001080);  // 应该重新从内存加载
-        end else begin
-            $display("一致性功能未开启，跳过MESI协议测试");
-        end
+                // 测试7: 配置参数验证
+                $display("测试7: 配置参数验证");
+                $display("Cache大小: %d KB", dut.CACHE_SIZE/1024);
+                $display("Cache Line大小: %d 字节", dut.CACHE_LINE_SIZE);
+                $display("相联度: %d路", dut.ASSOCIATIVITY);
+                $display("Cache层级: L%d", dut.CACHE_LEVEL);
+                $display("替换策略: %s", dut.REPLACEMENT_POLICY);
+                $display("一致性支持: %s", dut.SUPPORT_COHERENCY ? "是" : "否");
 
-        // 测试7: 配置参数验证
-        $display("测试7: 配置参数验证");
-        $display("Cache大小: %d KB", dut.CACHE_SIZE/1024);
-        $display("Cache Line大小: %d 字节", dut.CACHE_LINE_SIZE);
-        $display("相联度: %d路", dut.ASSOCIATIVITY);
-        $display("Cache层级: L%d", dut.CACHE_LEVEL);
-        $display("替换策略: %s", dut.REPLACEMENT_POLICY);
-        $display("一致性支持: %s", dut.SUPPORT_COHERENCY ? "是" : "否");
+                // 测试8: L1+L2多级缓存测试
+                $display("测试8: L1+L2多级缓存测试");
+                test_mode = L1_L2_CACHE;
+                @(posedge clk);
 
-        // 测试8: L1+L2多级缓存测试
-        $display("测试8: L1+L2多级缓存测试");
-        test_mode = L1_L2_CACHE;
-        @(posedge clk);
+                // 简化L1+L2测试：只测试基本功能，避免复杂的缓存状态管理
+                $display("测试8.1: 基本L1+L2读取测试");
+                read_data(32'h00003000);  // L1不命中，L2不命中，从内存加载
+                read_data(32'h00003000);  // L1命中
 
-        // 简化L1+L2测试：只测试基本功能，避免复杂的缓存状态管理
-        $display("测试8.1: 基本L1+L2读取测试");
-        read_data(32'h00003000);  // L1不命中，L2不命中，从内存加载
-        read_data(32'h00003000);  // L1命中
+                // 测试9: L1+L2+L3多级缓存测试
+                $display("测试9: L1+L2+L3多级缓存测试");
+                test_mode = L1_L2_L3_CACHE;
+                @(posedge clk);
 
-        // 测试9: L1+L2+L3多级缓存测试
-        $display("测试9: L1+L2+L3多级缓存测试");
-        test_mode = L1_L2_L3_CACHE;
-        @(posedge clk);
+                // 简化L1+L2+L3测试：只测试基本功能，避免复杂的缓存状态管理
+                $display("测试9.1: 基本L1+L2+L3读取测试");
+                read_data(32'h00004000);  // L1不命中，L2不命中，L3不命中，从内存加载
+                read_data(32'h00004000);  // L1命中
 
-        // 简化L1+L2+L3测试：只测试基本功能，避免复杂的缓存状态管理
-        $display("测试9.1: 基本L1+L2+L3读取测试");
-        read_data(32'h00004000);  // L1不命中，L2不命中，L3不命中，从内存加载
-        read_data(32'h00004000);  // L1命中
+                $display("=== 缓存模块测试完成 ===");
 
-        $display("=== 缓存模块测试完成 ===");
+                // 等待所有操作完成
+                repeat (10) @(posedge clk);
 
-        // 等待所有操作完成
-        repeat (10) @(posedge clk);
-
-        $finish;
+                $finish;
             end
 
             // 全局超时监控线程
