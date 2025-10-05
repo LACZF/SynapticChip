@@ -54,11 +54,11 @@ TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_params.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
 
-# PE router
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/router
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/router/pe_router_core.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/router/pe_router_config.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/router/pe_router_top.v
+# PE PE_router
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_router
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
 
 # uart
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/uart
