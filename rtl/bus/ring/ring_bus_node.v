@@ -160,7 +160,7 @@ module ring_bus_node #(
     end
 
     // 发送FIFO实例化
-    simple_fifo #(
+    fifo #(
         .DATA_WIDTH(tx_fifo_data_width),
         .FIFO_DEPTH(TX_FIFO_DEPTH)
     ) tx_fifo (
@@ -177,7 +177,7 @@ module ring_bus_node #(
     );
 
     // 接收FIFO实例化 - 用于rx方向的接收缓存
-    simple_fifo #(
+    fifo #(
         .DATA_WIDTH(rx_fifo_data_width),
         .FIFO_DEPTH(RX_FIFO_DEPTH)
     ) rx_fifo (
@@ -193,7 +193,7 @@ module ring_bus_node #(
     );
 
     // 响应FIFO实例化 - 用于rsp的接收缓存
-    simple_fifo #(
+    fifo #(
         .DATA_WIDTH(rsp_fifo_data_width),
         .FIFO_DEPTH(RSP_FIFO_DEPTH)
     ) rsp_fifo (

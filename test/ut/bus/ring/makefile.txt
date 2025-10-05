@@ -5,7 +5,7 @@ TEST_TARGET := ring_bus
 TEST_ARGS ?= -g2012
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
 
-TEST_SRC += $(TOP_DIR)/rtl/common/simple_fifo.v
+TEST_SRC += $(TOP_DIR)/rtl/common/fifo.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v

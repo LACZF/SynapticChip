@@ -4,6 +4,6 @@ TEST_TARGET := cache
 TEST_ARGS ?= -g2012
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/common
 TEST_SRC += $(TOP_DIR)/rtl/common/cache.v
-TEST_SRC += $(TOP_DIR)/rtl/common/simple_fifo.v
+TEST_SRC += $(TOP_DIR)/rtl/common/fifo.v
 
 TEST_SRC += $(CUR_DIR)/tb_cache.v

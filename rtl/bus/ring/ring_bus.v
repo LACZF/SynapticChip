@@ -291,7 +291,7 @@ module ring_bus #(
                 };
 
                 // 实例化请求FIFO
-                simple_fifo #(
+                fifo #(
                     .DATA_WIDTH(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH),
                     .FIFO_DEPTH(RX_FIFO_DEPTH)
                 ) rx_fifo (
@@ -343,7 +343,7 @@ module ring_bus #(
                 };
 
                 // 实例化响应FIFO
-                simple_fifo #(
+                fifo #(
                     .DATA_WIDTH(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH),
                     .FIFO_DEPTH(RSP_FIFO_DEPTH)
                 ) rsp_fifo (
