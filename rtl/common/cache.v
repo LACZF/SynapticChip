@@ -308,6 +308,7 @@ module cache #(
 
             // MESI protocol coherency response logic
             always @(posedge clk or negedge rst_n) begin
+                integer way_found;
                 if (!rst_n) begin
                     coh_rsp_valid_reg <= 1'b0;
                     coh_rsp_state_reg <= INVALID;
@@ -317,11 +318,11 @@ module cache #(
 
                     if (coh_req_valid) begin
                         // 先查找地址是否在缓存中
-                        integer way_found = -1;
+                        way_found = -1;
                         for (integer i = 0; i < ASSOCIATIVITY; i = i + 1) begin
-                            if (valid[i][set_index] && (tag_array[i][set_index] == tag)) begin
+                            if (way_found == -1 && valid[i][set_index] && (tag_array[i][set_index] == tag)) begin
                                 way_found = i;
-                                break;
+                                // 使用条件而不是break来提前结束查找
                             end
                         end
 
