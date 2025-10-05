@@ -1,9 +1,9 @@
-// synaptic_core.v
+// pe_top.v
 // 集成PE阵列和路由的Fabric模块
 
 `include "top_system_params.v"
 
-module synaptic_core #(
+module pe_top #(
     parameter NUM_RINGS         = 2,
     parameter ADDR_WIDTH        = 32,
     parameter DATA_WIDTH        = 64,

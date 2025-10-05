@@ -43,22 +43,22 @@ TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv_ring_node.v
 TEST_SRC += $(TOP_DIR)/rtl/core/riscv/riscv_system.v
 
 # PE
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/PE
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_params.v
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_core.v
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE/pe_node.v
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_params.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
 
 # PE controller
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/PE_ctrl
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE_ctrl/pe_ctrl_params.v
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE_ctrl/pe_ctrl.v
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/PE_ctrl/pe_ctrl_route_config.v
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_ctrl
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_params.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
 
 # PE router
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/router
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/router/pe_router_core.v
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/router/pe_router_config.v
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/router/pe_router_top.v
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/router
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/router/pe_router_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/router/pe_router_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/router/pe_router_top.v
 
 # uart
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/uart
@@ -82,8 +82,8 @@ TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_ring_node.v
 TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_node.v
 
 # Synaptic Core
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/SynapticChip/top
-TEST_SRC += $(TOP_DIR)/rtl/SynapticChip/top/synaptic_core.v
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_top
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 
 # spi
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/spi

@@ -311,8 +311,7 @@ module top_system #(
     );
 
     reg [DATA_WIDTH-1:0] fabric_status;
-    // 实例化Fabric模块
-    synaptic_core #(
+    pe_top #(
         .NUM_RINGS(NUM_RINGS),
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -325,7 +324,7 @@ module top_system #(
         .PE_ID_WIDTH(3),
         .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
         .PE_ARRAY_COLS(`PE_ARRAY_COLS)
-    ) fabric (
+    ) pe (
         .clk(clk),
         .rst_n(rst_n),
 
