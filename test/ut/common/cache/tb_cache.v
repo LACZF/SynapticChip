@@ -82,6 +82,8 @@ module tb_cache;
     wire [63:0] l3_cache_cpu_rsp_data_64bit; // 将l3_cache.cpu_rsp_data扩展为64位
     wire [31:0] l2_cache_mem_req_data_32bit; // 截取l2_cache.mem_req_data的低32位
     wire [3:0] full_strb; // 全选通信号常量
+    wire zero_bit; // 0值信号
+    wire [63:0] zero_64bit; // 64位0值信号
 
     // 在always_comb块外部定义这些信号的连接
     assign l1_mem_req_data_32bit = l1_mem_req_data[31:0];
@@ -89,6 +91,8 @@ module tb_cache;
     assign l3_cache_cpu_rsp_data_64bit = {32'b0, l3_cache.cpu_rsp_data};
     assign l2_cache_mem_req_data_32bit = l2_cache.mem_req_data[31:0];
     assign full_strb = 4'b1111; // 在外部定义常量值
+    assign zero_bit = 1'b0;
+    assign zero_64bit = 64'b0;
 
     // 缓存模块内存响应信号 - 改为reg类型以便在always_comb中赋值
     reg l1_mem_rsp_valid;
@@ -116,8 +120,8 @@ module tb_cache;
                 mem_req_data = l2_mem_req_data;
 
                 // L2的CPU请求数据直接连接到L1的内存请求数据的低32位
-                l2_cpu_req_data = l1_mem_req_data[31:0];
-                l2_cpu_req_strb = 4'b1111; // 全选通
+                l2_cpu_req_data = l1_mem_req_data_32bit;
+                l2_cpu_req_strb = full_strb; // 使用已定义的中间信号代替常量
 
                 // L2的内存响应连接到主内存响应
                 l2_mem_rsp_valid = mem_rsp_valid;
@@ -130,14 +134,14 @@ module tb_cache;
                 l1_mem_rsp_error = l2_cache.cpu_rsp_error;
 
                 // 单级缓存禁用
-                dut_mem_rsp_valid = 1'b0;
-                dut_mem_rsp_data = 64'b0;
-                dut_mem_rsp_error = 1'b0;
+                dut_mem_rsp_valid = zero_bit;
+                dut_mem_rsp_data = zero_64bit;
+                dut_mem_rsp_error = zero_bit;
 
                 // L3缓存禁用
-                l3_mem_rsp_valid = 1'b0;
-                l3_mem_rsp_data = 64'b0;
-                l3_mem_rsp_error = 1'b0;
+                l3_mem_rsp_valid = zero_bit;
+                l3_mem_rsp_data = zero_64bit;
+                l3_mem_rsp_error = zero_bit;
             end
 
             L1_L2_L3_CACHE:
@@ -147,8 +151,8 @@ module tb_cache;
                 l3_cpu_req_addr = l2_mem_req_addr;
                 l3_cpu_req_rw = l2_mem_req_rw;
                 // L3的CPU请求数据直接连接到L2的内存请求数据的低32位
-                l3_cpu_req_data = l2_mem_req_data[31:0];
-                l3_cpu_req_strb = 4'b1111; // 全选通
+                l3_cpu_req_data = l2_cache_mem_req_data_32bit;
+                l3_cpu_req_strb = full_strb;
 
                 // L2的CPU请求数据连接到L1的内存请求数据
                 l2_cpu_req_data = l1_mem_req_data_32bit;
@@ -176,9 +180,9 @@ module tb_cache;
                 l1_mem_rsp_error = l2_cache.cpu_rsp_error;
 
                 // 单级缓存禁用
-                dut_mem_rsp_valid = 1'b0;
-                dut_mem_rsp_data = 64'b0;
-                dut_mem_rsp_error = 1'b0;
+                dut_mem_rsp_valid = zero_bit;
+                dut_mem_rsp_data = zero_64bit;
+                dut_mem_rsp_error = zero_bit;
             end
 
             default: // SINGLE_LEVEL
@@ -195,15 +199,15 @@ module tb_cache;
                 dut_mem_rsp_error = mem_rsp_error;
 
                 // 其他缓存禁用
-                l1_mem_rsp_valid = 1'b0;
-                l1_mem_rsp_data = 64'b0;
-                l1_mem_rsp_error = 1'b0;
-                l2_mem_rsp_valid = 1'b0;
-                l2_mem_rsp_data = 64'b0;
-                l2_mem_rsp_error = 1'b0;
-                l3_mem_rsp_valid = 1'b0;
-                l3_mem_rsp_data = 64'b0;
-                l3_mem_rsp_error = 1'b0;
+                l1_mem_rsp_valid = zero_bit;
+                l1_mem_rsp_data = zero_64bit;
+                l1_mem_rsp_error = zero_bit;
+                l2_mem_rsp_valid = zero_bit;
+                l2_mem_rsp_data = zero_64bit;
+                l2_mem_rsp_error = zero_bit;
+                l3_mem_rsp_valid = zero_bit;
+                l3_mem_rsp_data = zero_64bit;
+                l3_mem_rsp_error = zero_bit;
             end
         endcase
     end

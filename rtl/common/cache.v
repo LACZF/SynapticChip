@@ -127,7 +127,11 @@ module cache #(
                     next_state = UPDATE_CACHE;
                 end
             UPDATE_CACHE:
-                next_state = IDLE;
+                if (mem_rsp_valid) begin
+                    next_state = IDLE;
+                end else begin
+                    next_state = UPDATE_CACHE;
+                end
         endcase
     end
 
@@ -223,8 +227,8 @@ module cache #(
                     endcase
                 end
             end
-            // Update cache on memory read completion
-            if (state == UPDATE_CACHE) begin
+            // Update cache on memory read completion - 确保在收到内存响应后才更新缓存
+            if (state == UPDATE_CACHE && mem_rsp_valid) begin
                 // Update valid, tag, and data
                 valid[evict_way][set_index] <= 1'b1;
                 tag_array[evict_way][set_index] <= tag;
@@ -251,10 +255,39 @@ module cache #(
         end
     end
 
-    // Output assignments
-    assign cpu_rsp_valid = (state == CHECK_HIT && hit) || (state == UPDATE_CACHE);
-    assign cpu_rsp_data = hit ? data_array[hit_way][set_index][cpu_req_addr[LINE_WIDTH-1:0] +: DATA_WIDTH] :
-                                mem_rsp_data[cpu_req_addr[LINE_WIDTH-1:0] +: DATA_WIDTH];
+    // Output assignments - 重新设计CPU响应逻辑，确保可靠的时序
+    reg cpu_rsp_valid_reg;
+    reg [DATA_WIDTH-1:0] cpu_rsp_data_reg;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            cpu_rsp_valid_reg <= 1'b0;
+        end else begin
+            // CPU读命中立即响应
+            if (state == CHECK_HIT && hit && !cpu_req_rw) begin
+                cpu_rsp_valid_reg <= 1'b1;
+                cpu_rsp_data_reg <= data_array[hit_way][set_index][0 +: DATA_WIDTH];
+            end
+            // CPU写操作立即响应（回写式缓存）
+            else if (state == CHECK_HIT && hit && cpu_req_rw) begin
+                cpu_rsp_valid_reg <= 1'b1;
+                cpu_rsp_data_reg <= cpu_req_data; // 写操作返回写入的数据
+            end
+            // 缓存更新完成后响应（读未命中）
+            else if (state == UPDATE_CACHE && mem_rsp_valid) begin
+                cpu_rsp_valid_reg <= 1'b1;
+                cpu_rsp_data_reg <= mem_rsp_data[0 +: DATA_WIDTH];
+            end
+            // 其他情况清除响应
+            else begin
+                cpu_rsp_valid_reg <= 1'b0;
+            end
+        end
+    end
+
+    // 输出赋值
+    assign cpu_rsp_valid = cpu_rsp_valid_reg;
+    assign cpu_rsp_data = cpu_rsp_data_reg;
     assign cpu_rsp_error = 1'b0; // Simplified, no error handling
 
     assign mem_req_valid = (state == MEM_READ) || (state == MEM_WRITE);
@@ -266,60 +299,81 @@ module cache #(
     // Coherency interface outputs (if supported)
     generate
         if (SUPPORT_COHERENCY) begin
-            assign coh_rsp_valid = coh_req_valid;
+            reg coh_rsp_valid_reg;
+            reg [2:0] coh_rsp_state_reg;
+
+            // 确保coh_rsp_valid有适当的时序，而不是直接连接到coh_req_valid
+            assign coh_rsp_valid = coh_rsp_valid_reg;
+            assign coh_rsp_state = coh_rsp_state_reg;
 
             // MESI protocol coherency response logic
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
-                    // No action
-                end else if (coh_req_valid) begin
-                    // Search for the address in all ways
-                    for (integer i = 0; i < ASSOCIATIVITY; i = i + 1) begin
-                        if (valid[i][set_index] && (tag_array[i][set_index] == tag)) begin
-                            // Found a matching cache line
+                    coh_rsp_valid_reg <= 1'b0;
+                    coh_rsp_state_reg <= INVALID;
+                end else begin
+                    // 默认情况下清除响应
+                    coh_rsp_valid_reg <= 1'b0;
+
+                    if (coh_req_valid) begin
+                        // 先查找地址是否在缓存中
+                        integer way_found = -1;
+                        for (integer i = 0; i < ASSOCIATIVITY; i = i + 1) begin
+                            if (valid[i][set_index] && (tag_array[i][set_index] == tag)) begin
+                                way_found = i;
+                                break;
+                            end
+                        end
+
+                        // 根据找到的路和请求类型处理一致性操作
+                        if (way_found != -1) begin
                             case (coh_req_type)
                                 3'd0: begin // Read request
-                                    case (coherency_state[i][set_index])
+                                    case (coherency_state[way_found][set_index])
                                         MODIFIED: begin
                                             // Need to write back to memory
                                             // In a real design, you would trigger a write back here
-                                            coherency_state[i][set_index] <= SHARED;
+                                            coherency_state[way_found][set_index] <= SHARED;
                                         end
                                         EXCLUSIVE: begin
-                                            coherency_state[i][set_index] <= SHARED;
+                                            coherency_state[way_found][set_index] <= SHARED;
                                         end
                                         // Shared and Invalid states don't change
                                     endcase
                                 end
                                 3'd1: begin // Write request
-                                    case (coherency_state[i][set_index])
+                                    case (coherency_state[way_found][set_index])
                                         MODIFIED, EXCLUSIVE, SHARED: begin
                                             // Invalidate the line
-                                            coherency_state[i][set_index] <= INVALID;
-                                            valid[i][set_index] <= 1'b0;
+                                            coherency_state[way_found][set_index] <= INVALID;
+                                            valid[way_found][set_index] <= 1'b0;
                                             // If modified, need to write back
-                                            if (coherency_state[i][set_index] == MODIFIED) begin
+                                            if (coherency_state[way_found][set_index] == MODIFIED) begin
                                                 // In a real design, you would trigger a write back here
                                             end
                                         end
                                     endcase
                                 end
                                 3'd2: begin // Invalidate request
-                                    coherency_state[i][set_index] <= INVALID;
-                                    valid[i][set_index] <= 1'b0;
+                                    coherency_state[way_found][set_index] <= INVALID;
+                                    valid[way_found][set_index] <= 1'b0;
                                     // If modified, need to write back
-                                    if (coherency_state[i][set_index] == MODIFIED) begin
+                                    if (coherency_state[way_found][set_index] == MODIFIED) begin
                                         // In a real design, you would trigger a write back here
                                     end
                                 end
                             endcase
+                            // 输出一致性响应
+                            coh_rsp_valid_reg <= 1'b1;
+                            coh_rsp_state_reg <= coherency_state[way_found][set_index];
+                        end else begin
+                            // 地址不在缓存中，返回无效状态
+                            coh_rsp_valid_reg <= 1'b1;
+                            coh_rsp_state_reg <= INVALID;
                         end
                     end
                 end
             end
-
-            // Simplified coherency state output (check way 0 only)
-            assign coh_rsp_state = coherency_state[0][set_index];
         end else begin
             assign coh_rsp_valid = 1'b0;
             assign coh_rsp_state = INVALID;
