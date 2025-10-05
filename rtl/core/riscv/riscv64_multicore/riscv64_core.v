@@ -241,9 +241,8 @@ module riscv64_core #(
         .pc(pc_if),
         .instr(instr_if),
         .cache_req(icache_req),
-        /* TODO */
-        // .cache_addr(icache_addr),
-        // .cache_data(icache_data),
+        .cache_addr(icache_addr),
+        .cache_data(icache_data),
         .cache_ready(icache_ready)
     );
 
