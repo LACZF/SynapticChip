@@ -1,0 +1,33 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := cpu_top
+TEST_ARGS ?=
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv/riscv64
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/common
+
+# 缓存参数文件
+TEST_SRC += $(TOP_DIR)/rtl/cpu/cache_params.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/cache_system_params.v
+
+# 通用缓存模块
+TEST_SRC += $(TOP_DIR)/rtl/common/cache.v
+
+# CPU顶层模块
+TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
+
+# RISC-V核心模块
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_clock_reset_gen.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_execution.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_hazard_detection.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_decode.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_fetch.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_access.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_soc_params.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
+
+# 测试平台文件
+TEST_SRC += $(CUR_DIR)/tb_cpu_top.v

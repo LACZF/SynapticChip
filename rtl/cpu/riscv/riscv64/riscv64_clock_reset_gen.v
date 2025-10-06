@@ -3,7 +3,7 @@ module riscv64_clock_reset_gen (
     input wire clk,
     input wire rst_n,
     output reg soc_clk,
-    output reg soc_rst_n,
+    output wire soc_rst_n,
     output reg soc_ready
 );
 

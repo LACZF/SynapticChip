@@ -307,8 +307,8 @@ module cache #(
             assign coh_rsp_state = coh_rsp_state_reg;
 
             // MESI protocol coherency response logic
+            integer way_found;
             always @(posedge clk or negedge rst_n) begin
-                integer way_found;
                 if (!rst_n) begin
                     coh_rsp_valid_reg <= 1'b0;
                     coh_rsp_state_reg <= INVALID;
