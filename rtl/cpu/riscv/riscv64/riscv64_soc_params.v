@@ -1,6 +1,6 @@
-// soc_params.v
-`ifndef SOC_PARAMS_V
-`define SOC_PARAMS_V
+// riscv64_soc_params.v
+`ifndef RISCV64_SOC_PARAMS_V
+`define RISCV64_SOC_PARAMS_V
 
 // SoC配置参数
 `define NUM_CORES         4

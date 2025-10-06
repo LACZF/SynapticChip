@@ -1,5 +1,4 @@
 // mmio_subsystem.v
-`include "soc_params.v"
 
 module mmio_subsystem #(
     parameter ADDR_WIDTH       = 32,

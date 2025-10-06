@@ -1,5 +1,5 @@
 // address_decoder.v
-`include "soc_params.v"
+`include "riscv64_soc_params.v"
 
 module address_decoder #(
     parameter ADDR_WIDTH       = 32,

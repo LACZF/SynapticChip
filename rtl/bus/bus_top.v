@@ -1,9 +1,6 @@
 
 // This is the bus top module
 
-// 包含必要的头文件
-`include "soc_params.v"
-
 // 系统参数
 `define NUM_CORES 4
 
