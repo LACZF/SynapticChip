@@ -1,5 +1,5 @@
-// execution.v
-module execution (
+// riscv64_execution.v
+module riscv64_execution (
     input wire clk,
     input wire rst_n,
     input wire stall,

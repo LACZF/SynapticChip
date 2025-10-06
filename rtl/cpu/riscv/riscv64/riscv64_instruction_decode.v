@@ -1,5 +1,5 @@
-// instruction_decode.v
-module instruction_decode (
+// riscv64_instruction_decode.v
+module riscv64_instruction_decode (
     input wire clk,
     input wire rst_n,
     input wire stall,

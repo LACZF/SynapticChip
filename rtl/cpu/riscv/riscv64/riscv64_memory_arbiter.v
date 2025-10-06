@@ -1,5 +1,5 @@
-// memory_arbiter.v
-module memory_arbiter #(
+// riscv64_memory_arbiter.v
+module riscv64_memory_arbiter #(
     parameter NUM_MASTERS = 2,
     parameter ADDR_WIDTH = 64,
     parameter DATA_WIDTH = 64

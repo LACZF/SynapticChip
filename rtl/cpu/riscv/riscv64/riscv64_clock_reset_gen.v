@@ -1,5 +1,5 @@
-// clock_reset_gen.v
-module clock_reset_gen (
+// riscv64_clock_reset_gen.v
+module riscv64_clock_reset_gen (
     input wire clk,
     input wire rst_n,
     output reg soc_clk,

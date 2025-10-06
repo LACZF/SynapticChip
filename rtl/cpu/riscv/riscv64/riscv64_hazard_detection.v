@@ -1,5 +1,5 @@
-// hazard_detection.v
-module hazard_detection (
+// riscv64_hazard_detection.v
+module riscv64_hazard_detection (
     input wire [4:0] rs1_id,
     input wire [4:0] rs2_id,
     input wire [4:0] rd_ex,

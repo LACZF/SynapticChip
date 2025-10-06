@@ -1,7 +1,7 @@
-// memory_access.v
+// riscv64_memory_access.v
 `include "cache_params.v"
 
-module memory_access (
+module riscv64_memory_access (
     input wire clk,
     input wire rst_n,
     input wire stall,

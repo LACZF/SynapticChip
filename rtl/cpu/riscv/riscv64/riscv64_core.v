@@ -224,7 +224,7 @@ module riscv64_core #(
     assign snoop_state = dcache_coh_rsp_state[1:0];
 
     // 取指阶段
-    instruction_fetch u_if (
+    riscv64_instruction_fetch u_if (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_if),
@@ -240,7 +240,7 @@ module riscv64_core #(
     );
 
     // 译码阶段
-    instruction_decode u_id (
+    riscv64_instruction_decode u_id (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_id),
@@ -256,7 +256,7 @@ module riscv64_core #(
     );
 
     // 执行阶段
-    execution u_ex (
+    riscv64_execution u_ex (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_ex),
@@ -276,7 +276,7 @@ module riscv64_core #(
     );
 
     // 内存访问阶段
-    memory_access u_mem (
+    riscv64_memory_access u_mem (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_mem),
@@ -300,7 +300,7 @@ module riscv64_core #(
     );
 
     // 写回阶段
-    write_back u_wb (
+    riscv64_write_back u_wb (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_wb),
@@ -318,7 +318,7 @@ module riscv64_core #(
     );
 
     // 寄存器文件
-    register_file u_regfile (
+    riscv64_register_file u_regfile (
         .clk(clk),
         .rst_n(rst_n),
         .rs1(instr_id[19:15]),
@@ -331,7 +331,7 @@ module riscv64_core #(
     );
 
     // 冒险检测单元
-    hazard_detection u_hazard (
+    riscv64_hazard_detection u_hazard (
         .rs1_id(instr_id[19:15]),
         .rs2_id(instr_id[24:20]),
         .rd_ex(instr_ex[11:7]),

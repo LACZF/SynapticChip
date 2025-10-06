@@ -1,5 +1,5 @@
-// write_back.v
-module write_back (
+// riscv64_write_back.v
+module riscv64_write_back (
     input wire clk,
     input wire rst_n,
     input wire stall,

@@ -1,5 +1,5 @@
-// instruction_fetch.v
-module instruction_fetch (
+// riscv64_instruction_fetch.v
+module riscv64_instruction_fetch (
     input wire clk,
     input wire rst_n,
     input wire stall,

@@ -1,5 +1,5 @@
-// register_file.v
-module register_file (
+// riscv64_register_file.v
+module riscv64_register_file (
     input wire clk,
     input wire rst_n,
     input wire [4:0] rs1,
