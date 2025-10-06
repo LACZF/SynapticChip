@@ -51,33 +51,33 @@ module tb_cpu_top;
         .ext_int            (ext_int),
 
         // Ring Bus 发送请求
-        .tx_req_ring_mask_i (tx_req_ring_mask_i),
-        .tx_req_ring_disable_i(tx_req_ring_disable_i),
-        .tx_req_valid_i     (tx_req_valid_i),
-        .tx_req_is_order_i  (tx_req_is_order_i),
-        .tx_req_opcode_i    (tx_req_opcode_i),
-        .tx_req_match_type_i(tx_req_match_type_i),
-        .tx_req_source_id_i (tx_req_source_id_i),
-        .tx_req_target_id_i (tx_req_target_id_i),
-        .tx_req_addr_i      (tx_req_addr_i),
-        .tx_req_data_i      (tx_req_data_i),
+        .tx_req_ring_mask_o (tx_req_ring_mask_i),
+        .tx_req_ring_disable_o(tx_req_ring_disable_i),
+        .tx_req_valid_o     (tx_req_valid_i),
+        .tx_req_is_order_o  (tx_req_is_order_i),
+        .tx_req_opcode_o    (tx_req_opcode_i),
+        .tx_req_match_type_o(tx_req_match_type_i),
+        .tx_req_source_id_o (tx_req_source_id_i),
+        .tx_req_target_id_o (tx_req_target_id_i),
+        .tx_req_addr_o      (tx_req_addr_i),
+        .tx_req_data_o      (tx_req_data_i),
 
         // Ring Bus 接收请求
-        .rx_req_valid_o     (rx_req_valid_o),
-        .rx_req_is_order_o  (rx_req_is_order_o),
-        .rx_req_opcode_o    (rx_req_opcode_o),
-        .rx_req_match_type_o(rx_req_match_type_o),
-        .rx_req_source_id_o (rx_req_source_id_o),
-        .rx_req_target_id_o (rx_req_target_id_o),
-        .rx_req_addr_o      (rx_req_addr_o),
-        .rx_req_data_o      (rx_req_data_o),
+        .rx_req_valid_i     (rx_req_valid_o),
+        .rx_req_is_order_i  (rx_req_is_order_o),
+        .rx_req_opcode_i    (rx_req_opcode_o),
+        .rx_req_match_type_i(rx_req_match_type_o),
+        .rx_req_source_id_i (rx_req_source_id_o),
+        .rx_req_target_id_i (rx_req_target_id_o),
+        .rx_req_addr_i      (rx_req_addr_o),
+        .rx_req_data_i      (rx_req_data_o),
 
         // Ring Bus 响应
-        .rsp_valid_o        (rsp_valid_o),
-        .rsp_source_id_o    (rsp_source_id_o),
-        .rsp_target_id_o    (rsp_target_id_o),
-        .rsp_addr_o         (rsp_addr_o),
-        .rsp_data_o         (rsp_data_o)
+        .rsp_valid_i        (rsp_valid_o),
+        .rsp_source_id_i    (rsp_source_id_o),
+        .rsp_target_id_i    (rsp_target_id_o),
+        .rsp_addr_i         (rsp_addr_o),
+        .rsp_data_i         (rsp_data_o)
     );
 
     // 主测试程序

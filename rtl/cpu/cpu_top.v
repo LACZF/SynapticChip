@@ -14,9 +14,9 @@ module cpu_top #(
     parameter OPCODE_WIDTH      = 8,
     parameter MATCH_TYPE_WIDTH  = 2,
     parameter INST_WIDTH        = 32,
-    parameter NUM_CORES = 4,
-    parameter CORE_ID_WIDTH = 2,
-    parameter ENABLE_L3_CACHE = 1, // 使能L3缓存，默认为1
+    parameter NUM_CORES         = 4,
+    parameter CORE_ID_WIDTH     = 2,
+    parameter ENABLE_L3_CACHE   = 1, // 使能L3缓存，默认为1
     parameter CPU_TYPE          = 0  // 0: RISC-V, 1: 预留其他CPU类型
 ) (
     input clk,
@@ -26,33 +26,33 @@ module cpu_top #(
     input ext_int,
 
     // 发送请求
-    input wire [NUM_RINGS-1:0]         tx_req_ring_mask_i,
-    input wire [NUM_RINGS-1:0]         tx_req_ring_disable_i,
-    input wire                         tx_req_valid_i,
-    input wire                         tx_req_is_order_i,
-    input wire [OPCODE_WIDTH-1:0]      tx_req_opcode_i,
-    input wire [MATCH_TYPE_WIDTH-1:0]  tx_req_match_type_i,
-    input wire [NODE_ID_WIDTH-1:0]     tx_req_source_id_i,
-    input wire [NODE_ID_WIDTH-1:0]     tx_req_target_id_i,
-    input wire [ADDR_WIDTH-1:0]        tx_req_addr_i,
-    input wire [DATA_WIDTH-1:0]        tx_req_data_i,
+    input wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,
+    input wire [NUM_RINGS-1:0]         tx_req_ring_disable_o,
+    input wire                         tx_req_valid_o,
+    input wire                         tx_req_is_order_o,
+    input wire [OPCODE_WIDTH-1:0]      tx_req_opcode_o,
+    input wire [MATCH_TYPE_WIDTH-1:0]  tx_req_match_type_o,
+    input wire [NODE_ID_WIDTH-1:0]     tx_req_source_id_o,
+    input wire [NODE_ID_WIDTH-1:0]     tx_req_target_id_o,
+    input wire [ADDR_WIDTH-1:0]        tx_req_addr_o,
+    input wire [DATA_WIDTH-1:0]        tx_req_data_o,
 
     // 接受请求
-    output wire                        rx_req_valid_o,
-    output wire                        rx_req_is_order_o,
-    output wire [OPCODE_WIDTH-1:0]     rx_req_opcode_o,
-    output wire [MATCH_TYPE_WIDTH-1:0] rx_req_match_type_o,
-    output wire [NODE_ID_WIDTH-1:0]    rx_req_source_id_o,
-    output wire [NODE_ID_WIDTH-1:0]    rx_req_target_id_o,
-    output wire [ADDR_WIDTH-1:0]       rx_req_addr_o,
-    output wire [DATA_WIDTH-1:0]       rx_req_data_o,
+    output wire                        rx_req_valid_i,
+    output wire                        rx_req_is_order_i,
+    output wire [OPCODE_WIDTH-1:0]     rx_req_opcode_i,
+    output wire [MATCH_TYPE_WIDTH-1:0] rx_req_match_type_i,
+    output wire [NODE_ID_WIDTH-1:0]    rx_req_source_id_i,
+    output wire [NODE_ID_WIDTH-1:0]    rx_req_target_id_i,
+    output wire [ADDR_WIDTH-1:0]       rx_req_addr_i,
+    output wire [DATA_WIDTH-1:0]       rx_req_data_i,
 
     // 接收响应
-    output wire                        rsp_valid_o,
-    output wire [NODE_ID_WIDTH-1:0]    rsp_source_id_o,
-    output wire [NODE_ID_WIDTH-1:0]    rsp_target_id_o,
-    output wire [ADDR_WIDTH-1:0]       rsp_addr_o,
-    output wire [DATA_WIDTH-1:0]       rsp_data_o
+    output wire                        rsp_valid_i,
+    output wire [NODE_ID_WIDTH-1:0]    rsp_source_id_i,
+    output wire [NODE_ID_WIDTH-1:0]    rsp_target_id_i,
+    output wire [ADDR_WIDTH-1:0]       rsp_addr_i,
+    output wire [DATA_WIDTH-1:0]       rsp_data_i
 );
 
     // L1缓存接口信号
@@ -241,23 +241,23 @@ module cpu_top #(
                     .rst_n(rst_n),
 
                     // L1指令缓存接口
-                .l1_icache_req(l1_icache_req[i]),
-                .l1_icache_addr(l1_icache_addr_64),
-                .l1_icache_data(l1_icache_data[i*512 +: 512]),
-                .l1_icache_ready(l1_icache_ready[i]),
+                    .l1_icache_req(l1_icache_req[i]),
+                    .l1_icache_addr(l1_icache_addr_64),
+                    .l1_icache_data(l1_icache_data[i*512 +: 512]),
+                    .l1_icache_ready(l1_icache_ready[i]),
 
-                // L1数据缓存接口
-                .l1_dcache_req(l1_dcache_req[i]),
-                .l1_dcache_addr(l1_dcache_addr_64),
-                .l1_dcache_wdata(l1_dcache_wdata[i*512 +: 512]),
-                .l1_dcache_data(l1_dcache_data[i*512 +: 512]),
-                .l1_dcache_we(l1_dcache_we[i]),
-                .l1_dcache_req_type(l1_dcache_req_type[i*2 +: 2]),
-                .l1_dcache_ready(l1_dcache_ready[i]),
+                    // L1数据缓存接口
+                    .l1_dcache_req(l1_dcache_req[i]),
+                    .l1_dcache_addr(l1_dcache_addr_64),
+                    .l1_dcache_wdata(l1_dcache_wdata[i*512 +: 512]),
+                    .l1_dcache_data(l1_dcache_data[i*512 +: 512]),
+                    .l1_dcache_we(l1_dcache_we[i]),
+                    .l1_dcache_req_type(l1_dcache_req_type[i*2 +: 2]),
+                    .l1_dcache_ready(l1_dcache_ready[i]),
 
-                // 监听接口
-                .snoop_valid(snoop_valid[i]),
-                .snoop_addr(snoop_addr_64),
+                    // 监听接口
+                    .snoop_valid(snoop_valid[i]),
+                    .snoop_addr(snoop_addr_64),
                     .snoop_req_type(snoop_req_type[i*2 +: 2]),
                     .snoop_ready(snoop_ready[i]),
                     .snoop_hit(snoop_hit[i]),
