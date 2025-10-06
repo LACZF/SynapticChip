@@ -2,7 +2,6 @@
 // CPU顶层模块，连接top_system和具体的CPU实现
 // 预留了与多种CPU对接的能力
 
-`include "riscv_core_params.v"
 `include "cache_params.v"
 `include "cache_system_params.v"
 

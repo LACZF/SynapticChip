@@ -35,8 +35,6 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv_bus_interface.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv_ring_node.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
 
 # PE
