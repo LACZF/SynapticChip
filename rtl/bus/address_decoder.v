@@ -1,14 +1,17 @@
 // address_decoder.v
 `include "soc_params.v"
 
-module address_decoder (
+module address_decoder #(
+    parameter ADDR_WIDTH       = 32,
+    parameter DATA_WIDTH       = 64
+) (
     input wire clk,
     input wire rst_n,
 
     // 系统总线输入
-    input wire [63:0] sys_addr,
-    input wire [63:0] sys_wdata,
-    output reg [63:0] sys_rdata,
+    input wire [ADDR_WIDTH-1:0] sys_addr,
+    input wire [DATA_WIDTH-1:0] sys_wdata,
+    output reg [DATA_WIDTH-1:0] sys_rdata,
     input wire sys_we,
     input wire [7:0] sys_byte_en,
     input wire sys_req,
@@ -16,33 +19,33 @@ module address_decoder (
 
     // Flash控制器接口
     output reg flash_req,
-    output reg [63:0] flash_addr,
-    output reg [63:0] flash_wdata,
-    input wire [63:0] flash_rdata,
+    output reg [ADDR_WIDTH-1:0] flash_addr,
+    output reg [DATA_WIDTH-1:0] flash_wdata,
+    input wire [DATA_WIDTH-1:0] flash_rdata,
     output reg flash_we,
     input wire flash_ready,
 
     // SRAM控制器接口
     output reg sram_req,
-    output reg [63:0] sram_addr,
-    output reg [63:0] sram_wdata,
-    input wire [63:0] sram_rdata,
+    output reg [ADDR_WIDTH-1:0] sram_addr,
+    output reg [DATA_WIDTH-1:0] sram_wdata,
+    input wire [DATA_WIDTH-1:0] sram_rdata,
     output reg sram_we,
     input wire sram_ready,
 
     // MMIO接口
     output reg mmio_req,
-    output reg [63:0] mmio_addr,
-    output reg [63:0] mmio_wdata,
-    input wire [63:0] mmio_rdata,
+    output reg [ADDR_WIDTH-1:0] mmio_addr,
+    output reg [DATA_WIDTH-1:0] mmio_wdata,
+    input wire [DATA_WIDTH-1:0] mmio_rdata,
     output reg mmio_we,
     output reg [7:0] mmio_byte_en,
     input wire mmio_ready
 );
 
     reg [2:0] state;
-    reg [63:0] saved_addr;
-    reg [63:0] saved_wdata;
+    reg [ADDR_WIDTH-1:0] saved_addr;
+    reg [DATA_WIDTH-1:0] saved_wdata;
     reg saved_we;
     reg [7:0] saved_byte_en;
     reg [1:0] target_device;

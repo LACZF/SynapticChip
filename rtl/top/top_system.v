@@ -86,7 +86,7 @@ module top_system #(
     wire [NUM_RINGS-1:0]                   ring_busy;
 
     // 实例化Ring总线
-    ring_bus #(
+    bus_top #(
         .NUM_RINGS(NUM_RINGS),
         .NUM_NODES(NUM_NODES),
         .ADDR_WIDTH(ADDR_WIDTH),

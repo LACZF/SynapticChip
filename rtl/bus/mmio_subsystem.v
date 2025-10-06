@@ -1,15 +1,18 @@
 // mmio_subsystem.v
 `include "soc_params.v"
 
-module mmio_subsystem (
+module mmio_subsystem #(
+    parameter ADDR_WIDTH       = 32,
+    parameter DATA_WIDTH       = 64
+) (
     input wire clk,
     input wire rst_n,
 
     // 系统接口
     input wire sys_req,
-    input wire [63:0] sys_addr,
-    input wire [63:0] sys_wdata,
-    output reg [63:0] sys_rdata,
+    input wire [ADDR_WIDTH-1:0] sys_addr,
+    input wire [DATA_WIDTH-1:0] sys_wdata,
+    output reg [DATA_WIDTH-1:0] sys_rdata,
     input wire sys_we,
     input wire [7:0] sys_byte_en,
     output reg sys_ready,
@@ -208,7 +211,7 @@ module mmio_subsystem (
                                 if (sys_we) begin
                                     timer_enable[core_id] <= sys_wdata[0];
                                 end else begin
-                                    sys_rdata <= {63'b0, timer_enable[core_id]};
+                                    sys_rdata <= {DATA_WIDTH-1'b0, timer_enable[core_id]};
                                 end
                             end
                         endcase
