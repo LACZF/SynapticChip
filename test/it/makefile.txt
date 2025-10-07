@@ -37,7 +37,7 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
-TEST_SRC += $(TOP_DIR)/test/ut/cpu/cpu_top_single_core_no_l3/instruction_rom.v
+TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
 
 # PE
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE

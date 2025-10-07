@@ -29,5 +29,8 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_soc_params.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 
+# ROM模块文件
+TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
+
 # 测试平台文件
 TEST_SRC += $(CUR_DIR)/tb_cpu_top.v
