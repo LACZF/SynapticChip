@@ -47,3 +47,6 @@
 // 路由参数
 `define NUM_PORTS 5
 `define PORT_ID_WIDTH 3
+
+`define BUS_TYPE_RING 0    // Ring总线类型
+`define BUS_TYPE_DIRECT 1   // 直接连接类型

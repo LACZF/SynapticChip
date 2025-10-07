@@ -4,6 +4,7 @@
 `include "top_system_params.v"
 
 module top_system #(
+    parameter BUS_TYPE         = `BUS_TYPE_RING, // 总线类型：`BUS_TYPE_RING 或 `BUS_TYPE_DIRECT
     parameter NUM_RINGS        = 2,        // Ring总线数量
     parameter NUM_NODES        = 8,        // 每个Ring的节点数
     parameter ADDR_WIDTH       = 32,       // 地址宽度
@@ -14,6 +15,7 @@ module top_system #(
     parameter TX_FIFO_DEPTH    = 4,        // 发送FIFO深度
     parameter RX_FIFO_DEPTH    = 4,        // 接收FIFO深度
     parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
+    parameter NUM_CORES        = 4,
     parameter MATCH_TYPE_WIDTH = 2         // 匹配类型宽度
 )(
     input clk,
@@ -87,6 +89,7 @@ module top_system #(
 
     // 实例化Ring总线
     bus_top #(
+        .BUS_TYPE(BUS_TYPE),
         .NUM_RINGS(NUM_RINGS),
         .NUM_NODES(NUM_NODES),
         .ADDR_WIDTH(ADDR_WIDTH),
@@ -97,6 +100,7 @@ module top_system #(
         .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
         .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
         .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH),
+        .NUM_CORES(NUM_CORES),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
     ) bus (
         .clk(clk),
@@ -145,6 +149,7 @@ module top_system #(
         .OPCODE_WIDTH(OPCODE_WIDTH),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
         .INST_WIDTH(32),
+        .NUM_CORES(NUM_CORES),
         .CPU_TYPE(0)  // 0: RISC-V, 预留其他CPU类型
     ) cpu_top (
         .clk(clk),

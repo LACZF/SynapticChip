@@ -1,18 +1,8 @@
 // spi_ring_node.v
 // SPI Ring节点实现，连接SPI节点和Ring总线
 
+`include "ring_bus_params.v"
 `include "spi_params.v"
-
-// 定义必要的Ring总线操作类型宏
-`ifndef RING_OP_READ
-`define RING_OP_READ  0
-`endif
-`ifndef RING_OP_WRITE
-`define RING_OP_WRITE 1
-`endif
-`ifndef RING_OP_RESP
-`define RING_OP_RESP  2
-`endif
 
 module spi_ring_node #(
     parameter NUM_RINGS         = 2,

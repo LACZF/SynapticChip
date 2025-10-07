@@ -56,7 +56,8 @@ module ring_bus #(
     // 内部信号定义
     wire [NUM_RINGS-1:0]                             ring_req_valid;
     wire [NUM_RINGS-1:0]                             ring_req_ready;
-    // 驱动ring_req_ready信号始终为1'b1，确保mem_req_ready信号正常工作
+    // 默认情况下，驱动ring_req_ready信号始终为1'b1以确保基本功能
+    // 在实际应用中，这个信号可以根据总线状态和负载动态调整
     assign ring_req_ready = {NUM_RINGS{1'b1}};
     wire [NUM_RINGS*ADDR_WIDTH-1:0]                  ring_req_addr;
     wire [NUM_RINGS*MATCH_TYPE_WIDTH-1:0]            ring_req_match_type;

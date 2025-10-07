@@ -132,16 +132,12 @@ module cpu_top #(
             assign l1_dcache_ready[0] = core_l2_ready[0];
             assign l1_icache_ready[0] = core_l2_ready[0];
 
-            // 对于多核情况，直接连接其他核心到同一L2响应
-            `ifdef NUM_CORES
-                // 移除嵌套的generate块，改用条件编译+简单if语句
-                if (NUM_CORES > 1) begin
-                    assign l1_dcache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
-                    assign l1_icache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
-                    assign l1_dcache_ready[1] = core_l2_ready[0];
-                    assign l1_icache_ready[1] = core_l2_ready[0];
-                end
-            `endif
+            if (NUM_CORES > 1) begin
+                assign l1_dcache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
+                assign l1_icache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
+                assign l1_dcache_ready[1] = core_l2_ready[0];
+                assign l1_icache_ready[1] = core_l2_ready[0];
+            end
 
             // L3缓存实例（使用通用cache模块，可选）
             if (ENABLE_L3_CACHE) begin : l3_cache_gen
@@ -237,16 +233,12 @@ module cpu_top #(
                 assign snoop_state[i*2 +: 2] = 2'b00;
             end
 
-            // 对于多核情况，将其他核心的响应连接到相同的内存响应
-            // 注意：这是一个简化实现，实际系统中应该有完整的仲裁机制
-            `ifdef NUM_CORES
-                if (NUM_CORES > 1) begin
-                    for (i = 1; i < NUM_CORES; i = i + 1) begin : multi_core_conn
-                        assign core_mem_rdata[i*512 +: 512] = mem_rdata;
-                        assign core_mem_ready[i] = mem_ready;
-                    end
+            if (NUM_CORES > 1) begin
+                for (i = 1; i < NUM_CORES; i = i + 1) begin : multi_core_conn
+                    assign core_mem_rdata[i*512 +: 512] = mem_rdata;
+                    assign core_mem_ready[i] = mem_ready;
                 end
-            `endif
+            end
         end
     endgenerate
 
