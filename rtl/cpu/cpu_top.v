@@ -165,14 +165,13 @@ module cpu_top #(
 
             // 对于多核情况，直接连接其他核心到同一L2响应
             `ifdef NUM_CORES
-                generate
+                // 移除嵌套的generate块，改用条件编译+简单if语句
                 if (NUM_CORES > 1) begin
                     assign l1_dcache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
                     assign l1_icache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
                     assign l1_dcache_ready[1] = core_l2_ready[0];
                     assign l1_icache_ready[1] = core_l2_ready[0];
                 end
-                endgenerate
             `endif
         end else begin : direct_l1_to_l3_or_mem
             // 直接连接L1到L3或内存
@@ -191,7 +190,7 @@ module cpu_top #(
 
             // 对于多核情况，直接连接其他核心
             `ifdef NUM_CORES
-                generate
+                // 移除嵌套的generate块，改用条件编译+简单if语句
                 if (NUM_CORES > 1) begin
                     assign l1_dcache_data[1*512 +: 512] = l2_l3_rdata;
                     assign l1_icache_data[1*512 +: 512] = l2_l3_rdata;
@@ -200,7 +199,6 @@ module cpu_top #(
                     assign snoop_ready[1] = 1'b1;
                     assign snoop_state[1*2 +: 2] = 2'b00;
                 end
-                endgenerate
             `endif
         end
     endgenerate
@@ -271,54 +269,106 @@ module cpu_top #(
                 // 创建中间信号，用于32位到64位的零扩展
                 wire [63:0] l1_icache_addr_64;
                 wire [63:0] l1_dcache_addr_64;
-                wire [63:0] snoop_addr_64;
+                wire icache_mem_req_rw;
+
+                // CPU核心与L1缓存之间的中间信号
+                wire icache_req;
+                wire [63:0] icache_addr;
+                wire [31:0] icache_data;
+                wire icache_ready;
+                wire dcache_req;
+                wire [63:0] dcache_addr;
+                wire [63:0] dcache_wdata;
+                wire [63:0] dcache_rdata;
+                wire dcache_we;
+                wire [7:0] dcache_byte_en;
+                wire dcache_ready;
 
                 // 零扩展：将32位地址信号扩展到64位
                 assign l1_icache_addr_64 = {{32{1'b0}}, l1_icache_addr[i*32 +: 32]};
                 assign l1_dcache_addr_64 = {{32{1'b0}}, l1_dcache_addr[i*32 +: 32]};
-                assign snoop_addr_64 = {{32{1'b0}}, snoop_addr[i*32 +: 32]};
-                riscv64_core #(
-                    .CORE_ID(i[CORE_ID_WIDTH-1:0])
-                ) u_core (
+                assign icache_mem_req_rw = 1'b0;  // 指令缓存始终是读操作
+
+                // L1指令缓存实例（使用通用cache模块）
+                cache #(
+                    .CACHE_LINE_SIZE(`L1_ICACHE_LINE_SIZE),
+                    .CACHE_SIZE(`L1_ICACHE_SIZE),
+                    .ASSOCIATIVITY(`L1_ICACHE_ASSOCIATIVITY),
+                    .ADDR_WIDTH(`L1_ICACHE_ADDR_WIDTH),
+                    .DATA_WIDTH(`L1_ICACHE_DATA_WIDTH),
+                    .SUPPORT_COHERENCY(0),  // L1缓存是核心独享的，不需要一致性
+                    .CACHE_LEVEL(`CACHE_LEVEL_L1),
+                    .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+                ) u_l1_icache (
                     .clk(clk),
                     .rst_n(rst_n),
 
-                    // L1指令缓存接口
-                    .l1_icache_req(l1_icache_req[i]),
-                    .l1_icache_addr(l1_icache_addr_64),
-                    .l1_icache_data(l1_icache_data[i*512 +: 512]),
-                    .l1_icache_ready(l1_icache_ready[i]),
+                    // CPU接口
+                    .cpu_req_valid(icache_req),
+                    .cpu_req_addr(icache_addr),
+                    .cpu_req_rw(1'b0),
+                    .cpu_req_data(32'd0),
+                    .cpu_req_strb(4'hF),
+                    .cpu_rsp_valid(icache_ready),
+                    .cpu_rsp_data(icache_data),
+                    .cpu_rsp_error(),
 
-                    // L1数据缓存接口
-                    .l1_dcache_req(l1_dcache_req[i]),
-                    .l1_dcache_addr(l1_dcache_addr_64),
-                    .l1_dcache_wdata(l1_dcache_wdata[i*512 +: 512]),
-                    .l1_dcache_data(l1_dcache_data[i*512 +: 512]),
-                    .l1_dcache_we(l1_dcache_we[i]),
-                    .l1_dcache_req_type(l1_dcache_req_type[i*2 +: 2]),
-                    .l1_dcache_ready(l1_dcache_ready[i]),
+                    // 内存接口（连接L2）
+                    .mem_req_valid(l1_icache_req[i]),
+                    .mem_req_addr(l1_icache_addr_64),
+                    .mem_req_rw(icache_mem_req_rw),
+                    .mem_req_data(l1_dcache_wdata[i*512 +: 64]),
+                    .mem_rsp_valid(l1_icache_ready[i]),
+                    .mem_rsp_data(l1_icache_data[i*512 +: 64]),
+                    .mem_rsp_error(),
 
-                    // 监听接口
-                    .snoop_valid(snoop_valid[i]),
-                    .snoop_addr(snoop_addr_64),
-                    .snoop_req_type(snoop_req_type[i*2 +: 2]),
-                    .snoop_ready(snoop_ready[i]),
-                    .snoop_hit(snoop_hit[i]),
-                    .snoop_state(snoop_state[i*2 +: 2]),
-                    .snoop_data(snoop_data[i*512 +: 512]),
+                    // 一致性接口（不使用，连接到0）
+                    .coh_req_addr(64'd0),
+                    .coh_req_valid(1'b0),
+                    .coh_req_type(3'd0),
+                    .coh_rsp_valid(),
+                    .coh_rsp_state()
+                );
 
-                    // 中断和调试
-                    // 中断接口
-                    .timer_interrupt(1'b0),
-                    .external_interrupt(1'b0),
-                    .software_interrupt(1'b0),
+                // L1数据缓存实例（使用通用cache模块）
+                cache #(
+                    .CACHE_LINE_SIZE(`L1_DCACHE_LINE_SIZE),
+                    .CACHE_SIZE(`L1_DCACHE_SIZE),
+                    .ASSOCIATIVITY(`L1_DCACHE_ASSOCIATIVITY),
+                    .ADDR_WIDTH(`L1_DCACHE_ADDR_WIDTH),
+                    .DATA_WIDTH(`L1_DCACHE_DATA_WIDTH),
+                    .SUPPORT_COHERENCY(0),  // L1缓存是核心独享的，不需要一致性
+                    .CACHE_LEVEL(`CACHE_LEVEL_L1),
+                    .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+                ) u_l1_dcache (
+                    .clk(clk),
+                    .rst_n(rst_n),
 
-                    // Debug interface
-                    .debug_pc(),
-                    .debug_instr(),
-                    .debug_wb_valid(),
-                    .debug_wb_rd(),
-                    .debug_wb_value()
+                    // CPU接口
+                    .cpu_req_valid(dcache_req),
+                    .cpu_req_addr(dcache_addr),
+                    .cpu_req_rw(dcache_we),
+                    .cpu_req_data(dcache_wdata),
+                    .cpu_req_strb(dcache_byte_en),
+                    .cpu_rsp_valid(dcache_ready),
+                    .cpu_rsp_data(dcache_rdata),
+                    .cpu_rsp_error(),
+
+                    // 内存接口（连接L2）
+                    .mem_req_valid(l1_dcache_req[i]),
+                    .mem_req_addr(l1_dcache_addr_64),
+                    .mem_req_rw(l1_dcache_we[i]),
+                    .mem_req_data(l1_dcache_wdata[i*512 +: 64]),
+                    .mem_rsp_valid(l1_dcache_ready[i]),
+                    .mem_rsp_data(l1_dcache_data[i*512 +: 64]),
+                    .mem_rsp_error(),
+
+                    // 一致性接口（不使用，连接到0）
+                    .coh_req_addr(64'd0),
+                    .coh_req_valid(1'b0),
+                    .coh_req_type(3'd0),
+                    .coh_rsp_valid(),
+                    .coh_rsp_state()
                 );
             end
             // 预留其他CPU类型的实现

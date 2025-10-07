@@ -21,20 +21,6 @@ module tb_riscv64_core;
     reg [63:0] dcache_rdata;
     reg dcache_ready;
 
-    // L1-L2缓存接口
-    wire l1_icache_req;
-    wire [63:0] l1_icache_addr;
-    wire [511:0] l1_icache_data;
-    wire l1_icache_ready;
-
-    wire l1_dcache_req;
-    wire [63:0] l1_dcache_addr;
-    wire l1_dcache_we;
-    wire [511:0] l1_dcache_wdata;
-    wire [511:0] l1_dcache_data;
-    wire [1:0] l1_dcache_req_type;
-    wire l1_dcache_ready;
-
     // 监听接口
     wire snoop_valid;
     wire [63:0] snoop_addr;
@@ -125,12 +111,6 @@ module tb_riscv64_core;
         end
     end
 
-    // 连接L1-L2接口（直接连接，简化测试）
-    assign l1_icache_ready = l1_icache_req;
-    assign l1_icache_data = 512'h0; // 简化测试，返回0
-    assign l1_dcache_ready = l1_dcache_req;
-    assign l1_dcache_data = 512'h0; // 简化测试，返回0
-
     // 连接监听接口（简化测试）
     assign snoop_valid = 1'b0; // 简化测试，无监听请求
     assign snoop_addr = 64'h0;
@@ -163,20 +143,6 @@ module tb_riscv64_core;
         .dcache_byte_en(dcache_byte_en),
         .dcache_rdata(dcache_rdata),
         .dcache_ready(dcache_ready),
-
-        // L1-L2缓存接口
-        .l1_icache_req(l1_icache_req),
-        .l1_icache_addr(l1_icache_addr),
-        .l1_icache_data(l1_icache_data),
-        .l1_icache_ready(l1_icache_ready),
-
-        .l1_dcache_req(l1_dcache_req),
-        .l1_dcache_addr(l1_dcache_addr),
-        .l1_dcache_we(l1_dcache_we),
-        .l1_dcache_wdata(l1_dcache_wdata),
-        .l1_dcache_data(l1_dcache_data),
-        .l1_dcache_req_type(l1_dcache_req_type),
-        .l1_dcache_ready(l1_dcache_ready),
 
         // 监听接口
         .snoop_valid(snoop_valid),
