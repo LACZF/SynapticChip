@@ -15,10 +15,6 @@ TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/address_decoder.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/mmio_subsystem.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/system_bus_arbiter.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/uart.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/bus_top.v
 
 # cpu
