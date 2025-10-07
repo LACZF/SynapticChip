@@ -114,7 +114,7 @@ module cpu_top #(
                 .ADDR_WIDTH(ADDR_WIDTH),
                 // 使用正确的L2缓存数据宽度（512位）
                 .DATA_WIDTH(`L2_CACHE_DATA_WIDTH),
-                .SUPPORT_COHERENCY(1),
+                .SUPPORT_COHERENCY(0),  // L2缓存是共享的，不需要一致性
                 .CACHE_LEVEL(`CACHE_LEVEL_L2),
                 .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
             ) u_l2_cache (
@@ -146,16 +146,16 @@ module cpu_top #(
                 .mem_rsp_data(l2_l3_rdata[0*64 +: 64]),
                 .mem_rsp_error(),
 
-                // 一致性接口
-                .coh_req_addr(snoop_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
-                .coh_req_valid(snoop_valid[0]),
-                .coh_req_type({1'b0, snoop_req_type[0*2 +: 2]}),
-                .coh_rsp_valid(snoop_ready[0]),
-                .coh_rsp_state(l2_coh_rsp_state)
+                // 一致性接口（不使用，连接到0）
+                .coh_req_addr({ADDR_WIDTH{1'b0}}),
+                .coh_req_valid(1'b0),
+                .coh_req_type(3'd0),
+                .coh_rsp_valid(),
+                .coh_rsp_state()
             );
 
-            // 将L2缓存的一致性状态转换为2位宽并连接到snoop_state
-            assign snoop_state[0*2 +: 2] = l2_coh_rsp_state[1:0];
+            // L2缓存不需要一致性，直接设置snoop_state为默认值
+            assign snoop_state[0*2 +: 2] = 2'b00;
 
             // 简化版：将L2的响应连接到所有核心（实际应根据请求源进行分发）
             // 使用非阻塞赋值实现连接
@@ -178,16 +178,16 @@ module cpu_top #(
             // L3缓存实例（使用通用cache模块，可选）
             if (ENABLE_L3_CACHE) begin : l3_cache_gen
                 cache #(
-                    .CACHE_LINE_SIZE(`L3_CACHE_LINE_SIZE),
-                    .CACHE_SIZE(`L3_CACHE_SIZE),
-                    .ASSOCIATIVITY(`L3_CACHE_ASSOCIATIVITY),
-                    .ADDR_WIDTH(ADDR_WIDTH),
-                    // 使用正确的L3缓存数据宽度（512位）
-                    .DATA_WIDTH(`L3_CACHE_DATA_WIDTH),
-                    .SUPPORT_COHERENCY(1),
-                    .CACHE_LEVEL(`CACHE_LEVEL_L3),
-                    .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
-                ) u_l3_cache (
+                .CACHE_LINE_SIZE(`L3_CACHE_LINE_SIZE),
+                .CACHE_SIZE(`L3_CACHE_SIZE),
+                .ASSOCIATIVITY(`L3_CACHE_ASSOCIATIVITY),
+                .ADDR_WIDTH(ADDR_WIDTH),
+                // 使用正确的L3缓存数据宽度（512位）
+                .DATA_WIDTH(`L3_CACHE_DATA_WIDTH),
+                .SUPPORT_COHERENCY(0),  // L3缓存是共享的，不需要一致性
+                .CACHE_LEVEL(`CACHE_LEVEL_L3),
+                .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+            ) u_l3_cache (
                     .clk(clk),
                     .rst_n(rst_n),
 
@@ -310,6 +310,13 @@ module cpu_top #(
                 assign l1_dcache_addr_64 = {{32{1'b0}}, l1_dcache_addr[i*32 +: 32]};
                 assign icache_mem_req_rw = 1'b0;  // 指令缓存始终是读操作
 
+                // 创建中间信号用于一致性接口（3位宽）
+                wire [2:0] icache_coh_rsp_state;
+                wire [2:0] dcache_coh_rsp_state;
+
+                // 将3位一致性状态连接到2位snoop_state
+                assign snoop_state[i*2 +: 2] = icache_coh_rsp_state[1:0] | dcache_coh_rsp_state[1:0];
+
                 // L1指令缓存实例（使用通用cache模块）
                 cache #(
                     .CACHE_LINE_SIZE(`L1_ICACHE_LINE_SIZE),
@@ -317,7 +324,7 @@ module cpu_top #(
                     .ASSOCIATIVITY(`L1_ICACHE_ASSOCIATIVITY),
                     .ADDR_WIDTH(`L1_ICACHE_ADDR_WIDTH),
                     .DATA_WIDTH(`L1_ICACHE_DATA_WIDTH),
-                    .SUPPORT_COHERENCY(0),  // L1缓存是核心独享的，不需要一致性
+                    .SUPPORT_COHERENCY(1),  // L1缓存是核心独享的，多核间需要一致性
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l1_icache (
@@ -343,12 +350,12 @@ module cpu_top #(
                     .mem_rsp_data(l1_icache_data[i*512 +: 64]),
                     .mem_rsp_error(),
 
-                    // 一致性接口（不使用，连接到0）
-                    .coh_req_addr(64'd0),
-                    .coh_req_valid(1'b0),
-                    .coh_req_type(3'd0),
-                    .coh_rsp_valid(),
-                    .coh_rsp_state()
+                    // 一致性接口（连接到snoop信号）
+                    .coh_req_addr(l1_icache_addr_64),
+                    .coh_req_valid(snoop_valid[i]),
+                    .coh_req_type({1'b0, snoop_req_type[i*2 +: 2]}),
+                    .coh_rsp_valid(snoop_ready[i]),
+                    .coh_rsp_state(icache_coh_rsp_state)
                 );
 
                 // L1数据缓存实例（使用通用cache模块）
@@ -358,7 +365,7 @@ module cpu_top #(
                     .ASSOCIATIVITY(`L1_DCACHE_ASSOCIATIVITY),
                     .ADDR_WIDTH(`L1_DCACHE_ADDR_WIDTH),
                     .DATA_WIDTH(`L1_DCACHE_DATA_WIDTH),
-                    .SUPPORT_COHERENCY(0),  // L1缓存是核心独享的，不需要一致性
+                    .SUPPORT_COHERENCY(1),  // L1缓存是核心独享的，多核间需要一致性
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l1_dcache (
@@ -384,12 +391,12 @@ module cpu_top #(
                     .mem_rsp_data(l1_dcache_data[i*512 +: 64]),
                     .mem_rsp_error(),
 
-                    // 一致性接口（不使用，连接到0）
-                    .coh_req_addr(64'd0),
-                    .coh_req_valid(1'b0),
-                    .coh_req_type(3'd0),
-                    .coh_rsp_valid(),
-                    .coh_rsp_state()
+                    // 一致性接口（连接到snoop信号）
+                    .coh_req_addr(l1_dcache_addr_64),
+                    .coh_req_valid(snoop_valid[i]),
+                    .coh_req_type({1'b0, snoop_req_type[i*2 +: 2]}),
+                    .coh_rsp_valid(snoop_ready[i]),
+                    .coh_rsp_state(dcache_coh_rsp_state)
                 );
             end
             // 预留其他CPU类型的实现
