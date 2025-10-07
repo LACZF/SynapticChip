@@ -135,11 +135,13 @@ module riscv64_write_back (
                 end
             endcase
 
+        `ifdef DEBUG
             // 调试信息输出
             if (reg_we && (instr_rd != 5'b0)) begin
                 $display("WB: PC=%h, Instr=%h, RD=x%0d, Value=%h",
                          pc_in, instr_in, instr_rd, reg_wdata);
             end
+        `endif
         end else begin
             wb_valid <= 1'b0;
         end

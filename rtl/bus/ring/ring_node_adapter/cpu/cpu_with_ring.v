@@ -21,7 +21,14 @@ module cpu_with_ring #(
 ) (
     input clk,
     input rst_n,
-    input ext_int,
+
+    output                            cpu_ext_int_o,
+    input  wire                       cpu_mem_req_i,
+    input  wire [ADDR_WIDTH-1:0]      cpu_mem_addr_i,
+    input  wire [511:0]               cpu_mem_wdata_i,
+    input  wire                       cpu_mem_we_i,
+    output wire                       cpu_mem_ready_o,
+    output wire [511:0]               cpu_mem_rdata_o,
 
     // Ring总线接口
     // 发送请求
@@ -53,39 +60,6 @@ module cpu_with_ring #(
     input wire [ADDR_WIDTH-1:0]       rsp_addr_i,
     input wire [DATA_WIDTH-1:0]       rsp_data_i
 );
-
-    // CPU和Ring接口之间的连接信号
-    wire                        cpu_mem_req;
-    wire [ADDR_WIDTH-1:0]       cpu_mem_addr;
-    wire [511:0]                cpu_mem_wdata;
-    wire                        cpu_mem_we;
-    wire                        cpu_mem_ready;
-    wire [511:0]                cpu_mem_rdata;
-
-    // CPU顶层模块实例
-    cpu_top #(
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH),
-        .INST_WIDTH(INST_WIDTH),
-        .NUM_CORES(NUM_CORES),
-        .CORE_ID_WIDTH(CORE_ID_WIDTH),
-        .ENABLE_L2_CACHE(ENABLE_L2_CACHE),
-        .ENABLE_L3_CACHE(ENABLE_L3_CACHE),
-        .CPU_TYPE(CPU_TYPE)
-    ) u_cpu_top (
-        .clk(clk),
-        .rst_n(rst_n),
-        .ext_int(ext_int),
-
-        // 内存接口直接连接到Ring接口
-        .mem_req(cpu_mem_req),
-        .mem_addr(cpu_mem_addr),
-        .mem_wdata(cpu_mem_wdata),
-        .mem_we(cpu_mem_we),
-        .mem_ready(cpu_mem_ready),
-        .mem_rdata(cpu_mem_rdata)
-    );
-
     // CPU-Ring总线接口模块实例
     cpu_ring_interface #(
         .NUM_RINGS(NUM_RINGS),
@@ -100,12 +74,12 @@ module cpu_with_ring #(
         .rst_n(rst_n),
 
         // 连接到CPU顶层模块
-        .cpu_mem_req(cpu_mem_req),
-        .cpu_mem_addr(cpu_mem_addr),
-        .cpu_mem_wdata(cpu_mem_wdata),
-        .cpu_mem_we(cpu_mem_we),
-        .cpu_mem_ready(cpu_mem_ready),
-        .cpu_mem_rdata(cpu_mem_rdata),
+        .cpu_mem_req(cpu_mem_req_i),
+        .cpu_mem_addr(cpu_mem_addr_i),
+        .cpu_mem_wdata(cpu_mem_wdata_i),
+        .cpu_mem_we(cpu_mem_we_i),
+        .cpu_mem_ready(cpu_mem_ready_o),
+        .cpu_mem_rdata(cpu_mem_rdata_o),
 
         // 连接到Ring总线
         .tx_req_ring_mask_o(tx_req_ring_mask_o),

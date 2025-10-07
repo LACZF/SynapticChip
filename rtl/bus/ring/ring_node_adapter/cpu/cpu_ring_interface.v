@@ -156,6 +156,7 @@ module cpu_ring_interface #(
     end
 
     // 调试信息
+`ifdef DEBUG
     always @(posedge clk) begin
         if (tx_req_valid_o) begin
             $display("[%0t ps] CPU_RING_INTERFACE: Sending request - Opcode=0x%h, Addr=0x%h, Data=0x%h, TargetID=0x%h",
@@ -178,5 +179,6 @@ module cpu_ring_interface #(
             end
         end
     end
+`endif
 
 endmodule

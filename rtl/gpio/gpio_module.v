@@ -3,7 +3,9 @@
 
 `include "gpio_params.v"
 
-module gpio_module (
+module gpio_module #(
+    parameter GPIO_WIDTH        = 32
+) (
     input clk,
     input rst_n,
 
@@ -16,37 +18,37 @@ module gpio_module (
     output reg ack,
 
     // GPIO引脚
-    inout [`GPIO_WIDTH-1:0] gpio_pins,
+    inout [GPIO_WIDTH-1:0] gpio_pins,
 
     // 中断输出
     output reg int_out
 );
 
     // 内部寄存器
-    reg [`GPIO_WIDTH-1:0] data_reg;     // 数据寄存器
-    reg [`GPIO_WIDTH-1:0] dir_reg;      // 方向寄存器
-    reg [`GPIO_WIDTH-1:0] inten_reg;    // 中断使能寄存器
-    reg [`GPIO_WIDTH-1:0] intpol_reg;   // 中断极性寄存器
-    reg [`GPIO_WIDTH-1:0] inttype_reg;  // 中断类型寄存器
-    reg [`GPIO_WIDTH-1:0] intstat_reg;  // 中断状态寄存器
+    reg [GPIO_WIDTH-1:0] data_reg;     // 数据寄存器
+    reg [GPIO_WIDTH-1:0] dir_reg;      // 方向寄存器
+    reg [GPIO_WIDTH-1:0] inten_reg;    // 中断使能寄存器
+    reg [GPIO_WIDTH-1:0] intpol_reg;   // 中断极性寄存器
+    reg [GPIO_WIDTH-1:0] inttype_reg;  // 中断类型寄存器
+    reg [GPIO_WIDTH-1:0] intstat_reg;  // 中断状态寄存器
     reg [15:0] debounce_reg;            // 去抖周期寄存器
 
     // 输入同步和去抖逻辑
-    reg [`GPIO_WIDTH-1:0] gpio_sync0;
-    reg [`GPIO_WIDTH-1:0] gpio_sync1;
-    reg [`GPIO_WIDTH-1:0] gpio_debounced;
-    reg [15:0] debounce_counter [`GPIO_WIDTH-1:0];
-    reg [`GPIO_WIDTH-1:0] debounce_active;
+    reg [GPIO_WIDTH-1:0] gpio_sync0;
+    reg [GPIO_WIDTH-1:0] gpio_sync1;
+    reg [GPIO_WIDTH-1:0] gpio_debounced;
+    reg [15:0] debounce_counter [GPIO_WIDTH-1:0];
+    reg [GPIO_WIDTH-1:0] debounce_active;
 
     // 中断检测逻辑
-    reg [`GPIO_WIDTH-1:0] gpio_prev;
-    wire [`GPIO_WIDTH-1:0] gpio_rise;
-    wire [`GPIO_WIDTH-1:0] gpio_fall;
+    reg [GPIO_WIDTH-1:0] gpio_prev;
+    wire [GPIO_WIDTH-1:0] gpio_rise;
+    wire [GPIO_WIDTH-1:0] gpio_fall;
 
     // GPIO引脚控制
     genvar i;
     generate
-        for (i = 0; i < `GPIO_WIDTH; i = i + 1) begin : gpio_pin
+        for (i = 0; i < GPIO_WIDTH; i = i + 1) begin : gpio_pin
             assign gpio_pins[i] = dir_reg[i] ? data_reg[i] : 1'bz;
         end
     endgenerate
@@ -54,9 +56,9 @@ module gpio_module (
     // 输入同步
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            gpio_sync0 <= {`GPIO_WIDTH{1'b0}};
-            gpio_sync1 <= {`GPIO_WIDTH{1'b0}};
-            gpio_prev <= {`GPIO_WIDTH{1'b0}};
+            gpio_sync0 <= {GPIO_WIDTH{1'b0}};
+            gpio_sync1 <= {GPIO_WIDTH{1'b0}};
+            gpio_prev <= {GPIO_WIDTH{1'b0}};
         end else begin
             gpio_sync0 <= gpio_pins;
             gpio_sync1 <= gpio_sync0;
@@ -70,7 +72,7 @@ module gpio_module (
 
     // 去抖逻辑
     generate
-        for (i = 0; i < `GPIO_WIDTH; i = i + 1) begin : debounce
+        for (i = 0; i < GPIO_WIDTH; i = i + 1) begin : debounce
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
                     debounce_counter[i] <= 0;
@@ -98,11 +100,11 @@ module gpio_module (
     // 中断检测
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            intstat_reg <= {`GPIO_WIDTH{1'b0}};
+            intstat_reg <= {GPIO_WIDTH{1'b0}};
             int_out <= 1'b0;
         end else begin
             // 检测中断条件
-            for (integer j = 0; j < `GPIO_WIDTH; j = j + 1) begin
+            for (integer j = 0; j < GPIO_WIDTH; j = j + 1) begin
                 if (inten_reg[j]) begin
                     if (inttype_reg[j]) begin
                         // 边沿中断
@@ -126,11 +128,11 @@ module gpio_module (
     // 寄存器读写
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            data_reg <= {`GPIO_WIDTH{1'b0}};
-            dir_reg <= {`GPIO_WIDTH{1'b0}};
-            inten_reg <= {`GPIO_WIDTH{1'b0}};
-            intpol_reg <= {`GPIO_WIDTH{1'b0}};
-            inttype_reg <= {`GPIO_WIDTH{1'b0}};
+            data_reg <= {GPIO_WIDTH{1'b0}};
+            dir_reg <= {GPIO_WIDTH{1'b0}};
+            inten_reg <= {GPIO_WIDTH{1'b0}};
+            intpol_reg <= {GPIO_WIDTH{1'b0}};
+            inttype_reg <= {GPIO_WIDTH{1'b0}};
             debounce_reg <= 16'd1000; // 默认去抖周期
             ack <= 1'b0;
             data_out <= {`DATA_WIDTH{1'b0}};
@@ -141,23 +143,32 @@ module gpio_module (
                 if (we) begin
                     // 写操作
                     case (addr)
-                        `REG_DATA: data_reg <= data_in[`GPIO_WIDTH-1:0];
-                        `REG_DIR: dir_reg <= data_in[`GPIO_WIDTH-1:0];
-                        `REG_INTEN: inten_reg <= data_in[`GPIO_WIDTH-1:0];
-                        `REG_INTPOL: intpol_reg <= data_in[`GPIO_WIDTH-1:0];
-                        `REG_INTTYPE: inttype_reg <= data_in[`GPIO_WIDTH-1:0];
-                        `REG_INTSTAT: intstat_reg <= intstat_reg & ~data_in[`GPIO_WIDTH-1:0]; // 写1清除
+                        `REG_DATA: data_reg <= data_in[GPIO_WIDTH-1:0];
+                        `REG_DIR: dir_reg <= data_in[GPIO_WIDTH-1:0];
+                        `REG_INTEN: inten_reg <= data_in[GPIO_WIDTH-1:0];
+                        `REG_INTPOL: intpol_reg <= data_in[GPIO_WIDTH-1:0];
+                        `REG_INTTYPE: inttype_reg <= data_in[GPIO_WIDTH-1:0];
+                        `REG_INTSTAT: intstat_reg <= intstat_reg & ~data_in[GPIO_WIDTH-1:0]; // 写1清除
                         `REG_DEBOUNCE: debounce_reg <= data_in[15:0];
                     endcase
                 end else begin
                     // 读操作
                     case (addr)
-                        `REG_DATA: data_out <= {{(`DATA_WIDTH-`GPIO_WIDTH){1'b0}}, dir_reg ? data_reg : gpio_debounced};
-                        `REG_DIR: data_out <= {{(`DATA_WIDTH-`GPIO_WIDTH){1'b0}}, dir_reg};
-                        `REG_INTEN: data_out <= {{(`DATA_WIDTH-`GPIO_WIDTH){1'b0}}, inten_reg};
-                        `REG_INTPOL: data_out <= {{(`DATA_WIDTH-`GPIO_WIDTH){1'b0}}, intpol_reg};
-                        `REG_INTTYPE: data_out <= {{(`DATA_WIDTH-`GPIO_WIDTH){1'b0}}, inttype_reg};
-                        `REG_INTSTAT: data_out <= {{(`DATA_WIDTH-`GPIO_WIDTH){1'b0}}, intstat_reg};
+                        `REG_DATA: begin
+                            // 逐位设置数据寄存器的值
+                            for (integer k = 0; k < GPIO_WIDTH; k = k + 1) begin
+                                data_out[k] <= dir_reg[k] ? data_reg[k] : gpio_debounced[k];
+                            end
+                            // 如果数据宽度大于GPIO宽度，高位填充0
+                            if (`DATA_WIDTH > GPIO_WIDTH) begin
+                                data_out[`DATA_WIDTH-1:GPIO_WIDTH] <= {(`DATA_WIDTH-GPIO_WIDTH){1'b0}};
+                            end
+                        end
+                        `REG_DIR: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, dir_reg};
+                        `REG_INTEN: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, inten_reg};
+                        `REG_INTPOL: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, intpol_reg};
+                        `REG_INTTYPE: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, inttype_reg};
+                        `REG_INTSTAT: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, intstat_reg};
                         `REG_DEBOUNCE: data_out <= {{(`DATA_WIDTH-16){1'b0}}, debounce_reg};
                         default: data_out <= {`DATA_WIDTH{1'b0}};
                     endcase

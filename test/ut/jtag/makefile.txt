@@ -1,11 +1,8 @@
 
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-TEST_TARGET := jtag_node
+TEST_TARGET := jtag_top
 TEST_ARGS ?=
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/jtag
-TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_params.v
 TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_top.v
-TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_node.v
-TEST_SRC += $(CUR_DIR)/tb_jtag_node.v
+TEST_SRC += $(CUR_DIR)/tb_jtag_top.v

@@ -15,7 +15,21 @@ TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_top.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/direct/direct_bus_top.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/bus_top.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/cpu/cpu_ring_interface.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/cpu/cpu_with_ring.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/PE/pe_ctrl_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/PE/pe_ctrl_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/uart/uart_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/uart/uart_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/gpio/gpio_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/gpio/gpio_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/jtag/jtag_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/jtag/jtag_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/spi/spi_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/spi/spi_ring_node.v
 
 # cpu
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu
@@ -33,20 +47,15 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_ring_interface.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_with_ring.v
 TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
 
 # PE
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_params.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
 
 # PE controller
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_ctrl
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_params.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
 
 # PE PE_router
@@ -59,32 +68,24 @@ TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/uart
 TEST_SRC += $(TOP_DIR)/rtl/uart/uart_params.v
 TEST_SRC += $(TOP_DIR)/rtl/uart/uart_core.v
-TEST_SRC += $(TOP_DIR)/rtl/uart/uart_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/uart/uart_node.v
 
 # gpio
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/gpio
 TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_params.v
 TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_module.v
-TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_node.v
 
 # jtag
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/jtag
 TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_params.v
 TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_top.v
-TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_node.v
 
-# Synaptic Core
+# PE
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_top
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 
 # spi
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/spi
 TEST_SRC += $(TOP_DIR)/rtl/spi/spi_core.v
-TEST_SRC += $(TOP_DIR)/rtl/spi/spi_node.v
-TEST_SRC += $(TOP_DIR)/rtl/spi/spi_ring_node.v
 
 # top
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/top

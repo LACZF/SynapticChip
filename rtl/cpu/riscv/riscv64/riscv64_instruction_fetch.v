@@ -42,6 +42,7 @@ module riscv64_instruction_fetch (
         end
     end
 
+`ifdef DEBUG
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             $display("[%0t ps] IF: Reset, initializing PC=0x%h", $time, 64'h8000_0000);
@@ -86,5 +87,6 @@ module riscv64_instruction_fetch (
             $display("[%0t ps] IF: Pipeline stalled", $time);
         end
     end
+`endif
 
 endmodule

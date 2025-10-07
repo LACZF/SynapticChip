@@ -1,12 +1,9 @@
 
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-TEST_TARGET := rom_node
+TEST_TARGET := spi_core
 TEST_ARGS ?= -g2012
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/spi
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
 TEST_SRC += $(TOP_DIR)/rtl/spi/spi_core.v
-TEST_SRC += $(TOP_DIR)/rtl/spi/spi_node.v
-TEST_SRC += $(TOP_DIR)/rtl/spi/spi_ring_node.v
-
+TEST_SRC += $(TOP_DIR)/rtl/spi/spi_params.v
 TEST_SRC += $(CUR_DIR)/tb_spi_controller.v

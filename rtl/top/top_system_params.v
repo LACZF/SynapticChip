@@ -40,9 +40,9 @@
 `define NODE_ROM   5'd2
 `define NODE_GPIO  5'd3
 `define NODE_UART  5'd4
-`define NODE_FABRIC 5'd5
-`define NODE_JTAG 5'd6
-`define NODE_SPI 5'd7
+`define NODE_PE    5'd5
+`define NODE_JTAG  5'd6
+`define NODE_SPI   5'd7
 
 // 路由参数
 `define NUM_PORTS 5

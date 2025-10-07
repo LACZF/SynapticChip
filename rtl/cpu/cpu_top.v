@@ -322,6 +322,7 @@ module cpu_top #(
                     .debug_wb_value()
                 );
 
+            `ifdef DEBUG
                 // 添加调试信息，追踪指令请求信号流
                 always @(posedge clk) begin
                     if (icache_req) begin
@@ -333,6 +334,7 @@ module cpu_top #(
                                  $time, i, l1_icache_req[i], l1_icache_addr_64);
                     end
                 end
+            `endif
 
                 // L1指令缓存实例（使用通用cache模块）
                 cache #(

@@ -17,6 +17,10 @@ module bus_top #(
     parameter RX_FIFO_DEPTH    = 4,        // 接收FIFO深度
     parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
     parameter NUM_CORES        = 4,
+    parameter GPIO_WIDTH       = 32,
+    parameter NUM_PES          = 16,
+    parameter INST_WIDTH       = 32,
+    parameter PE_ID_WIDTH      = 4,
     parameter MATCH_TYPE_WIDTH = 2         // 匹配类型宽度
 ) (
     input  wire                                   clk,
@@ -25,53 +29,75 @@ module bus_top #(
     input  wire [NUM_NODES*ADDR_WIDTH-1:0]        node_start_addr_i,
     input  wire [NUM_NODES*ADDR_WIDTH-1:0]        node_end_addr_i,
 
-    // 发送请求
-    input  wire [NUM_NODES*NUM_RINGS-1:0]         tx_req_ring_mask_i,      // 指定使用的Ring
-    input  wire [NUM_NODES*NUM_RINGS-1:0]         tx_req_ring_disable_i,   // 禁用的Ring
-    input  wire [NUM_NODES-1:0]                   tx_req_valid_i,
-    input  wire [NUM_NODES-1:0]                   tx_req_is_order_i,
-    input  wire [NUM_NODES*OPCODE_WIDTH-1:0]      tx_req_opcode_i,
-    input  wire [NUM_NODES*MATCH_TYPE_WIDTH-1:0]  tx_req_match_type_i,
-    input  wire [NUM_NODES*NODE_ID_WIDTH-1:0]     tx_req_source_id_i,
-    input  wire [NUM_NODES*NODE_ID_WIDTH-1:0]     tx_req_target_id_i,
-    input  wire [NUM_NODES*ADDR_WIDTH-1:0]        tx_req_addr_i,
-    input  wire [NUM_NODES*DATA_WIDTH-1:0]        tx_req_data_i,
-    output wire [NUM_NODES-1:0]                   tx_req_ready_o,
+    // CPU
+    output                                        cpu_ext_int_o,
+    input  wire                                   cpu_mem_req_i,
+    input  wire [ADDR_WIDTH-1:0]                  cpu_mem_addr_i,
+    input  wire [511:0]                           cpu_mem_wdata_i,
+    input  wire                                   cpu_mem_we_i,
+    output wire                                   cpu_mem_ready_o,
+    output wire [511:0]                           cpu_mem_rdata_o,
 
-    // 接受请求
-    output wire [NUM_NODES-1:0]                   rx_req_valid_o,
-    output wire [NUM_NODES-1:0]                   rx_req_is_order_o,
-    output wire [NUM_NODES*OPCODE_WIDTH-1:0]      rx_req_opcode_o,
-    output wire [NUM_NODES*MATCH_TYPE_WIDTH-1:0]  rx_req_match_type_o,
-    output wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rx_req_source_id_o,
-    output wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rx_req_target_id_o,
-    output wire [NUM_NODES*ADDR_WIDTH-1:0]        rx_req_addr_o,
-    output wire [NUM_NODES*DATA_WIDTH-1:0]        rx_req_data_o,
+    // PE
+    output reg  [NUM_PES-1:0]                     pe_enable_o,
+    output reg  [NUM_PES-1:0]                     pe_reset_o,
+    output reg  [(NUM_PES*INST_WIDTH)-1:0]        pe_instructions_o,
+    output reg                                    pe_inst_valid_o,
+    input       [(NUM_PES*DATA_WIDTH)-1:0]        pe_status_i,
+    input       [(NUM_PES*DATA_WIDTH)-1:0]        pe_outputs_i,
+    input       [NUM_PES-1:0]                     pe_busy_i,
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]     pe_route_config_o,
+    output reg                                    pe_route_cfg_valid_o,
 
-    // 接收响应
-    output wire [NUM_NODES-1:0]                   rsp_valid_o,
-    output wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rsp_source_id_o,
-    output wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rsp_target_id_o,
-    output wire [NUM_NODES*ADDR_WIDTH-1:0]        rsp_addr_o,
-    output wire [NUM_NODES*DATA_WIDTH-1:0]        rsp_data_o,
+    // GPIO
+    output                                        gpio_req_o,
+    output                                        gpio_we_o,
+    output      [ADDR_WIDTH-1:0]                  gpio_addr_o,
+    output      [DATA_WIDTH-1:0]                  gpio_data_in_o,
+    input  reg  [DATA_WIDTH-1:0]                  gpio_data_out_i,
+    input  reg                                    gpio_ack_i,
+    inout       [GPIO_WIDTH-1:0]                  gpio_pins,
+    input  reg                                    gpio_int_i,
 
-    // Ring总线状态
-    output wire [NUM_RINGS*RING_ID_WIDTH-1:0]     ring_id_o,
-    output wire [NUM_RINGS-1:0]                   ring_busy,
+    // JTAG接口
+    output                                        jtag_tck_o,
+    output                                        jtag_tms_o,
+    output                                        jtag_tdi_o,
+    input  reg                                    jtag_tdo_i,
+    input  reg                                    jtag_tdo_en_i,
+    output                                        jtag_req_o,
+    output                                        jtag_we_o,
+    output      [ADDR_WIDTH-1:0]                  jtag_addr_o,
+    output      [DATA_WIDTH-1:0]                  jtag_data_in_o,
+    input  reg  [DATA_WIDTH-1:0]                  jtag_data_out_i,
+    input  reg                                    jtag_ack_i,
+    input  reg  [DATA_WIDTH-1:0]                  jtag_debug_data_i,
+    input  reg                                    jtag_debug_valid_i,
 
-    // 外设接口
-    output wire                                   uart_txd,
-    input  wire                                   uart_rxd,
-    input  wire [15:0]                            gpio_in,
-    output wire [15:0]                            gpio_out,
-    input  wire [3:0]                             dip_switch,
-    output wire [3:0]                             led,
+    // SPI
+    output wire                                   spi_req_o,
+    output wire                                   spi_we_o,
+    output wire [ADDR_WIDTH-1:0]                  spi_addr_o,
+    output wire [DATA_WIDTH-1:0]                  spi_data_in_o,
+    input  reg  [DATA_WIDTH-1:0]                  spi_data_out_i,
+    input  reg                                    spi_ack_i,
+    input  reg                                    spi_cs_n_i,
+    input  reg                                    spi_clk_i,
+    input  reg                                    spi_mosi_i,
+    output wire                                   spi_miso_o,
 
-    // 中断接口
-    output wire [(NUM_CORES*16)-1:0]              core_irq,
-    output wire [NUM_CORES-1:0]                   timer_irq,
-    output wire [NUM_CORES-1:0]                   external_irq,
-    output wire [NUM_CORES-1:0]                   software_irq
+    // UART
+    output                                        uart_req_o,
+    output                                        uart_we_o,
+    output      [ADDR_WIDTH-1:0]                  uart_addr_o,
+    output      [DATA_WIDTH-1:0]                  uart_data_in_o,
+    input  reg  [DATA_WIDTH-1:0]                  uart_data_out_i,
+    input  reg                                    uart_ack_i,
+    input  reg                                    uart_txd_i,
+    output                                        uart_rxd_o,
+    input  reg                                    uart_rts_i,
+    output                                        uart_cts_o,
+    input  reg                                    uart_int_i
 );
     // 内部信号定义
     wire                                          req_valid;
@@ -142,7 +168,7 @@ module bus_top #(
     generate
         if (BUS_TYPE == `BUS_TYPE_RING) begin : ring_bus_instance
             // Ring总线模式
-            ring_bus #(
+            ring_bus_top #(
                 .NUM_RINGS(NUM_RINGS),
                 .NUM_NODES(NUM_NODES),
                 .ADDR_WIDTH(ADDR_WIDTH),
@@ -153,6 +179,7 @@ module bus_top #(
                 .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
                 .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
                 .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH),
+                .GPIO_WIDTH(GPIO_WIDTH),
                 .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
             ) u_ring_bus (
                 .clk(clk),
@@ -161,188 +188,167 @@ module bus_top #(
                 .node_start_addr_i(node_start_addr_i),
                 .node_end_addr_i(node_end_addr_i),
 
-                .tx_req_ring_mask_i(tx_req_ring_mask_i),
-                .tx_req_ring_disable_i(tx_req_ring_disable_i),
-                .tx_req_valid_i(tx_req_valid_i),
-                .tx_req_is_order_i(tx_req_is_order_i),
-                .tx_req_opcode_i(tx_req_opcode_i),
-                .tx_req_match_type_i(tx_req_match_type_i),
-                .tx_req_source_id_i(tx_req_source_id_i),
-                .tx_req_target_id_i(tx_req_target_id_i),
-                .tx_req_addr_i(tx_req_addr_i),
-                .tx_req_data_i(tx_req_data_i),
-                .tx_req_ready_o(tx_req_ready_o),
+                // CPU
+                .cpu_ext_int_o(cpu_ext_int_o),
+                .cpu_mem_req_i(cpu_mem_req_i),
+                .cpu_mem_addr_i(cpu_mem_addr_i),
+                .cpu_mem_wdata_i(cpu_mem_wdata_i),
+                .cpu_mem_we_i(cpu_mem_we_i),
+                .cpu_mem_ready_o(cpu_mem_ready_o),
+                .cpu_mem_rdata_o(cpu_mem_rdata_o),
 
-                .rx_req_valid_o(rx_req_valid_o),
-                .rx_req_is_order_o(rx_req_is_order_o),
-                .rx_req_opcode_o(rx_req_opcode_o),
-                .rx_req_match_type_o(rx_req_match_type_o),
-                .rx_req_source_id_o(rx_req_source_id_o),
-                .rx_req_target_id_o(rx_req_target_id_o),
-                .rx_req_addr_o(rx_req_addr_o),
-                .rx_req_data_o(rx_req_data_o),
+                // PE
+                .pe_enable_o(pe_enable_o),
+                .pe_reset_o(pe_reset_o),
+                .pe_instructions_o(pe_instructions_o),
+                .pe_inst_valid_o(pe_inst_valid_o),
+                .pe_status_i(pe_status_i),
+                .pe_outputs_i(pe_outputs_i),
+                .pe_busy_i(pe_busy_i),
+                .pe_route_config_o(pe_route_config_o),
+                .pe_route_cfg_valid_o(pe_route_cfg_valid_o),
 
-                .rsp_valid_o(rsp_valid_o),
-                .rsp_source_id_o(rsp_source_id_o),
-                .rsp_target_id_o(rsp_target_id_o),
-                .rsp_addr_o(rsp_addr_o),
-                .rsp_data_o(rsp_data_o),
+                // GPIO
+                .gpio_req_o(gpio_req_o),
+                .gpio_we_o(gpio_we_o),
+                .gpio_addr_o(gpio_addr_o),
+                .gpio_data_in_o(gpio_data_in_o),
+                .gpio_data_out_i(gpio_data_out_i),
+                .gpio_ack_i(gpio_ack_i),
+                .gpio_pins(gpio_pins),
+                .gpio_int_i(gpio_int_i),
 
-                .ring_id_o(ring_id_o),
-                .ring_busy(ring_busy)
+                // JTAG接口
+                .jtag_tck_o(jtag_tck_o),
+                .jtag_tms_o(jtag_tms_o),
+                .jtag_tdi_o(jtag_tdi_o),
+                .jtag_tdo_i(jtag_tdo_i),
+                .jtag_tdo_en_i(jtag_tdo_en_i),
+                .jtag_req_o(jtag_req_o),
+                .jtag_we_o(jtag_we_o),
+                .jtag_addr_o(jtag_addr_o),
+                .jtag_data_in_o(jtag_data_in_o),
+                .jtag_data_out_i(jtag_data_out_i),
+                .jtag_ack_i(jtag_ack_i),
+                .jtag_debug_data_i(jtag_debug_data_i),
+                .jtag_debug_valid_i(jtag_debug_valid_i),
+
+                // SPI
+                .spi_req_o(spi_req_o),
+                .spi_we_o(spi_we_o),
+                .spi_addr_o(spi_addr_o),
+                .spi_data_in_o(spi_data_in_o),
+                .spi_data_out_i(spi_data_out_i),
+                .spi_ack_i(spi_ack_i),
+                .spi_cs_n_i(spi_cs_n_i),
+                .spi_clk_i(spi_clk_i),
+                .spi_mosi_i(spi_mosi_i),
+                .spi_miso_o(spi_miso_o),
+
+                // UART
+                .uart_req_o(uart_req_o),
+                .uart_we_o(uart_we_o),
+                .uart_addr_o(uart_addr_o),
+                .uart_data_in_o(uart_data_in_o),
+                .uart_data_out_i(uart_data_out_i),
+                .uart_ack_i(uart_ack_i),
+                .uart_txd_i(uart_txd_i),
+                .uart_rxd_o(uart_rxd_o),
+                .uart_rts_i(uart_rts_i),
+                .uart_cts_o(uart_cts_o),
+                .uart_int_i(uart_int_i)
             );
-        end else if (BUS_TYPE == `BUS_TYPE_DIRECT) begin : direct_connect_instance
-            // 直接连接模式 - 使用地址解码分发请求
-            // 内部信号定义
-            wire [NUM_NODES-1:0]                        decoded_req_valid;
-            wire [NUM_NODES*OPCODE_WIDTH-1:0]           decoded_req_opcode;
-            wire [NUM_NODES*MATCH_TYPE_WIDTH-1:0]       decoded_req_match_type;
-            wire [NUM_NODES*NODE_ID_WIDTH-1:0]          decoded_req_source_id;
-            wire [NUM_NODES*NODE_ID_WIDTH-1:0]          decoded_req_target_id;
-            wire [NUM_NODES*ADDR_WIDTH-1:0]             decoded_req_addr;
-            wire [NUM_NODES*DATA_WIDTH-1:0]             decoded_req_data;
-            wire [NUM_NODES-1:0]                        decoded_req_is_order;
-
-            // 地址解码器 - 根据请求的地址范围将请求分发到对应的目标节点
-            // 每个节点监控所有其他节点的请求，并根据地址范围决定是否处理
-            genvar i, j;
-            for (i = 0; i < NUM_NODES; i = i + 1) begin : address_decoder_gen
-                // 初始化节点i的接收信号为0
-                assign decoded_req_valid[i] = 1'b0;
-                assign decoded_req_opcode[i*OPCODE_WIDTH +: OPCODE_WIDTH] = {OPCODE_WIDTH{1'b0}};
-                assign decoded_req_match_type[i*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] = {MATCH_TYPE_WIDTH{1'b0}};
-                assign decoded_req_source_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = {NODE_ID_WIDTH{1'b0}};
-                assign decoded_req_target_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = {NODE_ID_WIDTH{1'b0}};
-                assign decoded_req_addr[i*ADDR_WIDTH +: ADDR_WIDTH] = {ADDR_WIDTH{1'b0}};
-                assign decoded_req_data[i*DATA_WIDTH +: DATA_WIDTH] = {DATA_WIDTH{1'b0}};
-                assign decoded_req_is_order[i] = 1'b0;
-
-                // 处理来自其他节点的请求
-                for (j = 0; j < NUM_NODES; j = j + 1) begin : node_request_process
-                    if (i != j) begin : cross_node_requests
-                        wire [ADDR_WIDTH-1:0] req_addr = tx_req_addr_i[j*ADDR_WIDTH +: ADDR_WIDTH];
-                        wire [NODE_ID_WIDTH-1:0] req_target_id = tx_req_target_id_i[j*NODE_ID_WIDTH +: NODE_ID_WIDTH];
-                        wire [MATCH_TYPE_WIDTH-1:0] req_match_type = tx_req_match_type_i[j*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH];
-                        wire target_match;
-                        wire addr_range_match;
-
-                        // 目标ID匹配逻辑
-                        assign target_match = (req_match_type == `RING_MATCH_TYPE_ID) && (req_target_id == i);
-
-                        // 地址范围匹配逻辑 - 检查请求地址是否在节点i的地址范围内
-                        assign addr_range_match = (req_match_type == `RING_MATCH_TYPE_ADDR) &&
-                                                  (req_addr >= node_start_addr_i[i*ADDR_WIDTH +: ADDR_WIDTH]) &&
-                                                  (req_addr <= node_end_addr_i[i*ADDR_WIDTH +: ADDR_WIDTH]);
-
-                        // 当请求有效的情况下，如果目标匹配或地址范围匹配，则将请求转发到节点i
-                        always @(*) begin
-                            if (tx_req_valid_i[j] && (target_match || addr_range_match)) begin
-                                decoded_req_valid[i] = 1'b1;
-                                decoded_req_opcode[i*OPCODE_WIDTH +: OPCODE_WIDTH] = tx_req_opcode_i[j*OPCODE_WIDTH +: OPCODE_WIDTH];
-                                decoded_req_match_type[i*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] = req_match_type;
-                                decoded_req_source_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = tx_req_source_id_i[j*NODE_ID_WIDTH +: NODE_ID_WIDTH];
-                                decoded_req_target_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = i;
-                                decoded_req_addr[i*ADDR_WIDTH +: ADDR_WIDTH] = req_addr;
-                                decoded_req_data[i*DATA_WIDTH +: DATA_WIDTH] = tx_req_data_i[j*DATA_WIDTH +: DATA_WIDTH];
-                                decoded_req_is_order[i] = tx_req_is_order_i[j];
-                            end
-                        end
-                    end
-                end
-            end
-
-            // 连接解码后的请求到接收端口
-            for (i = 0; i < NUM_NODES; i = i + 1) begin : connect_decoded_requests
-                assign rx_req_valid_o[i] = decoded_req_valid[i];
-                assign rx_req_is_order_o[i] = decoded_req_is_order[i];
-                assign rx_req_opcode_o[i*OPCODE_WIDTH +: OPCODE_WIDTH] = decoded_req_opcode[i*OPCODE_WIDTH +: OPCODE_WIDTH];
-                assign rx_req_match_type_o[i*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] = decoded_req_match_type[i*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH];
-                assign rx_req_source_id_o[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = decoded_req_source_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH];
-                assign rx_req_target_id_o[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = decoded_req_target_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH];
-                assign rx_req_addr_o[i*ADDR_WIDTH +: ADDR_WIDTH] = decoded_req_addr[i*ADDR_WIDTH +: ADDR_WIDTH];
-                assign rx_req_data_o[i*DATA_WIDTH +: DATA_WIDTH] = decoded_req_data[i*DATA_WIDTH +: DATA_WIDTH];
-
-                // 返回ready信号
-                assign tx_req_ready_o[i] = 1'b1; // 简化处理，总是返回ready
-            end
-
-            // 默认响应信号
-            assign rsp_valid_o = {NUM_NODES{1'b0}};
-            assign rsp_source_id_o = {NUM_NODES*NODE_ID_WIDTH{1'b0}};
-            assign rsp_target_id_o = {NUM_NODES*NODE_ID_WIDTH{1'b0}};
-            assign rsp_addr_o = {NUM_NODES*ADDR_WIDTH{1'b0}};
-            assign rsp_data_o = {NUM_NODES*DATA_WIDTH{1'b0}};
-
-            // Ring相关信号
-            assign ring_id_o = {NUM_RINGS*RING_ID_WIDTH{1'b0}};
-            assign ring_busy = {NUM_RINGS{1'b0}};
-        end else begin : extended_bus_instance
-            // 扩展总线接口 - 提供连接其他总线类型的能力
-            // 这里仅提供基础框架，具体实现需要根据实际扩展的总线类型添加
-            // 默认返回未连接状态
-            assign tx_req_ready_o = {NUM_NODES{1'b0}};
-            assign rx_req_valid_o = {NUM_NODES{1'b0}};
-            assign rx_req_is_order_o = {NUM_NODES{1'b0}};
-            assign rx_req_opcode_o = {NUM_NODES*OPCODE_WIDTH{1'b0}};
-            assign rx_req_match_type_o = {NUM_NODES*MATCH_TYPE_WIDTH{1'b0}};
-            assign rx_req_source_id_o = {NUM_NODES*NODE_ID_WIDTH{1'b0}};
-            assign rx_req_target_id_o = {NUM_NODES*NODE_ID_WIDTH{1'b0}};
-            assign rx_req_addr_o = {NUM_NODES*ADDR_WIDTH{1'b0}};
-            assign rx_req_data_o = {NUM_NODES*DATA_WIDTH{1'b0}};
-
-            assign rsp_valid_o = {NUM_NODES{1'b0}};
-            assign rsp_source_id_o = {NUM_NODES*NODE_ID_WIDTH{1'b0}};
-            assign rsp_target_id_o = {NUM_NODES*NODE_ID_WIDTH{1'b0}};
-            assign rsp_addr_o = {NUM_NODES*ADDR_WIDTH{1'b0}};
-            assign rsp_data_o = {NUM_NODES*DATA_WIDTH{1'b0}};
-
-            assign ring_id_o = {NUM_RINGS*RING_ID_WIDTH{1'b0}};
-            assign ring_busy = {NUM_RINGS{1'b0}};
-        end
-    endgenerate
-
-    // 根据总线类型决定是否实例化Ring仲裁器
-    generate
-        if (BUS_TYPE == `BUS_TYPE_RING) begin : ring_arbiter_instance
-            // Ring总线模式下实例化仲裁器
-            ring_arbiter #(
+        end else if (BUS_TYPE == `BUS_TYPE_DIRECT) begin : direct_bus
+            direct_bus_top #(
                 .NUM_RINGS(NUM_RINGS),
+                .NUM_NODES(NUM_NODES),
                 .ADDR_WIDTH(ADDR_WIDTH),
                 .DATA_WIDTH(DATA_WIDTH),
+                .OPCODE_WIDTH(OPCODE_WIDTH),
+                .RING_ID_WIDTH(RING_ID_WIDTH),
                 .NODE_ID_WIDTH(NODE_ID_WIDTH),
+                .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
+                .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
+                .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH),
+                .GPIO_WIDTH(GPIO_WIDTH),
                 .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
-            ) u_ring_arbiter (
+            ) u_direct_bus (
                 .clk(clk),
                 .rst_n(rst_n),
 
-                // 主请求接口
-                .req_valid(req_valid),
-                .req_addr(req_addr),
-                .req_match_type(req_match_type),
-                .req_target_id(req_target_id),
-                .req_data(req_data),
-                .req_ring_mask(req_ring_mask),
-                .req_ring_disable(req_ring_disable),
-                .req_ready(req_ready),
+                .node_start_addr_i(node_start_addr_i),
+                .node_end_addr_i(node_end_addr_i),
 
-                // Ring总线接口
-                .ring_req_valid(ring_req_valid),
-                .ring_req_ready(ring_req_ready),
-                .ring_req_addr(ring_req_addr),
-                .ring_req_match_type(ring_req_match_type),
-                .ring_req_target_id(ring_req_target_id),
-                .ring_req_data(ring_req_data),
+                // CPU
+                .cpu_ext_int_o(cpu_ext_int_o),
+                .cpu_mem_req_i(cpu_mem_req_i),
+                .cpu_mem_addr_i(cpu_mem_addr_i),
+                .cpu_mem_wdata_i(cpu_mem_wdata_i),
+                .cpu_mem_we_i(cpu_mem_we_i),
+                .cpu_mem_ready_o(cpu_mem_ready_o),
+                .cpu_mem_rdata_o(cpu_mem_rdata_o),
 
-                // 状态输出
-                .ring_busy(ring_busy)
+                // PE
+                .pe_enable_o(pe_enable_o),
+                .pe_reset_o(pe_reset_o),
+                .pe_instructions_o(pe_instructions_o),
+                .pe_inst_valid_o(pe_inst_valid_o),
+                .pe_status_i(pe_status_i),
+                .pe_outputs_i(pe_outputs_i),
+                .pe_busy_i(pe_busy_i),
+                .pe_route_config_o(pe_route_config_o),
+                .pe_route_cfg_valid_o(pe_route_cfg_valid_o),
+
+                // GPIO
+                .gpio_req_o(gpio_req_o),
+                .gpio_we_o(gpio_we_o),
+                .gpio_addr_o(gpio_addr_o),
+                .gpio_data_in_o(gpio_data_in_o),
+                .gpio_data_out_i(gpio_data_out_i),
+                .gpio_ack_i(gpio_ack_i),
+                .gpio_pins(gpio_pins),
+                .gpio_int_i(gpio_int_i),
+
+                // JTAG接口
+                .jtag_tck_o(jtag_tck_o),
+                .jtag_tms_o(jtag_tms_o),
+                .jtag_tdi_o(jtag_tdi_o),
+                .jtag_tdo_i(jtag_tdo_i),
+                .jtag_tdo_en_i(jtag_tdo_en_i),
+                .jtag_req_o(jtag_req_o),
+                .jtag_we_o(jtag_we_o),
+                .jtag_addr_o(jtag_addr_o),
+                .jtag_data_in_o(jtag_data_in_o),
+                .jtag_data_out_i(jtag_data_out_i),
+                .jtag_ack_i(jtag_ack_i),
+                .jtag_debug_data_i(jtag_debug_data_i),
+                .jtag_debug_valid_i(jtag_debug_valid_i),
+
+                // SPI
+                .spi_req_o(spi_req_o),
+                .spi_we_o(spi_we_o),
+                .spi_addr_o(spi_addr_o),
+                .spi_data_in_o(spi_data_in_o),
+                .spi_data_out_i(spi_data_out_i),
+                .spi_ack_i(spi_ack_i),
+                .spi_cs_n_i(spi_cs_n_i),
+                .spi_clk_i(spi_clk_i),
+                .spi_mosi_i(spi_mosi_i),
+                .spi_miso_o(spi_miso_o),
+
+                // UART
+                .req_o(req_o),
+                .we_o(we_o),
+                .addr_o(addr_o),
+                .data_in_o(data_in_o),
+                .data_out_i(data_out_i),
+                .ack_i(ack_i),
+                .txd_i(txd_i),
+                .rxd_o(rxd_o),
+                .rts_i(rts_i),
+                .cts_o(cts_o),
+                .int_i(int_i)
             );
-        end else begin : no_arbiter
-            // 非Ring总线模式下不实例化仲裁器，而是驱动相关信号到默认值
-            assign ring_req_valid = {NUM_RINGS{1'b0}};
-            assign ring_req_addr = {NUM_RINGS*ADDR_WIDTH{1'b0}};
-            assign ring_req_match_type = {NUM_RINGS*MATCH_TYPE_WIDTH{1'b0}};
-            assign ring_req_target_id = {NUM_RINGS*NODE_ID_WIDTH{1'b0}};
-            assign ring_req_data = {NUM_RINGS*DATA_WIDTH{1'b0}};
         end
     endgenerate
 endmodule

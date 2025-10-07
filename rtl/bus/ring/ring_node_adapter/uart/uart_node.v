@@ -1,9 +1,9 @@
-// gpio_node.v
-// 完整的GPIO节点，包含GPIO模块和总线接口
+// uart_node.v
+// 完整的UART节点，包含UART模块和总线接口
 
-`include "gpio_params.v"
+`include "uart_params.v"
 
-module gpio_node #(
+module uart_node #(
     parameter NUM_RINGS         = 2,
     parameter ADDR_WIDTH        = 32,
     parameter DATA_WIDTH        = 64,
@@ -14,27 +14,39 @@ module gpio_node #(
 ) (
     input clk,
     input rst_n,
-    input [`NODE_ID_WIDTH-1:0] node_id,
+    input [NODE_ID_WIDTH-1:0] node_id,
 
     // Ring接口 - 输入
     input ring_in_valid,
-    input [`NODE_ID_WIDTH-1:0] ring_in_src,
-    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [`ADDR_WIDTH-1:0] ring_in_addr,
-    input [`DATA_WIDTH-1:0] ring_in_data,
+    input [NODE_ID_WIDTH-1:0] ring_in_src,
+    input [NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [ADDR_WIDTH-1:0] ring_in_addr,
+    input [DATA_WIDTH-1:0] ring_in_data,
     input ring_in_we,
     input [3:0] ring_in_be,
     input ring_in_ack,
 
     // Ring接口 - 输出
     output ring_out_valid,
-    output [`NODE_ID_WIDTH-1:0] ring_out_src,
-    output [`NODE_ID_WIDTH-1:0] ring_out_dest,
-    output [`ADDR_WIDTH-1:0] ring_out_addr,
-    output [`DATA_WIDTH-1:0] ring_out_data,
+    output [NODE_ID_WIDTH-1:0] ring_out_src,
+    output [NODE_ID_WIDTH-1:0] ring_out_dest,
+    output [ADDR_WIDTH-1:0] ring_out_addr,
+    output [DATA_WIDTH-1:0] ring_out_data,
     output ring_out_we,
     output [3:0] ring_out_be,
     output ring_out_ack,
+
+    output                              req_o,
+    output                              we_o,
+    output      [ADDR_WIDTH-1:0]        addr_o,
+    output      [DATA_WIDTH-1:0]        data_in_o,
+    input  reg  [DATA_WIDTH-1:0]        data_out_i,
+    input  reg                          ack_i,
+    input  reg                          txd_i,
+    output                              rxd_o,
+    input  reg                          rts_i,
+    output                              cts_o,
+    input  reg                          int_i,
 
     // 发送请求
     output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // 指定使用的Ring
@@ -64,40 +76,10 @@ module gpio_node #(
     input  wire [NODE_ID_WIDTH-1:0]     rsp_source_id_i,
     input  wire [NODE_ID_WIDTH-1:0]     rsp_target_id_i,
     input  wire [ADDR_WIDTH-1:0]        rsp_addr_i,
-    input  wire [DATA_WIDTH-1:0]        rsp_data_i,
-
-    // GPIO引脚
-    inout [`GPIO_WIDTH-1:0] gpio_pins,
-
-    // 中断输出
-    output int_out
+    input  wire [DATA_WIDTH-1:0]        rsp_data_i
 );
-
-    // GPIO接口信号
-    wire gpio_req;
-    wire gpio_we;
-    wire [`ADDR_WIDTH-1:0] gpio_addr;
-    wire [`DATA_WIDTH-1:0] gpio_data_out;
-    wire [`DATA_WIDTH-1:0] gpio_data_in;
-    wire gpio_ack;
-    wire gpio_int;
-
-    // 实例化GPIO模块
-    gpio_module gpio_inst (
-        .clk(clk),
-        .rst_n(rst_n),
-        .req(gpio_req),
-        .we(gpio_we),
-        .addr(gpio_addr),
-        .data_in(gpio_data_out),
-        .data_out(gpio_data_in),
-        .ack(gpio_ack),
-        .gpio_pins(gpio_pins),
-        .int_out(gpio_int)
-    );
-
-    // 实例化GPIO Ring节点
-    gpio_ring_node ring_node_inst (
+    // 实例化UART Ring节点
+    uart_ring_node ring_node_inst (
         .clk(clk),
         .rst_n(rst_n),
         .node_id(node_id),
@@ -117,17 +99,13 @@ module gpio_node #(
         .ring_out_we(ring_out_we),
         .ring_out_be(ring_out_be),
         .ring_out_ack(ring_out_ack),
-        .gpio_req(gpio_req),
-        .gpio_we(gpio_we),
-        .gpio_addr(gpio_addr),
-        .gpio_data_out(gpio_data_out),
-        .gpio_data_in(gpio_data_in),
-        .gpio_ack(gpio_ack),
-        .gpio_int(gpio_int),
-        .int_ack() // 暂时不使用中断确认
+        .uart_req(req_o),
+        .uart_we(we_o),
+        .uart_addr(addr_o),
+        .uart_data_out(data_out_i),
+        .uart_data_in(data_in_o),
+        .uart_ack(ack_i),
+        .uart_int(int_i),
+        .int_ack()
     );
-
-    // 中断输出
-    assign int_out = gpio_int;
-
 endmodule

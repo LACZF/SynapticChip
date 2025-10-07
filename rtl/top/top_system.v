@@ -16,7 +16,15 @@ module top_system #(
     parameter RX_FIFO_DEPTH    = 4,        // 接收FIFO深度
     parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
     parameter NUM_CORES        = 4,
-    parameter MATCH_TYPE_WIDTH = 2         // 匹配类型宽度
+    parameter MATCH_TYPE_WIDTH = 2,        // 匹配类型宽度
+    parameter INST_WIDTH       = 128,      // 指令宽度
+    parameter CORE_ID_WIDTH    = 2,        // 核心ID宽度
+    parameter ENABLE_L2_CACHE  = 1,        // 启用L2缓存
+    parameter ENABLE_L3_CACHE  = 0,        // 启用L3缓存
+    parameter GPIO_WIDTH       = 32,
+    parameter NUM_PES          = 16,
+    parameter PE_ID_WIDTH      = 4,
+    parameter CPU_TYPE         = 0         // CPU类型
 )(
     input clk,
     input rst_n,
@@ -54,38 +62,60 @@ module top_system #(
     reg [NUM_NODES*ADDR_WIDTH-1:0]        node_start_addr;
     reg [NUM_NODES*ADDR_WIDTH-1:0]        node_end_addr;
 
-    // 发送请求
-    wire [NUM_NODES*NUM_RINGS-1:0]         tx_req_ring_mask;
-    wire [NUM_NODES*NUM_RINGS-1:0]         tx_req_ring_disable;
-    wire [NUM_NODES-1:0]                   tx_req_valid;
-    wire [NUM_NODES-1:0]                   tx_req_is_order;
-    wire [NUM_NODES*OPCODE_WIDTH-1:0]      tx_req_opcode;
-    wire [NUM_NODES*MATCH_TYPE_WIDTH-1:0]  tx_req_match_type;
-    wire [NUM_NODES*NODE_ID_WIDTH-1:0]     tx_req_source_id;
-    wire [NUM_NODES*NODE_ID_WIDTH-1:0]     tx_req_target_id;
-    wire [NUM_NODES*ADDR_WIDTH-1:0]        tx_req_addr;
-    wire [NUM_NODES*DATA_WIDTH-1:0]        tx_req_data;
+    // CPU
+    wire                                  cpu_mem_req;
+    wire [ADDR_WIDTH-1:0]                 cpu_mem_addr;
+    wire [511:0]                          cpu_mem_wdata;
+    wire                                  cpu_mem_we;
+    wire                                  cpu_mem_ready;
+    wire [511:0]                          cpu_mem_rdata;
 
-    // 接受请求
-    wire [NUM_NODES-1:0]                   rx_req_valid;
-    wire [NUM_NODES-1:0]                   rx_req_is_order;
-    wire [NUM_NODES*OPCODE_WIDTH-1:0]      rx_req_opcode;
-    wire [NUM_NODES*MATCH_TYPE_WIDTH-1:0]  rx_req_match_type;
-    wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rx_req_source_id;
-    wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rx_req_target_id;
-    wire [NUM_NODES*ADDR_WIDTH-1:0]        rx_req_addr;
-    wire [NUM_NODES*DATA_WIDTH-1:0]        rx_req_data;
+    // PE
+    wire [NUM_PES-1:0]                    pe_enable;
+    wire [NUM_PES-1:0]                    pe_reset;
+    wire [(NUM_PES*INST_WIDTH)-1:0]       pe_instructions;
+    wire                                  pe_inst_valid;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]       pe_status;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]       pe_outputs;
+    wire [NUM_PES-1:0]                    pe_busy;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0]    pe_route_config;
+    wire                                  pe_route_cfg_valid;
 
-    // 接收响应
-    wire [NUM_NODES-1:0]                   rsp_valid;
-    wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rsp_source_id;
-    wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rsp_target_id;
-    wire [NUM_NODES*ADDR_WIDTH-1:0]        rsp_addr;
-    wire [NUM_NODES*DATA_WIDTH-1:0]        rsp_data;
+    // GPIO
+    wire                                  gpio_req;
+    wire                                  gpio_we;
+    wire [ADDR_WIDTH-1:0]                 gpio_addr;
+    wire [DATA_WIDTH-1:0]                 gpio_data_in;
+    reg [DATA_WIDTH-1:0]                  gpio_data_out;
+    reg                                   gpio_ack;
+    reg                                   gpio_int;
 
-    // Ring总线状态
-    wire [NUM_RINGS*RING_ID_WIDTH-1:0]     ring_id;
-    wire [NUM_RINGS-1:0]                   ring_busy;
+    // JTAG
+    wire                                  jtag_req;
+    wire                                  jtag_we;
+    wire [ADDR_WIDTH-1:0]                 jtag_addr;
+    wire [DATA_WIDTH-1:0]                 jtag_data_in;
+    wire [DATA_WIDTH-1:0]                 jtag_data_out;
+    wire                                  jtag_ack;
+
+    // SPI
+    wire                                  spi_req;
+    wire                                  spi_we;
+    wire [ADDR_WIDTH-1:0]                 spi_addr;
+    wire [DATA_WIDTH-1:0]                 spi_data_in;
+    wire [DATA_WIDTH-1:0]                 spi_data_out;
+    wire                                  spi_ack;
+
+    // UART
+    wire                                  uart_req;
+    wire                                  uart_we;
+    wire [ADDR_WIDTH-1:0]                 uart_addr;
+    wire [DATA_WIDTH-1:0]                 uart_data_in;
+    wire [DATA_WIDTH-1:0]                 uart_data_out;
+    wire                                  uart_ack;
+    wire                                  uart_rts;
+    wire                                  uart_cts;
+    wire                                  uart_int_out;
 
     // 实例化Ring总线
     bus_top #(
@@ -101,7 +131,11 @@ module top_system #(
         .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
         .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH),
         .NUM_CORES(NUM_CORES),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
+        .GPIO_WIDTH(GPIO_WIDTH),
+        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
+        .NUM_PES(NUM_PES),
+        .INST_WIDTH(INST_WIDTH),
+        .PE_ID_WIDTH(PE_ID_WIDTH)
     ) bus (
         .clk(clk),
         .rst_n(rst_n),
@@ -109,210 +143,150 @@ module top_system #(
         .node_start_addr_i(node_start_addr),
         .node_end_addr_i(node_end_addr),
 
-        .tx_req_ring_mask_i(tx_req_ring_mask),
-        .tx_req_ring_disable_i(tx_req_ring_disable),
-        .tx_req_valid_i(tx_req_valid),
-        .tx_req_is_order_i(tx_req_is_order),
-        .tx_req_opcode_i(tx_req_opcode),
-        .tx_req_match_type_i(tx_req_match_type),
-        .tx_req_source_id_i(tx_req_source_id),
-        .tx_req_target_id_i(tx_req_target_id),
-        .tx_req_addr_i(tx_req_addr),
-        .tx_req_data_i(tx_req_data),
+        // CPU
+        .cpu_ext_int_o(ext_int),
+        .cpu_mem_req_i(cpu_mem_req),
+        .cpu_mem_addr_i(cpu_mem_addr),
+        .cpu_mem_wdata_i(cpu_mem_wdata),
+        .cpu_mem_we_i(cpu_mem_we),
+        .cpu_mem_ready_o(cpu_mem_ready),
+        .cpu_mem_rdata_o(cpu_mem_rdata),
 
-        .rx_req_valid_o(rx_req_valid),
-        .rx_req_is_order_o(rx_req_is_order),
-        .rx_req_opcode_o(rx_req_opcode),
-        .rx_req_match_type_o(rx_req_match_type),
-        .rx_req_source_id_o(rx_req_source_id),
-        .rx_req_target_id_o(rx_req_target_id),
-        .rx_req_addr_o(rx_req_addr),
-        .rx_req_data_o(rx_req_data),
+        // PE
+        .pe_enable_o(pe_enable),
+        .pe_reset_o(pe_reset),
+        .pe_instructions_o(pe_instructions),
+        .pe_inst_valid_o(pe_inst_valid),
+        .pe_status_i(pe_status),
+        .pe_outputs_i(pe_outputs),
+        .pe_busy_i(pe_busy),
+        .pe_route_config_o(pe_route_config),
+        .pe_route_cfg_valid_o(pe_route_cfg_valid),
 
-        .rsp_valid_o(rsp_valid),
-        .rsp_source_id_o(rsp_source_id),
-        .rsp_target_id_o(rsp_target_id),
-        .rsp_addr_o(rsp_addr),
-        .rsp_data_o(rsp_data),
+        // GPIO
+        .gpio_req_o(gpio_req),
+        .gpio_we_o(gpio_we),
+        .gpio_addr_o(gpio_addr),
+        .gpio_data_in_o(gpio_data_in),
+        .gpio_data_out_i(gpio_data_out),
+        .gpio_ack_i(gpio_ack),
+        .gpio_pins(gpio_pins),
+        .gpio_int_i(gpio_int),
 
-        .ring_id_o(ring_id),
-        .ring_busy(ring_busy)
+        // JTAG
+        .jtag_tck_o(jtag_tck),
+        .jtag_tms_o(jtag_tms),
+        .jtag_tdi_o(jtag_tdi),
+        .jtag_tdo_i(jtag_tdo),
+        .jtag_tdo_en_i(jtag_tdo_en),
+        .jtag_req_o(jtag_req),
+        .jtag_we_o(jtag_we),
+        .jtag_addr_o(jtag_addr),
+        .jtag_data_in_o(jtag_data_in),
+        .jtag_data_out_i(jtag_data_out),
+        .jtag_ack_i(jtag_ack),
+        .jtag_debug_data_i(jtag_debug_data),
+        .jtag_debug_valid_i(jtag_debug_valid),
+
+        // SPI
+        .spi_req_o(spi_req),
+        .spi_we_o(spi_we),
+        .spi_addr_o(spi_addr),
+        .spi_data_in_o(spi_data_in),
+        .spi_data_out_i(spi_data_out),
+        .spi_ack_i(spi_ack),
+        .spi_cs_n_i(spi_cs_n),
+        .spi_clk_i(spi_clk),
+        .spi_mosi_i(spi_mosi),
+        .spi_miso_o(spi_miso),
+
+        // UART
+        .uart_req_o(uart_req),
+        .uart_we_o(uart_we),
+        .uart_addr_o(uart_addr),
+        .uart_data_in_o(uart_data_in),
+        .uart_data_out_i(uart_data_out),
+        .uart_ack_i(uart_ack),
+        .uart_txd_i(uart_txd),
+        .uart_rxd_o(uart_rxd),
+        .uart_rts_i(uart_rts),
+        .uart_cts_o(uart_cts),
+        .uart_int_i(uart_int)
     );
 
-    // 使用cpu_with_ring模块替代cpu_top，保持与环形总线的兼容性
-    cpu_with_ring #(
-        .NUM_RINGS(NUM_RINGS),
+    cpu_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
-        .NODE_ID_WIDTH(NODE_ID_WIDTH),
-        .NODE_ID(`NODE_RISCV),
-        .OPCODE_WIDTH(OPCODE_WIDTH),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
-        .INST_WIDTH(32),
+        .INST_WIDTH(INST_WIDTH),
         .NUM_CORES(NUM_CORES),
-        .CPU_TYPE(0)  // 0: RISC-V, 预留其他CPU类型
-    ) cpu_top (
+        .CORE_ID_WIDTH(CORE_ID_WIDTH),
+        .ENABLE_L2_CACHE(ENABLE_L2_CACHE),
+        .ENABLE_L3_CACHE(ENABLE_L3_CACHE),
+        .CPU_TYPE(CPU_TYPE)
+    ) cpu (
         .clk(clk),
         .rst_n(rst_n),
 
         .ext_int(ext_int),
 
-        .tx_req_ring_mask_o(tx_req_ring_mask[`NODE_RISCV*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_ring_disable_o(tx_req_ring_disable[`NODE_RISCV*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_valid_o(tx_req_valid[`NODE_RISCV]),
-        .tx_req_is_order_o(tx_req_is_order[`NODE_RISCV]),
-        .tx_req_opcode_o(tx_req_opcode[`NODE_RISCV*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .tx_req_match_type_o(tx_req_match_type[`NODE_RISCV*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .tx_req_source_id_o(tx_req_source_id[`NODE_RISCV*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_target_id_o(tx_req_target_id[`NODE_RISCV*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_addr_o(tx_req_addr[`NODE_RISCV*ADDR_WIDTH +: ADDR_WIDTH]),
-        .tx_req_data_o(tx_req_data[`NODE_RISCV*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rx_req_valid_i(rx_req_valid[`NODE_RISCV]),
-        .rx_req_is_order_i(rx_req_is_order[`NODE_RISCV]),
-        .rx_req_opcode_i(rx_req_opcode[`NODE_RISCV*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .rx_req_match_type_i(rx_req_match_type[`NODE_RISCV*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .rx_req_source_id_i(rx_req_source_id[`NODE_RISCV*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_target_id_i(rx_req_target_id[`NODE_RISCV*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_addr_i(rx_req_addr[`NODE_RISCV*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rx_req_data_i(rx_req_data[`NODE_RISCV*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rsp_valid_i(rsp_valid[`NODE_RISCV]),
-        .rsp_source_id_i(rsp_source_id[`NODE_RISCV*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_target_id_i(rsp_target_id[`NODE_RISCV*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_addr_i(rsp_addr[`NODE_RISCV*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rsp_data_i(rsp_data[`NODE_RISCV*DATA_WIDTH +: DATA_WIDTH])
+        .mem_req(cpu_mem_req),
+        .mem_addr(cpu_mem_addr),
+        .mem_wdata(cpu_mem_wdata),
+        .mem_we(cpu_mem_we),
+        .mem_ready(cpu_mem_ready),
+        .mem_rdata(cpu_mem_rdata)
     );
 
     // 实例化GPIO模块
-    gpio_node #(
-        .NUM_RINGS(NUM_RINGS),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH),
-        .NODE_ID_WIDTH(NODE_ID_WIDTH),
-        .NODE_ID(`NODE_GPIO),
-        .OPCODE_WIDTH(OPCODE_WIDTH),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
+    gpio_module #(
+        .GPIO_WIDTH(GPIO_WIDTH)
     ) gpio (
         .clk(clk),
         .rst_n(rst_n),
-
+        .req(gpio_req),
+        .we(gpio_we),
+        .addr(gpio_addr),
+        .data_in(gpio_data_out),
+        .data_out(gpio_data_in),
+        .ack(gpio_ack),
         .gpio_pins(gpio_pins),
-
-        .tx_req_ring_mask_o(tx_req_ring_mask[`NODE_GPIO*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_ring_disable_o(tx_req_ring_disable[`NODE_GPIO*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_valid_o(tx_req_valid[`NODE_GPIO]),
-        .tx_req_is_order_o(tx_req_is_order[`NODE_GPIO]),
-        .tx_req_opcode_o(tx_req_opcode[`NODE_GPIO*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .tx_req_match_type_o(tx_req_match_type[`NODE_GPIO*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .tx_req_source_id_o(tx_req_source_id[`NODE_GPIO*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_target_id_o(tx_req_target_id[`NODE_GPIO*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_addr_o(tx_req_addr[`NODE_GPIO*ADDR_WIDTH +: ADDR_WIDTH]),
-        .tx_req_data_o(tx_req_data[`NODE_GPIO*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rx_req_valid_i(rx_req_valid[`NODE_GPIO]),
-        .rx_req_is_order_i(rx_req_is_order[`NODE_GPIO]),
-        .rx_req_opcode_i(rx_req_opcode[`NODE_GPIO*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .rx_req_match_type_i(rx_req_match_type[`NODE_GPIO*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .rx_req_source_id_i(rx_req_source_id[`NODE_GPIO*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_target_id_i(rx_req_target_id[`NODE_GPIO*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_addr_i(rx_req_addr[`NODE_GPIO*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rx_req_data_i(rx_req_data[`NODE_GPIO*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rsp_valid_i(rsp_valid[`NODE_GPIO]),
-        .rsp_source_id_i(rsp_source_id[`NODE_GPIO*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_target_id_i(rsp_target_id[`NODE_GPIO*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_addr_i(rsp_addr[`NODE_GPIO*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rsp_data_i(rsp_data[`NODE_GPIO*DATA_WIDTH +: DATA_WIDTH])
+        .int_out(gpio_int)
     );
 
     // 实例化UART模块
-    uart_node #(
-        .NUM_RINGS(NUM_RINGS),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH),
-        .NODE_ID_WIDTH(NODE_ID_WIDTH),
-        .NODE_ID(`NODE_UART),
-        .OPCODE_WIDTH(OPCODE_WIDTH),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
-    ) uart (
+    uart_core uart (
         .clk(clk),
         .rst_n(rst_n),
 
-        .tx_req_ring_mask_o(tx_req_ring_mask[`NODE_UART*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_ring_disable_o(tx_req_ring_disable[`NODE_UART*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_valid_o(tx_req_valid[`NODE_UART]),
-        .tx_req_is_order_o(tx_req_is_order[`NODE_UART]),
-        .tx_req_opcode_o(tx_req_opcode[`NODE_UART*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .tx_req_match_type_o(tx_req_match_type[`NODE_UART*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .tx_req_source_id_o(tx_req_source_id[`NODE_UART*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_target_id_o(tx_req_target_id[`NODE_UART*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_addr_o(tx_req_addr[`NODE_UART*ADDR_WIDTH +: ADDR_WIDTH]),
-        .tx_req_data_o(tx_req_data[`NODE_UART*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rx_req_valid_i(rx_req_valid[`NODE_UART]),
-        .rx_req_is_order_i(rx_req_is_order[`NODE_UART]),
-        .rx_req_opcode_i(rx_req_opcode[`NODE_UART*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .rx_req_match_type_i(rx_req_match_type[`NODE_UART*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .rx_req_source_id_i(rx_req_source_id[`NODE_UART*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_target_id_i(rx_req_target_id[`NODE_UART*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_addr_i(rx_req_addr[`NODE_UART*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rx_req_data_i(rx_req_data[`NODE_UART*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rsp_valid_i(rsp_valid[`NODE_UART]),
-        .rsp_source_id_i(rsp_source_id[`NODE_UART*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_target_id_i(rsp_target_id[`NODE_UART*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_addr_i(rsp_addr[`NODE_UART*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rsp_data_i(rsp_data[`NODE_UART*DATA_WIDTH +: DATA_WIDTH]),
-
-        .uart_txd(uart_txd),
-        .uart_rxd(uart_rxd)
+        .req(uart_req),
+        .we(uart_we),
+        .addr(uart_addr),
+        .data_in(uart_data_in),
+        .data_out(uart_data_out),
+        .ack(uart_ack),
+        .txd(uart_txd),
+        .rxd(uart_rxd),
+        .rts(uart_rts),
+        .cts(uart_cts),
+        .int_out(uart_int)
     );
 
-    // 实例化DUT
-    jtag_node #(
-        .NUM_RINGS(NUM_RINGS),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH),
-        .NODE_ID_WIDTH(NODE_ID_WIDTH),
-        .NODE_ID(`NODE_JTAG),
-        .OPCODE_WIDTH(OPCODE_WIDTH),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
-    ) jtag (
+    // 实例化JTAG
+    jtag_top jtag (
         .clk(clk),
         .rst_n(rst_n),
-
-        .tx_req_ring_mask_o(tx_req_ring_mask[`NODE_JTAG*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_ring_disable_o(tx_req_ring_disable[`NODE_JTAG*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_valid_o(tx_req_valid[`NODE_JTAG]),
-        .tx_req_is_order_o(tx_req_is_order[`NODE_JTAG]),
-        .tx_req_opcode_o(tx_req_opcode[`NODE_JTAG*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .tx_req_match_type_o(tx_req_match_type[`NODE_JTAG*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .tx_req_source_id_o(tx_req_source_id[`NODE_JTAG*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_target_id_o(tx_req_target_id[`NODE_JTAG*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_addr_o(tx_req_addr[`NODE_JTAG*ADDR_WIDTH +: ADDR_WIDTH]),
-        .tx_req_data_o(tx_req_data[`NODE_JTAG*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rx_req_valid_i(rx_req_valid[`NODE_JTAG]),
-        .rx_req_is_order_i(rx_req_is_order[`NODE_JTAG]),
-        .rx_req_opcode_i(rx_req_opcode[`NODE_JTAG*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .rx_req_match_type_i(rx_req_match_type[`NODE_JTAG*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .rx_req_source_id_i(rx_req_source_id[`NODE_JTAG*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_target_id_i(rx_req_target_id[`NODE_JTAG*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_addr_i(rx_req_addr[`NODE_JTAG*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rx_req_data_i(rx_req_data[`NODE_JTAG*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rsp_valid_i(rsp_valid[`NODE_JTAG]),
-        .rsp_source_id_i(rsp_source_id[`NODE_JTAG*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_target_id_i(rsp_target_id[`NODE_JTAG*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_addr_i(rsp_addr[`NODE_JTAG*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rsp_data_i(rsp_data[`NODE_JTAG*DATA_WIDTH +: DATA_WIDTH]),
 
         .tck(jtag_tck),
         .tms(jtag_tms),
         .tdi(jtag_tdi),
         .tdo(jtag_tdo),
         .tdo_en(jtag_tdo_en),
+        .req(jtag_req),
+        .we(jtag_we),
+        .addr(jtag_addr),
+        .data_in(jtag_data_in),
+        .data_out(jtag_data_out),
+        .ack(jtag_ack),
         .debug_data(jtag_debug_data),
         .debug_valid(jtag_debug_valid)
     );
@@ -323,90 +297,45 @@ module top_system #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
         .NODE_ID_WIDTH(NODE_ID_WIDTH),
-        .NODE_ID(`NODE_FABRIC),
+        .NODE_ID(`NODE_PE),
         .OPCODE_WIDTH(OPCODE_WIDTH),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
-        .NUM_PES(4),
-        .INST_WIDTH(128),
-        .PE_ID_WIDTH(3),
+        .NUM_PES(NUM_PES),
+        .INST_WIDTH(INST_WIDTH),
+        .PE_ID_WIDTH(PE_ID_WIDTH),
         .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
         .PE_ARRAY_COLS(`PE_ARRAY_COLS)
     ) pe (
         .clk(clk),
         .rst_n(rst_n),
 
-        .tx_req_ring_mask_o(tx_req_ring_mask[`NODE_FABRIC*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_ring_disable_o(tx_req_ring_disable[`NODE_FABRIC*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_valid_o(tx_req_valid[`NODE_FABRIC]),
-        .tx_req_is_order_o(tx_req_is_order[`NODE_FABRIC]),
-        .tx_req_opcode_o(tx_req_opcode[`NODE_FABRIC*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .tx_req_match_type_o(tx_req_match_type[`NODE_FABRIC*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .tx_req_source_id_o(tx_req_source_id[`NODE_FABRIC*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_target_id_o(tx_req_target_id[`NODE_FABRIC*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_addr_o(tx_req_addr[`NODE_FABRIC*ADDR_WIDTH +: ADDR_WIDTH]),
-        .tx_req_data_o(tx_req_data[`NODE_FABRIC*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rx_req_valid_i(rx_req_valid[`NODE_FABRIC]),
-        .rx_req_is_order_i(rx_req_is_order[`NODE_FABRIC]),
-        .rx_req_opcode_i(rx_req_opcode[`NODE_FABRIC*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .rx_req_match_type_i(rx_req_match_type[`NODE_FABRIC*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .rx_req_source_id_i(rx_req_source_id[`NODE_FABRIC*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_target_id_i(rx_req_target_id[`NODE_FABRIC*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_addr_i(rx_req_addr[`NODE_FABRIC*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rx_req_data_i(rx_req_data[`NODE_FABRIC*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rsp_valid_i(rsp_valid[`NODE_FABRIC]),
-        .rsp_source_id_i(rsp_source_id[`NODE_FABRIC*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_target_id_i(rsp_target_id[`NODE_FABRIC*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_addr_i(rsp_addr[`NODE_FABRIC*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rsp_data_i(rsp_data[`NODE_FABRIC*DATA_WIDTH +: DATA_WIDTH]),
+        .pe_enable(pe_enable),
+        .pe_reset(pe_reset),
+        .pe_instructions(pe_instructions),
+        .pe_inst_valid(pe_inst_valid),
+        .pe_status(pe_status),
+        .pe_outputs(pe_outputs),
+        .pe_busy(pe_busy),
+        .route_config(pe_route_config),
+        .route_cfg_valid(pe_route_cfg_valid),
 
         .fabric_status(fabric_status)
     );
 
-    // 实例化SPI模块
-    spi_ring_node #(
-        .NUM_RINGS(NUM_RINGS),
-        .ADDR_WIDTH(ADDR_WIDTH),
+    // 实例化SPI核心控制器
+    spi_core #(
         .DATA_WIDTH(DATA_WIDTH),
-        .NODE_ID_WIDTH(NODE_ID_WIDTH),
-        .NODE_ID(`NODE_SPI),
-        .OPCODE_WIDTH(OPCODE_WIDTH),
-        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
-        .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
-        .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
-        .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH)
-    ) spi (
+        .ADDR_WIDTH(ADDR_WIDTH)
+    ) u_spi_core (
         .clk(clk),
         .rst_n(rst_n),
 
-        .tx_req_ring_mask_o(tx_req_ring_mask[`NODE_SPI*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_ring_disable_o(tx_req_ring_disable[`NODE_SPI*NUM_RINGS +: NUM_RINGS]),
-        .tx_req_valid_o(tx_req_valid[`NODE_SPI]),
-        .tx_req_is_order_o(tx_req_is_order[`NODE_SPI]),
-        .tx_req_opcode_o(tx_req_opcode[`NODE_SPI*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .tx_req_match_type_o(tx_req_match_type[`NODE_SPI*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .tx_req_source_id_o(tx_req_source_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_target_id_o(tx_req_target_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .tx_req_addr_o(tx_req_addr[`NODE_SPI*ADDR_WIDTH +: ADDR_WIDTH]),
-        .tx_req_data_o(tx_req_data[`NODE_SPI*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rx_req_valid_i(rx_req_valid[`NODE_SPI]),
-        .rx_req_is_order_i(rx_req_is_order[`NODE_SPI]),
-        .rx_req_opcode_i(rx_req_opcode[`NODE_SPI*OPCODE_WIDTH +: OPCODE_WIDTH]),
-        .rx_req_match_type_i(rx_req_match_type[`NODE_SPI*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-        .rx_req_source_id_i(rx_req_source_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_target_id_i(rx_req_target_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rx_req_addr_i(rx_req_addr[`NODE_SPI*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rx_req_data_i(rx_req_data[`NODE_SPI*DATA_WIDTH +: DATA_WIDTH]),
-
-        .rsp_valid_i(rsp_valid[`NODE_SPI]),
-        .rsp_source_id_i(rsp_source_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_target_id_i(rsp_target_id[`NODE_SPI*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-        .rsp_addr_i(rsp_addr[`NODE_SPI*ADDR_WIDTH +: ADDR_WIDTH]),
-        .rsp_data_i(rsp_data[`NODE_SPI*DATA_WIDTH +: DATA_WIDTH]),
-
-        // SPI物理接口
+        .req(spi_req),
+        .we(spi_we),
+        .addr(spi_addr),
+        .data_in(spi_data_in),
+        .data_out(spi_data_out),
+        .ack(spi_ack),
         .spi_cs_n(spi_cs_n),
         .spi_clk(spi_clk),
         .spi_mosi(spi_mosi),

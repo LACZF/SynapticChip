@@ -3,7 +3,7 @@
 
 `include "pe_ctrl_params.v"
 
-module pe_controller #(
+module pe_ctrl_ring_node #(
     parameter NODE_ID_WIDTH = 5,
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32,

@@ -19,6 +19,17 @@ module spi_ring_node #(
     input  wire                         clk,
     input  wire                         rst_n,
 
+    output wire                         spi_req_o,
+    output wire                         spi_we_o,
+    output wire [ADDR_WIDTH-1:0]        spi_addr_o,
+    output wire [DATA_WIDTH-1:0]        spi_data_in_o,
+    input  reg [DATA_WIDTH-1:0]         spi_data_out_i,
+    input  reg                          spi_ack_i,
+    input  reg                          spi_cs_n_i,
+    input  reg                          spi_clk_i,
+    input  reg                          spi_mosi_i,
+    output wire                         spi_miso_o,
+
     // 发送请求
     output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // 指定使用的Ring
     output wire [NUM_RINGS-1:0]         tx_req_ring_disable_o,   // 禁用的Ring
@@ -47,13 +58,7 @@ module spi_ring_node #(
     input  wire [NODE_ID_WIDTH-1:0]     rsp_source_id_i,
     input  wire [NODE_ID_WIDTH-1:0]     rsp_target_id_i,
     input  wire [ADDR_WIDTH-1:0]        rsp_addr_i,
-    input  wire [DATA_WIDTH-1:0]        rsp_data_i,
-
-    // SPI物理接口
-    output reg                          spi_cs_n,
-    output reg                          spi_clk,
-    output reg                          spi_mosi,
-    input wire                          spi_miso
+    input  wire [DATA_WIDTH-1:0]        rsp_data_i
 );
     // SPI节点
     wire spi_node_rsp_valid;
@@ -71,6 +76,18 @@ module spi_ring_node #(
         .clk(clk),
         .rst_n(rst_n),
         .node_id(NODE_ID[NODE_ID_WIDTH-1:0]),
+
+        .spi_req_o(spi_req_o),
+        .spi_we_o(spi_we_o),
+        .spi_addr_o(spi_addr_o),
+        .spi_data_in_o(spi_data_in_o),
+        .spi_data_out_i(spi_data_out_i),
+        .spi_ack_i(spi_ack_i),
+        .spi_cs_n_i(spi_cs_n_i),
+        .spi_clk_i(spi_clk_i),
+        .spi_mosi_i(spi_mosi_i),
+        .spi_miso_o(spi_miso_o),
+
         .req_valid(rx_req_valid_i && rx_req_opcode_i != `RING_OP_RESP),
         .req_source_id(rx_req_source_id_i),
         .req_target_id(rx_req_target_id_i),
@@ -81,11 +98,7 @@ module spi_ring_node #(
         .rsp_source_id(spi_node_rsp_source_id),
         .rsp_target_id(spi_node_rsp_target_id),
         .rsp_addr(spi_node_rsp_addr),
-        .rsp_data(spi_node_rsp_data),
-        .spi_cs_n(spi_cs_n),
-        .spi_clk(spi_clk),
-        .spi_mosi(spi_mosi),
-        .spi_miso(spi_miso)
+        .rsp_data(spi_node_rsp_data)
     );
 
     // 处理SPI节点的响应，将其转发到Ring总线

@@ -1,15 +1,16 @@
-// uart_node.v
-// 完整的UART节点，包含UART模块和总线接口
+// gpio_node.v
+// 完整的GPIO节点，包含GPIO模块和总线接口
 
-`include "uart_params.v"
+`include "gpio_params.v"
 
-module uart_node #(
+module gpio_node #(
     parameter NUM_RINGS         = 2,
     parameter ADDR_WIDTH        = 32,
     parameter DATA_WIDTH        = 64,
     parameter NODE_ID_WIDTH     = 8,
     parameter NODE_ID           = 0,
     parameter OPCODE_WIDTH      = 8,
+    parameter GPIO_WIDTH        = 32,
     parameter MATCH_TYPE_WIDTH  = 2
 ) (
     input clk,
@@ -36,14 +37,14 @@ module uart_node #(
     output [3:0] ring_out_be,
     output ring_out_ack,
 
-    // 串行接口
-    output uart_txd,            // 发送数据线
-    input uart_rxd,             // 接收数据线
-    output rts,            // 请求发送 (可选)
-    input cts,             // 清除发送 (可选)
-
-    // 中断输出
-    output int_out,
+    output                              gpio_req_o,
+    output                              gpio_we_o,
+    output     [ADDR_WIDTH-1:0]         gpio_addr_o,
+    output     [DATA_WIDTH-1:0]         gpio_data_in_o,
+    input  reg [DATA_WIDTH-1:0]         gpio_data_out_i,
+    input  reg                          gpio_ack_i,
+    inout      [GPIO_WIDTH-1:0]         gpio_pins,
+    input  reg                          gpio_int_i,
 
     // 发送请求
     output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // 指定使用的Ring
@@ -75,35 +76,7 @@ module uart_node #(
     input  wire [ADDR_WIDTH-1:0]        rsp_addr_i,
     input  wire [DATA_WIDTH-1:0]        rsp_data_i
 );
-
-    // UART接口信号
-    wire uart_req;
-    wire uart_we;
-    wire [`ADDR_WIDTH-1:0] uart_addr;
-    wire [`DATA_WIDTH-1:0] uart_data_out;
-    wire [`DATA_WIDTH-1:0] uart_data_in;
-    wire uart_ack;
-    wire uart_int;
-
-    // 实例化UART模块
-    uart_core uart_inst (
-        .clk(clk),
-        .rst_n(rst_n),
-        .req(uart_req),
-        .we(uart_we),
-        .addr(uart_addr),
-        .data_in(uart_data_out),
-        .data_out(uart_data_in),
-        .ack(uart_ack),
-        .txd(uart_txd),
-        .rxd(uart_rxd),
-        .rts(rts),
-        .cts(cts),
-        .int_out(uart_int)
-    );
-
-    // 实例化UART Ring节点
-    uart_ring_node ring_node_inst (
+    gpio_ring_node ring_node_inst (
         .clk(clk),
         .rst_n(rst_n),
         .node_id(node_id),
@@ -123,17 +96,13 @@ module uart_node #(
         .ring_out_we(ring_out_we),
         .ring_out_be(ring_out_be),
         .ring_out_ack(ring_out_ack),
-        .uart_req(uart_req),
-        .uart_we(uart_we),
-        .uart_addr(uart_addr),
-        .uart_data_out(uart_data_out),
-        .uart_data_in(uart_data_in),
-        .uart_ack(uart_ack),
-        .uart_int(uart_int),
+        .gpio_req(gpio_req_o),
+        .gpio_we(gpio_we_o),
+        .gpio_addr(gpio_addr_o),
+        .gpio_data_out(gpio_data_out_i),
+        .gpio_data_in(gpio_data_in_o),
+        .gpio_ack(gpio_ack_i),
+        .gpio_int(gpio_int_i),
         .int_ack() // 暂时不使用中断确认
     );
-
-    // 中断输出
-    assign int_out = uart_int;
-
 endmodule

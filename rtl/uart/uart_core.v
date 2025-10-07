@@ -83,7 +83,7 @@ module uart_core #(
             baud_counter <= 0;
             baud_tick <= 0;
         end else begin
-            if (baud_counter == dll_dlm) begin
+            if (baud_counter == dll_dlm - 1) begin
                 baud_counter <= 0;
                 baud_tick <= 1;
             end else begin
@@ -179,6 +179,7 @@ module uart_core #(
             rx_tail <= 0;
             rx_empty <= 1;
             rx_full <= 0;
+            lsr <= 8'b0; // 初始化线状态寄存器
         end else if (baud_tick) begin
             case (rx_state)
                 RX_IDLE: begin
@@ -192,16 +193,17 @@ module uart_core #(
                 RX_START: begin
                     if (!rxd_sync) begin // 确认起始位
                         rx_state <= RX_DATA;
+                        rx_shift <= 8'b0;
                     end else begin
                         rx_state <= RX_IDLE; // 假起始位
                     end
                 end
 
                 RX_DATA: begin
-                    rx_shift <= {rxd_sync, rx_shift[7:1]};
+                    rx_shift <= {rx_shift[6:0], rxd_sync};
                     rx_parity <= rx_parity ^ rxd_sync;
 
-                    if (rx_bit_count == (lcr[1:0] + 4'd5)) begin
+                    if (rx_bit_count == 7) begin
                         rx_bit_count <= 0;
                         if (lcr[3]) begin
                             rx_state <= RX_PARITY; // 有奇偶校验
@@ -323,7 +325,7 @@ module uart_core #(
                                 rx_full <= 0;
                                 rx_empty <= (rx_tail + 1 == rx_head);
 
-                                if (rx_empty) begin
+                                if (rx_tail + 1 == rx_head) begin
                                     lsr[0] <= 1'b0; // 清除数据就绪标志
                                 end
                             end

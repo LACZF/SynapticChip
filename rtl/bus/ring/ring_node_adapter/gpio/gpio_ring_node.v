@@ -1,9 +1,9 @@
-// uart_ring_node.v
-// UART的Ring总线节点接口
+// gpio_ring_node.v
+// GPIO的Ring总线节点接口
 
-`include "uart_params.v"
+`include "gpio_params.v"
 
-module uart_ring_node #(
+module gpio_ring_node #(
     parameter NODE_ID_WIDTH = 5,
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32
@@ -32,16 +32,16 @@ module uart_ring_node #(
     output reg [3:0] ring_out_be,
     output reg ring_out_ack,
 
-    // UART接口
-    output reg uart_req,
-    output reg uart_we,
-    output reg [ADDR_WIDTH-1:0] uart_addr,
-    output reg [DATA_WIDTH-1:0] uart_data_out,
-    input [DATA_WIDTH-1:0] uart_data_in,
-    input uart_ack,
+    // GPIO接口
+    output reg gpio_req,
+    output reg gpio_we,
+    output reg [ADDR_WIDTH-1:0] gpio_addr,
+    input  reg [DATA_WIDTH-1:0] gpio_data_out,
+    output reg [DATA_WIDTH-1:0] gpio_data_in,
+    input gpio_ack,
 
     // 中断接口
-    input uart_int,
+    input gpio_int,
     output reg int_ack
 );
 
@@ -64,14 +64,14 @@ module uart_ring_node #(
             state <= `STATE_IDLE;
             ring_out_valid <= 1'b0;
             ring_out_ack <= 1'b0;
-            uart_req <= 1'b0;
+            gpio_req <= 1'b0;
             int_pending <= 1'b0;
             int_ack <= 1'b0;
         end else begin
             case (state)
                 `STATE_IDLE: begin
                     ring_out_ack <= 1'b0;
-                    uart_req <= 1'b0;
+                    gpio_req <= 1'b0;
                     int_ack <= 1'b0;
 
                     if (int_pending) begin
@@ -80,7 +80,7 @@ module uart_ring_node #(
                         ring_out_valid <= 1'b1;
                         ring_out_src <= node_id;
                         ring_out_dest <= 0; // 发送给主控制器
-                        ring_out_addr <= `REG_IIR;
+                        ring_out_addr <= `REG_INTSTAT;
                         ring_out_data <= {DATA_WIDTH{1'b1}}; // 中断标识
                         ring_out_we <= 1'b1;
                         int_pending <= 1'b0;
@@ -95,12 +95,12 @@ module uart_ring_node #(
                         ring_out_be <= ring_in_be;
 
                         if (is_for_me) begin
-                            // 数据是发给本节点的UART
+                            // 数据是发给本节点的GPIO
                             state <= `STATE_DATA;
-                            uart_req <= 1'b1;
-                            uart_addr <= ring_in_addr;
-                            uart_data_out <= ring_in_data;
-                            uart_we <= ring_in_we;
+                            gpio_req <= 1'b1;
+                            gpio_addr <= ring_in_addr;
+                            gpio_data_in <= ring_in_data;
+                            gpio_we <= ring_in_we;
 
                             // 保存源信息以便回复
                             src_buffer <= ring_in_src;
@@ -113,13 +113,13 @@ module uart_ring_node #(
                 end
 
                 `STATE_DATA: begin
-                    // UART数据处理状态
-                    if (uart_ack) begin
-                        uart_req <= 1'b0;
+                    // GPIO数据处理状态
+                    if (gpio_ack) begin
+                        gpio_req <= 1'b0;
 
                         if (!we_buffer) begin
                             // 读操作完成，准备发送回复
-                            data_buffer <= uart_data_in;
+                            data_buffer <= gpio_data_out;
                             state <= `STATE_ARB;
                         end else begin
                             // 写操作完成，发送确认
@@ -155,7 +155,7 @@ module uart_ring_node #(
             endcase
 
             // 检测中断
-            if (uart_int && !int_pending) begin
+            if (gpio_int && !int_pending) begin
                 int_pending <= 1'b1;
             end
         end

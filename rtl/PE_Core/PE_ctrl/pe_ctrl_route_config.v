@@ -3,7 +3,7 @@
 
 `include "pe_ctrl_params.v"
 
-module route_config #(
+module pe_route_config #(
     parameter NUM_PES           = 4,
     parameter PE_ID_WIDTH       = 3,
     parameter PE_ARRAY_ROWS     = 2,

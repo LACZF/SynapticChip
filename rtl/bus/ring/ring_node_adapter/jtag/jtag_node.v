@@ -36,6 +36,21 @@ module jtag_node #(
     output [3:0] ring_out_be,
     output ring_out_ack,
 
+    // JTAG接口
+    output                              jtag_tck_o,
+    output                              jtag_tms_o,
+    output                              jtag_tdi_o,
+    input  reg                          jtag_tdo_i,
+    input  reg                          jtag_tdo_en_i,
+    output                              jtag_req_o,
+    output                              jtag_we_o,
+    output [`ADDR_WIDTH-1:0]            jtag_addr_o,
+    output [`DATA_WIDTH-1:0]            jtag_data_in_o,
+    input  reg [`DATA_WIDTH-1:0]        jtag_data_out_i,
+    input  reg                          jtag_ack_i,
+    input  reg [`DATA_WIDTH-1:0]        jtag_debug_data_i,
+    input  reg                          jtag_debug_valid_i,
+
     // 发送请求
     output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // 指定使用的Ring
     output wire [NUM_RINGS-1:0]         tx_req_ring_disable_o,   // 禁用的Ring
@@ -64,50 +79,8 @@ module jtag_node #(
     input  wire [NODE_ID_WIDTH-1:0]     rsp_source_id_i,
     input  wire [NODE_ID_WIDTH-1:0]     rsp_target_id_i,
     input  wire [ADDR_WIDTH-1:0]        rsp_addr_i,
-    input  wire [DATA_WIDTH-1:0]        rsp_data_i,
-
-    // JTAG接口
-    input tck,
-    input tms,
-    input tdi,
-    output tdo,
-    output tdo_en,
-
-    // 调试输出
-    output [DATA_WIDTH-1:0] debug_data,
-    output debug_valid
+    input  wire [DATA_WIDTH-1:0]        rsp_data_i
 );
-
-    // JTAG接口信号
-    wire jtag_req;
-    wire jtag_we;
-    wire [ADDR_WIDTH-1:0] jtag_addr;
-    wire [DATA_WIDTH-1:0] jtag_data_out;
-    wire [DATA_WIDTH-1:0] jtag_data_in;
-    wire jtag_ack;
-    wire [DATA_WIDTH-1:0] jtag_debug_data;
-    wire jtag_debug_valid;
-
-    // 实例化JTAG TAP控制器
-    jtag_top tap_inst (
-        .clk(clk),
-        .rst_n(rst_n),
-        .tck(tck),
-        .tms(tms),
-        .tdi(tdi),
-        .tdo(tdo),
-        .tdo_en(tdo_en),
-        .req(jtag_req),
-        .we(jtag_we),
-        .addr(jtag_addr),
-        .data_in(jtag_data_out),
-        .data_out(jtag_data_in),
-        .ack(jtag_ack),
-        .debug_data(jtag_debug_data),
-        .debug_valid(jtag_debug_valid)
-    );
-
-    // 实例化JTAG Ring节点
     jtag_ring_node ring_node_inst (
         .clk(clk),
         .rst_n(rst_n),
@@ -128,18 +101,13 @@ module jtag_node #(
         .ring_out_we(ring_out_we),
         .ring_out_be(ring_out_be),
         .ring_out_ack(ring_out_ack),
-        .jtag_req(jtag_req),
-        .jtag_we(jtag_we),
-        .jtag_addr(jtag_addr),
-        .jtag_data_out(jtag_data_out),
-        .jtag_data_in(jtag_data_in),
-        .jtag_ack(jtag_ack),
-        .jtag_debug_data(jtag_debug_data),
-        .jtag_debug_valid(jtag_debug_valid)
+        .jtag_req(jtag_req_o),
+        .jtag_we(jtag_we_o),
+        .jtag_addr(jtag_addr_o),
+        .jtag_data_out(jtag_data_in_o),
+        .jtag_data_in(jtag_data_out_i),
+        .jtag_ack(jtag_ack_i),
+        .jtag_debug_data(jtag_debug_data_i),
+        .jtag_debug_valid(jtag_debug_valid_i)
     );
-
-    // 调试输出
-    assign debug_data = jtag_debug_data;
-    assign debug_valid = jtag_debug_valid;
-
 endmodule

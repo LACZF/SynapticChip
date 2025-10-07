@@ -1,11 +1,16 @@
 
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-TEST_TARGET := gpio_node
+TEST_TARGET := gpio_module
+TEST_NAME = tb_gpio_module
 TEST_ARGS ?=
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/gpio
-TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_params.v
 TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_module.v
-TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_ring_node.v
-TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_node.v
-TEST_SRC += $(CUR_DIR)/tb_gpio_node.v
+TEST_SRC += $(CUR_DIR)/tb_gpio_module.v
+TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_params.v
+
+# 编译选项
+COMPILE_OPTIONS += +define+NODE_ID_WIDTH=5 +define+ADDR_WIDTH=16 +define+DATA_WIDTH=32 +define+BE_WIDTH=4
+
+# 运行选项
+RUN_OPTIONS += -l $(CUR_DIR)/run.log
