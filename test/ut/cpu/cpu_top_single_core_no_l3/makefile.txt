@@ -25,4 +25,5 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_soc_params.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 
+TEST_SRC += $(CUR_DIR)/instruction_rom.v
 TEST_SRC += $(CUR_DIR)/tb_cpu_top_single_core_no_l3.v
