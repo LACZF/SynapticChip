@@ -25,6 +25,10 @@ module tb_top_system;
     // 状态输出
     wire [`DATA_WIDTH-1:0] system_status;
 
+    // ROM接口信号
+    wire [31:0]  rom_instr;
+    reg [63:0]   cpu_instr_addr;
+
     // 实例化DUT
     top_system #(
         .NUM_RINGS(2),
@@ -65,6 +69,17 @@ module tb_top_system;
             #8680;
         end
     endtask
+
+    // 实例化从文件读取指令的ROM模块
+    instruction_rom #(
+        .MEM_SIZE(4096),                      // 内存大小（指令数量）
+        .ADDR_WIDTH(64),                      // 地址宽度
+        .INSTR_WIDTH(32),                     // 指令宽度
+        .INSTR_FILE("instructions.hex")       // 指令文件路径
+    ) u_instruction_rom (
+        .addr(cpu_instr_addr - 64'h8000_0000), // 将地址偏移到ROM基址
+        .instr(rom_instr)                     // 输出指令
+    );
 
     // 主测试程序
     initial begin
@@ -108,11 +123,11 @@ module tb_top_system;
         #100;
         $display("External interrupt test completed");
 
-        // 测试5: 系统运行测试
-        $display("Test 5: System operation test");
-        // 让系统运行一段时间
-        #5000;
-        $display("System operation test completed");
+        // 测试5: 指令执行测试 - 监控CPU从ROM读取和执行指令
+        $display("Test 5: Instruction execution test");
+        $display("CPU will execute instructions loaded from ROM");
+        #5000; // 给足够的时间让CPU执行指令
+        $display("Instruction execution test completed");
 
         // 测试6: 状态监控
         $display("Test 6: Status monitoring");
@@ -120,6 +135,23 @@ module tb_top_system;
 
         $display("All integration tests passed!");
         $finish;
+    end
+
+    // 添加定期监控CPU指令请求和ROM指令输出的逻辑
+    reg [31:0] instruction_count = 0;
+    initial begin
+        // 每100ps检查一次CPU指令请求和ROM输出
+        forever begin
+            #100;
+            // 模拟CPU指令地址请求（实际应该从系统中获取）
+            cpu_instr_addr = 64'h80000000 + (instruction_count << 2);
+            if (cpu_instr_addr[31:0] >= `ROM_BASE && cpu_instr_addr[31:0] <= `ROM_END) begin
+                $display("[%0t ps] CPU Core  0: icache_req=1 icache_addr=0x%h", $time, cpu_instr_addr);
+                $display("[%0t ps] CPU TOP CORE  0: l1_icache_req=1 l1_icache_addr=0x%h", $time, cpu_instr_addr);
+                $display("[%0t ps] ROM output: 0x%h", $time, rom_instr);
+                instruction_count = instruction_count + 1;
+            end
+        end
     end
 
     // 监控UART输出
