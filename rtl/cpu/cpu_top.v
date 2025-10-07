@@ -317,6 +317,63 @@ module cpu_top #(
                 // 将3位一致性状态连接到2位snoop_state
                 assign snoop_state[i*2 +: 2] = icache_coh_rsp_state[1:0] | dcache_coh_rsp_state[1:0];
 
+                // RISC-V CPU核心实例
+                riscv64_core #(
+                    .CORE_ID(i)
+                ) u_riscv64_core (
+                    .clk(clk),
+                    .rst_n(rst_n),
+
+                    // 指令缓存接口
+                    .icache_req(icache_req),
+                    .icache_addr(icache_addr),
+                    .icache_data(icache_data),
+                    .icache_ready(icache_ready),
+
+                    // 数据缓存接口
+                    .dcache_req(dcache_req),
+                    .dcache_addr(dcache_addr),
+                    .dcache_wdata(dcache_wdata),
+                    .dcache_rdata(dcache_rdata),
+                    .dcache_we(dcache_we),
+                    .dcache_byte_en(dcache_byte_en),
+                    .dcache_ready(dcache_ready),
+
+                    // 监听接口
+                    /* TODO */
+                    // .snoop_valid(snoop_valid[i]),
+                    // .snoop_addr(snoop_addr[i*ADDR_WIDTH +: ADDR_WIDTH]),
+                    // .snoop_req_type(snoop_req_type[i*2 +: 2]),
+                    // .snoop_ready(snoop_ready[i]),
+                    // .snoop_hit(snoop_hit[i]),
+                    // .snoop_state(snoop_state[i*2 +: 2]),
+                    // .snoop_data(snoop_data[i*512 +: 512]),
+
+                    // 中断和调试
+                    .timer_interrupt(1'b0),
+                    .external_interrupt(ext_int),
+                    .software_interrupt(1'b0),
+
+                    // Debug interface - 可以连接到调试模块
+                    .debug_pc(),
+                    .debug_instr(),
+                    .debug_wb_valid(),
+                    .debug_wb_rd(),
+                    .debug_wb_value()
+                );
+
+                // 添加调试信息，追踪指令请求信号流
+                always @(posedge clk) begin
+                    if (icache_req) begin
+                        $display("[%0t ps] CPU CORE %d: icache_req=%b, icache_addr=0x%h",
+                                 $time, i, icache_req, icache_addr);
+                    end
+                    if (l1_icache_req[i]) begin
+                        $display("[%0t ps] CPU TOP CORE %d: l1_icache_req=%b, l1_icache_addr=0x%h",
+                                 $time, i, l1_icache_req[i], l1_icache_addr_64);
+                    end
+                end
+
                 // L1指令缓存实例（使用通用cache模块）
                 cache #(
                     .CACHE_LINE_SIZE(`L1_ICACHE_LINE_SIZE),

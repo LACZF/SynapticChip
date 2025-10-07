@@ -51,19 +51,24 @@ module riscv64_execution (
                 3'b111: alu_result <= alu_src2 << rs1_data[5:0]; // SLL
             endcase
 
-            // 分支判断
+            // 分支判断 - 只有当指令是分支指令时才进行判断
             branch_taken <= 1'b0;
             branch_target <= pc_in + imm;
 
-            case (instr_in[14:12]) // funct3
-                3'b000: branch_taken <= (rs1_data == rs2_data); // BEQ
-                3'b001: branch_taken <= (rs1_data != rs2_data); // BNE
-                3'b100: branch_taken <= ($signed(rs1_data) < $signed(rs2_data)); // BLT
-                3'b101: branch_taken <= ($signed(rs1_data) >= $signed(rs2_data)); // BGE
-                3'b110: branch_taken <= (rs1_data < rs2_data); // BLTU
-                3'b111: branch_taken <= (rs1_data >= rs2_data); // BGEU
-                default: branch_taken <= 1'b0;
-            endcase
+            // RISC-V架构中，分支指令的opcode是7'b1100011
+            if (instr_in[6:0] == 7'b1100011) begin
+                case (instr_in[14:12]) // funct3
+                    3'b000: branch_taken <= (rs1_data == rs2_data); // BEQ
+                    3'b001: branch_taken <= (rs1_data != rs2_data); // BNE
+                    3'b100: branch_taken <= ($signed(rs1_data) < $signed(rs2_data)); // BLT
+                    3'b101: branch_taken <= ($signed(rs1_data) >= $signed(rs2_data)); // BGE
+                    3'b110: branch_taken <= (rs1_data < rs2_data); // BLTU
+                    3'b111: branch_taken <= (rs1_data >= rs2_data); // BGEU
+                    default: branch_taken <= 1'b0;
+                endcase
+            end else begin
+                branch_taken <= 1'b0;
+            end
         end
     end
 
