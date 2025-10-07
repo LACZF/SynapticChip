@@ -99,8 +99,9 @@ module cpu_top #(
     wire mem_we;
     wire mem_ready;
 
-    // 生成L2缓存（可选）
+    // 缓存层次结构连接逻辑
     generate
+        // 当有L2缓存时
         if (ENABLE_L2_CACHE) begin : l2_cache_gen
             // 中间信号用于L2缓存一致性状态
             wire [2:0] l2_coh_rsp_state;
@@ -173,91 +174,111 @@ module cpu_top #(
                     assign l1_icache_ready[1] = core_l2_ready[0];
                 end
             `endif
-        end else begin : direct_l1_to_l3_or_mem
-            // 直接连接L1到L3或内存
-            assign l2_l3_req = |l1_dcache_req || |l1_icache_req;
-            assign l2_l3_addr = |l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH];
-            assign l2_l3_we = |l1_dcache_req && l1_dcache_we[0];
-            assign l2_l3_wdata = l1_dcache_wdata;
 
-            // 直接连接响应信号
-            assign l1_dcache_data[0*512 +: 512] = l2_l3_rdata;
-            assign l1_icache_data[0*512 +: 512] = l2_l3_rdata;
-            assign l1_dcache_ready[0] = l2_l3_ready;
-            assign l1_icache_ready[0] = l2_l3_ready;
-            assign snoop_ready[0] = 1'b1; // 默认响应监听
-            assign snoop_state[0*2 +: 2] = 2'b00; // 默认状态
+            // L3缓存实例（使用通用cache模块，可选）
+            if (ENABLE_L3_CACHE) begin : l3_cache_gen
+                cache #(
+                    .CACHE_LINE_SIZE(`L3_CACHE_LINE_SIZE),
+                    .CACHE_SIZE(`L3_CACHE_SIZE),
+                    .ASSOCIATIVITY(`L3_CACHE_ASSOCIATIVITY),
+                    .ADDR_WIDTH(ADDR_WIDTH),
+                    // 使用正确的L3缓存数据宽度（512位）
+                    .DATA_WIDTH(`L3_CACHE_DATA_WIDTH),
+                    .SUPPORT_COHERENCY(1),
+                    .CACHE_LEVEL(`CACHE_LEVEL_L3),
+                    .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+                ) u_l3_cache (
+                    .clk(clk),
+                    .rst_n(rst_n),
 
-            // 对于多核情况，直接连接其他核心
+                    // CPU接口（连接L2）
+                    .cpu_req_valid(l2_l3_req),
+                    .cpu_req_addr(l2_l3_addr),
+                    .cpu_req_rw(l2_l3_we),
+                    .cpu_req_data(l2_l3_wdata[0*512 +: 512]),
+                    .cpu_req_strb(64'hFFFFFFFFFFFFFFFF),
+                    .cpu_rsp_valid(l2_l3_ready),
+                    .cpu_rsp_data(l2_l3_rdata),
+                    .cpu_rsp_error(),
+
+                    // 内存接口
+                    .mem_req_valid(mem_req),
+                    .mem_req_addr(mem_addr),
+                    .mem_req_rw(mem_we),
+                    // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
+                    // 因此我们只使用缓存行的低64位
+                    .mem_req_data(mem_wdata[0*64 +: 64]),
+                    .mem_rsp_valid(mem_ready),
+                    // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
+                    // 因此我们只使用缓存行的低64位
+                    .mem_rsp_data(mem_rdata[0*64 +: 64]),
+                    .mem_rsp_error(),
+
+                    // 一致性接口
+                    .coh_req_addr({ADDR_WIDTH{1'b0}}),
+                    .coh_req_valid(1'b0),
+                    .coh_req_type(3'd0),
+                    .coh_rsp_valid(),
+                    .coh_rsp_state()
+                );
+            end else begin : direct_l2_to_mem
+                // 直接连接L2到内存
+                assign mem_req = l2_l3_req;
+                assign mem_addr = l2_l3_addr;
+                assign mem_wdata = l2_l3_wdata;
+                assign mem_we = l2_l3_we;
+                assign l2_l3_rdata = mem_rdata;
+                assign l2_l3_ready = mem_ready;
+            end
+        end else begin : direct_l1_to_mem
+            // 没有L2缓存时，L1直接连接到内存
+            // 为每个核心创建请求仲裁逻辑
+            wire [NUM_CORES-1:0] core_mem_req;
+            wire [NUM_CORES*ADDR_WIDTH-1:0] core_mem_addr;
+            wire [NUM_CORES*512-1:0] core_mem_wdata;
+            wire [NUM_CORES-1:0] core_mem_we;
+            wire [NUM_CORES-1:0] core_mem_ready;
+            wire [NUM_CORES*512-1:0] core_mem_rdata;
+
+            // 简化的仲裁逻辑，仅连接第一个核心到内存
+            // 实际应用中应实现更复杂的仲裁器
+            assign mem_req = core_mem_req[0];
+            assign mem_addr = core_mem_addr[0*ADDR_WIDTH +: ADDR_WIDTH];
+            assign mem_wdata = core_mem_wdata[0*512 +: 512];
+            assign mem_we = core_mem_we[0];
+            assign core_mem_rdata[0*512 +: 512] = mem_rdata;
+            assign core_mem_ready[0] = mem_ready;
+
+            // 直接连接L1缓存到内存接口
+            genvar i;
+            for (i = 0; i < NUM_CORES; i = i + 1) begin : l1_to_mem_conn
+                assign core_mem_req[i] = l1_dcache_req[i] || l1_icache_req[i];
+                assign core_mem_addr[i*ADDR_WIDTH +: ADDR_WIDTH] =
+                    l1_dcache_req[i] ? l1_dcache_addr[i*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[i*ADDR_WIDTH +: ADDR_WIDTH];
+                assign core_mem_we[i] = l1_dcache_req[i] && l1_dcache_we[i];
+                assign core_mem_wdata[i*512 +: 512] = l1_dcache_wdata[i*512 +: 512];
+
+                // 连接响应信号
+                assign l1_dcache_data[i*512 +: 512] = core_mem_rdata[i*512 +: 512];
+                assign l1_icache_data[i*512 +: 512] = core_mem_rdata[i*512 +: 512];
+                assign l1_dcache_ready[i] = core_mem_ready[i];
+                assign l1_icache_ready[i] = core_mem_ready[i];
+
+                // 不使用监听接口，设置默认值
+                assign snoop_ready[i] = 1'b1;
+                assign snoop_state[i*2 +: 2] = 2'b00;
+            end
+
+            // 对于多核情况，将其他核心的响应连接到相同的内存响应
+            // 注意：这是一个简化实现，实际系统中应该有完整的仲裁机制
             `ifdef NUM_CORES
-                // 移除嵌套的generate块，改用条件编译+简单if语句
                 if (NUM_CORES > 1) begin
-                    assign l1_dcache_data[1*512 +: 512] = l2_l3_rdata;
-                    assign l1_icache_data[1*512 +: 512] = l2_l3_rdata;
-                    assign l1_dcache_ready[1] = l2_l3_ready;
-                    assign l1_icache_ready[1] = l2_l3_ready;
-                    assign snoop_ready[1] = 1'b1;
-                    assign snoop_state[1*2 +: 2] = 2'b00;
+                    for (i = 1; i < NUM_CORES; i = i + 1) begin : multi_core_conn
+                        assign core_mem_rdata[i*512 +: 512] = mem_rdata;
+                        assign core_mem_ready[i] = mem_ready;
+                    end
                 end
             `endif
-        end
-    endgenerate
-
-    // L3缓存实例（使用通用cache模块，可选）
-    generate
-        if (ENABLE_L3_CACHE) begin : l3_cache_gen
-            cache #(
-                .CACHE_LINE_SIZE(`L3_CACHE_LINE_SIZE),
-                .CACHE_SIZE(`L3_CACHE_SIZE),
-                .ASSOCIATIVITY(`L3_CACHE_ASSOCIATIVITY),
-                .ADDR_WIDTH(ADDR_WIDTH),
-                // 使用正确的L3缓存数据宽度（512位）
-                .DATA_WIDTH(`L3_CACHE_DATA_WIDTH),
-                .SUPPORT_COHERENCY(1),
-                .CACHE_LEVEL(`CACHE_LEVEL_L3),
-                .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
-            ) u_l3_cache (
-                .clk(clk),
-                .rst_n(rst_n),
-
-                // CPU接口（连接L2）
-                .cpu_req_valid(l2_l3_req),
-                .cpu_req_addr(l2_l3_addr),
-                .cpu_req_rw(l2_l3_we),
-                .cpu_req_data(l2_l3_wdata[0*512 +: 512]),
-                .cpu_req_strb(64'hFFFFFFFFFFFFFFFF),
-                .cpu_rsp_valid(l2_l3_ready),
-                .cpu_rsp_data(l2_l3_rdata),
-                .cpu_rsp_error(),
-
-                // 内存接口
-                .mem_req_valid(mem_req),
-                .mem_req_addr(mem_addr),
-                .mem_req_rw(mem_we),
-                // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
-                // 因此我们只使用缓存行的低64位
-                .mem_req_data(mem_wdata[0*64 +: 64]),
-                .mem_rsp_valid(mem_ready),
-                // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
-                // 因此我们只使用缓存行的低64位
-                .mem_rsp_data(mem_rdata[0*64 +: 64]),
-                .mem_rsp_error(),
-
-                // 一致性接口
-                .coh_req_addr({ADDR_WIDTH{1'b0}}),
-                .coh_req_valid(1'b0),
-                .coh_req_type(3'd0),
-                .coh_rsp_valid(),
-                .coh_rsp_state()
-            );
-        end else begin : direct_mem_access
-            // 直接连接L2到内存
-            assign mem_req = l2_l3_req;
-            assign mem_addr = l2_l3_addr;
-            assign mem_wdata = l2_l3_wdata;
-            assign mem_we = l2_l3_we;
-            assign l2_l3_rdata = mem_rdata;
-            assign l2_l3_ready = mem_ready;
         end
     endgenerate
 
