@@ -16,6 +16,7 @@ module cpu_top #(
     parameter INST_WIDTH        = 32,
     parameter NUM_CORES         = 4,
     parameter CORE_ID_WIDTH     = 2,
+    parameter ENABLE_L2_CACHE   = 1, // 使能L2缓存，默认为1
     parameter ENABLE_L3_CACHE   = 1, // 使能L3缓存，默认为1
     parameter CPU_TYPE          = 0  // 0: RISC-V, 1: 预留其他CPU类型
 ) (
@@ -78,9 +79,6 @@ module cpu_top #(
     wire [NUM_CORES*2-1:0] snoop_state;
     wire [NUM_CORES*512-1:0] snoop_data;
 
-    // 中间信号用于L2缓存一致性状态
-    wire [2:0] l2_coh_rsp_state;
-
     // L2-L3接口信号
     wire l2_l3_req;
     wire [ADDR_WIDTH-1:0] l2_l3_addr;
@@ -101,64 +99,109 @@ module cpu_top #(
     wire mem_we;
     wire mem_ready;
 
-    // 共享L2缓存实例（使用通用cache模块）
-    cache #(
-        .CACHE_LINE_SIZE(`L2_CACHE_LINE_SIZE),
-        .CACHE_SIZE(`L2_CACHE_SIZE),
-        .ASSOCIATIVITY(`L2_CACHE_ASSOCIATIVITY),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        // 使用正确的L2缓存数据宽度（512位）
-        .DATA_WIDTH(`L2_CACHE_DATA_WIDTH),
-        .SUPPORT_COHERENCY(1),
-        .CACHE_LEVEL(`CACHE_LEVEL_L2),
-        .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
-    ) u_l2_cache (
-        .clk(clk),
-        .rst_n(rst_n),
-
-        // CPU接口（简化为单一请求，实际应添加仲裁逻辑）
-        .cpu_req_valid(|l1_dcache_req || |l1_icache_req),
-        .cpu_req_addr(|l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
-        .cpu_req_rw(|l1_dcache_req && l1_dcache_we[0]),
-        // 使用完整的512位缓存行宽度
-        .cpu_req_data(l1_dcache_wdata[0*512 +: 512]),
-        .cpu_req_strb(64'hFFFFFFFFFFFFFFFF),
-        .cpu_rsp_valid(core_l2_ready[0]),
-        // 使用完整的512位缓存行宽度
-        .cpu_rsp_data(core_l2_data[0*512 +: 512]),
-        .cpu_rsp_error(),
-
-        // 内存接口
-        .mem_req_valid(l2_l3_req),
-        .mem_req_addr(l2_l3_addr),
-        .mem_req_rw(l2_l3_we),
-        // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
-        // 因此我们只使用缓存行的低64位
-        .mem_req_data(l2_l3_wdata[0*64 +: 64]),
-        .mem_rsp_valid(l2_l3_ready),
-        // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
-        // 因此我们只使用缓存行的低64位
-        .mem_rsp_data(l2_l3_rdata[0*64 +: 64]),
-        .mem_rsp_error(),
-
-        // 一致性接口
-        .coh_req_addr(snoop_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
-        .coh_req_valid(snoop_valid[0]),
-        .coh_req_type({1'b0, snoop_req_type[0*2 +: 2]}),
-        .coh_rsp_valid(snoop_ready[0]),
-        .coh_rsp_state(l2_coh_rsp_state)
-    );
-
-    // 将L2缓存的一致性状态转换为2位宽并连接到snoop_state
-    assign snoop_state[0*2 +: 2] = l2_coh_rsp_state[1:0];
-
-    // 简化版：将L2的响应连接到所有核心（实际应根据请求源进行分发）
+    // 生成L2缓存（可选）
     generate
-        for (i = 0; i < NUM_CORES; i = i + 1) begin : l2_response_gen
-            assign l1_dcache_data[i*512 +: 512] = core_l2_data[0*512 +: 512];
-            assign l1_icache_data[i*512 +: 512] = core_l2_data[0*512 +: 512];
-            assign l1_dcache_ready[i] = core_l2_ready[0];
-            assign l1_icache_ready[i] = core_l2_ready[0];
+        if (ENABLE_L2_CACHE) begin : l2_cache_gen
+            // 中间信号用于L2缓存一致性状态
+            wire [2:0] l2_coh_rsp_state;
+
+            // 共享L2缓存实例（使用通用cache模块）
+            cache #(
+                .CACHE_LINE_SIZE(`L2_CACHE_LINE_SIZE),
+                .CACHE_SIZE(`L2_CACHE_SIZE),
+                .ASSOCIATIVITY(`L2_CACHE_ASSOCIATIVITY),
+                .ADDR_WIDTH(ADDR_WIDTH),
+                // 使用正确的L2缓存数据宽度（512位）
+                .DATA_WIDTH(`L2_CACHE_DATA_WIDTH),
+                .SUPPORT_COHERENCY(1),
+                .CACHE_LEVEL(`CACHE_LEVEL_L2),
+                .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+            ) u_l2_cache (
+                .clk(clk),
+                .rst_n(rst_n),
+
+                // CPU接口（简化为单一请求，实际应添加仲裁逻辑）
+                .cpu_req_valid(|l1_dcache_req || |l1_icache_req),
+                .cpu_req_addr(|l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
+                .cpu_req_rw(|l1_dcache_req && l1_dcache_we[0]),
+                // 使用完整的512位缓存行宽度
+                .cpu_req_data(l1_dcache_wdata[0*512 +: 512]),
+                .cpu_req_strb(64'hFFFFFFFFFFFFFFFF),
+                .cpu_rsp_valid(core_l2_ready[0]),
+                // 使用完整的512位缓存行宽度
+                .cpu_rsp_data(core_l2_data[0*512 +: 512]),
+                .cpu_rsp_error(),
+
+                // 内存接口
+                .mem_req_valid(l2_l3_req),
+                .mem_req_addr(l2_l3_addr),
+                .mem_req_rw(l2_l3_we),
+                // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
+                // 因此我们只使用缓存行的低64位
+                .mem_req_data(l2_l3_wdata[0*64 +: 64]),
+                .mem_rsp_valid(l2_l3_ready),
+                // 注意：cache模块定义中存在设计错误，CACHE_LINE_SIZE是字节但被用作位宽
+                // 因此我们只使用缓存行的低64位
+                .mem_rsp_data(l2_l3_rdata[0*64 +: 64]),
+                .mem_rsp_error(),
+
+                // 一致性接口
+                .coh_req_addr(snoop_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
+                .coh_req_valid(snoop_valid[0]),
+                .coh_req_type({1'b0, snoop_req_type[0*2 +: 2]}),
+                .coh_rsp_valid(snoop_ready[0]),
+                .coh_rsp_state(l2_coh_rsp_state)
+            );
+
+            // 将L2缓存的一致性状态转换为2位宽并连接到snoop_state
+            assign snoop_state[0*2 +: 2] = l2_coh_rsp_state[1:0];
+
+            // 简化版：将L2的响应连接到所有核心（实际应根据请求源进行分发）
+            // 使用非阻塞赋值实现连接
+            assign l1_dcache_data[0*512 +: 512] = core_l2_data[0*512 +: 512];
+            assign l1_icache_data[0*512 +: 512] = core_l2_data[0*512 +: 512];
+            assign l1_dcache_ready[0] = core_l2_ready[0];
+            assign l1_icache_ready[0] = core_l2_ready[0];
+
+            // 对于多核情况，直接连接其他核心到同一L2响应
+            `ifdef NUM_CORES
+                generate
+                if (NUM_CORES > 1) begin
+                    assign l1_dcache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
+                    assign l1_icache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
+                    assign l1_dcache_ready[1] = core_l2_ready[0];
+                    assign l1_icache_ready[1] = core_l2_ready[0];
+                end
+                endgenerate
+            `endif
+        end else begin : direct_l1_to_l3_or_mem
+            // 直接连接L1到L3或内存
+            assign l2_l3_req = |l1_dcache_req || |l1_icache_req;
+            assign l2_l3_addr = |l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH];
+            assign l2_l3_we = |l1_dcache_req && l1_dcache_we[0];
+            assign l2_l3_wdata = l1_dcache_wdata;
+
+            // 直接连接响应信号
+            assign l1_dcache_data[0*512 +: 512] = l2_l3_rdata;
+            assign l1_icache_data[0*512 +: 512] = l2_l3_rdata;
+            assign l1_dcache_ready[0] = l2_l3_ready;
+            assign l1_icache_ready[0] = l2_l3_ready;
+            assign snoop_ready[0] = 1'b1; // 默认响应监听
+            assign snoop_state[0*2 +: 2] = 2'b00; // 默认状态
+
+            // 对于多核情况，直接连接其他核心
+            `ifdef NUM_CORES
+                generate
+                if (NUM_CORES > 1) begin
+                    assign l1_dcache_data[1*512 +: 512] = l2_l3_rdata;
+                    assign l1_icache_data[1*512 +: 512] = l2_l3_rdata;
+                    assign l1_dcache_ready[1] = l2_l3_ready;
+                    assign l1_icache_ready[1] = l2_l3_ready;
+                    assign snoop_ready[1] = 1'b1;
+                    assign snoop_state[1*2 +: 2] = 2'b00;
+                end
+                endgenerate
+            `endif
         end
     endgenerate
 
