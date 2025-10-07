@@ -1,18 +1,13 @@
 // cpu_top.v
-// CPU顶层模块，连接top_system和具体的CPU实现
-// 预留了与多种CPU对接的能力
+// CPU顶层模块，包含CPU核心和缓存层次结构
+// 直接与外界通信，不再通过ring总线
 
 `include "cache_params.v"
 `include "cache_system_params.v"
 
 module cpu_top #(
-    parameter NUM_RINGS         = 2,
     parameter ADDR_WIDTH        = 64,  // 与64位RISC-V架构保持一致
     parameter DATA_WIDTH        = 64,
-    parameter NODE_ID_WIDTH     = 8,
-    parameter NODE_ID           = 0,
-    parameter OPCODE_WIDTH      = 8,
-    parameter MATCH_TYPE_WIDTH  = 2,
     parameter INST_WIDTH        = 32,
     parameter NUM_CORES         = 4,
     parameter CORE_ID_WIDTH     = 2,
@@ -26,34 +21,13 @@ module cpu_top #(
     // 外部中断
     input ext_int,
 
-    // 发送请求
-    input wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,
-    input wire [NUM_RINGS-1:0]         tx_req_ring_disable_o,
-    input wire                         tx_req_valid_o,
-    input wire                         tx_req_is_order_o,
-    input wire [OPCODE_WIDTH-1:0]      tx_req_opcode_o,
-    input wire [MATCH_TYPE_WIDTH-1:0]  tx_req_match_type_o,
-    input wire [NODE_ID_WIDTH-1:0]     tx_req_source_id_o,
-    input wire [NODE_ID_WIDTH-1:0]     tx_req_target_id_o,
-    input wire [ADDR_WIDTH-1:0]        tx_req_addr_o,
-    input wire [DATA_WIDTH-1:0]        tx_req_data_o,
-
-    // 接受请求
-    output wire                        rx_req_valid_i,
-    output wire                        rx_req_is_order_i,
-    output wire [OPCODE_WIDTH-1:0]     rx_req_opcode_i,
-    output wire [MATCH_TYPE_WIDTH-1:0] rx_req_match_type_i,
-    output wire [NODE_ID_WIDTH-1:0]    rx_req_source_id_i,
-    output wire [NODE_ID_WIDTH-1:0]    rx_req_target_id_i,
-    output wire [ADDR_WIDTH-1:0]       rx_req_addr_i,
-    output wire [DATA_WIDTH-1:0]       rx_req_data_i,
-
-    // 接收响应
-    output wire                        rsp_valid_i,
-    output wire [NODE_ID_WIDTH-1:0]    rsp_source_id_i,
-    output wire [NODE_ID_WIDTH-1:0]    rsp_target_id_i,
-    output wire [ADDR_WIDTH-1:0]       rsp_addr_i,
-    output wire [DATA_WIDTH-1:0]       rsp_data_i
+    // 内存接口信号 - 直接引出与外界通信
+    output wire                        mem_req,
+    output wire [ADDR_WIDTH-1:0]       mem_addr,
+    output wire [511:0]                mem_wdata,
+    output wire                        mem_we,
+    input wire                         mem_ready,
+    input wire [511:0]                 mem_rdata
 );
 
     // L1缓存接口信号
@@ -91,13 +65,7 @@ module cpu_top #(
     wire [NUM_CORES-1:0] core_l2_ready;
     wire [NUM_CORES*512-1:0] core_l2_data;
 
-    // 内存接口信号
-    wire mem_req;
-    wire [ADDR_WIDTH-1:0] mem_addr;
-    wire [511:0] mem_wdata;
-    wire [511:0] mem_rdata;
-    wire mem_we;
-    wire mem_ready;
+    // 内存接口信号 - 已在模块端口中声明
 
     // 缓存层次结构连接逻辑
     generate
@@ -460,19 +428,10 @@ module cpu_top #(
             else if (CPU_TYPE == 1) begin : other_cpu_implementation
                 // 其他CPU类型的实现可以在这里添加
                 // 当前只是占位，实际实现需要根据具体的CPU架构来编写
-                assign rx_req_valid_o = 1'b0;
-                assign rx_req_is_order_o = 1'b0;
-                assign rx_req_opcode_o = {OPCODE_WIDTH{1'b0}};
-                assign rx_req_match_type_o = {MATCH_TYPE_WIDTH{1'b0}};
-                assign rx_req_source_id_o = {NODE_ID_WIDTH{1'b0}};
-                assign rx_req_target_id_o = {NODE_ID_WIDTH{1'b0}};
-                assign rx_req_addr_o = {ADDR_WIDTH{1'b0}};
-                assign rx_req_data_o = {DATA_WIDTH{1'b0}};
-                assign rsp_valid_o = 1'b0;
-                assign rsp_source_id_o = {NODE_ID_WIDTH{1'b0}};
-                assign rsp_target_id_o = {NODE_ID_WIDTH{1'b0}};
-                assign rsp_addr_o = {ADDR_WIDTH{1'b0}};
-                assign rsp_data_o = {DATA_WIDTH{1'b0}};
+                assign mem_req = 1'b0;
+                assign mem_addr = {ADDR_WIDTH{1'b0}};
+                assign mem_wdata = {512{1'b0}};
+                assign mem_we = 1'b0;
             end
         end
     endgenerate

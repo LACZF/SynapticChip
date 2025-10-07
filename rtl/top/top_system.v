@@ -135,7 +135,8 @@ module top_system #(
         .ring_busy(ring_busy)
     );
 
-    cpu_top #(
+    // 使用cpu_with_ring模块替代cpu_top，保持与环形总线的兼容性
+    cpu_with_ring #(
         .NUM_RINGS(NUM_RINGS),
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),

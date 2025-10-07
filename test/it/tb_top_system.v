@@ -2,7 +2,92 @@
 // 顶层系统集成测试平台
 
 `include "top_system_params.v"
+`include "spi_params.v"
 `timescale 1ns/1ps
+
+// SPI Flash模型 - 模拟SPI ROM设备
+module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output wire miso);
+    parameter MEM_SIZE = 4096; // 内存大小（指令数量）
+    parameter INSTR_FILE = "instructions.hex"; // 指令文件路径
+
+    // 内部存储器
+    reg [31:0] mem [0:MEM_SIZE-1];
+    reg [31:0] current_addr;
+    reg [7:0] current_cmd;
+    reg [1:0] state;
+    reg [4:0] bit_count;
+    reg [31:0] rx_data;
+    reg [31:0] tx_data;
+    reg miso_reg;
+
+    localparam IDLE = 2'b00;
+    localparam CMD = 2'b01;
+    localparam ADDR = 2'b10;
+    localparam DATA = 2'b11;
+
+    // 初始化从文件加载指令
+    initial begin
+        $readmemh(INSTR_FILE, mem);
+        state = IDLE;
+        miso_reg = 1'b0;
+    end
+
+    // SPI通信处理
+    always @(negedge sclk or posedge cs_n) begin
+        if (cs_n) begin
+            state = IDLE;
+            bit_count = 0;
+            miso_reg = 1'b0;
+        end else begin
+            case (state)
+                IDLE:
+                    begin
+                        state = CMD;
+                        bit_count = 0;
+                        current_cmd = 0;
+                    end
+                CMD:
+                    begin
+                        current_cmd = {current_cmd[6:0], mosi};
+                        bit_count = bit_count + 1;
+                        if (bit_count == 8) begin
+                            bit_count = 0;
+                            if (current_cmd == `SPI_CMD_READ_DATA || current_cmd == `SPI_CMD_FAST_READ) begin
+                                state = ADDR;
+                                current_addr = 0;
+                            end
+                        end
+                    end
+                ADDR:
+                    begin
+                        current_addr = {current_addr[29:0], mosi};
+                        bit_count = bit_count + 1;
+                        if (bit_count == 24) begin
+                            bit_count = 0;
+                            state = DATA;
+                            // 将字节地址转换为指令索引 (除以4)
+                            tx_data = mem[current_addr / 4];
+                        end
+                    end
+                DATA:
+                    begin
+                        // 从最高位开始发送数据
+                        miso_reg = tx_data[31 - bit_count];
+                        bit_count = bit_count + 1;
+                        if (bit_count == 32) begin
+                            // 读取完一个指令后，自动增加地址读取下一个
+                            current_addr = current_addr + 4;
+                            tx_data = mem[current_addr / 4];
+                            bit_count = 0;
+                        end
+                    end
+            endcase
+        end
+    end
+
+    // 输出MISO信号
+    assign miso = cs_n ? 1'bz : miso_reg;
+endmodule
 
 module tb_top_system;
 
@@ -25,9 +110,11 @@ module tb_top_system;
     // 状态输出
     wire [`DATA_WIDTH-1:0] system_status;
 
-    // ROM接口信号
-    wire [31:0]  rom_instr;
-    reg [63:0]   cpu_instr_addr;
+    // SPI物理接口（连接到SPI Flash模型）
+    wire spi_cs_n;
+    wire spi_clk;
+    wire spi_mosi;
+    wire spi_miso;
 
     // 实例化DUT
     top_system #(
@@ -43,7 +130,12 @@ module tb_top_system;
         .uart_rxd(uart_rxd),
         .gpio_pins(gpio_pins),
         .ext_int(ext_int),
-        .system_status(system_status)
+        .system_status(system_status),
+        // SPI接口连接到SPI Flash模型
+        .spi_cs_n(spi_cs_n),
+        .spi_clk(spi_clk),
+        .spi_mosi(spi_mosi),
+        .spi_miso(spi_miso)
     );
 
     // 时钟生成
@@ -70,15 +162,15 @@ module tb_top_system;
         end
     endtask
 
-    // 实例化从文件读取指令的ROM模块
-    instruction_rom #(
-        .MEM_SIZE(4096),                      // 内存大小（指令数量）
-        .ADDR_WIDTH(64),                      // 地址宽度
-        .INSTR_WIDTH(32),                     // 指令宽度
-        .INSTR_FILE("instructions.hex")       // 指令文件路径
-    ) u_instruction_rom (
-        .addr(cpu_instr_addr - 64'h8000_0000), // 将地址偏移到ROM基址
-        .instr(rom_instr)                     // 输出指令
+    // 实例化SPI Flash模型，连接到SPI物理接口
+    spi_flash_model #(
+        .MEM_SIZE(4096),
+        .INSTR_FILE("instructions.hex")
+    ) u_spi_flash_model (
+        .cs_n(spi_cs_n),
+        .sclk(spi_clk),
+        .mosi(spi_mosi),
+        .miso(spi_miso)
     );
 
     // 主测试程序
@@ -137,20 +229,26 @@ module tb_top_system;
         $finish;
     end
 
-    // 添加定期监控CPU指令请求和ROM指令输出的逻辑
+    // 添加SPI通信监控逻辑
+    initial begin
+        forever begin
+            #1000;
+            // 监控SPI通信状态
+            if (!spi_cs_n) begin
+                $display("[%0t ps] SPI通信活跃: cs_n=0, clk=%b, mosi=%b, miso=%b",
+                         $time, spi_clk, spi_mosi, spi_miso);
+            end
+        end
+    end
+
+    // 添加定期监控系统状态的逻辑
     reg [31:0] instruction_count = 0;
     initial begin
-        // 每100ps检查一次CPU指令请求和ROM输出
         forever begin
-            #100;
-            // 模拟CPU指令地址请求（实际应该从系统中获取）
-            cpu_instr_addr = 64'h80000000 + (instruction_count << 2);
-            if (cpu_instr_addr[31:0] >= `ROM_BASE && cpu_instr_addr[31:0] <= `ROM_END) begin
-                $display("[%0t ps] CPU Core  0: icache_req=1 icache_addr=0x%h", $time, cpu_instr_addr);
-                $display("[%0t ps] CPU TOP CORE  0: l1_icache_req=1 l1_icache_addr=0x%h", $time, cpu_instr_addr);
-                $display("[%0t ps] ROM output: 0x%h", $time, rom_instr);
-                instruction_count = instruction_count + 1;
-            end
+            #1000;
+            instruction_count = instruction_count + 1;
+            $display("[%0t ps] 已执行指令数: %d, 系统状态: 0x%h",
+                     $time, instruction_count, system_status);
         end
     end
 

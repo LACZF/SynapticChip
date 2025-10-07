@@ -9,34 +9,13 @@ module tb_cpu_top;
     reg         rst_n;
     reg         ext_int;
 
-    // Ring Bus 接口
-    reg  [1:0]   tx_req_ring_mask_i;
-    reg  [1:0]   tx_req_ring_disable_i;
-    reg          tx_req_valid_i;
-    reg          tx_req_is_order_i;
-    reg  [7:0]   tx_req_opcode_i;
-    reg  [1:0]   tx_req_match_type_i;
-    reg  [7:0]   tx_req_source_id_i;
-    reg  [7:0]   tx_req_target_id_i;
-    reg  [63:0]  tx_req_addr_i;
-    reg  [63:0]  tx_req_data_i;
-
-    // 接收请求端口
-    wire         rx_req_valid_o;
-    wire         rx_req_is_order_o;
-    wire [7:0]   rx_req_opcode_o;
-    wire [1:0]   rx_req_match_type_o;
-    wire [7:0]   rx_req_source_id_o;
-    wire [7:0]   rx_req_target_id_o;
-    wire [63:0]  rx_req_addr_o;
-    wire [63:0]  rx_req_data_o;
-
-    // 响应端口
-    wire         rsp_valid_o;
-    wire [7:0]   rsp_source_id_o;
-    wire [7:0]   rsp_target_id_o;
-    wire [63:0]  rsp_addr_o;
-    wire [63:0]  rsp_data_o;
+    // 内存接口信号
+    wire        mem_req;
+    wire [63:0] mem_addr;
+    wire [511:0] mem_wdata;
+    wire        mem_we;
+    reg         mem_ready;
+    reg [511:0] mem_rdata;
 
     // CPU核心内部信号监控
     wire [NUM_CORES-1:0] l1_icache_req;
@@ -88,46 +67,32 @@ module tb_cpu_top;
         .rst_n              (rst_n),
         .ext_int            (ext_int),
 
-        // Ring Bus 发送请求
-        .tx_req_ring_mask_o (tx_req_ring_mask_i),
-        .tx_req_ring_disable_o(tx_req_ring_disable_i),
-        .tx_req_valid_o     (tx_req_valid_i),
-        .tx_req_is_order_o  (tx_req_is_order_i),
-        .tx_req_opcode_o    (tx_req_opcode_i),
-        .tx_req_match_type_o(tx_req_match_type_i),
-        .tx_req_source_id_o (tx_req_source_id_i),
-        .tx_req_target_id_o (tx_req_target_id_i),
-        .tx_req_addr_o      (tx_req_addr_i),
-        .tx_req_data_o      (tx_req_data_i),
-
-        // Ring Bus 接收请求
-        .rx_req_valid_i     (rx_req_valid_o),
-        .rx_req_is_order_i  (rx_req_is_order_o),
-        .rx_req_opcode_i    (rx_req_opcode_o),
-        .rx_req_match_type_i(rx_req_match_type_o),
-        .rx_req_source_id_i (rx_req_source_id_o),
-        .rx_req_target_id_i (rx_req_target_id_o),
-        .rx_req_addr_i      (rx_req_addr_o),
-        .rx_req_data_i      (rx_req_data_o),
-
-        // Ring Bus 响应
-        .rsp_valid_i        (rsp_valid_o),
-        .rsp_source_id_i    (rsp_source_id_o),
-        .rsp_target_id_i    (rsp_target_id_o),
-        .rsp_addr_i         (rsp_addr_o),
-        .rsp_data_i         (rsp_data_o)
+        // 内存接口
+        .mem_req            (mem_req),
+        .mem_addr           (mem_addr),
+        .mem_wdata          (mem_wdata),
+        .mem_we             (mem_we),
+        .mem_ready          (mem_ready),
+        .mem_rdata          (mem_rdata)
     );
 
-    // 直接连接测试平台生成的L1缓存响应信号到cpu_top内部的L1缓存接口
-    assign u_cpu_top.l1_icache_data = l1_icache_data;  // 直接连接指令数据
-    assign u_cpu_top.l1_icache_ready = l1_icache_ready;  // 直接连接就绪信号
-    // 直接使用CPU提供的外部接口进行监控
-    assign l1_icache_req = u_cpu_top.l1_icache_req;
-    // 对于多核配置，l1_icache_addr是一个数组，我们取第一个核心的地址
-    assign l1_icache_addr = u_cpu_top.l1_icache_addr[63:0];
-    assign l1_dcache_req = u_cpu_top.l1_dcache_req;
-    assign l1_dcache_addr = u_cpu_top.l1_dcache_addr[63:0];
-    assign l1_dcache_we = u_cpu_top.l1_dcache_we;
+    // 使用内存接口替代直接访问内部信号
+    always @* begin
+        // 对于所有核心，提供指令缓存响应
+        for (i = 0; i < NUM_CORES; i = i + 1) begin
+            if (l1_icache_req[i]) begin
+                mem_ready = 1'b1;
+                mem_rdata = {{480{1'b0}}, rom_instr};
+            end
+        end
+    end
+
+    // 监控信号
+    assign l1_icache_req = mem_req;
+    assign l1_icache_addr = mem_addr;
+    assign l1_dcache_req = mem_req;
+    assign l1_dcache_addr = mem_addr;
+    assign l1_dcache_we = mem_we;
 
     // 模拟内存响应逻辑
     always @(posedge clk or negedge rst_n) begin
@@ -204,16 +169,8 @@ module tb_cpu_top;
         // 初始化
         rst_n = 1;
         ext_int = 0;
-        tx_req_ring_mask_i = 0;
-        tx_req_ring_disable_i = 0;
-        tx_req_valid_i = 0;
-        tx_req_is_order_i = 0;
-        tx_req_opcode_i = 0;
-        tx_req_match_type_i = 0;
-        tx_req_source_id_i = 0;
-        tx_req_target_id_i = 0;
-        tx_req_addr_i = 0;
-        tx_req_data_i = 0;
+        mem_ready = 0;
+        mem_rdata = 0;
         cpu_instr_addr = 0;
 
         // 执行复位
@@ -235,29 +192,25 @@ module tb_cpu_top;
         #10 ext_int = 0;
         #500;
 
-        // 测试3: Ring Bus 通信 - 读操作
-        $display("测试3: Ring Bus 通信 - 读操作");
+        // 测试3: 内存读操作测试
+        $display("测试3: 内存读操作测试");
         #500;
-        // 发送一个测试请求
-        tx_req_valid_i = 1;
-        tx_req_opcode_i = 8'h01; // 读操作
-        tx_req_addr_i = 64'h0000000000001000;
-        tx_req_source_id_i = 8'h01;
-        tx_req_target_id_i = 8'h00;
-        #10 tx_req_valid_i = 0;
+        // 准备内存读响应
+        wait(mem_req && !mem_we);
+        $display("[内存读请求] 地址=0x%h", mem_addr);
+        #5 mem_ready = 1;
+        mem_rdata = 64'h0000000012345678;
+        #5 mem_ready = 0;
         #1000;
 
-        // 测试4: Ring Bus 通信 - 写操作
-        $display("测试4: Ring Bus 通信 - 写操作");
+        // 测试4: 内存写操作测试
+        $display("测试4: 内存写操作测试");
         #500;
-        // 发送一个写请求
-        tx_req_valid_i = 1;
-        tx_req_opcode_i = 8'h02; // 写操作
-        tx_req_addr_i = 64'h0000000000002000;
-        tx_req_data_i = 64'hDEADBEEFDEADBEEF;
-        tx_req_source_id_i = 8'h01;
-        tx_req_target_id_i = 8'h00;
-        #10 tx_req_valid_i = 0;
+        // 准备内存写响应
+        wait(mem_req && mem_we);
+        $display("[内存写请求] 地址=0x%h, 数据=0x%h", mem_addr, mem_wdata);
+        #5 mem_ready = 1;
+        #5 mem_ready = 0;
         #1000;
 
         // 测试5: 从文件读取指令并执行
@@ -321,8 +274,6 @@ module tb_cpu_top;
     initial begin
         $dumpfile("tb_cpu_top.vcd");
         $dumpvars(0, tb_cpu_top);
-        $dumpvars(1, u_cpu_top);
-        $dumpvars(1, u_instruction_rom);
     end
 
     // 监控核心和缓存活动
@@ -346,9 +297,16 @@ module tb_cpu_top;
             end
         end
 
-        // 监控Ring Bus 通信
-        if (rx_req_valid_o) begin
-            $display("时间: %t - Ring Bus 请求: 地址=0x%h, 操作码=0x%h", $time, rx_req_addr_o, rx_req_opcode_o);
+        // 监控内存操作
+        if (mem_req) begin
+            if (mem_we) begin
+                $display("时间: %t - 内存写请求: 地址=0x%h, 数据=0x%h", $time, mem_addr, mem_wdata);
+            end else begin
+                $display("时间: %t - 内存读请求: 地址=0x%h", $time, mem_addr);
+            end
+        end
+        if (mem_ready) begin
+            $display("时间: %t - 内存响应: 数据=0x%h", $time, mem_rdata);
         end
     end
 
