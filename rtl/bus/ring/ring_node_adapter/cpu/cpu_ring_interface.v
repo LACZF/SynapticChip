@@ -1,11 +1,7 @@
 // CPU与Ring总线接口模块
 // 负责连接cpu_top和ring总线，处理信号格式转换
-// 修改：添加SPI读取指令功能，当所有缓存未命中时通过SPI从flash中读取指令
 
-`include "cache_params.v"
-`include "cache_system_params.v"
-`include "spi_params.v"
-`include "../top/top_system_params.v"
+`include "top_system_params.v"
 
 module cpu_ring_interface #(
     parameter NUM_RINGS         = 2,

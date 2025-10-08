@@ -17,7 +17,9 @@ module bus_top #(
     parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
     parameter NUM_CORES        = 4,
     parameter GPIO_WIDTH       = 32,
-    parameter NUM_PES          = 16,
+    parameter NUM_PES          = 4,
+    parameter PE_ARRAY_ROWS    = 2,
+    parameter PE_ARRAY_COLS    = 2,
     parameter INST_WIDTH       = 32,
     parameter PE_ID_WIDTH      = 4,
     parameter MATCH_TYPE_WIDTH = 2         // 匹配类型宽度
@@ -178,8 +180,14 @@ module bus_top #(
                 .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
                 .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
                 .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH),
+                .NUM_CORES(NUM_CORES),
                 .GPIO_WIDTH(GPIO_WIDTH),
-                .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
+                .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
+                .NUM_PES(NUM_PES),
+                .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
+                .PE_ARRAY_COLS(PE_ARRAY_COLS),
+                .INST_WIDTH(INST_WIDTH),
+                .PE_ID_WIDTH(PE_ID_WIDTH)
             ) u_ring_bus (
                 .clk(clk),
                 .rst_n(rst_n),
@@ -269,8 +277,14 @@ module bus_top #(
                 .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
                 .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
                 .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH),
+                .NUM_CORES(NUM_CORES),
                 .GPIO_WIDTH(GPIO_WIDTH),
-                .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
+                .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
+                .NUM_PES(NUM_PES),
+                .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
+                .PE_ARRAY_COLS(PE_ARRAY_COLS),
+                .INST_WIDTH(INST_WIDTH),
+                .PE_ID_WIDTH(PE_ID_WIDTH)
             ) u_direct_bus (
                 .clk(clk),
                 .rst_n(rst_n),

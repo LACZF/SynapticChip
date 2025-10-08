@@ -291,7 +291,7 @@ module uart_core #(
             scr <= 8'b0;
             dll_dlm <= 16'd12; // 默认波特率 115200 @ 100MHz
             ack <= 1'b0;
-            data_out <= {`DATA_WIDTH{1'b0}};
+            data_out <= {DATA_WIDTH{1'b0}};
         end else begin
             ack <= 1'b0;
 
@@ -339,7 +339,7 @@ module uart_core #(
                         `REG_SCR: data_out <= {24'b0, scr};
                         `REG_DLL: if (lcr[7]) data_out <= {24'b0, dll_dlm[7:0]};
                         `REG_DLM: if (lcr[7]) data_out <= {24'b0, dll_dlm[15:8]};
-                        default: data_out <= {`DATA_WIDTH{1'b0}};
+                        default: data_out <= {DATA_WIDTH{1'b0}};
                     endcase
                 end
 

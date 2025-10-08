@@ -4,12 +4,12 @@
 `include "pe_ctrl_params.v"
 
 module pe_ctrl_ring_node #(
-    parameter NODE_ID_WIDTH = 5,
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32,
-    parameter NUM_PES = 4,
-    parameter INST_WIDTH = 128,
-    parameter PE_ID_WIDTH = 3
+    parameter NODE_ID_WIDTH  = 5,
+    parameter ADDR_WIDTH     = 32,
+    parameter DATA_WIDTH     = 32,
+    parameter NUM_PES        = 4,
+    parameter INST_WIDTH     = 32,
+    parameter PE_ID_WIDTH    = 4
 ) (
     input clk,
     input rst_n,
@@ -71,12 +71,12 @@ module pe_ctrl_ring_node #(
             state <= `STATE_IDLE;
             ring_out_valid <= 1'b0;
             ring_out_ack <= 1'b0;
-            pe_enable <= {`NUM_PES{1'b0}};
-            pe_reset <= {`NUM_PES{1'b0}};
+            pe_enable <= {NUM_PES{1'b0}};
+            pe_reset <= {NUM_PES{1'b0}};
             pe_inst_valid <= 1'b0;
             route_cfg_valid <= 1'b0;
-            control_reg <= {`DATA_WIDTH{1'b0}};
-            status_reg <= {`DATA_WIDTH{1'b0}};
+            control_reg <= {DATA_WIDTH{1'b0}};
+            status_reg <= {DATA_WIDTH{1'b0}};
         end else begin
             case (state)
                 `STATE_IDLE: begin
@@ -110,8 +110,8 @@ module pe_ctrl_ring_node #(
                                     `REG_PE_CTRL: begin
                                         control_reg <= ring_in_data;
                                         // 解析控制寄存器
-                                        pe_enable <= ring_in_data[`NUM_PES-1:0];
-                                        pe_reset <= ring_in_data[31:`NUM_PES];
+                                        pe_enable <= ring_in_data[NUM_PES-1:0];
+                                        pe_reset <= ring_in_data[31:NUM_PES];
                                     end
 
                                     `REG_PE_INST: begin
@@ -147,15 +147,15 @@ module pe_ctrl_ring_node #(
                                 // 汇总PE状态
                                 status_reg <= {
                                     pe_busy,
-                                    pe_status[(`DATA_WIDTH-`NUM_PES-1):0]
+                                    pe_status[(DATA_WIDTH-NUM_PES-1):0]
                                 };
                                 ring_out_data <= status_reg;
                             end
                             `REG_PE_DATA: begin
                                 // 读取PE输出数据
-                                ring_out_data <= pe_outputs[`DATA_WIDTH-1:0]; // 只返回第一个PE的输出
+                                ring_out_data <= pe_outputs[DATA_WIDTH-1:0]; // 只返回第一个PE的输出
                             end
-                            default: ring_out_data <= {`DATA_WIDTH{1'b0}};
+                            default: ring_out_data <= {DATA_WIDTH{1'b0}};
                         endcase
 
                         state <= `STATE_ARB;
@@ -171,7 +171,7 @@ module pe_ctrl_ring_node #(
                     if (!ring_in_valid) begin
                         // 环空闲，可以发送回复
                         ring_out_valid <= 1'b1;
-                        ring_out_src <= `NODE_ID_WIDTH'd0; // 控制器节点ID
+                        ring_out_src <= {NODE_ID_WIDTH{1'd0}}; // 控制器节点ID
                         ring_out_dest <= src_buffer;       // 回复给请求者
                         ring_out_addr <= addr_buffer;
                         ring_out_data <= data_buffer;
@@ -196,10 +196,10 @@ module pe_ctrl_ring_node #(
     // 将指令缓冲区分发到各个PE
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            pe_instructions <= {(`NUM_PES*`INST_WIDTH){1'b0}};
+            pe_instructions <= {(NUM_PES*INST_WIDTH){1'b0}};
         end else if (control_reg[0]) begin // 如果启用指令广播
-            for (integer i = 0; i < `NUM_PES; i = i + 1) begin
-                pe_instructions[i*`INST_WIDTH +: `INST_WIDTH] <= inst_buffer;
+            for (integer i = 0; i < NUM_PES; i = i + 1) begin
+                pe_instructions[i*INST_WIDTH +: INST_WIDTH] <= inst_buffer;
             end
             pe_inst_valid <= 1'b1;
         end else begin
@@ -212,11 +212,11 @@ module pe_ctrl_ring_node #(
     // 将路由配置分发到各个PE
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            route_config <= {(`NUM_PES*4*`PE_ID_WIDTH){1'b0}};
+            route_config <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
         end else if (route_cfg_valid) begin
-            for (integer i = 0; i < `NUM_PES; i = i + 1) begin
+            for (integer i = 0; i < NUM_PES; i = i + 1) begin
                 // 每个PE的4个方向的路由配置
-                route_config[i*4*`PE_ID_WIDTH +: 4*`PE_ID_WIDTH] <= route_buffer;
+                route_config[i*4*PE_ID_WIDTH +: 4*PE_ID_WIDTH] <= route_buffer;
             end
         end
     end

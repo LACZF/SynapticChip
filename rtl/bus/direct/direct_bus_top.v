@@ -14,7 +14,9 @@ module direct_bus_top #(
     parameter NUM_CORES        = 4,
     parameter GPIO_WIDTH       = 32,
     parameter MATCH_TYPE_WIDTH = 2,
-    parameter NUM_PES          = 16,
+    parameter NUM_PES          = 4,
+    parameter PE_ARRAY_ROWS    = 2,
+    parameter PE_ARRAY_COLS    = 2,
     parameter INST_WIDTH       = 32,
     parameter PE_ID_WIDTH      = 4
 ) (

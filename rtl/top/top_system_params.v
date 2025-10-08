@@ -12,8 +12,8 @@
 // PE阵列参数
 `define PE_ARRAY_ROWS 2
 `define PE_ARRAY_COLS 2
-`define NUM_PES 16
-`define PE_ID_WIDTH 4
+`define NUM_PES       4
+`define PE_ID_WIDTH   4
 
 // 指令宽度
 `define INST_WIDTH 32

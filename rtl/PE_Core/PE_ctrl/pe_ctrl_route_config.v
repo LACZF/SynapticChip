@@ -5,7 +5,7 @@
 
 module pe_route_config #(
     parameter NUM_PES           = 4,
-    parameter PE_ID_WIDTH       = 3,
+    parameter PE_ID_WIDTH       = 4,
     parameter PE_ARRAY_ROWS     = 2,
     parameter PE_ARRAY_COLS     = 2
 ) (
@@ -36,44 +36,44 @@ module pe_route_config #(
             route_table <= cfg_data;
 
             // 根据PE位置配置路由
-            for (integer y = 0; y < `ARRAY_ROWS; y = y + 1) begin
-                for (integer x = 0; x < `ARRAY_COLS; x = x + 1) begin
-                    // integer pe_idx = y * `ARRAY_COLS + x;
+            for (integer y = 0; y < PE_ARRAY_ROWS; y = y + 1) begin
+                for (integer x = 0; x < PE_ARRAY_COLS; x = x + 1) begin
+                    // integer pe_idx = y * PE_ARRAY_COLS + x;
 
                     // 北方向路由
                     if (y > 0) begin
-                        north_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            (y-1) * `ARRAY_COLS + x;
+                        north_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            (y-1) * PE_ARRAY_COLS + x;
                     end else begin
-                        north_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH];
+                        north_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
                     // 南方向路由
-                    if (y < `ARRAY_ROWS-1) begin
-                        south_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            (y+1) * `ARRAY_COLS + x;
+                    if (y < PE_ARRAY_ROWS-1) begin
+                        south_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            (y+1) * PE_ARRAY_COLS + x;
                     end else begin
-                        south_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH + PE_ID_WIDTH +: PE_ID_WIDTH];
+                        south_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
                     // 东方向路由
-                    if (x < `ARRAY_COLS-1) begin
-                        east_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            y * `ARRAY_COLS + (x+1);
+                    if (x < PE_ARRAY_COLS-1) begin
+                        east_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            y * PE_ARRAY_COLS + (x+1);
                     end else begin
-                        east_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH + 2*PE_ID_WIDTH +: PE_ID_WIDTH];
+                        east_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + 2*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
                     // 西方向路由
                     if (x > 0) begin
-                        west_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            y * `ARRAY_COLS + (x-1);
+                        west_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            y * PE_ARRAY_COLS + (x-1);
                     end else begin
-                        west_routes[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * `ARRAY_COLS + x)*4*PE_ID_WIDTH + 3*PE_ID_WIDTH +: PE_ID_WIDTH];
+                        west_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + 3*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
                 end
             end

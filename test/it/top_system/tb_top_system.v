@@ -118,12 +118,15 @@ module tb_top_system;
 
     // 实例化DUT
     top_system #(
+        .BUS_TYPE(`BUS_TYPE_RING),
         .NUM_RINGS(2),
         .NUM_NODES(`NODES),
         .ADDR_WIDTH(`ADDR_WIDTH),
         .NODE_ID_WIDTH(`NODE_ID_WIDTH),
         .DATA_WIDTH(`DATA_WIDTH),
         .NUM_PES(`NUM_PES),
+        .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(`PE_ARRAY_COLS),
         .INST_WIDTH(`INST_WIDTH),
         .PE_ID_WIDTH(`PE_ID_WIDTH)
     ) dut (

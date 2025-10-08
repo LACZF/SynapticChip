@@ -118,13 +118,15 @@ module tb_top_system_direct_single_core;
 
     // 实例化DUT - 配置为Direct总线、1个核心、无L2/L3缓存
     top_system #(
-        .BUS_TYPE(`BUS_TYPE_DIRECT), // 使用Direct总线
+        .BUS_TYPE(`BUS_TYPE_DIRECT),
         .NUM_RINGS(1),
         .NUM_NODES(`NODES),
         .ADDR_WIDTH(`ADDR_WIDTH),
         .NODE_ID_WIDTH(`NODE_ID_WIDTH),
         .DATA_WIDTH(`DATA_WIDTH),
         .NUM_PES(`NUM_PES),
+        .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(`PE_ARRAY_COLS),
         .INST_WIDTH(`INST_WIDTH),
         .PE_ID_WIDTH(`PE_ID_WIDTH),
         .NUM_CORES(1),             // 1个核心

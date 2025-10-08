@@ -15,24 +15,24 @@ module gpio_node #(
 ) (
     input clk,
     input rst_n,
-    input [`NODE_ID_WIDTH-1:0] node_id,
+    input [NODE_ID_WIDTH-1:0] node_id,
 
     // Ring接口 - 输入
     input ring_in_valid,
-    input [`NODE_ID_WIDTH-1:0] ring_in_src,
-    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [`ADDR_WIDTH-1:0] ring_in_addr,
-    input [`DATA_WIDTH-1:0] ring_in_data,
+    input [NODE_ID_WIDTH-1:0] ring_in_src,
+    input [NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [ADDR_WIDTH-1:0] ring_in_addr,
+    input [DATA_WIDTH-1:0] ring_in_data,
     input ring_in_we,
     input [3:0] ring_in_be,
     input ring_in_ack,
 
     // Ring接口 - 输出
     output ring_out_valid,
-    output [`NODE_ID_WIDTH-1:0] ring_out_src,
-    output [`NODE_ID_WIDTH-1:0] ring_out_dest,
-    output [`ADDR_WIDTH-1:0] ring_out_addr,
-    output [`DATA_WIDTH-1:0] ring_out_data,
+    output [NODE_ID_WIDTH-1:0] ring_out_src,
+    output [NODE_ID_WIDTH-1:0] ring_out_dest,
+    output [ADDR_WIDTH-1:0] ring_out_addr,
+    output [DATA_WIDTH-1:0] ring_out_data,
     output ring_out_we,
     output [3:0] ring_out_be,
     output ring_out_ack,

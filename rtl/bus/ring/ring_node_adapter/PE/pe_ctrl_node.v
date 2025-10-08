@@ -1,8 +1,6 @@
 // pe_ctrl_node.v
 // 集成PE阵列和路由的Fabric模块
 
-`include "top_system_params.v"
-
 module pe_ctrl_node #(
     parameter NUM_RINGS         = 2,
     parameter ADDR_WIDTH        = 32,
@@ -12,10 +10,10 @@ module pe_ctrl_node #(
     parameter OPCODE_WIDTH      = 8,
     parameter MATCH_TYPE_WIDTH  = 2,
     parameter NUM_PES           = 4,
-    parameter INST_WIDTH        = 128,
-    parameter PE_ID_WIDTH       = 3,
-    parameter PE_ARRAY_ROWS     = `PE_ARRAY_ROWS,
-    parameter PE_ARRAY_COLS     = `PE_ARRAY_COLS
+    parameter INST_WIDTH        = 32,
+    parameter PE_ID_WIDTH       = 4,
+    parameter PE_ARRAY_ROWS     = 2,
+    parameter PE_ARRAY_COLS     = 2
 ) (
     input clk,
     input rst_n,

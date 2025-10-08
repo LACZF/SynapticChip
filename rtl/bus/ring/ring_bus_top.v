@@ -14,7 +14,9 @@ module ring_bus_top #(
     parameter NUM_CORES        = 4,
     parameter GPIO_WIDTH       = 32,
     parameter MATCH_TYPE_WIDTH = 2,        // 匹配类型宽度
-    parameter NUM_PES          = 16,       // PE数量
+    parameter NUM_PES          = 4,
+    parameter PE_ARRAY_ROWS    = 2,
+    parameter PE_ARRAY_COLS    = 2,
     parameter INST_WIDTH       = 32,       // 指令宽度
     parameter PE_ID_WIDTH      = 4         // PE ID宽度
 ) (
@@ -239,8 +241,8 @@ module ring_bus_top #(
         .NUM_PES(NUM_PES),
         .INST_WIDTH(INST_WIDTH),
         .PE_ID_WIDTH(PE_ID_WIDTH),
-        .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
-        .PE_ARRAY_COLS(`PE_ARRAY_COLS)
+        .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(PE_ARRAY_COLS)
     ) u_pe_ring_node (
         .clk(clk),
         .rst_n(rst_n),

@@ -4,7 +4,7 @@
 `include "top_system_params.v"
 
 module top_system #(
-    parameter BUS_TYPE         = `BUS_TYPE_RING, // 总线类型：`BUS_TYPE_RING 或 `BUS_TYPE_DIRECT
+    parameter BUS_TYPE         = `BUS_TYPE_DIRECT, // 总线类型：`BUS_TYPE_RING 或 `BUS_TYPE_DIRECT
     parameter NUM_RINGS        = 2,        // Ring总线数量
     parameter NUM_NODES        = 8,        // 每个Ring的节点数
     parameter ADDR_WIDTH       = 32,       // 地址宽度
@@ -15,14 +15,16 @@ module top_system #(
     parameter TX_FIFO_DEPTH    = 4,        // 发送FIFO深度
     parameter RX_FIFO_DEPTH    = 4,        // 接收FIFO深度
     parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
-    parameter NUM_CORES        = 4,
+    parameter NUM_CORES        = 1,
     parameter MATCH_TYPE_WIDTH = 2,        // 匹配类型宽度
-    parameter INST_WIDTH       = 128,      // 指令宽度
+    parameter INST_WIDTH       = 32,      // 指令宽度
     parameter CORE_ID_WIDTH    = 2,        // 核心ID宽度
-    parameter ENABLE_L2_CACHE  = 1,        // 启用L2缓存
+    parameter ENABLE_L2_CACHE  = 0,        // 启用L2缓存
     parameter ENABLE_L3_CACHE  = 0,        // 启用L3缓存
     parameter GPIO_WIDTH       = 32,
-    parameter NUM_PES          = 16,
+    parameter NUM_PES          = 4,
+    parameter PE_ARRAY_ROWS    = 2,
+    parameter PE_ARRAY_COLS    = 2,
     parameter PE_ID_WIDTH      = 4,
     parameter CPU_TYPE         = 0         // CPU类型
 )(
@@ -134,6 +136,8 @@ module top_system #(
         .GPIO_WIDTH(GPIO_WIDTH),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
         .NUM_PES(NUM_PES),
+        .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(PE_ARRAY_COLS),
         .INST_WIDTH(INST_WIDTH),
         .PE_ID_WIDTH(PE_ID_WIDTH)
     ) bus (
@@ -239,6 +243,8 @@ module top_system #(
 
     // 实例化GPIO模块
     gpio_module #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
         .GPIO_WIDTH(GPIO_WIDTH)
     ) gpio (
         .clk(clk),
@@ -272,7 +278,11 @@ module top_system #(
     );
 
     // 实例化JTAG
-    jtag_top jtag (
+    jtag_top #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .INST_WIDTH(INST_WIDTH)
+    ) jtag (
         .clk(clk),
         .rst_n(rst_n),
 
@@ -297,14 +307,13 @@ module top_system #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
         .NODE_ID_WIDTH(NODE_ID_WIDTH),
-        .NODE_ID(`NODE_PE),
         .OPCODE_WIDTH(OPCODE_WIDTH),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
         .NUM_PES(NUM_PES),
         .INST_WIDTH(INST_WIDTH),
         .PE_ID_WIDTH(PE_ID_WIDTH),
-        .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
-        .PE_ARRAY_COLS(`PE_ARRAY_COLS)
+        .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(PE_ARRAY_COLS)
     ) pe (
         .clk(clk),
         .rst_n(rst_n),

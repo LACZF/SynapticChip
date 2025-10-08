@@ -44,11 +44,11 @@ module jtag_node #(
     input  reg                          jtag_tdo_en_i,
     output                              jtag_req_o,
     output                              jtag_we_o,
-    output [`ADDR_WIDTH-1:0]            jtag_addr_o,
-    output [`DATA_WIDTH-1:0]            jtag_data_in_o,
-    input  reg [`DATA_WIDTH-1:0]        jtag_data_out_i,
+    output [ADDR_WIDTH-1:0]            jtag_addr_o,
+    output [DATA_WIDTH-1:0]            jtag_data_in_o,
+    input  reg [DATA_WIDTH-1:0]        jtag_data_out_i,
     input  reg                          jtag_ack_i,
-    input  reg [`DATA_WIDTH-1:0]        jtag_debug_data_i,
+    input  reg [DATA_WIDTH-1:0]        jtag_debug_data_i,
     input  reg                          jtag_debug_valid_i,
 
     // 发送请求
@@ -81,7 +81,15 @@ module jtag_node #(
     input  wire [ADDR_WIDTH-1:0]        rsp_addr_i,
     input  wire [DATA_WIDTH-1:0]        rsp_data_i
 );
-    jtag_ring_node ring_node_inst (
+    jtag_ring_node #(
+        .NUM_RINGS(NUM_RINGS),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .NODE_ID_WIDTH(NODE_ID_WIDTH),
+        .NODE_ID(NODE_ID),
+        .OPCODE_WIDTH(OPCODE_WIDTH),
+        .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH)
+    ) ring_node_inst (
         .clk(clk),
         .rst_n(rst_n),
         .node_id(node_id),

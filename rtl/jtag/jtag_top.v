@@ -3,7 +3,11 @@
 
 `include "jtag_params.v"
 
-module jtag_top (
+module jtag_top #(
+    parameter ADDR_WIDTH  = 32,
+    parameter DATA_WIDTH  = 32,
+    parameter INST_WIDTH  = 32
+)(
     input clk,
     input rst_n,
 
@@ -17,13 +21,13 @@ module jtag_top (
     // 控制接口
     input req,
     input we,
-    input [`ADDR_WIDTH-1:0] addr,
-    input [`DATA_WIDTH-1:0] data_in,
-    output reg [`DATA_WIDTH-1:0] data_out,
+    input [ADDR_WIDTH-1:0] addr,
+    input [DATA_WIDTH-1:0] data_in,
+    output reg [DATA_WIDTH-1:0] data_out,
     output reg ack,
 
     // 调试接口
-    output reg [`DATA_WIDTH-1:0] debug_data,
+    output reg [DATA_WIDTH-1:0] debug_data,
     output reg debug_valid
 );
 
@@ -32,16 +36,16 @@ module jtag_top (
     reg [3:0] next_tap_state;
 
     // 指令寄存器
-    reg [`INSTR_WIDTH-1:0] instruction_reg;
-    reg [`INSTR_WIDTH-1:0] next_instruction;
+    reg [INST_WIDTH-1:0] instruction_reg;
+    reg [INST_WIDTH-1:0] next_instruction;
 
     // 数据寄存器
-    reg [`DATA_WIDTH-1:0] data_reg;
-    reg [`DATA_WIDTH-1:0] next_data;
+    reg [DATA_WIDTH-1:0] data_reg;
+    reg [DATA_WIDTH-1:0] next_data;
 
     // 移位寄存器
-    reg [`DATA_WIDTH-1:0] shift_reg;
-    reg [`DATA_WIDTH-1:0] next_shift_reg;
+    reg [DATA_WIDTH-1:0] shift_reg;
+    reg [DATA_WIDTH-1:0] next_shift_reg;
 
     // 计数器
     reg [5:0] bit_count;
@@ -136,7 +140,7 @@ module jtag_top (
                 // 移位数据阶段
                 tdo = shift_reg[0];
                 tdo_en = 1'b1;
-                next_shift_reg = {tdi, shift_reg[`DATA_WIDTH-1:1]};
+                next_shift_reg = {tdi, shift_reg[DATA_WIDTH-1:1]};
                 next_bit_count = bit_count + 1;
             end
 
@@ -147,7 +151,7 @@ module jtag_top (
 
             `CAPTURE_IR: begin
                 // 捕获指令阶段
-                next_shift_reg = {4'b0001, {(`DATA_WIDTH-4){1'b0}}}; // 固定模式
+                next_shift_reg = {4'b0001, {(DATA_WIDTH-4){1'b0}}}; // 固定模式
                 next_bit_count = 0;
             end
 
@@ -155,13 +159,13 @@ module jtag_top (
                 // 移位指令阶段
                 tdo = shift_reg[0];
                 tdo_en = 1'b1;
-                next_shift_reg = {tdi, shift_reg[`DATA_WIDTH-1:1]};
+                next_shift_reg = {tdi, shift_reg[DATA_WIDTH-1:1]};
                 next_bit_count = bit_count + 1;
             end
 
             `UPDATE_IR: begin
                 // 更新指令阶段
-                next_instruction = shift_reg[`INSTR_WIDTH-1:0];
+                next_instruction = shift_reg[INST_WIDTH-1:0];
             end
         endcase
     end

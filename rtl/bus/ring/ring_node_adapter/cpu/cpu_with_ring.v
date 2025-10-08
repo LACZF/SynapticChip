@@ -1,9 +1,6 @@
 // 集成CPU和Ring总线接口的顶层模块示例
 // 展示如何连接cpu_top和cpu_ring_interface
 
-`include "cache_params.v"
-`include "cache_system_params.v"
-
 module cpu_with_ring #(
     parameter NUM_RINGS         = 2,
     parameter ADDR_WIDTH        = 64,

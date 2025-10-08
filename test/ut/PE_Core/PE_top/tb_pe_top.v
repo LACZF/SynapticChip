@@ -5,6 +5,7 @@
 `timescale 1ns/1ps
 
 module tb_pe_top;
+    localparam INST_WIDTH = 32;
 
     // 时钟和复位
     reg clk;
@@ -13,7 +14,7 @@ module tb_pe_top;
     // 直接控制接口
     reg [`NUM_PES-1:0] pe_enable;
     reg [`NUM_PES-1:0] pe_reset;
-    reg [(`NUM_PES*128)-1:0] pe_instructions; // 4个PE，每个128位指令
+    reg [(`NUM_PES*INST_WIDTH)-1:0] pe_instructions;
     reg pe_inst_valid;
     reg [(`NUM_PES*4*`PE_ID_WIDTH)-1:0] route_config; // 路由配置
     reg route_cfg_valid;
@@ -27,7 +28,7 @@ module tb_pe_top;
     // 实例化DUT
     pe_top #(
         .NUM_PES(`NUM_PES),
-        .INST_WIDTH(128),
+        .INST_WIDTH(INST_WIDTH),
         .DATA_WIDTH(`DATA_WIDTH),
         .ADDR_WIDTH(`ADDR_WIDTH),
         .PE_ID_WIDTH(`PE_ID_WIDTH),

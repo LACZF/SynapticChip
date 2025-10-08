@@ -7,8 +7,8 @@ module pe_node #(
     parameter ADDR_WIDTH        = 32,
     parameter DATA_WIDTH        = 64,
     parameter NUM_PES           = 4,
-    parameter INST_WIDTH        = 128,
-    parameter PE_ID_WIDTH       = 3,
+    parameter INST_WIDTH        = 32,
+    parameter PE_ID_WIDTH       = 4,
     parameter PE_ARRAY_ROWS     = 2,
     parameter PE_ARRAY_COLS     = 2
 ) (

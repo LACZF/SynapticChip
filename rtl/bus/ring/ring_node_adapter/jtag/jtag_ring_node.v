@@ -3,27 +3,35 @@
 
 `include "jtag_params.v"
 
-module jtag_ring_node (
+module jtag_ring_node #(
+    parameter NUM_RINGS         = 2,
+    parameter ADDR_WIDTH        = `ADDR_WIDTH,
+    parameter DATA_WIDTH        = `DATA_WIDTH,
+    parameter NODE_ID_WIDTH     = `NODE_ID_WIDTH,
+    parameter NODE_ID           = 0,
+    parameter OPCODE_WIDTH      = 8,
+    parameter MATCH_TYPE_WIDTH  = 2
+) (
     input clk,
     input rst_n,
-    input [`NODE_ID_WIDTH-1:0] node_id,
+    input [NODE_ID_WIDTH-1:0] node_id,
 
     // Ring接口 - 输入
     input ring_in_valid,
-    input [`NODE_ID_WIDTH-1:0] ring_in_src,
-    input [`NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [`ADDR_WIDTH-1:0] ring_in_addr,
-    input [`DATA_WIDTH-1:0] ring_in_data,
+    input [NODE_ID_WIDTH-1:0] ring_in_src,
+    input [NODE_ID_WIDTH-1:0] ring_in_dest,
+    input [ADDR_WIDTH-1:0] ring_in_addr,
+    input [DATA_WIDTH-1:0] ring_in_data,
     input ring_in_we,
     input [3:0] ring_in_be,
     input ring_in_ack,
 
     // Ring接口 - 输出
     output reg ring_out_valid,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_src,
-    output reg [`NODE_ID_WIDTH-1:0] ring_out_dest,
-    output reg [`ADDR_WIDTH-1:0] ring_out_addr,
-    output reg [`DATA_WIDTH-1:0] ring_out_data,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_src,
+    output reg [NODE_ID_WIDTH-1:0] ring_out_dest,
+    output reg [ADDR_WIDTH-1:0] ring_out_addr,
+    output reg [DATA_WIDTH-1:0] ring_out_data,
     output reg ring_out_we,
     output reg [3:0] ring_out_be,
     output reg ring_out_ack,
@@ -31,21 +39,21 @@ module jtag_ring_node (
     // JTAG接口
     output reg jtag_req,
     output reg jtag_we,
-    output reg [`ADDR_WIDTH-1:0] jtag_addr,
-    output reg [`DATA_WIDTH-1:0] jtag_data_out,
-    input [`DATA_WIDTH-1:0] jtag_data_in,
+    output reg [ADDR_WIDTH-1:0] jtag_addr,
+    output reg [DATA_WIDTH-1:0] jtag_data_out,
+    input [DATA_WIDTH-1:0] jtag_data_in,
     input jtag_ack,
 
     // 调试接口
-    input [`DATA_WIDTH-1:0] jtag_debug_data,
+    input [DATA_WIDTH-1:0] jtag_debug_data,
     input jtag_debug_valid
 );
 
     // 内部状态寄存器
     reg [1:0] state;
-    reg [`DATA_WIDTH-1:0] data_buffer;
-    reg [`ADDR_WIDTH-1:0] addr_buffer;
-    reg [`NODE_ID_WIDTH-1:0] src_buffer;
+    reg [DATA_WIDTH-1:0] data_buffer;
+    reg [ADDR_WIDTH-1:0] addr_buffer;
+    reg [NODE_ID_WIDTH-1:0] src_buffer;
     reg we_buffer;
 
     // 判断是否为本节点数据

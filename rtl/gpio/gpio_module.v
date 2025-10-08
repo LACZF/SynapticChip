@@ -4,6 +4,8 @@
 `include "gpio_params.v"
 
 module gpio_module #(
+    parameter ADDR_WIDTH        = 32,
+    parameter DATA_WIDTH        = 32,
     parameter GPIO_WIDTH        = 32
 ) (
     input clk,
@@ -12,9 +14,9 @@ module gpio_module #(
     // 控制接口
     input req,
     input we,
-    input [`ADDR_WIDTH-1:0] addr,
-    input [`DATA_WIDTH-1:0] data_in,
-    output reg [`DATA_WIDTH-1:0] data_out,
+    input [ADDR_WIDTH-1:0] addr,
+    input [DATA_WIDTH-1:0] data_in,
+    output reg [DATA_WIDTH-1:0] data_out,
     output reg ack,
 
     // GPIO引脚
@@ -135,7 +137,7 @@ module gpio_module #(
             inttype_reg <= {GPIO_WIDTH{1'b0}};
             debounce_reg <= 16'd1000; // 默认去抖周期
             ack <= 1'b0;
-            data_out <= {`DATA_WIDTH{1'b0}};
+            data_out <= {DATA_WIDTH{1'b0}};
         end else begin
             ack <= 1'b0;
 
@@ -160,17 +162,17 @@ module gpio_module #(
                                 data_out[k] <= dir_reg[k] ? data_reg[k] : gpio_debounced[k];
                             end
                             // 如果数据宽度大于GPIO宽度，高位填充0
-                            if (`DATA_WIDTH > GPIO_WIDTH) begin
-                                data_out[`DATA_WIDTH-1:GPIO_WIDTH] <= {(`DATA_WIDTH-GPIO_WIDTH){1'b0}};
+                            if (DATA_WIDTH > GPIO_WIDTH) begin
+                                data_out[DATA_WIDTH-1:GPIO_WIDTH] <= {(DATA_WIDTH-GPIO_WIDTH){1'b0}};
                             end
                         end
-                        `REG_DIR: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, dir_reg};
-                        `REG_INTEN: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, inten_reg};
-                        `REG_INTPOL: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, intpol_reg};
-                        `REG_INTTYPE: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, inttype_reg};
-                        `REG_INTSTAT: data_out <= {{(`DATA_WIDTH-GPIO_WIDTH){1'b0}}, intstat_reg};
-                        `REG_DEBOUNCE: data_out <= {{(`DATA_WIDTH-16){1'b0}}, debounce_reg};
-                        default: data_out <= {`DATA_WIDTH{1'b0}};
+                        `REG_DIR: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, dir_reg};
+                        `REG_INTEN: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, inten_reg};
+                        `REG_INTPOL: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, intpol_reg};
+                        `REG_INTTYPE: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, inttype_reg};
+                        `REG_INTSTAT: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, intstat_reg};
+                        `REG_DEBOUNCE: data_out <= {{(DATA_WIDTH-16){1'b0}}, debounce_reg};
+                        default: data_out <= {DATA_WIDTH{1'b0}};
                     endcase
                 end
 
