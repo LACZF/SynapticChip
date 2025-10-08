@@ -279,6 +279,8 @@ module cpu_top #(
 
                 // RISC-V CPU核心实例
                 riscv64_core #(
+                    .ADDR_WIDTH(ADDR_WIDTH),
+                    .DATA_WIDTH(DATA_WIDTH),
                     .CORE_ID(i)
                 ) u_riscv64_core (
                     .clk(clk),
@@ -300,14 +302,13 @@ module cpu_top #(
                     .dcache_ready(dcache_ready),
 
                     // 监听接口
-                    /* TODO */
-                    // .snoop_valid(snoop_valid[i]),
-                    // .snoop_addr(snoop_addr[i*ADDR_WIDTH +: ADDR_WIDTH]),
-                    // .snoop_req_type(snoop_req_type[i*2 +: 2]),
-                    // .snoop_ready(snoop_ready[i]),
-                    // .snoop_hit(snoop_hit[i]),
-                    // .snoop_state(snoop_state[i*2 +: 2]),
-                    // .snoop_data(snoop_data[i*512 +: 512]),
+                    .snoop_valid(snoop_valid[i]),
+                    .snoop_addr(snoop_addr[i*ADDR_WIDTH +: ADDR_WIDTH]),
+                    .snoop_req_type(snoop_req_type[i*2 +: 2]),
+                    .snoop_ready(snoop_ready[i]),
+                    .snoop_hit(snoop_hit[i]),
+                    .snoop_state(snoop_state[i*2 +: 2]),
+                    .snoop_data(snoop_data[i*512 +: 512]),
 
                     // 中断和调试
                     .timer_interrupt(1'b0),

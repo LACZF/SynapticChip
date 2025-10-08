@@ -89,7 +89,7 @@ module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output
     assign miso = cs_n ? 1'bz : miso_reg;
 endmodule
 
-module tb_top_system_direct_single_core;
+module tb_top_system_direct_4core;
 
     // 时钟和复位
     reg clk;
@@ -116,22 +116,30 @@ module tb_top_system_direct_single_core;
     wire spi_mosi;
     wire spi_miso;
 
-    // 实例化DUT - 配置为Direct总线、1个核心、无L2/L3缓存
     top_system #(
-        .BUS_TYPE(`BUS_TYPE_DIRECT),
-        .NUM_RINGS(1),
+        .BUS_TYPE(`BUS_TYPE_RING),
+        .NUM_RINGS(4),
         .NUM_NODES(`NODES),
         .ADDR_WIDTH(`ADDR_WIDTH),
-        .NODE_ID_WIDTH(`NODE_ID_WIDTH),
         .DATA_WIDTH(`DATA_WIDTH),
-        .NUM_PES(`NUM_PES),
-        .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
-        .PE_ARRAY_COLS(`PE_ARRAY_COLS),
+        .OPCODE_WIDTH(8),
+        .RING_ID_WIDTH(4),
+        .NODE_ID_WIDTH(`NODE_ID_WIDTH),
+        .TX_FIFO_DEPTH(4),
+        .RX_FIFO_DEPTH(4),
+        .RSP_FIFO_DEPTH(4),
+        .NUM_CORES(4),
+        .MATCH_TYPE_WIDTH(2),
         .INST_WIDTH(`INST_WIDTH),
-        .PE_ID_WIDTH(`PE_ID_WIDTH),
-        .NUM_CORES(1),             // 1个核心
-        .ENABLE_L2_CACHE(0),       // 禁用L2缓存
-        .ENABLE_L3_CACHE(0)        // 禁用L3缓存
+        .CORE_ID_WIDTH(3),
+        .ENABLE_L2_CACHE(1),
+        .ENABLE_L3_CACHE(1),
+        .GPIO_WIDTH(32),
+        .NUM_PES(16),
+        .PE_ARRAY_ROWS(4),
+        .PE_ARRAY_COLS(4),
+        .PE_ID_WIDTH(4),
+        .CPU_TYPE(0)
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
@@ -192,8 +200,8 @@ module tb_top_system_direct_single_core;
         ext_int = 0;
 
         // 打开波形文件
-        $dumpfile("top_system_direct_single_core.vcd");
-        $dumpvars(0, tb_top_system_direct_single_core);
+        $dumpfile("top_system_direct_4core.vcd");
+        $dumpvars(0, tb_top_system_direct_4core);
 
         // 复位
         #20 rst_n = 1;

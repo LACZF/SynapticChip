@@ -3,7 +3,9 @@
 `include "cache_system_params.v"
 
 module riscv64_core #(
-    parameter CORE_ID = 0
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64,
+    parameter CORE_ID           = 0
 )(
     input wire clk,
     input wire rst_n,
@@ -25,7 +27,7 @@ module riscv64_core #(
 
     // 监听接口
     input wire snoop_valid,
-    input wire [63:0] snoop_addr,
+    input wire [ADDR_WIDTH-1:0] snoop_addr,
     input wire [1:0] snoop_req_type,
     output wire snoop_ready,
     output wire snoop_hit,

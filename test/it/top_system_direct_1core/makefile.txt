@@ -1,0 +1,76 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := top_system_direct_1core
+TEST_ARGS ?= -g2005-sv
+# TEST_ARGS += -D DEBUG=1
+
+# common
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/common
+TEST_SRC += $(TOP_DIR)/rtl/common/fifo.v
+TEST_SRC += $(TOP_DIR)/rtl/common/cache.v
+
+# bus
+TEST_SRC += $(TOP_DIR)/rtl/bus/direct/direct_bus_top.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus_top.v
+
+# cpu
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv/riscv64
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_clock_reset_gen.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_execution.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_hazard_detection.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_decode.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_fetch.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_access.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
+
+# PE
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
+
+# PE controller
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_ctrl
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
+
+# PE PE_router
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_router
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
+
+# uart
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/uart
+TEST_SRC += $(TOP_DIR)/rtl/uart/uart_params.v
+TEST_SRC += $(TOP_DIR)/rtl/uart/uart_core.v
+
+# gpio
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/gpio
+TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_params.v
+TEST_SRC += $(TOP_DIR)/rtl/gpio/gpio_module.v
+
+# jtag
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/jtag
+TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_params.v
+TEST_SRC += $(TOP_DIR)/rtl/jtag/jtag_top.v
+
+# PE
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE_top
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
+
+# spi
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/spi
+TEST_SRC += $(TOP_DIR)/rtl/spi/spi_core.v
+
+# top
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/top
+TEST_SRC += $(TOP_DIR)/rtl/top/top_system.v
+
+TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
+TEST_SRC += $(CUR_DIR)/tb_top_system_direct_1core.v

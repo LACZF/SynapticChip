@@ -1,7 +1,7 @@
 
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-TEST_TARGET := top_system_direct_single_core
+TEST_TARGET := top_system_direct_4core
 TEST_ARGS ?= -g2005-sv
 
 # common
@@ -10,7 +10,24 @@ TEST_SRC += $(TOP_DIR)/rtl/common/fifo.v
 TEST_SRC += $(TOP_DIR)/rtl/common/cache.v
 
 # bus
-TEST_SRC += $(TOP_DIR)/rtl/bus/direct/direct_bus_top.v
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/cpu/cpu_ring_interface.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/cpu/cpu_with_ring.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/PE/pe_ctrl_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/PE/pe_ctrl_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/uart/uart_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/uart/uart_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/gpio/gpio_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/gpio/gpio_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/jtag/jtag_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/jtag/jtag_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/spi/spi_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/spi/spi_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_top.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/bus_top.v
 
 # cpu
@@ -72,4 +89,4 @@ TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/top
 TEST_SRC += $(TOP_DIR)/rtl/top/top_system.v
 
 TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
-TEST_SRC += $(CUR_DIR)/tb_top_system_direct_single_core.v
+TEST_SRC += $(CUR_DIR)/tb_top_system_4core.v
