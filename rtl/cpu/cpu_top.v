@@ -142,16 +142,16 @@ module cpu_top #(
             // L3缓存实例（使用通用cache模块，可选）
             if (ENABLE_L3_CACHE) begin : l3_cache_gen
                 cache #(
-                .CACHE_LINE_SIZE(`L3_CACHE_LINE_SIZE),
-                .CACHE_SIZE(`L3_CACHE_SIZE),
-                .ASSOCIATIVITY(`L3_CACHE_ASSOCIATIVITY),
-                .ADDR_WIDTH(ADDR_WIDTH),
-                // 使用正确的L3缓存数据宽度（512位）
-                .DATA_WIDTH(`L3_CACHE_DATA_WIDTH),
-                .SUPPORT_COHERENCY(0),  // L3缓存是共享的，不需要一致性
-                .CACHE_LEVEL(`CACHE_LEVEL_L3),
-                .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
-            ) u_l3_cache (
+                    .CACHE_LINE_SIZE(`L3_CACHE_LINE_SIZE),
+                    .CACHE_SIZE(`L3_CACHE_SIZE),
+                    .ASSOCIATIVITY(`L3_CACHE_ASSOCIATIVITY),
+                    .ADDR_WIDTH(ADDR_WIDTH),
+                    // 使用正确的L3缓存数据宽度（512位）
+                    .DATA_WIDTH(`L3_CACHE_DATA_WIDTH),
+                    .SUPPORT_COHERENCY(0),  // L3缓存是共享的，不需要一致性
+                    .CACHE_LEVEL(`CACHE_LEVEL_L3),
+                    .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
+                ) u_l3_cache (
                     .clk(clk),
                     .rst_n(rst_n),
 

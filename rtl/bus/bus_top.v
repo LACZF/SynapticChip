@@ -1,7 +1,6 @@
 
 // This is the bus top module
 
-`include "ring_bus_params.v"
 `include "top_system_params.v"
 
 module bus_top #(
@@ -337,17 +336,17 @@ module bus_top #(
                 .spi_miso_o(spi_miso_o),
 
                 // UART
-                .req_o(req_o),
-                .we_o(we_o),
-                .addr_o(addr_o),
-                .data_in_o(data_in_o),
-                .data_out_i(data_out_i),
-                .ack_i(ack_i),
-                .txd_i(txd_i),
-                .rxd_o(rxd_o),
-                .rts_i(rts_i),
-                .cts_o(cts_o),
-                .int_i(int_i)
+                .uart_req_o(uart_req_o),
+                .uart_we_o(uart_we_o),
+                .uart_addr_o(uart_addr_o),
+                .uart_data_in_o(uart_data_in_o),
+                .uart_data_out_i(uart_data_out_i),
+                .uart_ack_i(uart_ack_i),
+                .uart_txd_i(uart_txd_i),
+                .uart_rxd_o(uart_rxd_o),
+                .uart_rts_i(uart_rts_i),
+                .uart_cts_o(uart_cts_o),
+                .uart_int_i(uart_int_i)
             );
         end
     endgenerate

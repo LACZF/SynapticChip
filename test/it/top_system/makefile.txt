@@ -11,13 +11,6 @@ TEST_SRC += $(TOP_DIR)/rtl/common/cache.v
 
 # bus
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/bus/ring
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_top.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/direct/direct_bus_top.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/bus_top.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/cpu/cpu_ring_interface.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/cpu/cpu_with_ring.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/PE/pe_ctrl_node.v
@@ -30,12 +23,17 @@ TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/jtag/jtag_ring_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/jtag/jtag_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/spi/spi_node.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_node_adapter/spi/spi_ring_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_node.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_single_bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/ring/ring_bus_top.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus_top.v
 
 # cpu
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv/riscv64
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/test/ut/cpu/cpu_top_single_core_no_l3
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_clock_reset_gen.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_execution.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_hazard_detection.v
@@ -47,7 +45,6 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
-TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
 
 # PE
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE
@@ -91,4 +88,5 @@ TEST_SRC += $(TOP_DIR)/rtl/spi/spi_core.v
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/top
 TEST_SRC += $(TOP_DIR)/rtl/top/top_system.v
 
+TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
 TEST_SRC += $(CUR_DIR)/tb_top_system.v

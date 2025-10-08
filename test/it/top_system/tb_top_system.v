@@ -250,8 +250,10 @@ module tb_top_system;
         forever begin
             #1000;
             instruction_count = instruction_count + 1;
-            // $display("[%0t ps] 已执行指令数: %d, 系统状态: 0x%h",
-            //          $time, instruction_count, system_status);
+        `ifdef DEBUG
+            $display("[%0t ps] 已执行指令数: %d, 系统状态: 0x%h",
+                     $time, instruction_count, system_status);
+        `endif
         end
     end
 

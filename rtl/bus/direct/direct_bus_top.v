@@ -13,7 +13,10 @@ module direct_bus_top #(
     parameter RSP_FIFO_DEPTH   = 4,
     parameter NUM_CORES        = 4,
     parameter GPIO_WIDTH       = 32,
-    parameter MATCH_TYPE_WIDTH = 2
+    parameter MATCH_TYPE_WIDTH = 2,
+    parameter NUM_PES          = 16,
+    parameter INST_WIDTH       = 32,
+    parameter PE_ID_WIDTH      = 4
 ) (
     input  wire                                   clk,
     input  wire                                   rst_n,
@@ -42,10 +45,10 @@ module direct_bus_top #(
     output reg                                    pe_route_cfg_valid_o,
 
     // GPIO
-    output                                        gpio_req_o,
-    output                                        gpio_we_o,
-    output      [ADDR_WIDTH-1:0]                  gpio_addr_o,
-    output      [DATA_WIDTH-1:0]                  gpio_data_in_o,
+    output reg                                    gpio_req_o,
+    output reg                                    gpio_we_o,
+    output reg  [ADDR_WIDTH-1:0]                  gpio_addr_o,
+    output reg  [DATA_WIDTH-1:0]                  gpio_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  gpio_data_out_i,
     input  reg                                    gpio_ack_i,
     inout       [GPIO_WIDTH-1:0]                  gpio_pins,
@@ -79,10 +82,10 @@ module direct_bus_top #(
     output wire                                   spi_miso_o,
 
     // UART
-    output                                        uart_req_o,
-    output                                        uart_we_o,
-    output      [ADDR_WIDTH-1:0]                  uart_addr_o,
-    output      [DATA_WIDTH-1:0]                  uart_data_in_o,
+    output reg                                    uart_req_o,
+    output reg                                    uart_we_o,
+    output reg  [ADDR_WIDTH-1:0]                  uart_addr_o,
+    output reg  [DATA_WIDTH-1:0]                  uart_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  uart_data_out_i,
     input  reg                                    uart_ack_i,
     input  reg                                    uart_txd_i,
