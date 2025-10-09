@@ -26,6 +26,7 @@ module riscv64_instruction_fetch (
         end
     end
 
+`ifdef DEBUG
     // 调试信息
     always @(posedge clk) begin
         if (rst_n) begin
@@ -41,18 +42,22 @@ module riscv64_instruction_fetch (
             end
         end
     end
+`endif
 
-`ifdef DEBUG
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
+        `ifdef DEBUG
             $display("[%0t ps] IF: Reset, initializing PC=0x%h", $time, 64'h8000_0000);
+        `endif
             pc <= 64'h8000_0000;
             pc_next <= 64'h8000_0000;
             instr <= 32'h0000_0013; // NOP
             cache_req <= 1'b1; // 复位后立即请求指令
             cache_addr <= 64'h8000_0000;
         end else if (flush) begin
+        `ifdef DEBUG
             $display("[%0t ps] IF: Flush, new PC=0x%h", $time, branch_target);
+        `endif
             pc <= branch_target;
             pc_next <= branch_target + 4;
             instr <= 32'h0000_0013;
@@ -60,21 +65,29 @@ module riscv64_instruction_fetch (
             cache_addr <= branch_target;
         end else if (!stall) begin
             if (branch_taken) begin
+            `ifdef DEBUG
                 $display("[%0t ps] IF: Branch taken, new PC=0x%h", $time, branch_target);
+            `endif
                 pc <= branch_target;
                 pc_next <= branch_target + 4;
                 cache_req <= 1'b1;
                 cache_addr <= branch_target;
             end else if (cache_ready) begin
+            `ifdef DEBUG
                 $display("[%0t ps] IF: Cache ready, PC updated to 0x%h, fetching next instr at 0x%h",
                          $time, pc_next, pc_next + 4);
+            `endif
                 // 确保指令正确加载
                 if (cache_data !== 32'bz && cache_data !== 32'bx) begin
                     instr <= cache_data; // 从缓存中获取指令数据
+                `ifdef DEBUG
                     $display("[%0t ps] IF: Loading instruction from cache: 0x%h", $time, cache_data);
+                `endif
                 end else begin
                     instr <= 32'h0000_0013; // NOP指令作为备选
+                `ifdef DEBUG
                     $display("[%0t ps] IF: Cache data invalid, using NOP instead", $time);
+                `endif
                 end
                 // 更新PC和下一个取指地址
                 pc <= pc_next;
@@ -84,9 +97,10 @@ module riscv64_instruction_fetch (
                 cache_addr <= pc_next + 4;
             end
         end else begin
+        `ifdef DEBUG
             $display("[%0t ps] IF: Pipeline stalled", $time);
+        `endif
         end
     end
-`endif
 
 endmodule

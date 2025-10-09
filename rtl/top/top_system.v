@@ -335,7 +335,7 @@ module top_system #(
     spi_core #(
         .DATA_WIDTH(DATA_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH)
-    ) u_spi_core (
+    ) spi (
         .clk(clk),
         .rst_n(rst_n),
 
