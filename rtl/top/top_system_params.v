@@ -33,6 +33,10 @@
 `define UART_END   32'h3000_00FF
 `define FABRIC_BASE 32'h4000_0000
 `define FABRIC_END  32'h4000_FFFF
+`define JTAG_BASE  32'h5000_0000
+`define JTAG_END   32'h5000_00FF
+`define SPI_BASE   32'h6000_0000
+`define SPI_END    32'h6000_00FF
 
 // 节点ID分配
 `define NODE_RISCV 5'd0

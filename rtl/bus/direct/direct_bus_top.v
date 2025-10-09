@@ -62,20 +62,20 @@ module direct_bus_top #(
     output                                        jtag_tdi_o,
     input  reg                                    jtag_tdo_i,
     input  reg                                    jtag_tdo_en_i,
-    output                                        jtag_req_o,
-    output                                        jtag_we_o,
-    output      [ADDR_WIDTH-1:0]                  jtag_addr_o,
-    output      [DATA_WIDTH-1:0]                  jtag_data_in_o,
+    output reg                                    jtag_req_o,
+    output reg                                    jtag_we_o,
+    output reg  [ADDR_WIDTH-1:0]                  jtag_addr_o,
+    output reg  [DATA_WIDTH-1:0]                  jtag_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  jtag_data_out_i,
     input  reg                                    jtag_ack_i,
     input  reg  [DATA_WIDTH-1:0]                  jtag_debug_data_i,
     input  reg                                    jtag_debug_valid_i,
 
     // SPI
-    output wire                                   spi_req_o,
-    output wire                                   spi_we_o,
-    output wire [ADDR_WIDTH-1:0]                  spi_addr_o,
-    output wire [DATA_WIDTH-1:0]                  spi_data_in_o,
+    output reg                                    spi_req_o,
+    output reg                                    spi_we_o,
+    output reg  [ADDR_WIDTH-1:0]                  spi_addr_o,
+    output reg  [DATA_WIDTH-1:0]                  spi_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  spi_data_out_i,
     input  reg                                    spi_ack_i,
     input  reg                                    spi_cs_n_i,
@@ -135,6 +135,10 @@ module direct_bus_top #(
             target_device = `NODE_RAM;
         end else if (cpu_mem_addr_i >= `ROM_BASE && cpu_mem_addr_i <= `ROM_END) begin
             target_device = `NODE_ROM;
+        end else if (cpu_mem_addr_i >= `JTAG_BASE && cpu_mem_addr_i <= `JTAG_END) begin
+            target_device = `NODE_JTAG;
+        end else if (cpu_mem_addr_i >= `SPI_BASE && cpu_mem_addr_i <= `SPI_END) begin
+            target_device = `NODE_SPI;
         end else begin
             target_device = {NODE_ID_WIDTH{1'b1}}; // 未定义地址
         end
@@ -146,7 +150,9 @@ module direct_bus_top #(
         target_device == `NODE_UART ? `UART_BASE :
         target_device == `NODE_PE ? `FABRIC_BASE :
         target_device == `NODE_RAM ? `RAM_BASE :
-        target_device == `NODE_ROM ? `ROM_BASE : 0
+        target_device == `NODE_ROM ? `ROM_BASE :
+        target_device == `NODE_JTAG ? `JTAG_BASE :
+        target_device == `NODE_SPI ? `SPI_BASE : 0
     );
 
     // 状态机实现
@@ -193,6 +199,20 @@ module direct_bus_top #(
                             cpu_ready <= 1'b1;
                             state <= STATE_IDLE;
                         end
+                        `NODE_JTAG: begin // JTAG模块
+                            jtag_req_o <= 1'b1;
+                            jtag_we_o <= saved_we;
+                            jtag_addr_o <= saved_addr;
+                            jtag_data_in_o <= saved_wdata;
+                            state <= STATE_ACCESS;
+                        end
+                        `NODE_SPI: begin // SPI模块
+                            spi_req_o <= 1'b1;
+                            spi_we_o <= saved_we;
+                            spi_addr_o <= saved_addr;
+                            spi_data_in_o <= saved_wdata;
+                            state <= STATE_ACCESS;
+                        end
                         default: begin // 未定义地址或其他模块
                             cpu_ready <= 1'b1; // 立即返回，读操作返回0，写操作忽略
                             state <= STATE_IDLE;
@@ -216,6 +236,20 @@ module direct_bus_top #(
                                 state <= STATE_IDLE;
                             end
                         end
+                        `NODE_JTAG: begin
+                            if (jtag_ack_i) begin
+                                cpu_ready <= 1'b1;
+                                jtag_req_o <= 1'b0;
+                                state <= STATE_IDLE;
+                            end
+                        end
+                        `NODE_SPI: begin
+                            if (spi_ack_i) begin
+                                cpu_ready <= 1'b1;
+                                spi_req_o <= 1'b0;
+                                state <= STATE_IDLE;
+                            end
+                        end
                         default: begin
                             state <= STATE_IDLE;
                         end
@@ -234,6 +268,8 @@ module direct_bus_top #(
     assign cpu_mem_rdata_o = (
         target_device == `NODE_UART ? uart_data_out_i :
         target_device == `NODE_GPIO ? gpio_data_out_i :
+        target_device == `NODE_JTAG ? jtag_data_out_i :
+        target_device == `NODE_SPI ? spi_data_out_i :
         0
     );
 
