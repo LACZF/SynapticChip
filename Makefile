@@ -90,10 +90,22 @@ all_ut:
 all_test: all_ut all_it
 	$(QUITE)echo "All tests done."
 
-YOSYS_ENV ?= OUTPUT_SVG=1
+# YOSYS_ENV ?= OUTPUT_SVG=1
 yosys_synthesis:
 	READ_RTL_ARGS="$(READ_RTL_ARGS) -I$(shell realpath $$(dirname $(M)))" \
 		$(YOSYS_ENV) $(TOP_MODULE_ARG) $(TOP_DIR)/yosys.sh synth $(M)
+
+all:
+	$(QUITE)echo "Start ut."
+	make -C $(TOP_DIR) all_ut
+	$(QUITE)echo "ut done."
+	$(QUITE)echo "Start it."
+	make -C $(TOP_DIR) all_it
+	$(QUITE)echo "it done."
+	$(QUITE)echo "Start yosys synthesis."
+	make -C $(TOP_DIR) yosys_synthesis
+	$(QUITE)echo "yosys synthesis done."
+	$(QUITE)echo "All done."
 
 help:
 	@echo "Usage: make [target] [options]"

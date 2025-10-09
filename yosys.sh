@@ -159,7 +159,7 @@ function dot2svg() { # do_not_function_help
 }
 
 function do_netlistsvg() { # do_not_function_help
-	if [ ! "$NETLIST2SVG"x = "0"x ]; then
+	if [ "$NETLIST2SVG"x = "1"x ]; then
 		run_cmd netlistsvg $@ 2>/dev/null 1>/dev/null
 	fi
 }
