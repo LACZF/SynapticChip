@@ -54,3 +54,6 @@
 
 `define BUS_TYPE_RING 0    // Ring总线类型
 `define BUS_TYPE_DIRECT 1   // 直接连接类型
+
+// SPI参数
+`define SPI_CS_NUM 2        // SPI片选信号数量

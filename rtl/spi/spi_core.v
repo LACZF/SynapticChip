@@ -5,7 +5,8 @@
 
 module spi_core #(
     parameter DATA_WIDTH = `SPI_DATA_WIDTH,
-    parameter ADDR_WIDTH = `SPI_ADDR_WIDTH
+    parameter ADDR_WIDTH = `SPI_ADDR_WIDTH,
+    parameter CS_NUM     = 1
 ) (
     input wire clk,
     input wire rst_n,
@@ -19,7 +20,7 @@ module spi_core #(
     output reg ack,
 
     // SPI物理接口
-    output reg spi_cs_n,
+    output reg [CS_NUM-1:0] spi_cs_n,
     output reg spi_clk,
     output reg spi_mosi,
     input wire spi_miso
@@ -32,6 +33,7 @@ module spi_core #(
     reg [DATA_WIDTH-1:0] cmd_reg;
     reg [DATA_WIDTH-1:0] clk_div_reg;
     reg [DATA_WIDTH-1:0] config_reg;
+    reg [DATA_WIDTH-1:0] cs_sel_reg;  // 片选选择寄存器
 
     // SPI状态机变量
     reg [2:0] state;
@@ -123,7 +125,13 @@ module spi_core #(
                                 state <= `SPI_STATE_CMD;
                                 bit_counter <= 8'h0;
                                 byte_counter <= 8'h0;
-                                spi_cs_n <= 1'b0;
+                                if (CS_NUM > 1) begin
+                                    // 多片选模式：只拉低选中的片选信号
+                                    spi_cs_n <= ~(1 << cs_sel_reg[$clog2(CS_NUM)-1:0]);
+                                end else begin
+                                    // 单片选模式：兼容原有行为
+                                    spi_cs_n <= 1'b0;
+                                end
                                 status_reg[`SPI_STATUS_BUSY] <= 1'b1;
                                 status_reg[`SPI_STATUS_TX_READY] <= 1'b0;
                             end
@@ -134,6 +142,10 @@ module spi_core #(
                         end
                         `SPI_REG_CONFIG: begin
                             config_reg <= data_in;
+                            ack <= 1'b1;
+                        end
+                        `SPI_REG_CS_SEL: begin  // 片选选择寄存器
+                            cs_sel_reg <= data_in;
                             ack <= 1'b1;
                         end
                     endcase
@@ -167,6 +179,10 @@ module spi_core #(
                         end
                         `SPI_REG_CONFIG: begin
                             data_out <= config_reg;
+                            ack <= 1'b1;
+                        end
+                        `SPI_REG_CS_SEL: begin  // 片选选择寄存器
+                            data_out <= cs_sel_reg;
                             ack <= 1'b1;
                         end
                     endcase
@@ -289,7 +305,13 @@ module spi_core #(
 
                 `SPI_STATE_DONE:
                     begin
-                        spi_cs_n <= 1'b1;
+                        if (CS_NUM > 1) begin
+                            // 多片选模式：拉高所有片选信号
+                            spi_cs_n <= {CS_NUM{1'b1}};
+                        end else begin
+                            // 单片选模式：兼容原有行为
+                            spi_cs_n <= 1'b1;
+                        end
                         status_reg[`SPI_STATUS_BUSY] <= 1'b0;
                         status_reg[`SPI_STATUS_TX_READY] <= 1'b1;
 
@@ -303,7 +325,13 @@ module spi_core #(
             endcase
         end else begin
             state <= `SPI_STATE_IDLE;
-            spi_cs_n <= 1'b1;
+            if (CS_NUM > 1) begin
+                // 多片选模式：拉高所有片选信号
+                spi_cs_n <= {CS_NUM{1'b1}};
+            end else begin
+                // 单片选模式：兼容原有行为
+                spi_cs_n <= 1'b1;
+            end
             status_reg[`SPI_STATUS_BUSY] <= 1'b0;
         end
     end

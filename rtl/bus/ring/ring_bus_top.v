@@ -13,6 +13,7 @@ module ring_bus_top #(
     parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
     parameter NUM_CORES        = 4,
     parameter GPIO_WIDTH       = 32,
+    parameter SPI_CS_NUM       = 1,
     parameter MATCH_TYPE_WIDTH = 2,        // 匹配类型宽度
     parameter NUM_PES          = 4,
     parameter PE_ARRAY_ROWS    = 2,
@@ -78,7 +79,7 @@ module ring_bus_top #(
     output wire [DATA_WIDTH-1:0]                  spi_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  spi_data_out_i,
     input  reg                                    spi_ack_i,
-    input  reg                                    spi_cs_n_i,
+    input  reg  [SPI_CS_NUM-1:0]                  spi_cs_n_i,
     input  reg                                    spi_clk_i,
     input  reg                                    spi_mosi_i,
     output wire                                   spi_miso_o,
@@ -395,6 +396,7 @@ module ring_bus_top #(
         .NODE_ID(`NODE_SPI),
         .OPCODE_WIDTH(OPCODE_WIDTH),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
+        .SPI_CS_NUM(SPI_CS_NUM),
         .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
         .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
         .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH)

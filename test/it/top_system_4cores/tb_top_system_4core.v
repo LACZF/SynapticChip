@@ -90,6 +90,7 @@ module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output
 endmodule
 
 module tb_top_system_direct_4core;
+    localparam SPI_CS_NUM = 2;
 
     // 时钟和复位
     reg clk;
@@ -111,7 +112,7 @@ module tb_top_system_direct_4core;
     wire [`DATA_WIDTH-1:0] system_status;
 
     // SPI物理接口（连接到SPI Flash模型）
-    wire spi_cs_n;
+    wire [SPI_CS_NUM-1:0] spi_cs_n;
     wire spi_clk;
     wire spi_mosi;
     wire spi_miso;
@@ -135,6 +136,7 @@ module tb_top_system_direct_4core;
         .ENABLE_L2_CACHE(1),
         .ENABLE_L3_CACHE(1),
         .GPIO_WIDTH(32),
+        .SPI_CS_NUM(SPI_CS_NUM),
         .NUM_PES(16),
         .PE_ARRAY_ROWS(4),
         .PE_ARRAY_COLS(4),
@@ -184,7 +186,7 @@ module tb_top_system_direct_4core;
         .MEM_SIZE(4096),
         .INSTR_FILE("instructions.hex")
     ) u_spi_flash_model (
-        .cs_n(spi_cs_n),
+        .cs_n(spi_cs_n[0]),
         .sclk(spi_clk),
         .mosi(spi_mosi),
         .miso(spi_miso)

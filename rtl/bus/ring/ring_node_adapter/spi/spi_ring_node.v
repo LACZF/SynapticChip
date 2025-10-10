@@ -12,6 +12,7 @@ module spi_ring_node #(
     parameter NODE_ID           = 0,
     parameter OPCODE_WIDTH      = 8,
     parameter MATCH_TYPE_WIDTH  = 2,
+    parameter SPI_CS_NUM        = 1,
     parameter TX_FIFO_DEPTH     = 4,
     parameter RX_FIFO_DEPTH     = 4,
     parameter RSP_FIFO_DEPTH    = 4
@@ -23,9 +24,9 @@ module spi_ring_node #(
     output wire                         spi_we_o,
     output wire [ADDR_WIDTH-1:0]        spi_addr_o,
     output wire [DATA_WIDTH-1:0]        spi_data_in_o,
-    input  reg [DATA_WIDTH-1:0]         spi_data_out_i,
+    input  reg  [DATA_WIDTH-1:0]        spi_data_out_i,
     input  reg                          spi_ack_i,
-    input  reg                          spi_cs_n_i,
+    input  reg  [SPI_CS_NUM-1:0]        spi_cs_n_i,
     input  reg                          spi_clk_i,
     input  reg                          spi_mosi_i,
     output wire                         spi_miso_o,
@@ -71,6 +72,7 @@ module spi_ring_node #(
     spi_node #(
         .DATA_WIDTH(DATA_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH),
+        .SPI_CS_NUM(SPI_CS_NUM),
         .NODE_ID_WIDTH(NODE_ID_WIDTH)
     ) u_spi_node (
         .clk(clk),

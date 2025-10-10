@@ -22,6 +22,7 @@ module top_system #(
     parameter ENABLE_L2_CACHE  = 0,        // 启用L2缓存
     parameter ENABLE_L3_CACHE  = 0,        // 启用L3缓存
     parameter GPIO_WIDTH       = 32,
+    parameter SPI_CS_NUM       = 1,
     parameter NUM_PES          = 4,
     parameter PE_ARRAY_ROWS    = 2,
     parameter PE_ARRAY_COLS    = 2,
@@ -56,7 +57,7 @@ module top_system #(
     output jtag_debug_valid,
 
     // SPI物理接口
-    output spi_cs_n,
+    output [SPI_CS_NUM-1:0] spi_cs_n,
     output spi_clk,
     output spi_mosi,
     input spi_miso
@@ -134,6 +135,7 @@ module top_system #(
         .RSP_FIFO_DEPTH(RSP_FIFO_DEPTH),
         .NUM_CORES(NUM_CORES),
         .GPIO_WIDTH(GPIO_WIDTH),
+        .SPI_CS_NUM(SPI_CS_NUM),
         .MATCH_TYPE_WIDTH(MATCH_TYPE_WIDTH),
         .NUM_PES(NUM_PES),
         .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
@@ -334,7 +336,8 @@ module top_system #(
     // 实例化SPI核心控制器
     spi_core #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH)
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .CS_NUM(SPI_CS_NUM)
     ) spi (
         .clk(clk),
         .rst_n(rst_n),

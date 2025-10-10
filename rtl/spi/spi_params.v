@@ -14,6 +14,7 @@
 `define SPI_REG_CMD      8'h10  // 命令寄存器
 `define SPI_REG_CLK_DIV  8'h14  // 时钟分频寄存器
 `define SPI_REG_CONFIG   8'h18  // 配置寄存器
+`define SPI_REG_CS_SEL   8'h1C  // 片选选择寄存器
 
 // 控制寄存器位定义
 `define SPI_CTRL_EN       0     // 使能位

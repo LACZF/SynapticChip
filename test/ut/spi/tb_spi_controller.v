@@ -15,7 +15,8 @@ module tb_spi_controller;
     reg rst_n;
 
     // SPI物理接口
-    wire spi_cs_n;
+    localparam CS_NUM = 4;  // 测试时使用4个片选信号
+    wire [CS_NUM-1:0] spi_cs_n;
     wire spi_clk;
     wire spi_mosi;
     wire spi_miso;
@@ -57,7 +58,8 @@ module tb_spi_controller;
     // 实例化SPI控制器核心模块
     spi_core #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH)
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .CS_NUM(CS_NUM)
     ) u_spi_core (
         .clk(clk),
         .rst_n(rst_n),
@@ -148,6 +150,7 @@ module tb_spi_controller;
             write_register_debug(`SPI_REG_CONFIG, 32'h00000000); // SPI模式0
             write_register_debug(`SPI_REG_CLK_DIV, 32'h00000001); // 设置较小的时钟分频
             write_register_debug(`SPI_REG_CONTROL, 32'h00000011); // 使能SPI控制器和中断
+            write_register_debug(`SPI_REG_CS_SEL, 32'h00000000); // 选择第一个片选通道 (CS0)
 
             // 2. 读取配置以验证写入
             $display("Verifying configuration...");
@@ -227,9 +230,9 @@ module tb_spi_controller;
         end
     endtask
 
-    // 外部Flash响应逻辑
-    always @(posedge spi_clk or posedge spi_cs_n) begin
-        if (spi_cs_n) begin
+    // 外部Flash响应逻辑 - 为简化测试，只使用第一个片选信号
+    always @(posedge spi_clk or posedge spi_cs_n[0]) begin
+        if (spi_cs_n[0]) begin
             flash_state <= FLASH_IDLE;
             flash_bit_count <= 8'd0;
             flash_command <= 8'd0;
@@ -306,8 +309,8 @@ module tb_spi_controller;
         end
     end
 
-    // 连接MISO信号
-    assign spi_miso = (spi_cs_n || flash_state < FLASH_READ) ? 1'bz : flash_miso_data[7];
+    // 连接MISO信号 - 为简化测试，只使用第一个片选信号
+    assign spi_miso = (spi_cs_n[0] || flash_state < FLASH_READ) ? 1'bz : flash_miso_data[7];
 
     // 定期检查状态寄存器，但避免在复位期间检查
     initial begin
