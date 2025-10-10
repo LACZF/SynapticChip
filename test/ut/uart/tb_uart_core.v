@@ -95,7 +95,9 @@ module tb_uart_core;
             // 数据位
             for (i = 0; i < 8; i = i + 1) begin
                 rxd <= data[i];
+            `ifdef DEBUG
                 $display("Sending bit %d: %b", i, data[i]);
+            `endif
                 #8680;
             end
 

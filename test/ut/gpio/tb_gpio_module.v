@@ -66,7 +66,9 @@ module tb_gpio_module;
             timeout_count = 0;
             timeout = 0;
 
+        `ifdef DEBUG
             $display("[write_register] Writing to addr=0x%h, data=0x%h", reg_addr, write_data);
+        `endif
             @(posedge clk);
             req <= 1'b1;
             we <= 1'b1;
@@ -107,7 +109,9 @@ module tb_gpio_module;
             timeout_count = 0;
             timeout = 0;
 
+        `ifdef DEBUG
             $display("[read_register] Reading from addr=0x%h", reg_addr);
+        `endif
             @(posedge clk);
             req <= 1'b1;
             we <= 1'b0;

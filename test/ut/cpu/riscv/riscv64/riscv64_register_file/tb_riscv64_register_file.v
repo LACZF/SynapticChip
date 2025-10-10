@@ -72,10 +72,14 @@ module tb_riscv64_register_file;
             total_tests = total_tests + 1;
             if (actual_value === expected_value) begin
                 test_passed = test_passed + 1;
+            `ifdef DEBUG
                 $display("时间: %t - 通过: 寄存器 x%0d 值为 0x%h (符合预期)", $time, reg_addr, actual_value);
+            `endif
             end else begin
                 error_count = error_count + 1;
+            `ifdef DEBUG
                 $display("时间: %t - 错误: 寄存器 x%0d 预期值为 0x%h, 实际值为 0x%h", $time, reg_addr, expected_value, actual_value);
+            `endif
             end
         end
     endtask
@@ -194,11 +198,13 @@ module tb_riscv64_register_file;
         $dumpvars(0, tb_riscv64_register_file);
     end
 
+`ifdef DEBUG
     // 实时监控
     always @(posedge clk) begin
         if (we) begin
             $display("时间: %t - 写操作: 寄存器 x%0d, 数据=0x%h", $time, rd, wdata);
         end
     end
+`endif
 
 endmodule

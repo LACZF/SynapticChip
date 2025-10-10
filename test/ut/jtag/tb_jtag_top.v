@@ -63,7 +63,9 @@ module tb_jtag_top;
             addr = reg_addr;
             data_in = reg_data;
 
+        `ifdef DEBUG
             $display("[write_register] Writing to addr=0x%h, data=0x%h", reg_addr, reg_data);
+        `endif
 
             // 等待确认
             while (!ack) begin
@@ -88,7 +90,9 @@ module tb_jtag_top;
             we = 1'b0;
             addr = reg_addr;
 
+        `ifdef DEBUG
             $display("[read_register] Reading from addr=0x%h", reg_addr);
+        `endif
 
             // 等待确认
             while (!ack) begin

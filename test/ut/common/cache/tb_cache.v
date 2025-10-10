@@ -436,11 +436,13 @@ module tb_cache;
                 timeout = timeout + 1;
             end
 
+        `ifdef DEBUG
             if (cpu_rsp_valid) begin
                 $display("时间: %t - 读取地址: 0x%h, 数据: 0x%h", $time, address, cpu_rsp_data);
             end else begin
                 $display("时间: %t - 读取地址: 0x%h 超时! 测试可能存在问题.", $time, address);
             end
+        `endif
 
             @(posedge clk);
             cpu_req_valid = 1'b0;
@@ -467,11 +469,13 @@ module tb_cache;
                 timeout = timeout + 1;
             end
 
+        `ifdef DEBUG
             if (cpu_rsp_valid) begin
                 $display("时间: %t - 写入地址: 0x%h, 数据: 0x%h, 选通: 0x%h", $time, address, data, strb);
             end else begin
                 $display("时间: %t - 写入地址: 0x%h 超时! 测试可能存在问题.", $time, address);
             end
+        `endif
 
             @(posedge clk);
             cpu_req_valid = 1'b0;
@@ -507,12 +511,14 @@ module tb_cache;
                 timeout = timeout + 1;
             end
 
+        `ifdef DEBUG
             if (coh_rsp_valid) begin
                 $display("时间: %t - 一致性操作: %s, 地址=0x%h, 状态=%s",
                          $time, req_name, address, get_state_name(coh_rsp_state));
             end else begin
                 $display("时间: %t - 一致性操作: %s, 地址=0x%h 超时! 测试可能存在问题.", $time, req_name, address);
             end
+        `endif
 
             @(posedge clk);
             coh_req_valid = 1'b0;
@@ -674,6 +680,7 @@ module tb_cache;
         join
     end
 
+`ifdef DEBUG
     // 监控缓存操作
     always @(posedge clk) begin
         if (mem_req_valid) begin
@@ -685,5 +692,6 @@ module tb_cache;
             end
         end
     end
+`endif
 
 endmodule

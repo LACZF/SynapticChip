@@ -57,19 +57,24 @@ module tb_cpu_top_single_core_no_l3;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             l1_icache_ready <= 1'b0;
+        `ifdef DEBUG
             $display("[%0t ps] MEM LOGIC: 复位状态", $time);
+        `endif
         end else if (l1_icache_req) begin
             // 当有请求时，使用ROM的输出来响应
             l1_icache_data <= {{480{1'b0}}, rom_instr};
             l1_icache_ready <= 1'b1;
+        `ifdef DEBUG
             $display("[%0t ps] MEM LOGIC: 收到指令请求，地址=0x%h，使用ROM指令: 0x%h，l1_icache_ready=1，rom_valid=%b",
                      $time, l1_icache_addr, rom_instr, rom_valid);
+        `endif
         end else begin
             // 没有请求时保持就绪信号为0
             l1_icache_ready <= 1'b0;
         end
     end
 
+`ifdef DEBUG
     // 添加请求监控，跟踪请求和响应的状态
     reg l1_icache_req_prev;
 
@@ -82,6 +87,7 @@ module tb_cpu_top_single_core_no_l3;
             $display("[%0t ps] REQ MONITOR: 指令请求结束", $time);
         end
     end
+`endif
 
     // 用于跟踪指令执行数量
     reg [7:0] instr_count;
@@ -96,10 +102,13 @@ module tb_cpu_top_single_core_no_l3;
     always @(posedge clk) begin
         if (l1_icache_req && l1_icache_ready) begin
             executed_instructions = executed_instructions + 1;
+        `ifdef DEBUG
             $display("[%0t ps] INSTR COUNT: 已执行 %0d 条指令", $time, executed_instructions);
+        `endif
         end
     end
 
+`ifdef DEBUG
     // 添加定期监控ROM信号的逻辑
     initial begin
         // 每1000ps检查一次ROM信号状态
@@ -111,6 +120,7 @@ module tb_cpu_top_single_core_no_l3;
             end
         end
     end
+`endif
 
     // 实例化被测模块 (DUT) - 配置为单核、无L2和L3缓存
     cpu_top #(
@@ -142,6 +152,7 @@ module tb_cpu_top_single_core_no_l3;
     assign l1_icache_req = mem_req;
     assign l1_icache_addr = mem_addr;
 
+`ifdef DEBUG
     // 添加定期监控CPU和ROM信号的逻辑
     initial begin
         // 在复位后定期监控信号
@@ -153,6 +164,8 @@ module tb_cpu_top_single_core_no_l3;
                      l1_icache_addr - 64'h8000_0000, rom_instr);
         end
     end
+`endif
+
     // 使用CPU的内存接口信号监控数据缓存操作
     assign l1_dcache_req = mem_req;
     assign l1_dcache_addr = mem_addr;
@@ -259,6 +272,7 @@ module tb_cpu_top_single_core_no_l3;
         $finish;
     end
 
+`ifdef DEBUG
     // 定期监控执行状态
     initial begin
         forever begin
@@ -268,6 +282,7 @@ module tb_cpu_top_single_core_no_l3;
             end
         end
     end
+`endif
 
     // 波形输出
     initial begin
@@ -275,6 +290,7 @@ module tb_cpu_top_single_core_no_l3;
         $dumpvars(0, tb_cpu_top_single_core_no_l3);
     end
 
+`ifdef DEBUG
     // 监控核心和缓存活动
     always @(posedge clk) begin
         // 监控指令缓存请求和ROM输出
@@ -303,5 +319,6 @@ module tb_cpu_top_single_core_no_l3;
             $display("时间: %t - 内存响应: 数据=0x%h", $time, mem_rdata);
         end
     end
+`endif
 
 endmodule

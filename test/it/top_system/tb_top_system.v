@@ -235,6 +235,7 @@ module tb_top_system;
         $finish;
     end
 
+`ifdef DEBUG
     // 添加SPI通信监控逻辑
     initial begin
         forever begin
@@ -246,19 +247,20 @@ module tb_top_system;
             end
         end
     end
+`endif
 
     // 添加定期监控系统状态的逻辑
+`ifdef DEBUG
     reg [31:0] instruction_count = 0;
     initial begin
         forever begin
             #1000;
             instruction_count = instruction_count + 1;
-        `ifdef DEBUG
             $display("[%0t ps] 已执行指令数: %d, 系统状态: 0x%h",
                      $time, instruction_count, system_status);
-        `endif
         end
     end
+`endif
 
     // 监控UART输出
     reg [7:0] uart_rx_byte;

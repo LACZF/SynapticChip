@@ -104,11 +104,13 @@ module ring_bus_system_tb;
             @(posedge clk);
             mem_req_enable <= 1'b0;
 
+        `ifdef DEBUG
             if (!wr) begin
                 $display("Memory Read: Address=%h, Data=%h", addr, mem_req_data_out);
             end else begin
                 $display("Memory Write: Address=%h, Data=%h", addr, data);
             end
+        `endif
         end
     endtask
 
@@ -128,11 +130,13 @@ module ring_bus_system_tb;
             @(posedge clk);
             uart_req_enable <= 1'b0;
 
+        `ifdef DEBUG
             if (!wr) begin
                 $display("UART Read: Address=%h, Data=%h", addr, uart_req_data_out);
             end else begin
                 $display("UART Write: Address=%h, Data=%h", addr, data);
             end
+        `endif
         end
     endtask
 

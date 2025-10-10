@@ -21,10 +21,12 @@ module instruction_rom #(
     initial begin
         $readmemh(INSTR_FILE, mem);
 
+    `ifdef DEBUG
         $display("First few instructions loaded:");
         for (i = 0; i < 128; i = i + 1) begin
             $display("MEM[%0d] = 0x%h", i, mem[i]);
         end
+    `endif
     end
 
     // 从内存中读取指令 - 添加地址范围检查和请求控制
@@ -36,6 +38,7 @@ module instruction_rom #(
     assign valid = req && addr_valid;
     assign instr = (req && addr_valid) ? mem[addr_index] : {INSTR_WIDTH{1'b0}};
 
+`ifdef DEBUG
     // 添加调试信息 - 只在有请求时显示
     always @(posedge req) begin
         if (addr_valid) begin
@@ -46,5 +49,6 @@ module instruction_rom #(
                      $time, addr, addr_index);
         end
     end
+`endif
 
 endmodule

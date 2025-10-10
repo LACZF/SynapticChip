@@ -46,6 +46,10 @@ endif
 READ_RTL_ARGS += -sv
 endif
 
+ifeq ($(DEBUG),1)
+TEST_ARGS += -D DEBUG=1
+endif
+
 .PHONY: test $(COMPLETE_TEST_TARGET) yosys_synthesis top_yosys_synthesis
 
 default: help

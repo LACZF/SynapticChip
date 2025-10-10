@@ -101,7 +101,9 @@ module tb_cpu_top;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             l1_icache_ready <= {NUM_CORES{1'b0}};
+        `ifdef DEBUG
             $display("[%0t ps] MEM LOGIC: 复位状态", $time);
+        `endif
         end else begin
             // 为所有核心提供指令
             for (i = 0; i < NUM_CORES; i = i + 1) begin
@@ -109,10 +111,12 @@ module tb_cpu_top;
                     cpu_instr_addr = l1_icache_addr;
                     l1_icache_data = {{480{1'b0}}, rom_instr};
                     l1_icache_ready[i] = rom_valid;
+                `ifdef DEBUG
                     if (rom_valid) begin
                         $display("[%0t ps] MEM LOGIC: 核心 %d 请求指令，地址=0x%h，ROM输出指令=0x%h，valid=%b",
                                  $time, i, l1_icache_addr, rom_instr, rom_valid);
                     end
+                `endif
                 end else begin
                     l1_icache_ready[i] = 1'b0;
                 end
@@ -137,7 +141,9 @@ module tb_cpu_top;
             if (l1_icache_ready[i]) begin
                 // 一个时钟周期后将就绪信号置为低电平
                 #1 l1_icache_ready[i] <= 1'b0;
+            `ifdef DEBUG
                 $display("[%0t ps] ICACHE RESP: 核心 %d 响应完成，拉低ready信号", $time, i);
+            `endif
             end
         end
     end
@@ -250,18 +256,6 @@ module tb_cpu_top;
         end
     end
 
-    // 添加定期监控CPU和ROM信号的逻辑
-    initial begin
-        // 在复位后定期监控信号
-        #100;
-        forever begin
-            #100;
-            $display("[%0t ps] CPU & ROM STATUS: req=%b, l1_icache_addr=0x%h, rom_addr=0x%h, rom_instr=0x%h, valid=%b",
-                     $time, |l1_icache_req, l1_icache_addr,
-                     l1_icache_addr - 64'h8000_0000, rom_instr, rom_valid);
-        end
-    end
-
     // 全局超时监控
     initial begin
         #30000;
@@ -273,6 +267,19 @@ module tb_cpu_top;
     initial begin
         $dumpfile("tb_cpu_top.vcd");
         $dumpvars(0, tb_cpu_top);
+    end
+
+`ifdef DEBUG
+    // 添加定期监控CPU和ROM信号的逻辑
+    initial begin
+        // 在复位后定期监控信号
+        #100;
+        forever begin
+            #100;
+            $display("[%0t ps] CPU & ROM STATUS: req=%b, l1_icache_addr=0x%h, rom_addr=0x%h, rom_instr=0x%h, valid=%b",
+                     $time, |l1_icache_req, l1_icache_addr,
+                     l1_icache_addr - 64'h8000_0000, rom_instr, rom_valid);
+        end
     end
 
     // 监控核心和缓存活动
@@ -308,5 +315,6 @@ module tb_cpu_top;
             $display("时间: %t - 内存响应: 数据=0x%h", $time, mem_rdata);
         end
     end
+`endif
 
 endmodule

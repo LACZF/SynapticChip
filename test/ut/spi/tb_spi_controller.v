@@ -316,9 +316,11 @@ module tb_spi_controller;
             if (rst_n) begin
                 read_register_status();
                 // 添加调试信息
+            `ifdef DEBUG
                 if (status_reg_value != 0) begin
                     $display("Status register: 0x%h at time %t", status_reg_value, $time);
                 end
+            `endif
             end
             // 避免过于频繁的检查
             repeat(10) @(posedge clk);

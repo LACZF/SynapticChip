@@ -59,21 +59,31 @@ module tb_riscv64_core;
 
     always @(*) begin
         if (icache_req) begin
+        `ifdef DEBUG
             $display("Time: %0t, ICache request: addr=%0h", $time, icache_addr);
+        `endif
             if (icache_addr >= 64'h80000000 && icache_addr < 64'h80004000) begin
                 icache_data = instr_memory[(icache_addr - 64'h80000000) >> 2];
+            `ifdef DEBUG
                 $display("Time: %0t, ICache hit: addr=%0h, index=%0d, data=0x%0h",
                          $time, icache_addr, (icache_addr - 64'h80000000) >> 2, icache_data);
+            `endif
             end else if (icache_addr >= 0 && icache_addr < 64'h4000) begin
                 icache_data = instr_memory[icache_addr >> 2];
+            `ifdef DEBUG
                 $display("Time: %0t, ICache hit: addr=%0h, index=%0d, data=0x%0h",
                          $time, icache_addr, icache_addr >> 2, icache_data);
+            `endif
             end else begin
                 icache_data = 32'h00000013; // NOP
+            `ifdef DEBUG
                 $display("Time: %0t, ICache miss: addr=%0h, returning NOP", $time, icache_addr);
+            `endif
             end
             icache_ready = 1'b1;
+        `ifdef DEBUG
             $display("Time: %0t, ICache response: data=0x%0h, ready=1", $time, icache_data);
+        `endif
         end else begin
             icache_data = 32'h00000013; // NOP
             icache_ready = 1'b0;
@@ -466,10 +476,12 @@ module tb_riscv64_core;
         #10;
 
         $display("Reset completed. Starting test execution...");
+    `ifdef DEBUG
         $display("Initial instructions: ");
         for (int i = 0; i < 10; i = i + 1) begin
             $display("Instr[0x%0h] = 0x%0h", i, instr_memory[i]);
         end
+    `endif
 
         // 运行测试用例
         test_arithmetic;
@@ -512,6 +524,7 @@ module tb_riscv64_core;
         $finish;
     end
 
+`ifdef DEBUG
     // 调试监控
     always @(posedge clk) begin
         if (debug_wb_valid) begin
@@ -534,5 +547,6 @@ module tb_riscv64_core;
             end
         end
     end
+`endif
 
 endmodule
