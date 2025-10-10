@@ -30,6 +30,7 @@ module tb_cpu_top;
 
     // 从文件读取指令的ROM模块
     wire [31:0]  rom_instr;
+    wire         rom_valid;  // ROM读取完成有效信号
     reg [63:0]   cpu_instr_addr;
 
     // 跟踪测试通过和失败的数量
@@ -56,8 +57,10 @@ module tb_cpu_top;
         .INSTR_WIDTH(32),                     // 指令宽度
         .INSTR_FILE("instructions.hex")       // 指令文件路径
     ) u_instruction_rom (
+        .req(|l1_icache_req),                 // 使用任意核心的请求信号
         .addr(cpu_instr_addr - 64'h8000_0000), // 将地址偏移到ROM基址
-        .instr(rom_instr)                     // 输出指令
+        .instr(rom_instr),                    // 输出指令
+        .valid(rom_valid)                     // 读取完成有效信号
     );
 
     // 实例化被测模块 (DUT)
@@ -94,7 +97,7 @@ module tb_cpu_top;
     assign l1_dcache_addr = mem_addr;
     assign l1_dcache_we = mem_we;
 
-    // 模拟内存响应逻辑
+    // 模拟内存响应逻辑 - 使用ROM的valid信号控制
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             l1_icache_ready <= {NUM_CORES{1'b0}};
@@ -105,9 +108,11 @@ module tb_cpu_top;
                 if (l1_icache_req[i]) begin
                     cpu_instr_addr = l1_icache_addr;
                     l1_icache_data = {{480{1'b0}}, rom_instr};
-                    l1_icache_ready[i] = 1'b1;
-                    $display("[%0t ps] MEM LOGIC: 核心 %d 请求指令，地址=0x%h，ROM输出指令=0x%h",
-                             $time, i, l1_icache_addr, rom_instr);
+                    l1_icache_ready[i] = rom_valid;
+                    if (rom_valid) begin
+                        $display("[%0t ps] MEM LOGIC: 核心 %d 请求指令，地址=0x%h，ROM输出指令=0x%h，valid=%b",
+                                 $time, i, l1_icache_addr, rom_instr, rom_valid);
+                    end
                 end else begin
                     l1_icache_ready[i] = 1'b0;
                 end
@@ -237,12 +242,10 @@ module tb_cpu_top;
         // 每1000ps检查一次ROM信号状态
         forever begin
             #1000;
-            for (i = 0; i < NUM_CORES; i = i + 1) begin
-                if (l1_icache_req[i]) begin
-                    $display("[%0t ps] ROM STATUS: 核心 %d, addr=0x%h, rom_addr=0x%h, instr=0x%h",
-                             $time, i, l1_icache_addr,
-                             l1_icache_addr - 64'h8000_0000, rom_instr);
-                end
+            if (|l1_icache_req || rom_valid) begin
+                $display("[%0t ps] ROM STATUS: req=%b, addr=0x%h, rom_addr=0x%h, instr=0x%h, valid=%b",
+                         $time, |l1_icache_req, l1_icache_addr,
+                         l1_icache_addr - 64'h8000_0000, rom_instr, rom_valid);
             end
         end
     end
@@ -253,13 +256,9 @@ module tb_cpu_top;
         #100;
         forever begin
             #100;
-            for (i = 0; i < NUM_CORES; i = i + 1) begin
-                if (l1_icache_req[i]) begin
-                    $display("[%0t ps] CPU & ROM STATUS: 核心 %d, l1_icache_req=%b, l1_icache_addr=0x%h, rom_addr=0x%h, rom_instr=0x%h",
-                             $time, i, l1_icache_req[i], l1_icache_addr,
-                             l1_icache_addr - 64'h8000_0000, rom_instr);
-                end
-            end
+            $display("[%0t ps] CPU & ROM STATUS: req=%b, l1_icache_addr=0x%h, rom_addr=0x%h, rom_instr=0x%h, valid=%b",
+                     $time, |l1_icache_req, l1_icache_addr,
+                     l1_icache_addr - 64'h8000_0000, rom_instr, rom_valid);
         end
     end
 
