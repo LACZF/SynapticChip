@@ -1,5 +1,8 @@
 // riscv64_hazard_detection.v
-module riscv64_hazard_detection (
+module riscv64_hazard_detection #(
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64
+)(
     input wire [4:0] rs1_id,
     input wire [4:0] rs2_id,
     input wire [4:0] rd_ex,

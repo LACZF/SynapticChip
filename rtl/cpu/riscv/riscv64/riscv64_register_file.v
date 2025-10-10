@@ -1,5 +1,8 @@
 // riscv64_register_file.v
-module riscv64_register_file (
+module riscv64_register_file #(
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64
+)(
     input wire clk,
     input wire rst_n,
     input wire [4:0] rs1,

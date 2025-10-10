@@ -1,5 +1,8 @@
 // riscv64_instruction_decode.v
-module riscv64_instruction_decode (
+module riscv64_instruction_decode #(
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64
+)(
     input wire clk,
     input wire rst_n,
     input wire stall,

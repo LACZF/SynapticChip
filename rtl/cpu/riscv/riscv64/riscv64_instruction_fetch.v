@@ -1,5 +1,8 @@
 // riscv64_instruction_fetch.v
-module riscv64_instruction_fetch (
+module riscv64_instruction_fetch #(
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64
+)(
     input wire clk,
     input wire rst_n,
     input wire stall,
@@ -9,7 +12,7 @@ module riscv64_instruction_fetch (
     output reg [63:0] pc,
     output reg [31:0] instr,
     output reg cache_req,
-    output reg [63:0] cache_addr,
+    output reg [ADDR_WIDTH-1:0] cache_addr,
     input wire [31:0] cache_data,
     input wire cache_ready
 );

@@ -9,6 +9,7 @@ module top_system #(
     parameter NUM_NODES        = 8,        // 每个Ring的节点数
     parameter ADDR_WIDTH       = 32,       // 地址宽度
     parameter DATA_WIDTH       = 64,       // 数据宽度
+    parameter MEM_WIDTH        = 512,
     parameter OPCODE_WIDTH     = 8,        // 操作类型的宽带：read/write/reponse等
     parameter RING_ID_WIDTH    = 4,        // ring ID宽度
     parameter NODE_ID_WIDTH    = 8,        // 节点ID宽度
@@ -68,10 +69,10 @@ module top_system #(
     // CPU
     wire                                  cpu_mem_req;
     wire [ADDR_WIDTH-1:0]                 cpu_mem_addr;
-    wire [511:0]                          cpu_mem_wdata;
+    wire [MEM_WIDTH-1:0]                  cpu_mem_wdata;
     wire                                  cpu_mem_we;
     wire                                  cpu_mem_ready;
-    wire [511:0]                          cpu_mem_rdata;
+    wire [MEM_WIDTH-1:0]                  cpu_mem_rdata;
 
     // PE
     wire [NUM_PES-1:0]                    pe_enable;
@@ -224,6 +225,7 @@ module top_system #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
         .INST_WIDTH(INST_WIDTH),
+        .MEM_WIDTH(MEM_WIDTH),
         .NUM_CORES(NUM_CORES),
         .CORE_ID_WIDTH(CORE_ID_WIDTH),
         .ENABLE_L2_CACHE(ENABLE_L2_CACHE),

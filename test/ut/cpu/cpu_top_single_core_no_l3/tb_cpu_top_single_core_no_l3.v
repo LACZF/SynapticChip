@@ -47,30 +47,31 @@ module tb_cpu_top_single_core_no_l3;
         .INSTR_WIDTH(32),                     // 指令宽度
         .INSTR_FILE("instructions.hex")       // 指令文件路径
     ) u_instruction_rom (
-        .req(l1_icache_req),                  // 连接指令请求信号
-        .addr(l1_icache_addr - 64'h8000_0000), // 将地址偏移到ROM基址
+        .req(mem_req),                        // 连接内存请求信号
+        .addr(mem_addr - 64'h8000_0000),      // 将地址偏移到ROM基址
         .instr(rom_instr),                    // 输出指令
         .valid(rom_valid)                     // 读取完成有效信号
     );
 
-    // 简化的内存响应逻辑，确保只要有请求就能得到响应
+    // 简化的内存响应逻辑，直接连接到CPU的内存接口
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            l1_icache_ready <= 1'b0;
+            mem_ready <= 1'b0;
+            mem_rdata <= 0;
         `ifdef DEBUG
             $display("[%0t ps] MEM LOGIC: 复位状态", $time);
         `endif
-        end else if (l1_icache_req) begin
+        end else if (mem_req) begin
             // 当有请求时，使用ROM的输出来响应
-            l1_icache_data <= {{480{1'b0}}, rom_instr};
-            l1_icache_ready <= 1'b1;
+            mem_rdata <= {{480{1'b0}}, rom_instr};
+            mem_ready <= 1'b1;
         `ifdef DEBUG
-            $display("[%0t ps] MEM LOGIC: 收到指令请求，地址=0x%h，使用ROM指令: 0x%h，l1_icache_ready=1，rom_valid=%b",
-                     $time, l1_icache_addr, rom_instr, rom_valid);
+            $display("[%0t ps] MEM LOGIC: 收到内存请求，地址=0x%h，使用ROM指令: 0x%h，mem_ready=1",
+                     $time, mem_addr, rom_instr);
         `endif
         end else begin
             // 没有请求时保持就绪信号为0
-            l1_icache_ready <= 1'b0;
+            mem_ready <= 1'b0;
         end
     end
 
@@ -100,7 +101,7 @@ module tb_cpu_top_single_core_no_l3;
 
     // 监控指令执行情况
     always @(posedge clk) begin
-        if (l1_icache_req && l1_icache_ready) begin
+        if (mem_req && mem_ready) begin
             executed_instructions = executed_instructions + 1;
         `ifdef DEBUG
             $display("[%0t ps] INSTR COUNT: 已执行 %0d 条指令", $time, executed_instructions);
@@ -142,15 +143,9 @@ module tb_cpu_top_single_core_no_l3;
         .mem_rdata          (mem_rdata)
     );
 
-    // 对于单核配置，将内存响应信号连接到CPU的内存接口
-    always @* begin
-        mem_ready = l1_icache_ready;
-        mem_rdata = l1_icache_data; // 使用完整的512位数据
-    end
-
-    // 使用CPU的内存接口信号进行监控
-    assign l1_icache_req = mem_req;
-    assign l1_icache_addr = mem_addr;
+    // ROM模块连接到CPU的内存请求信号
+    assign u_instruction_rom.req = mem_req;
+    assign u_instruction_rom.addr = mem_addr - 64'h8000_0000; // 将地址偏移到ROM基址
 
 `ifdef DEBUG
     // 添加定期监控CPU和ROM信号的逻辑
@@ -166,10 +161,7 @@ module tb_cpu_top_single_core_no_l3;
     end
 `endif
 
-    // 使用CPU的内存接口信号监控数据缓存操作
-    assign l1_dcache_req = mem_req;
-    assign l1_dcache_addr = mem_addr;
-    assign l1_dcache_we = mem_we;
+
 
     // 跟踪测试通过和失败的数量
     integer test_pass = 0;
@@ -181,9 +173,9 @@ module tb_cpu_top_single_core_no_l3;
     integer instruction_count = 0;
 
     // 监控CPU取指和执行指令的情况
-    // 不再依赖rom_instr信号，而是直接基于缓存请求和就绪信号判断
+    // 直接基于内存请求和就绪信号判断
     always @(posedge clk) begin
-        if (l1_icache_ready && l1_icache_req) begin
+        if (mem_ready && mem_req) begin
             instruction_executed = 1'b1;
             instruction_count = instruction_count + 1;
         end

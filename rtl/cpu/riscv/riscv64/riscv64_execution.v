@@ -1,5 +1,8 @@
 // riscv64_execution.v
-module riscv64_execution (
+module riscv64_execution #(
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64
+)(
     input wire clk,
     input wire rst_n,
     input wire stall,

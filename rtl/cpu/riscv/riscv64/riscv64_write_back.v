@@ -1,5 +1,8 @@
 // riscv64_write_back.v
-module riscv64_write_back (
+module riscv64_write_back #(
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64
+)(
     input wire clk,
     input wire rst_n,
     input wire stall,

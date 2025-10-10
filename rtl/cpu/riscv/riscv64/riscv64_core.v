@@ -12,13 +12,13 @@ module riscv64_core #(
 
     // 指令缓存接口 - 现在连接到cpu_top中的L1缓存
     output wire icache_req,
-    output wire [63:0] icache_addr,
+    output wire [ADDR_WIDTH-1:0] icache_addr,
     input wire [31:0] icache_data,
     input wire icache_ready,
 
     // 数据缓存接口 - 现在连接到cpu_top中的L1缓存
     output wire dcache_req,
-    output wire [63:0] dcache_addr,
+    output wire [ADDR_WIDTH-1:0] dcache_addr,
     output wire [63:0] dcache_wdata,
     input wire [63:0] dcache_rdata,
     output wire dcache_we,
@@ -117,7 +117,10 @@ module riscv64_core #(
     assign snoop_data = 512'd0;
 
     // 取指阶段
-    riscv64_instruction_fetch u_if (
+    riscv64_instruction_fetch #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_if (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_if),
@@ -133,7 +136,10 @@ module riscv64_core #(
     );
 
     // 译码阶段
-    riscv64_instruction_decode u_id (
+    riscv64_instruction_decode #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_id (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_id),
@@ -149,7 +155,10 @@ module riscv64_core #(
     );
 
     // 执行阶段
-    riscv64_execution u_ex (
+    riscv64_execution #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_ex (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_ex),
@@ -169,7 +178,10 @@ module riscv64_core #(
     );
 
     // 内存访问阶段
-    riscv64_memory_access u_mem (
+    riscv64_memory_access #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_mem (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_mem),
@@ -193,7 +205,10 @@ module riscv64_core #(
     );
 
     // 写回阶段
-    riscv64_write_back u_wb (
+    riscv64_write_back #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_wb (
         .clk(clk),
         .rst_n(rst_n),
         .stall(stall_wb),
@@ -211,7 +226,10 @@ module riscv64_core #(
     );
 
     // 寄存器文件
-    riscv64_register_file u_regfile (
+    riscv64_register_file #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_regfile (
         .clk(clk),
         .rst_n(rst_n),
         .rs1(instr_id[19:15]),
@@ -224,7 +242,10 @@ module riscv64_core #(
     );
 
     // 冒险检测单元
-    riscv64_hazard_detection u_hazard (
+    riscv64_hazard_detection #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_hazard (
         .rs1_id(instr_id[19:15]),
         .rs2_id(instr_id[24:20]),
         .rd_ex(instr_ex[11:7]),

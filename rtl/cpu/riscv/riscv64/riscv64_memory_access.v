@@ -1,7 +1,10 @@
 // riscv64_memory_access.v
 `include "cache_params.v"
 
-module riscv64_memory_access (
+module riscv64_memory_access #(
+    parameter ADDR_WIDTH        = 64,
+    parameter DATA_WIDTH        = 64
+)(
     input wire clk,
     input wire rst_n,
     input wire stall,
@@ -15,7 +18,7 @@ module riscv64_memory_access (
     input wire [15:0] ctrl_in,
 
     // 缓存接口
-    output reg [63:0] cache_addr,
+    output reg [ADDR_WIDTH-1:0] cache_addr,
     output reg [63:0] cache_wdata,
     input wire [63:0] cache_rdata,
     output reg cache_req,

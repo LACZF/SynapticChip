@@ -1,43 +1,44 @@
 `timescale 1ns / 1ps
 
 module cache #(
-    parameter CACHE_LINE_SIZE = 64,          // Cache line size in bytes
-    parameter CACHE_SIZE = 4096,             // Cache size in bytes
-    parameter ASSOCIATIVITY = 4,             // Cache associativity (1=direct mapped, 2=2-way, etc.)
-    parameter ADDR_WIDTH = 32,               // Address width
-    parameter DATA_WIDTH = 32,               // Data width
-    parameter SUPPORT_COHERENCY = 1,         // 1=support cache coherency, 0=not support
-    parameter CACHE_LEVEL = 2,               // Cache level (1=L1, 2=L2, 3=L3, etc.)
-    parameter REPLACEMENT_POLICY = "LRU"     // Replacement policy ("LRU", "FIFO", "RANDOM")
+    parameter CACHE_LINE_SIZE               = 64,       // Cache line size in bytes
+    parameter CACHE_SIZE                    = 4096,     // Cache size in bytes
+    parameter ASSOCIATIVITY                 = 4,        // Cache associativity (1=direct mapped, 2=2-way, etc.)
+    parameter ADDR_WIDTH                    = 32,       // Address width
+    parameter INPUT_DATA_WIDTH              = 32,       // Data width (CPU interface)
+    parameter OUTPUT_DATA_WIDTH             = 32,       // Memory data width (new parameter)
+    parameter SUPPORT_COHERENCY             = 1,        // 1=support cache coherency, 0=not support
+    parameter CACHE_LEVEL                   = 2,        // Cache level (1=L1, 2=L2, 3=L3, etc.)
+    parameter REPLACEMENT_POLICY            = "LRU"     // Replacement policy ("LRU", "FIFO", "RANDOM")
 )(
     input wire clk,
     input wire rst_n,
 
     // CPU interface
-    input wire cpu_req_valid,
-    input wire [ADDR_WIDTH-1:0] cpu_req_addr,
-    input wire cpu_req_rw,                   // 0=read, 1=write
-    input wire [DATA_WIDTH-1:0] cpu_req_data,
-    input wire [DATA_WIDTH/8-1:0] cpu_req_strb,
-    output wire cpu_rsp_valid,
-    output wire [DATA_WIDTH-1:0] cpu_rsp_data,
-    output wire cpu_rsp_error,
+    input  wire                             cpu_req_valid,
+    input  wire [ADDR_WIDTH-1:0]            cpu_req_addr,
+    input  wire                             cpu_req_rw,                   // 0=read, 1=write
+    input  wire [INPUT_DATA_WIDTH-1:0]      cpu_req_data,
+    input  wire [INPUT_DATA_WIDTH/8-1:0]    cpu_req_strb,
+    output wire                             cpu_rsp_valid,
+    output wire [INPUT_DATA_WIDTH-1:0]      cpu_rsp_data,
+    output wire                             cpu_rsp_error,
 
     // Memory interface
-    output wire mem_req_valid,
-    output wire [ADDR_WIDTH-1:0] mem_req_addr,
-    output wire mem_req_rw,
-    output wire [CACHE_LINE_SIZE-1:0] mem_req_data,
-    input wire mem_rsp_valid,
-    input wire [CACHE_LINE_SIZE-1:0] mem_rsp_data,
-    input wire mem_rsp_error,
+    output wire                             mem_req_valid,
+    output wire [ADDR_WIDTH-1:0]            mem_req_addr,
+    output wire                             mem_req_rw,
+    output wire [OUTPUT_DATA_WIDTH-1:0]     mem_req_data,
+    input  wire                             mem_rsp_valid,
+    input  wire [OUTPUT_DATA_WIDTH-1:0]     mem_rsp_data,
+    input  wire                             mem_rsp_error,
 
     // Coherency interface (only used if SUPPORT_COHERENCY=1)
-    input wire [ADDR_WIDTH-1:0] coh_req_addr,
-    input wire coh_req_valid,
-    input wire [2:0] coh_req_type,           // 0=Read, 1=Write, 2=Invalidate
-    output wire coh_rsp_valid,
-    output wire [2:0] coh_rsp_state          // 0=Invalid, 1=Shared, 2=Exclusive, 3=Modified
+    input  wire [ADDR_WIDTH-1:0]            coh_req_addr,
+    input  wire                             coh_req_valid,
+    input  wire [2:0]                       coh_req_type,          // 0=Read, 1=Write, 2=Invalidate
+    output wire                             coh_rsp_valid,
+    output wire [2:0]                       coh_rsp_state          // 0=Invalid, 1=Shared, 2=Exclusive, 3=Modified
 );
 
     // Calculate cache parameters
@@ -46,6 +47,16 @@ module cache #(
     localparam SET_WIDTH = $clog2(NUM_SETS);
     localparam TAG_WIDTH = ADDR_WIDTH - SET_WIDTH - LINE_WIDTH;
     localparam WAY_WIDTH = $clog2(ASSOCIATIVITY);
+
+    // Calculate transfer parameters for handling different data widths
+    // 计算从CPU数据宽度到内存数据宽度需要的传输次数
+    localparam TRANSFER_COUNT = (INPUT_DATA_WIDTH > OUTPUT_DATA_WIDTH) ?
+                              ((INPUT_DATA_WIDTH + OUTPUT_DATA_WIDTH - 1) / OUTPUT_DATA_WIDTH) : 1;
+    localparam TRANSFER_COUNT_WIDTH = $clog2(TRANSFER_COUNT + 1);
+
+    // 安全计算内存数据宽度到CPU数据宽度的截断偏移量
+    localparam MEM_TO_CPU_TRUNC_OFFSET = (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) ?
+                                        (OUTPUT_DATA_WIDTH - INPUT_DATA_WIDTH) : 0;
 
     // Cache line offset
     wire [LINE_WIDTH-1:0] line_offset = cpu_req_addr[LINE_WIDTH-1:0];
@@ -78,6 +89,10 @@ module cache #(
     localparam MEM_WRITE = 3'd3;
     localparam UPDATE_CACHE = 3'd4;
 
+    // New states for multi-transfer support
+    localparam MEM_READ_MULTI = 3'd5;
+    localparam MEM_WRITE_MULTI = 3'd6;
+
     reg [2:0] state;
     reg [2:0] next_state;
 
@@ -89,6 +104,11 @@ module cache #(
     reg [CACHE_LINE_SIZE-1:0] write_data;
     reg evict;
     reg [WAY_WIDTH-1:0] evict_way;
+
+    // Multi-transfer signals
+    reg [TRANSFER_COUNT_WIDTH-1:0] transfer_count;
+    reg [CACHE_LINE_SIZE-1:0] multi_transfer_buffer;
+    reg [CACHE_LINE_SIZE-1:0] cpu_data_buffer; // 用于存储完整的CPU数据
 
     // FSM state transition
     always @(posedge clk or negedge rst_n) begin
@@ -120,18 +140,34 @@ module cache #(
                 end
             MEM_WRITE:
                 if (mem_rsp_valid) begin
-                    next_state = MEM_READ;
+                    if (TRANSFER_COUNT > 1) begin
+                        next_state = MEM_WRITE_MULTI;
+                    end else begin
+                        next_state = MEM_READ;
+                    end
+                end
+            MEM_WRITE_MULTI:
+                if (mem_rsp_valid) begin
+                    if (transfer_count == TRANSFER_COUNT - 1) begin
+                        next_state = MEM_READ;
+                    end
                 end
             MEM_READ:
                 if (mem_rsp_valid) begin
-                    next_state = UPDATE_CACHE;
+                    if (TRANSFER_COUNT > 1) begin
+                        next_state = MEM_READ_MULTI;
+                    end else begin
+                        next_state = UPDATE_CACHE;
+                    end
+                end
+            MEM_READ_MULTI:
+                if (mem_rsp_valid) begin
+                    if (transfer_count == TRANSFER_COUNT - 1) begin
+                        next_state = UPDATE_CACHE;
+                    end
                 end
             UPDATE_CACHE:
-                if (mem_rsp_valid) begin
-                    next_state = IDLE;
-                end else begin
-                    next_state = UPDATE_CACHE;
-                end
+                next_state = IDLE;
         endcase
     end
 
@@ -228,11 +264,20 @@ module cache #(
                 end
             end
             // Update cache on memory read completion - 确保在收到内存响应后才更新缓存
-            if (state == UPDATE_CACHE && mem_rsp_valid) begin
+            if (state == UPDATE_CACHE) begin
                 // Update valid, tag, and data
                 valid[evict_way][set_index] <= 1'b1;
                 tag_array[evict_way][set_index] <= tag;
-                data_array[evict_way][set_index] <= mem_rsp_data;
+                if (TRANSFER_COUNT > 1) begin
+                    data_array[evict_way][set_index] <= multi_transfer_buffer;
+                end else begin
+                    // 对于内存数据宽度大于CPU数据宽度的情况，我们只使用低位数据
+                    if (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) begin
+                        data_array[evict_way][set_index] <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, mem_rsp_data[0 +: INPUT_DATA_WIDTH]};
+                    end else begin
+                        data_array[evict_way][set_index] <= mem_rsp_data[0 +: CACHE_LINE_SIZE];
+                    end
+                end
                 // Clear dirty bit
                 dirty[evict_way][set_index] <= 1'b0;
                 // Update coherency state according to MESI protocol
@@ -248,16 +293,82 @@ module cache #(
     always @(*) begin
         write_data = data_array[hit_way][set_index];
         // Update only the bytes specified by the strobe
-        for (integer i = 0; i < DATA_WIDTH/8; i = i + 1) begin
+        for (integer i = 0; i < INPUT_DATA_WIDTH/8; i = i + 1) begin
             if (cpu_req_strb[i]) begin
                 write_data[i*8 +: 8] = cpu_req_data[i*8 +: 8];
             end
         end
     end
 
+    // CPU数据缓冲区 - 用于多传输操作时存储完整的CPU数据
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            cpu_data_buffer <= {CACHE_LINE_SIZE{1'b0}};
+        end else if (state == IDLE && cpu_req_valid) begin
+            // 存储完整的CPU请求数据
+            if (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) begin
+                // 当内存数据宽度大于CPU数据宽度时，只使用低位
+                cpu_data_buffer <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, cpu_req_data};
+            end else begin
+                cpu_data_buffer <= cpu_req_data;
+            end
+        end
+    end
+
+    // Transfer count logic
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            transfer_count <= 0;
+        end else begin
+            case (state)
+                MEM_WRITE:
+                    if (mem_rsp_valid && TRANSFER_COUNT > 1) begin
+                        transfer_count <= 1;
+                    end
+                MEM_READ:
+                    if (mem_rsp_valid && TRANSFER_COUNT > 1) begin
+                        transfer_count <= 1;
+                    end
+                MEM_WRITE_MULTI:
+                    if (mem_rsp_valid) begin
+                        transfer_count <= transfer_count + 1;
+                    end
+                MEM_READ_MULTI:
+                    if (mem_rsp_valid) begin
+                        transfer_count <= transfer_count + 1;
+                    end
+                default:
+                    transfer_count <= 0;
+            endcase
+        end
+    end
+
+    // Multi-transfer buffer logic
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            multi_transfer_buffer <= {CACHE_LINE_SIZE{1'b0}};
+        end else begin
+            case (state)
+                MEM_READ:
+                    if (mem_rsp_valid) begin
+                        multi_transfer_buffer[0 +: OUTPUT_DATA_WIDTH] <= mem_rsp_data;
+                    end
+                MEM_READ_MULTI:
+                    if (mem_rsp_valid) begin
+                        multi_transfer_buffer[transfer_count*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH] <= mem_rsp_data;
+                    end
+                MEM_WRITE:
+                    if (mem_rsp_valid && TRANSFER_COUNT > 1) begin
+                        // 初始化多传输缓冲区
+                        multi_transfer_buffer <= data_array[evict_way][set_index];
+                    end
+            endcase
+        end
+    end
+
     // Output assignments - 重新设计CPU响应逻辑，确保可靠的时序
     reg cpu_rsp_valid_reg;
-    reg [DATA_WIDTH-1:0] cpu_rsp_data_reg;
+    reg [INPUT_DATA_WIDTH-1:0] cpu_rsp_data_reg;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -266,7 +377,7 @@ module cache #(
             // CPU读命中立即响应
             if (state == CHECK_HIT && hit && !cpu_req_rw) begin
                 cpu_rsp_valid_reg <= 1'b1;
-                cpu_rsp_data_reg <= data_array[hit_way][set_index][0 +: DATA_WIDTH];
+                cpu_rsp_data_reg <= data_array[hit_way][set_index][0 +: INPUT_DATA_WIDTH];
             end
             // CPU写操作立即响应（回写式缓存）
             else if (state == CHECK_HIT && hit && cpu_req_rw) begin
@@ -274,9 +385,14 @@ module cache #(
                 cpu_rsp_data_reg <= cpu_req_data; // 写操作返回写入的数据
             end
             // 缓存更新完成后响应（读未命中）
-            else if (state == UPDATE_CACHE && mem_rsp_valid) begin
+            else if (state == UPDATE_CACHE) begin
                 cpu_rsp_valid_reg <= 1'b1;
-                cpu_rsp_data_reg <= mem_rsp_data[0 +: DATA_WIDTH];
+                if (TRANSFER_COUNT > 1) begin
+                    cpu_rsp_data_reg <= multi_transfer_buffer[0 +: INPUT_DATA_WIDTH];
+                end else begin
+                    // 对于内存数据宽度大于CPU数据宽度的情况，我们只使用低位数据
+                    cpu_rsp_data_reg <= mem_rsp_data[0 +: INPUT_DATA_WIDTH];
+                end
             end
             // 其他情况清除响应
             else begin
@@ -290,11 +406,17 @@ module cache #(
     assign cpu_rsp_data = cpu_rsp_data_reg;
     assign cpu_rsp_error = 1'b0; // Simplified, no error handling
 
-    assign mem_req_valid = (state == MEM_READ) || (state == MEM_WRITE);
-    assign mem_req_addr = (state == MEM_WRITE) ? {tag_array[evict_way][set_index], set_index, {LINE_WIDTH{1'b0}}} :
-                                                {tag, set_index, {LINE_WIDTH{1'b0}}};
-    assign mem_req_rw = (state == MEM_WRITE) ? 1'b1 : 1'b0;
-    assign mem_req_data = data_array[evict_way][set_index];
+    assign mem_req_valid = (state == MEM_READ) || (state == MEM_WRITE) || (state == MEM_READ_MULTI) || (state == MEM_WRITE_MULTI);
+    assign mem_req_addr = (state == MEM_WRITE || state == MEM_WRITE_MULTI) ?
+                          {tag_array[evict_way][set_index], set_index, {LINE_WIDTH{1'b0}}} + (transfer_count * OUTPUT_DATA_WIDTH/8) :
+                          {tag, set_index, {LINE_WIDTH{1'b0}}} + (transfer_count * OUTPUT_DATA_WIDTH/8);
+    assign mem_req_rw = (state == MEM_WRITE || state == MEM_WRITE_MULTI) ? 1'b1 : 1'b0;
+    assign mem_req_data = (state == MEM_WRITE) ?
+                         (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) ?
+                           {{MEM_TO_CPU_TRUNC_OFFSET{1'b0}}, cpu_req_data} :
+                           data_array[evict_way][set_index][0 +: OUTPUT_DATA_WIDTH] :
+                          (state == MEM_WRITE_MULTI) ? data_array[evict_way][set_index][transfer_count*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH] :
+                          {OUTPUT_DATA_WIDTH{1'b0}};
 
     // Coherency interface outputs (if supported)
     generate
