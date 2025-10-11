@@ -4,31 +4,35 @@
 `include "top_system_params.v"
 
 module top_system #(
-    parameter BUS_TYPE         = `BUS_TYPE_DIRECT, // 总线类型：`BUS_TYPE_RING 或 `BUS_TYPE_DIRECT
-    parameter NUM_RINGS        = 2,        // Ring总线数量
-    parameter NUM_NODES        = 8,        // 每个Ring的节点数
-    parameter ADDR_WIDTH       = 32,       // 地址宽度
-    parameter DATA_WIDTH       = 64,       // 数据宽度
-    parameter MEM_WIDTH        = 512,
-    parameter OPCODE_WIDTH     = 8,        // 操作类型的宽带：read/write/reponse等
-    parameter RING_ID_WIDTH    = 4,        // ring ID宽度
-    parameter NODE_ID_WIDTH    = 8,        // 节点ID宽度
-    parameter TX_FIFO_DEPTH    = 4,        // 发送FIFO深度
-    parameter RX_FIFO_DEPTH    = 4,        // 接收FIFO深度
-    parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
-    parameter NUM_CORES        = 1,
-    parameter MATCH_TYPE_WIDTH = 2,        // 匹配类型宽度
-    parameter INST_WIDTH       = 32,      // 指令宽度
-    parameter CORE_ID_WIDTH    = 2,        // 核心ID宽度
-    parameter ENABLE_L2_CACHE  = 0,        // 启用L2缓存
-    parameter ENABLE_L3_CACHE  = 0,        // 启用L3缓存
-    parameter GPIO_WIDTH       = 32,
-    parameter SPI_CS_NUM       = 1,
-    parameter NUM_PES          = 4,
-    parameter PE_ARRAY_ROWS    = 2,
-    parameter PE_ARRAY_COLS    = 2,
-    parameter PE_ID_WIDTH      = 4,
-    parameter CPU_TYPE         = 0         // CPU类型
+    parameter BUS_TYPE                      = `BUS_TYPE_DIRECT, // 总线类型：`BUS_TYPE_RING 或 `BUS_TYPE_DIRECT
+    parameter NUM_RINGS                     = 2,        // Ring总线数量
+    parameter NUM_NODES                     = 8,        // 每个Ring的节点数
+    parameter ADDR_WIDTH                    = 32,       // 地址宽度
+    parameter DATA_WIDTH                    = 64,       // 数据宽度
+    parameter L1_ICACHE_DATA_WIDTH          = 32,
+    parameter L1_DCACHE_DATA_WIDTH          = 64,
+    parameter L2_CACHE_DATA_WIDTH           = 512,
+    parameter L3_CACHE_DATA_WIDTH           = 512,
+    parameter MEM_WIDTH                     = 512,
+    parameter OPCODE_WIDTH                  = 8,        // 操作类型的宽带：read/write/reponse等
+    parameter RING_ID_WIDTH                 = 4,        // ring ID宽度
+    parameter NODE_ID_WIDTH                 = 8,        // 节点ID宽度
+    parameter TX_FIFO_DEPTH                 = 4,        // 发送FIFO深度
+    parameter RX_FIFO_DEPTH                 = 4,        // 接收FIFO深度
+    parameter RSP_FIFO_DEPTH                = 4,        // 响应FIFO深度
+    parameter NUM_CORES                     = 1,
+    parameter MATCH_TYPE_WIDTH              = 2,        // 匹配类型宽度
+    parameter INST_WIDTH                    = 32,      // 指令宽度
+    parameter CORE_ID_WIDTH                 = 2,        // 核心ID宽度
+    parameter ENABLE_L2_CACHE               = 0,        // 启用L2缓存
+    parameter ENABLE_L3_CACHE               = 0,        // 启用L3缓存
+    parameter GPIO_WIDTH                    = 32,
+    parameter SPI_CS_NUM                    = 1,
+    parameter NUM_PES                       = 4,
+    parameter PE_ARRAY_ROWS                 = 2,
+    parameter PE_ARRAY_COLS                 = 2,
+    parameter PE_ID_WIDTH                   = 4,
+    parameter CPU_TYPE                      = 0         // CPU类型
 )(
     input clk,
     input rst_n,
@@ -224,6 +228,10 @@ module top_system #(
     cpu_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
+        .L1_ICACHE_DATA_WIDTH(L1_ICACHE_DATA_WIDTH),
+        .L1_DCACHE_DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
+        .L2_CACHE_DATA_WIDTH(L2_CACHE_DATA_WIDTH),
+        .L3_CACHE_DATA_WIDTH(L3_CACHE_DATA_WIDTH),
         .INST_WIDTH(INST_WIDTH),
         .MEM_WIDTH(MEM_WIDTH),
         .NUM_CORES(NUM_CORES),

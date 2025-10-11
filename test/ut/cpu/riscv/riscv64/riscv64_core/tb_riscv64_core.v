@@ -9,7 +9,7 @@ module tb_riscv64_core;
     // 指令缓存接口
     wire icache_req;
     wire [63:0] icache_addr;
-    reg [31:0] icache_data;
+    reg [63:0] icache_data;
     reg icache_ready;
 
     // 数据缓存接口
@@ -133,6 +133,10 @@ module tb_riscv64_core;
 
     // 被测模块实例化
     riscv64_core #(
+        .ADDR_WIDTH(64),
+        .DATA_WIDTH(64),
+        .L1_ICACHE_DATA_WIDTH(64),
+        .L1_DCACHE_DATA_WIDTH(64),
         .CORE_ID(0)
     ) u_dut (
         // 时钟和复位

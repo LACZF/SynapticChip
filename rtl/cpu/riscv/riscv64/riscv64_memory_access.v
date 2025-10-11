@@ -2,35 +2,36 @@
 `include "cache_params.v"
 
 module riscv64_memory_access #(
-    parameter ADDR_WIDTH        = 64,
-    parameter DATA_WIDTH        = 64
+    parameter ADDR_WIDTH                    = 64,
+    parameter DATA_WIDTH                    = 64,
+    parameter L1_DCACHE_DATA_WIDTH          = 64
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire stall,
-    input wire flush,
+    input  wire                                          clk,
+    input  wire                                          rst_n,
+    input  wire                                          stall,
+    input  wire                                          flush,
 
     // 来自执行阶段
-    input wire [63:0] pc_in,
-    input wire [31:0] instr_in,
-    input wire [63:0] alu_result,
-    input wire [63:0] rs2_data,
-    input wire [15:0] ctrl_in,
+    input  wire [63:0]                                   pc_in,
+    input  wire [31:0]                                   instr_in,
+    input  wire [63:0]                                   alu_result,
+    input  wire [63:0]                                   rs2_data,
+    input  wire [15:0]                                   ctrl_in,
 
     // 缓存接口
-    output reg [ADDR_WIDTH-1:0] cache_addr,
-    output reg [63:0] cache_wdata,
-    input wire [63:0] cache_rdata,
-    output reg cache_req,
-    output reg cache_we,
-    output reg [7:0] cache_byte_en,
-    input wire cache_ready,
+    output reg  [ADDR_WIDTH-1:0]                         cache_addr,
+    output reg  [L1_DCACHE_DATA_WIDTH-1:0]               cache_wdata,
+    input  wire [L1_DCACHE_DATA_WIDTH-1:0]               cache_rdata,
+    output reg                                           cache_req,
+    output reg                                           cache_we,
+    output reg  [L1_DCACHE_DATA_WIDTH/8-1:0]             cache_byte_en,
+    input  wire                                          cache_ready,
 
     // 输出到写回阶段
-    output reg [63:0] pc_out,
-    output reg [31:0] instr_out,
-    output reg [63:0] mem_result,
-    output reg [15:0] ctrl_out
+    output reg [63:0]                                    pc_out,
+    output reg [31:0]                                    instr_out,
+    output reg [63:0]                                    mem_result,
+    output reg [15:0]                                    ctrl_out
 );
 
     // 控制信号
@@ -187,7 +188,7 @@ module riscv64_memory_access #(
             mem_result <= 64'b0;
             ctrl_out <= 16'b0;
             cache_addr <= 64'b0;
-            cache_wdata <= 64'b0;
+            cache_wdata <= {L1_DCACHE_DATA_WIDTH{1'b0}};
             cache_byte_en <= 8'b0;
         end else if (flush) begin
             state <= STATE_IDLE;

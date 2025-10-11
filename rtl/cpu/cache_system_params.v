@@ -8,7 +8,7 @@
 `define L1_ICACHE_SIZE              4*1024  // 4KB
 `define L1_ICACHE_ASSOCIATIVITY     4       // 4路组相联
 `define L1_ICACHE_ADDR_WIDTH        64      // 64位地址
-`define L1_ICACHE_DATA_WIDTH        64      // 32位数据（单条指令）
+`define L1_ICACHE_DATA_WIDTH        32      // 32位数据（单条指令）
 
 // L1数据缓存参数
 `define L1_DCACHE_LINE_SIZE         64      // 字节

@@ -6,32 +6,38 @@
 `include "cache_system_params.v"
 
 module cpu_top #(
-    parameter ADDR_WIDTH        = 64,  // 与64位RISC-V架构保持一致
-    parameter DATA_WIDTH        = 64,
-    parameter MEM_WIDTH         = 512,
-    parameter INST_WIDTH        = 32,
-    parameter NUM_CORES         = 4,
-    parameter CORE_ID_WIDTH     = 2,
-    parameter ENABLE_L2_CACHE   = 1, // 使能L2缓存，默认为1
-    parameter ENABLE_L3_CACHE   = 1, // 使能L3缓存，默认为1
-    parameter CPU_TYPE          = 0  // 0: RISC-V, 1: 预留其他CPU类型
+    parameter ADDR_WIDTH                    = 64,  // 与64位RISC-V架构保持一致
+    parameter DATA_WIDTH                    = 64,
+    parameter MEM_WIDTH                     = 512,
+    parameter INST_WIDTH                    = 32,
+    parameter NUM_CORES                     = 4,
+    parameter CORE_ID_WIDTH                 = 2,
+    parameter L1_ICACHE_DATA_WIDTH          = 32,
+    parameter L1_DCACHE_DATA_WIDTH          = 64,
+    parameter L2_CACHE_DATA_WIDTH           = 512,
+    parameter L3_CACHE_DATA_WIDTH           = 512,
+    parameter ENABLE_L2_CACHE               = 1, // 使能L2缓存，默认为1
+    parameter ENABLE_L3_CACHE               = 1, // 使能L3缓存，默认为1
+    parameter CPU_TYPE                      = 0  // 0: RISC-V, 1: 预留其他CPU类型
 ) (
     input clk,
     input rst_n,
 
     // 外部中断
-    input ext_int,
+    input                              ext_int,
 
     // 内存接口信号 - 直接引出与外界通信
     output wire                        mem_req,
     output wire [ADDR_WIDTH-1:0]       mem_addr,
     output wire [MEM_WIDTH-1:0]        mem_wdata,
     output wire                        mem_we,
-    input wire                         mem_ready,
-    input wire [MEM_WIDTH-1:0]         mem_rdata
+    input  wire                        mem_ready,
+    input  wire  [MEM_WIDTH-1:0]       mem_rdata
 );
-    localparam L2_OUT_WIDTH = ENABLE_L3_CACHE ? `L3_CACHE_DATA_WIDTH : MEM_WIDTH;
-    localparam L1_OUT_WIDTH = ENABLE_L2_CACHE ? `L2_CACHE_DATA_WIDTH : ENABLE_L3_CACHE ? `L3_CACHE_DATA_WIDTH : MEM_WIDTH;
+    localparam L2_OUT_WIDTH = ENABLE_L3_CACHE ? L3_CACHE_DATA_WIDTH : MEM_WIDTH;
+    localparam L1_OUT_WIDTH = ENABLE_L2_CACHE ? L2_CACHE_DATA_WIDTH : ENABLE_L3_CACHE ? L3_CACHE_DATA_WIDTH : MEM_WIDTH;
+    // 计算L1缓存的最大数据宽度，用于L2缓存的输入位宽
+    localparam MAX_L1_DATA_WIDTH = L1_ICACHE_DATA_WIDTH > L1_DCACHE_DATA_WIDTH ? L1_ICACHE_DATA_WIDTH : L1_DCACHE_DATA_WIDTH;
 
     // 更改为每个核心独立的信号，避免索引访问问题
     wire [NUM_CORES-1:0]                                l1_icache_req;
@@ -78,14 +84,28 @@ module cpu_top #(
             // 中间信号用于L2缓存一致性状态
             wire [2:0] l2_coh_rsp_state;
 
+            // 用于L2缓存位宽适配的中间信号
+            wire [MAX_L1_DATA_WIDTH-1:0] l2_cpu_req_data;
+            wire [MAX_L1_DATA_WIDTH/8-1:0] l2_cpu_req_strb;
+            wire [MAX_L1_DATA_WIDTH-1:0] l2_cpu_rsp_data;
+
+            // 赋值L2缓存请求数据和字节使能
+            assign l2_cpu_req_data = |l1_dcache_req ?
+                {{(MAX_L1_DATA_WIDTH-L1_DCACHE_DATA_WIDTH){1'b0}}, l1_dcache_wdata[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH]} :
+                {{(MAX_L1_DATA_WIDTH-L1_ICACHE_DATA_WIDTH){1'b0}}, l1_icache_wdata[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH]};
+
+            assign l2_cpu_req_strb = |l1_dcache_req ?
+                {{(MAX_L1_DATA_WIDTH/8-L1_DCACHE_DATA_WIDTH/8){1'b0}}, {L1_DCACHE_DATA_WIDTH/8{1'b1}}} :
+                {{(MAX_L1_DATA_WIDTH/8-L1_ICACHE_DATA_WIDTH/8){1'b0}}, {L1_ICACHE_DATA_WIDTH/8{1'b1}}};
+
             // 共享L2缓存实例（使用通用cache模块）
             cache #(
                 .CACHE_LINE_SIZE(`L2_CACHE_LINE_SIZE),
                 .CACHE_SIZE(`L2_CACHE_SIZE),
                 .ASSOCIATIVITY(`L2_CACHE_ASSOCIATIVITY),
                 .ADDR_WIDTH(ADDR_WIDTH),
-                /* TODO : 暂时约束l1 icache与l1 dcache的位宽一致 */
-                .INPUT_DATA_WIDTH(`L1_DCACHE_DATA_WIDTH),
+                // L2缓存使用L1缓存的最大数据宽度作为输入位宽
+                .INPUT_DATA_WIDTH(MAX_L1_DATA_WIDTH),
                 .OUTPUT_DATA_WIDTH(L2_OUT_WIDTH),
                 .SUPPORT_COHERENCY(0),  // L2缓存是共享的，不需要一致性
                 .CACHE_LEVEL(`CACHE_LEVEL_L2),
@@ -94,15 +114,15 @@ module cpu_top #(
                 .clk(clk),
                 .rst_n(rst_n),
 
-                // CPU接口（简化为单一请求，实际应添加仲裁逻辑）
+                // CPU接口
                 .cpu_req_valid(|l1_dcache_req || |l1_icache_req),
                 .cpu_req_addr(|l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
                 .cpu_req_rw(|l1_dcache_req && l1_dcache_we[0]),
-                /* TODO : 暂时只与core0的l1 cache连接 */
-                .cpu_req_data(|l1_dcache_req ? l1_dcache_wdata[0*`L1_DCACHE_DATA_WIDTH +: `L1_DCACHE_DATA_WIDTH] : l1_icache_wdata[0*`L1_ICACHE_DATA_WIDTH +: `L1_ICACHE_DATA_WIDTH]),
-                .cpu_req_strb({`L1_DCACHE_DATA_WIDTH/8{1'b1}}),
+                // 使用中间信号连接
+                .cpu_req_data(l2_cpu_req_data),
+                .cpu_req_strb(l2_cpu_req_strb),
                 .cpu_rsp_valid(core_l2_ready[0]),
-                .cpu_rsp_data(core_l2_data[0*`L1_DCACHE_DATA_WIDTH +: `L1_DCACHE_DATA_WIDTH]),
+                .cpu_rsp_data(l2_cpu_rsp_data),
                 .cpu_rsp_error(),
 
                 // 内存接口
@@ -125,18 +145,24 @@ module cpu_top #(
             // L2缓存不需要一致性，直接设置snoop_state为默认值
             assign snoop_state[0*2 +: 2] = 2'b00;
 
-            // 简化版：将L2的响应连接到所有核心（实际应根据请求源进行分发）
-            // 使用非阻塞赋值实现连接
-            assign l1_dcache_data[0*512 +: 512] = core_l2_data[0*512 +: 512];
-            assign l1_icache_data[0*512 +: 512] = core_l2_data[0*512 +: 512];
+            // 根据不同的L1缓存位宽进行响应数据连接
+            // 针对指令缓存的连接
+            assign l1_icache_data[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH];
+
+            // 针对数据缓存的连接
+            assign l1_dcache_data[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH];
+
             assign l1_dcache_ready[0] = core_l2_ready[0];
             assign l1_icache_ready[0] = core_l2_ready[0];
 
             if (NUM_CORES > 1) begin
-                assign l1_dcache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
-                assign l1_icache_data[1*512 +: 512] = core_l2_data[0*512 +: 512];
-                assign l1_dcache_ready[1] = core_l2_ready[0];
-                assign l1_icache_ready[1] = core_l2_ready[0];
+                // 针对多核的连接，同样考虑不同位宽
+                for (genvar j = 1; j < NUM_CORES; j = j + 1) begin
+                    assign l1_icache_data[j*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH];
+                    assign l1_dcache_data[j*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH];
+                    assign l1_dcache_ready[j] = core_l2_ready[0];
+                    assign l1_icache_ready[j] = core_l2_ready[0];
+                end
             end
 
             // L3缓存实例（使用通用cache模块，可选）
@@ -146,7 +172,7 @@ module cpu_top #(
                     .CACHE_SIZE(`L3_CACHE_SIZE),
                     .ASSOCIATIVITY(`L3_CACHE_ASSOCIATIVITY),
                     .ADDR_WIDTH(ADDR_WIDTH),
-                    .INPUT_DATA_WIDTH(`L2_CACHE_DATA_WIDTH),
+                    .INPUT_DATA_WIDTH(L2_CACHE_DATA_WIDTH),
                     .OUTPUT_DATA_WIDTH(MEM_WIDTH),
                     .SUPPORT_COHERENCY(0),  // L3缓存是共享的，不需要一致性
                     .CACHE_LEVEL(`CACHE_LEVEL_L3),
@@ -160,7 +186,7 @@ module cpu_top #(
                     .cpu_req_addr(l2_l3_addr),
                     .cpu_req_rw(l2_l3_we),
                     .cpu_req_data(l2_l3_wdata),
-                    .cpu_req_strb({`L2_CACHE_DATA_WIDTH/8{1'b1}}),
+                    .cpu_req_strb({L2_CACHE_DATA_WIDTH/8{1'b1}}),
                     .cpu_rsp_valid(l2_l3_ready),
                     .cpu_rsp_data(l2_l3_rdata),
                     .cpu_rsp_error(),
@@ -251,17 +277,18 @@ module cpu_top #(
                 // CPU核心与L1缓存之间的中间信号
                 wire icache_req;
                 wire [ADDR_WIDTH-1:0] icache_addr;
-                wire [31:0] icache_data;
+                wire [L1_ICACHE_DATA_WIDTH-1:0] icache_data;  // 使用指令缓存专用数据宽度
                 wire icache_ready;
                 wire dcache_req;
                 wire [ADDR_WIDTH-1:0] dcache_addr;
-                wire [63:0] dcache_wdata;
-                wire [63:0] dcache_rdata;
                 wire dcache_we;
-                wire [7:0] dcache_byte_en;
                 wire dcache_ready;
 
-                // 零扩展：将32位地址信号扩展到64位
+                // 缓存侧使用专用数据宽度
+                wire [L1_DCACHE_DATA_WIDTH-1:0] dcache_wdata;
+                wire [L1_DCACHE_DATA_WIDTH-1:0] dcache_rdata;
+                wire [L1_DCACHE_DATA_WIDTH/8-1:0] dcache_byte_en;
+
                 assign l1_icache_addr_64 = {{32{1'b0}}, l1_icache_addr[i*32 +: 32]};
                 assign l1_dcache_addr_64 = {{32{1'b0}}, l1_dcache_addr[i*32 +: 32]};
                 assign icache_mem_req_rw = 1'b0;  // 指令缓存始终是读操作
@@ -276,7 +303,9 @@ module cpu_top #(
                 // RISC-V CPU核心实例
                 riscv64_core #(
                     .ADDR_WIDTH(ADDR_WIDTH),
-                    .DATA_WIDTH(DATA_WIDTH),
+                    .DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
+                    .L1_ICACHE_DATA_WIDTH(L1_ICACHE_DATA_WIDTH),
+                    .L1_DCACHE_DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
                     .CORE_ID(i)
                 ) u_riscv64_core (
                     .clk(clk),
@@ -339,7 +368,7 @@ module cpu_top #(
                     .CACHE_SIZE(`L1_ICACHE_SIZE),
                     .ASSOCIATIVITY(`L1_ICACHE_ASSOCIATIVITY),
                     .ADDR_WIDTH(ADDR_WIDTH),
-                    .INPUT_DATA_WIDTH(DATA_WIDTH),
+                    .INPUT_DATA_WIDTH(L1_ICACHE_DATA_WIDTH),
                     .OUTPUT_DATA_WIDTH(L1_OUT_WIDTH),
                     .SUPPORT_COHERENCY(1),  // L1缓存是核心独享的，多核间需要一致性
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),
@@ -352,8 +381,8 @@ module cpu_top #(
                     .cpu_req_valid(icache_req),
                     .cpu_req_addr(icache_addr),
                     .cpu_req_rw(1'b0),
-                    .cpu_req_data(32'd0),
-                    .cpu_req_strb({DATA_WIDTH/8{1'b1}}),
+                    .cpu_req_data({L1_ICACHE_DATA_WIDTH{1'd0}}),
+                    .cpu_req_strb({L1_ICACHE_DATA_WIDTH/8{1'b1}}),
                     .cpu_rsp_valid(icache_ready),
                     .cpu_rsp_data(icache_data),
                     .cpu_rsp_error(),
@@ -383,7 +412,7 @@ module cpu_top #(
                     .CACHE_SIZE(`L1_DCACHE_SIZE),
                     .ASSOCIATIVITY(`L1_DCACHE_ASSOCIATIVITY),
                     .ADDR_WIDTH(ADDR_WIDTH),
-                    .INPUT_DATA_WIDTH(DATA_WIDTH),
+                    .INPUT_DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
                     .OUTPUT_DATA_WIDTH(L1_OUT_WIDTH),
                     .SUPPORT_COHERENCY(1),  // L1缓存是核心独享的，多核间需要一致性
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),

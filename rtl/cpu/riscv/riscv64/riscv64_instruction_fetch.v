@@ -1,20 +1,21 @@
 // riscv64_instruction_fetch.v
 module riscv64_instruction_fetch #(
-    parameter ADDR_WIDTH        = 64,
-    parameter DATA_WIDTH        = 64
+    parameter ADDR_WIDTH                    = 64,
+    parameter DATA_WIDTH                    = 64,
+    parameter L1_ICACHE_DATA_WIDTH          = 32
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire stall,
-    input wire flush,
-    input wire [63:0] branch_target,
-    input wire branch_taken,
-    output reg [63:0] pc,
-    output reg [31:0] instr,
-    output reg cache_req,
-    output reg [ADDR_WIDTH-1:0] cache_addr,
-    input wire [31:0] cache_data,
-    input wire cache_ready
+    input  wire                                       clk,
+    input  wire                                       rst_n,
+    input  wire                                       stall,
+    input  wire                                       flush,
+    input  wire [63:0]                                branch_target,
+    input  wire                                       branch_taken,
+    output reg  [63:0]                                pc,
+    output reg  [31:0]                                instr,
+    output reg                                        cache_req,
+    output reg  [ADDR_WIDTH-1:0]                      cache_addr,
+    input  wire [L1_ICACHE_DATA_WIDTH-1:0]           cache_data,
+    input  wire                                       cache_ready
 );
 
     reg [63:0] pc_next;
@@ -81,8 +82,8 @@ module riscv64_instruction_fetch #(
                          $time, pc_next, pc_next + 4);
             `endif
                 // 确保指令正确加载
-                if (cache_data !== 32'bz && cache_data !== 32'bx) begin
-                    instr <= cache_data; // 从缓存中获取指令数据
+                if (cache_data !== {L1_ICACHE_DATA_WIDTH{1'bz}} && cache_data !== {L1_ICACHE_DATA_WIDTH{1'bx}}) begin
+                    instr <= cache_data[0 +: 31];; // 从缓存中获取指令数据
                 `ifdef DEBUG
                     $display("[%0t ps] IF: Loading instruction from cache: 0x%h", $time, cache_data);
                 `endif

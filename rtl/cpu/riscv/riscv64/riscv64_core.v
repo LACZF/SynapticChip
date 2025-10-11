@@ -3,48 +3,50 @@
 `include "cache_system_params.v"
 
 module riscv64_core #(
-    parameter ADDR_WIDTH        = 64,
-    parameter DATA_WIDTH        = 64,
-    parameter CORE_ID           = 0
+    parameter ADDR_WIDTH                    = 64,
+    parameter DATA_WIDTH                    = 64,
+    parameter L1_ICACHE_DATA_WIDTH          = 32,
+    parameter L1_DCACHE_DATA_WIDTH          = 64,
+    parameter CORE_ID                       = 0
 )(
     input wire clk,
     input wire rst_n,
 
     // 指令缓存接口 - 现在连接到cpu_top中的L1缓存
-    output wire icache_req,
-    output wire [ADDR_WIDTH-1:0] icache_addr,
-    input wire [31:0] icache_data,
-    input wire icache_ready,
+    output wire                                      icache_req,
+    output wire [ADDR_WIDTH-1:0]                     icache_addr,
+    input  wire [L1_ICACHE_DATA_WIDTH-1:0]           icache_data,
+    input  wire                                      icache_ready,
 
     // 数据缓存接口 - 现在连接到cpu_top中的L1缓存
-    output wire dcache_req,
-    output wire [ADDR_WIDTH-1:0] dcache_addr,
-    output wire [63:0] dcache_wdata,
-    input wire [63:0] dcache_rdata,
-    output wire dcache_we,
-    output wire [7:0] dcache_byte_en,
-    input wire dcache_ready,
+    output wire                                      dcache_req,
+    output wire [ADDR_WIDTH-1:0]                     dcache_addr,
+    output wire [L1_DCACHE_DATA_WIDTH-1:0]           dcache_wdata,
+    input  wire [L1_DCACHE_DATA_WIDTH-1:0]           dcache_rdata,
+    output wire                                      dcache_we,
+    output wire [L1_DCACHE_DATA_WIDTH/8-1:0]         dcache_byte_en,
+    input  wire                                      dcache_ready,
 
     // 监听接口
-    input wire snoop_valid,
-    input wire [ADDR_WIDTH-1:0] snoop_addr,
-    input wire [1:0] snoop_req_type,
-    output wire snoop_ready,
-    output wire snoop_hit,
-    output wire [1:0] snoop_state,
-    output wire [511:0] snoop_data,
+    input  wire                                      snoop_valid,
+    input  wire [ADDR_WIDTH-1:0]                     snoop_addr,
+    input  wire [1:0]                                snoop_req_type,
+    output wire                                      snoop_ready,
+    output wire                                      snoop_hit,
+    output wire [1:0]                                snoop_state,
+    output wire [511:0]                              snoop_data,
 
     // 中断和调试
-    input wire timer_interrupt,
-    input wire external_interrupt,
-    input wire software_interrupt,
+    input  wire                                      timer_interrupt,
+    input  wire                                      external_interrupt,
+    input  wire                                      software_interrupt,
 
     // Debug interface
-    output wire [63:0] debug_pc,
-    output wire [31:0] debug_instr,
-    output wire debug_wb_valid,
-    output wire [4:0] debug_wb_rd,
-    output wire [63:0] debug_wb_value
+    output wire [63:0]                               debug_pc,
+    output wire [31:0]                               debug_instr,
+    output wire                                      debug_wb_valid,
+    output wire [4:0]                                debug_wb_rd,
+    output wire [63:0]                               debug_wb_value
 );
 
     // 内部信号定义
@@ -119,7 +121,8 @@ module riscv64_core #(
     // 取指阶段
     riscv64_instruction_fetch #(
         .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .L1_ICACHE_DATA_WIDTH(L1_ICACHE_DATA_WIDTH)
     ) u_if (
         .clk(clk),
         .rst_n(rst_n),
@@ -180,7 +183,8 @@ module riscv64_core #(
     // 内存访问阶段
     riscv64_memory_access #(
         .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .L1_DCACHE_DATA_WIDTH(L1_DCACHE_DATA_WIDTH)
     ) u_mem (
         .clk(clk),
         .rst_n(rst_n),

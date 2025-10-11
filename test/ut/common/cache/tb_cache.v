@@ -218,7 +218,8 @@ module tb_cache;
         .CACHE_SIZE(256),              // 256B - 较小的L1缓存
         .ASSOCIATIVITY(2),             // 2路组相联
         .ADDR_WIDTH(32),               // 32位地址宽度
-        .DATA_WIDTH(32),               // 32位数据宽度
+        .INPUT_DATA_WIDTH(32),         // 32位数据宽度
+        .OUTPUT_DATA_WIDTH(64),
         .SUPPORT_COHERENCY(1),         // 支持一致性
         .CACHE_LEVEL(1),               // L1缓存
         .REPLACEMENT_POLICY("LRU")     // LRU替换策略
@@ -253,7 +254,8 @@ module tb_cache;
         .CACHE_SIZE(1024),             // 1KB cache容量
         .ASSOCIATIVITY(4),             // 4路组相联
         .ADDR_WIDTH(32),               // 32位地址宽度
-        .DATA_WIDTH(32),               // 32位数据宽度
+        .INPUT_DATA_WIDTH(32),         // 32位数据宽度
+        .OUTPUT_DATA_WIDTH(64),
         .SUPPORT_COHERENCY(1),         // 支持一致性
         .CACHE_LEVEL(2),               // L2缓存
         .REPLACEMENT_POLICY("LRU")     // LRU替换策略
@@ -288,7 +290,8 @@ module tb_cache;
         .CACHE_SIZE(4096),             // 4KB cache容量
         .ASSOCIATIVITY(8),             // 8路组相联
         .ADDR_WIDTH(32),               // 32位地址宽度
-        .DATA_WIDTH(32),               // 32位数据宽度
+        .INPUT_DATA_WIDTH(32),         // 32位数据宽度
+        .OUTPUT_DATA_WIDTH(64),
         .SUPPORT_COHERENCY(1),         // 支持一致性
         .CACHE_LEVEL(3),               // L3缓存
         .REPLACEMENT_POLICY("LRU")     // LRU替换策略
@@ -323,7 +326,8 @@ module tb_cache;
         .CACHE_SIZE(1024),             // 1KB cache容量
         .ASSOCIATIVITY(4),             // 4路组相联
         .ADDR_WIDTH(32),               // 32位地址宽度
-        .DATA_WIDTH(32),               // 32位数据宽度
+        .INPUT_DATA_WIDTH(32),         // 32位数据宽度
+        .OUTPUT_DATA_WIDTH(64),
         .SUPPORT_COHERENCY(1),         // 支持一致性
         .CACHE_LEVEL(2),               // L2缓存
         .REPLACEMENT_POLICY("LRU")     // LRU替换策略
