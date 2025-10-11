@@ -1,38 +1,38 @@
 // tb_top_system_direct_single_core.v
-// 顶层系统集成测试平台 - 单核心+Direct总线+无L2/L3缓存配置
+// Top-Level System Integration Test Bench - Single Core + Direct Bus + No L2/L3 Cache Configuration
 
 `include "top_system_params.v"
 `include "spi_params.v"
 `timescale 1ns/1ps
 
-// SPI Flash模型 - 模拟SPI ROM设备
+// SPI Flash Model - Simulating SPI ROM Device
 module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output wire miso);
-    parameter MEM_SIZE = 4096; // 内存大小（指令数量）
-    parameter INSTR_FILE = "instructions.hex"; // 指令文件路径
+    parameter MEM_SIZE = 4096; // Memory Size (Instruction Count)
+    parameter INSTR_FILE = "instructions.hex"; // Instruction File Path
 
-    // 内部存储器
+    // Internal Memory
     reg [31:0] mem [0:MEM_SIZE-1];
     reg [31:0] current_addr;
-    reg [7:0] current_cmd;
-    reg [1:0] state;
-    reg [4:0] bit_count;
+    reg [7:0]  current_cmd;
+    reg [1:0]  state;
+    reg [4:0]  bit_count;
     reg [31:0] rx_data;
     reg [31:0] tx_data;
-    reg miso_reg;
+    reg        miso_reg;
 
     localparam IDLE = 2'b00;
-    localparam CMD = 2'b01;
+    localparam CMD  = 2'b01;
     localparam ADDR = 2'b10;
     localparam DATA = 2'b11;
 
-    // 初始化从文件加载指令
+    // Initialize by Loading Instructions from File
     initial begin
         $readmemh(INSTR_FILE, mem);
         state = IDLE;
         miso_reg = 1'b0;
     end
 
-    // SPI通信处理
+    // SPI Communication Processing
     always @(negedge sclk or posedge cs_n) begin
         if (cs_n) begin
             state = IDLE;
@@ -65,17 +65,17 @@ module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output
                         if (bit_count == 24) begin
                             bit_count = 0;
                             state = DATA;
-                            // 将字节地址转换为指令索引 (除以4)
+                            // Convert Byte Address to Instruction Index (Divide by 4)
                             tx_data = mem[current_addr / 4];
                         end
                     end
                 DATA:
                     begin
-                        // 从最高位开始发送数据
+                        // Send Data Starting from MSB
                         miso_reg = tx_data[31 - bit_count];
                         bit_count = bit_count + 1;
                         if (bit_count == 32) begin
-                            // 读取完一个指令后，自动增加地址读取下一个
+                            // After reading one instruction, automatically increment address to read next
                             current_addr = current_addr + 4;
                             tx_data = mem[current_addr / 4];
                             bit_count = 0;
@@ -85,39 +85,39 @@ module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output
         end
     end
 
-    // 输出MISO信号
+    // Output MISO Signal
     assign miso = cs_n ? 1'bz : miso_reg;
 endmodule
 
 module tb_top_system_direct_1core;
     localparam SPI_CS_NUM = 2;
 
-    // 时钟和复位
+    // Clock and Reset
     reg clk;
     reg rst_n;
 
-    // UART接口
+    // UART Interface
     wire uart_txd;
-    reg uart_rxd;
+    reg  uart_rxd;
 
-    // GPIO接口
+    // GPIO Interface
     wire [`DATA_WIDTH-1:0] gpio_pins;
-    reg [`DATA_WIDTH-1:0] gpio_ext_drive;
+    reg  [`DATA_WIDTH-1:0] gpio_ext_drive;
     assign gpio_pins = gpio_ext_drive;
 
-    // 外部中断
+    // External Interrupt
     reg ext_int;
 
-    // 状态输出
+    // Status Output
     wire [`DATA_WIDTH-1:0] system_status;
 
-    // SPI物理接口（连接到SPI Flash模型）
+    // SPI Physical Interface (Connected to SPI Flash Model)
     wire [SPI_CS_NUM-1:0] spi_cs_n;
     wire spi_clk;
     wire spi_mosi;
     wire spi_miso;
 
-    // 实例化DUT - 配置为Direct总线、1个核心、无L2/L3缓存
+    // Instantiate DUT - Configured as Direct Bus, Single Core, No L2/L3 Cache
     top_system #(
         .BUS_TYPE(`BUS_TYPE_DIRECT),
         .NUM_RINGS(1),
@@ -131,9 +131,9 @@ module tb_top_system_direct_1core;
         .INST_WIDTH(`INST_WIDTH),
         .PE_ID_WIDTH(`PE_ID_WIDTH),
         .SPI_CS_NUM(SPI_CS_NUM),
-        .NUM_CORES(1),             // 1个核心
-        .ENABLE_L2_CACHE(0),       // 禁用L2缓存
-        .ENABLE_L3_CACHE(0)        // 禁用L3缓存
+        .NUM_CORES(1),             // 1 Core
+        .ENABLE_L2_CACHE(0),       // Disable L2 Cache
+        .ENABLE_L3_CACHE(0)        // Disable L3 Cache
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
@@ -142,38 +142,38 @@ module tb_top_system_direct_1core;
         .gpio_pins(gpio_pins),
         .ext_int(ext_int),
         .system_status(system_status),
-        // SPI接口连接到SPI Flash模型
+        // SPI Interface Connected to SPI Flash Model
         .spi_cs_n(spi_cs_n),
         .spi_clk(spi_clk),
         .spi_mosi(spi_mosi),
         .spi_miso(spi_miso)
     );
 
-    // 时钟生成
+    // Clock Generation
     always #5 clk = ~clk;
 
-    // 测试任务：通过UART发送数据
+    // Test Task: Send Data via UART
     task uart_send_byte;
         input [7:0] data;
         integer i;
         begin
-            // 起始位
+            // Start Bit
             uart_rxd <= 1'b0;
-            #8680; // 115200波特率的位时间
+            #8680; // Bit time for 115200 baud rate
 
-            // 数据位
+            // Data Bits
             for (i = 0; i < 8; i = i + 1) begin
                 uart_rxd <= data[i];
                 #8680;
             end
 
-            // 停止位
+            // Stop Bit
             uart_rxd <= 1'b1;
             #8680;
         end
     endtask
 
-    // 实例化SPI Flash模型，连接到SPI物理接口（使用第一个片选信号）
+    // Instantiate SPI Flash Model, Connected to SPI Physical Interface (Using First Chip Select)
     spi_flash_model #(
         .MEM_SIZE(4096),
         .INSTR_FILE("instructions.hex")
@@ -184,38 +184,38 @@ module tb_top_system_direct_1core;
         .miso(spi_miso)
     );
 
-    // 主测试程序
+    // Main Test Program
     initial begin
-        // 初始化
+        // Initialization
         clk = 0;
         rst_n = 0;
         uart_rxd = 1'b1;
         gpio_ext_drive = 0;
         ext_int = 0;
 
-        // 打开波形文件
+        // Open Waveform File
         $dumpfile("top_system_direct_1core.vcd");
         $dumpvars(0, tb_top_system_direct_1core);
 
-        // 复位
+        // Reset
         #20 rst_n = 1;
 
         $display("Starting Top System Integration Test - Direct Bus, Single Core, No L2/L3 Cache");
 
-        // 测试1: 系统启动和初始化
+        // Test 1: System Startup and Initialization
         $display("Test 1: System startup and initialization");
         #100;
         $display("System status: 0x%h", system_status);
 
-        // 测试2: GPIO测试
+        // Test 2: GPIO Test
         $display("Test 2: GPIO test");
-        // 通过外部驱动GPIO引脚
+        // Drive GPIO Pins via External Drive
         #1000;
         gpio_ext_drive = 32'h12345678;
         #100;
         $display("GPIO pins driven to: 0x%h", gpio_ext_drive);
 
-        // 测试3: UART通信测试
+        // Test 3: UART Communication Test
         $display("Test 3: UART communication test");
         #1000;
         $display("Sending test data via UART");
@@ -226,7 +226,7 @@ module tb_top_system_direct_1core;
         uart_send_byte(8'h6F); // 'o'
         uart_send_byte(8'h0A); // '\n'
 
-        // 测试4: 外部中断测试
+        // Test 4: External Interrupt Test
         $display("Test 4: External interrupt test");
         #2000;
         ext_int = 1;
@@ -235,7 +235,7 @@ module tb_top_system_direct_1core;
         #100;
         $display("External interrupt triggered");
 
-        // 等待一段时间以观察系统响应
+        // Wait for a period to observe system response
         #5000;
 
         $display("All tests completed!");

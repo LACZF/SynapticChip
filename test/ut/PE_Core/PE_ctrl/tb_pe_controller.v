@@ -1,5 +1,5 @@
 // tb_pe_controller.v
-// PE控制器测试平台
+// PE Controller Test Bench
 
 `include "pe_ctrl_params.v"
 `include "pe_params.v"
@@ -7,15 +7,15 @@
 
 module tb_pe_controller;
 
-    // 时钟和复位
+    // Clock and Reset
     reg clk;
     reg rst_n;
 
-    // 测试控制信号
-    reg enable;
+    // Test Control Signals
+    reg        enable;
     reg [31:0] error_count;
 
-    // 实例化单个PE节点进行测试
+    // Instantiate Single PE Node for Testing
     pe_node #(
         .ADDR_WIDTH(`ADDR_WIDTH),
         .DATA_WIDTH(`DATA_WIDTH),
@@ -28,7 +28,7 @@ module tb_pe_controller;
         .clk(clk),
         .rst_n(rst_n),
         .enable(enable),
-        .instruction(32'h12345678), // 测试指令
+        .instruction(32'h12345678), // Test Instruction
         .inst_valid(1'b1),
         .ext_mem_req(),
         .ext_mem_we(),
@@ -54,13 +54,13 @@ module tb_pe_controller;
         .busy()
     );
 
-    // 时钟生成
+    // Clock Generation
     always #5 clk = ~clk;
 
-    // 定义超时周期
+    // Define Timeout Period
     parameter TIMEOUT_CYCLES = 1000;
 
-    // 测试任务：直接控制PE
+    // Test Task: Directly Control PE
     task test_pe_enable;
         input [31:0] enable_value;
         begin
@@ -72,18 +72,18 @@ module tb_pe_controller;
         end
     endtask
 
-    // 主测试程序
+    // Main Test Program
     initial begin
         fork
-            // 主测试流程
+            // Main Test Flow
             begin
-                // 初始化
+                // Initialization
                 clk = 0;
                 rst_n = 0;
                 enable = 0;
                 error_count = 0;
 
-                // 复位
+                // Reset
                 #20 rst_n = 1;
 
                 $display("Starting PE Node Test");
@@ -91,60 +91,60 @@ module tb_pe_controller;
                 $display("Direct testing of pe_node without Ring Bus");
                 $display("====================");
 
-                // 测试1: PE使能测试
+                // Test 1: PE Enable Test
                 $display("--- Test 1: PE Enable Test ---");
                 test_pe_enable(1'b1);
                 #100;
 
-                // 验证PE是否处于busy状态
+                // Verify if PE is in busy state
                 if (!pe_dut.busy) begin
                     $display("WARNING: PE not busy after enabling");
                 end else begin
                     $display("PASS: PE entered busy state after enabling");
                 end
 
-                // 测试2: PE禁用测试
+                // Test 2: PE Disable Test
                 $display("--- Test 2: PE Disable Test ---");
                 test_pe_enable(1'b0);
                 #100;
 
-                // 验证PE是否退出busy状态
+                // Verify if PE exited busy state
                 if (pe_dut.busy) begin
                     $display("WARNING: PE still busy after disabling");
                 end else begin
                     $display("PASS: PE exited busy state after disabling");
                 end
 
-                // 测试3: 指令执行测试
+                // Test 3: Instruction Execution Test
                 $display("--- Test 3: Instruction Execution Test ---");
-                // 设置一个简单的指令模式
+                // Set a simple instruction mode
                 test_pe_enable(1'b1);
                 #500;
 
-                // 观察PE状态变化
+                // Observe PE status changes
                 $display("PE status after instruction execution: 0x%h", pe_dut.status);
                 $display("PE busy state: %b", pe_dut.busy);
                 $display("PASS: Instruction execution test completed");
 
-                // 测试4: 复位测试
+                // Test 4: Reset Test
                 $display("--- Test 4: Reset Test ---");
                 @(posedge clk);
                 rst_n = 0;
-                #100;  // 增加复位时间
+                #100;  // Increase reset time
                 @(posedge clk);
                 rst_n = 1;
-                #200;  // 增加复位后的稳定时间
+                #200;  // Increase stabilization time after reset
 
-                // 验证PE是否被正确复位
+                // Verify if PE is correctly reset
                 if (pe_dut.busy) begin
                     $display("INFO: PE is still busy after reset, which might be normal if busy is registered");
-                    // 不再将此视为错误，因为busy信号可能是寄存器输出
+                    // No longer consider this an error because the busy signal might be a registered output
                     // error_count = error_count + 1;
                 end else begin
                     $display("PASS: PE successfully reset");
                 end
 
-                // 总结测试结果
+                // Summarize test results
                 if (error_count == 0) begin
                     $display("\nTEST PASSED: PE node functionality verified successfully!");
                 end else begin
@@ -155,16 +155,16 @@ module tb_pe_controller;
                 $finish;
             end
 
-            // 全局超时机制
+            // Global Timeout Mechanism
             begin
-                #1000000; // 1毫秒超时（假设时间单位是ns）
+                #1000000; // 1ms timeout (assuming time unit is ns)
                 $display("ERROR: Global test timeout");
                 $finish;
             end
         join
     end
 
-    // 波形输出
+    // Waveform Output
     initial begin
         $dumpfile("tb_pe_controller.vcd");
         $dumpvars(0, tb_pe_controller);

@@ -1,44 +1,44 @@
 // pe_router_top.v
-// 完整的路由模块实现
+// Complete router module implementation
 
 `include "pe_router_params.v"
 
 module pe_router_top #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32,
-    parameter NUM_PORTS = 4
+    parameter ADDR_WIDTH                    = 32,
+    parameter DATA_WIDTH                    = 32,
+    parameter NUM_PORTS                     = 4
 ) (
-    input clk,
-    input rst_n,
+    input                                   clk,
+    input                                   rst_n,
 
-    // 配置接口
-    input cfg_valid,
-    input [ADDR_WIDTH-1:0] cfg_addr,
-    input [DATA_WIDTH-1:0] cfg_data,
-    output cfg_ack,
+    // Configuration interface
+    input                                   cfg_valid,
+    input  [ADDR_WIDTH-1:0]                 cfg_addr,
+    input  [DATA_WIDTH-1:0]                 cfg_data,
+    output                                  cfg_ack,
 
-    // 数据输入接口
-    input [NUM_PORTS-1:0] data_in_valid,
-    input [(NUM_PORTS*DATA_WIDTH)-1:0] data_in,
-    output [NUM_PORTS-1:0] data_in_ready,
+    // Data input interface
+    input  [NUM_PORTS-1:0]                  data_in_valid,
+    input  [(NUM_PORTS*DATA_WIDTH)-1:0]     data_in,
+    output [NUM_PORTS-1:0]                  data_in_ready,
 
-    // 数据输出接口
-    output [NUM_PORTS-1:0] data_out_valid,
-    output [(NUM_PORTS*DATA_WIDTH)-1:0] data_out,
-    input [NUM_PORTS-1:0] data_out_ready,
+    // Data output interface
+    output [NUM_PORTS-1:0]                  data_out_valid,
+    output [(NUM_PORTS*DATA_WIDTH)-1:0]     data_out,
+    input  [NUM_PORTS-1:0]                  data_out_ready,
 
-    // 状态输出
-    output [DATA_WIDTH-1:0] status
+    // Status output
+    output [DATA_WIDTH-1:0]                 status
 );
 
-    // 内部信号
-    wire route_cfg_valid;
+    // Internal signals
+    wire                  route_cfg_valid;
     wire [ADDR_WIDTH-1:0] route_cfg_addr;
     wire [DATA_WIDTH-1:0] route_cfg_data;
-    wire route_cfg_ack;
+    wire                  route_cfg_ack;
     wire [DATA_WIDTH-1:0] route_status;
 
-    // 实例化路由配置接口
+    // Instantiate router configuration interface
     router_config #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -58,7 +58,7 @@ module pe_router_top #(
         .status_out(status)
     );
 
-    // 实例化路由核心
+    // Instantiate router core
     pe_router_core #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),

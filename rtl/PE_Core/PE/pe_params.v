@@ -1,16 +1,16 @@
 // pe_params.v
-// PE参数配置
+// PE parameter configuration
 
-// 数据宽度
+// Data width
 `define DATA_WIDTH 32
 `define ADDR_WIDTH 32
 
-// 指令宽度和字段
+// Instruction width and fields
 `define INST_WIDTH 32
 `define OPCODE_WIDTH 6
 `define REG_ADDR_WIDTH 4
 
-// 操作码定义
+// Opcode definitions
 `define OP_NOP   6'b000000
 `define OP_ADD   6'b000001
 `define OP_SUB   6'b000010
@@ -30,14 +30,14 @@
 `define OP_BLT   6'b010000
 `define OP_BGT   6'b010001
 
-// PE模式
+// PE modes
 `define MODE_COMPUTE 2'b00
 `define MODE_MEMORY  2'b01
 `define MODE_COMM    2'b10
 `define MODE_IDLE    2'b11
 
-// 寄存器数量
+// Number of registers
 `define NUM_REGS 16
 
-// 存储器深度
+// Memory depth
 `define MEM_DEPTH 256

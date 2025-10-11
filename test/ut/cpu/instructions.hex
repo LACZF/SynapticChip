@@ -13,8 +13,8 @@
 002404b3    // SLTU x9, x8, x2      // x9 = (x8 < x2) ? 1 : 0 = 1
 00348533    // SLTI x10, x9, 3      // x10 = (x9 < 3) ? 1 : 0 = 1
 001505b3    // SLLI x11, x10, 1     // x11 = x10 << 1 = 2
-00158633    // SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (逻辑右移)
-401606b3    // SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (算术右移)
+00158633    // SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (logical right shift)
+401606b3    // SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (arithmetic right shift)
 00168733    // ADDI x14, x13, 1     // x14 = x13 + 1 = 1
 002707b3    // ADDI x15, x14, 2     // x15 = x14 + 2 = 3
 00378833    // ADDI x16, x15, 3     // x16 = x15 + 3 = 6
@@ -33,11 +33,11 @@
 00ee0eb3    // ADDI x29, x28, 16    // x29 = x28 + 16 = 136
 00ee8f33    // ADDI x30, x29, 17    // x30 = x29 + 17 = 153
 00ff0fb3    // ADDI x31, x30, 18    // x31 = x30 + 18 = 171
-00000073    // ECALL                // 系统调用指令
+00000073    // ECALL                // system call instruction
 
-// ===== 保持少量NOP指令用于测试稳定性 =====
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
+// ===== Keep some NOP instructions for test stability =====
+00000013    // NOP                  // no-operation instruction
+00000013    // NOP                  // no-operation instruction
+00000013    // NOP                  // no-operation instruction
+00000013    // NOP                  // no-operation instruction
+00000013    // NOP                  // no-operation instruction

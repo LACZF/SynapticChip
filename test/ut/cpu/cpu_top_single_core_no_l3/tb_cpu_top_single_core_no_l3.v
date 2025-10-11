@@ -1,17 +1,17 @@
 `timescale 1ns/1ps
 
-// CPU顶层模块单元测试平台 - 单核且禁用L3缓存配置
+// CPU Top Module Unit Test Bench - Single Core with L3 Cache Disabled
 module tb_cpu_top_single_core_no_l3;
 
-    // 定义参数
+    // Define parameters
     parameter NUM_CORES = 1;
 
-    // 时钟和复位信号
-    reg         clk;
-    reg         rst_n;
-    reg         ext_int;
+    // Clock and reset signals
+    reg           clk;
+    reg           rst_n;
+    reg           ext_int;
 
-    // 内存接口信号
+    // Memory interface signals
     wire          mem_req;
     wire [63:0]   mem_addr;
     wire [511:0]  mem_wdata;
@@ -19,7 +19,7 @@ module tb_cpu_top_single_core_no_l3;
     reg           mem_ready;
     reg [511:0]   mem_rdata;
 
-    // CPU核心内部信号监控
+    // CPU core internal signal monitoring
     wire         l1_icache_req;
     wire [63:0]  l1_icache_addr;
     wire         l1_dcache_req;
@@ -30,67 +30,67 @@ module tb_cpu_top_single_core_no_l3;
     reg          l1_dcache_ready;
     wire         l1_dcache_we;
 
-    // 从文件读取指令的ROM模块
+    // Instruction ROM module that reads from file
     wire [31:0]  rom_instr;
-    wire         rom_valid;  // ROM读取完成有效信号
+    wire         rom_valid;  // ROM read completion valid signal
 
-    // 时钟生成 (100MHz)
+    // Clock generation (100MHz)
     initial begin
         clk = 0;
         forever #5 clk = ~clk;
     end
 
-    // 实例化从文件读取指令的ROM模块
+    // Instantiate instruction ROM module that reads from file
     instruction_rom #(
-        .MEM_SIZE(4096),                      // 内存大小（指令数量）
-        .ADDR_WIDTH(64),                      // 地址宽度
-        .INSTR_WIDTH(32),                     // 指令宽度
-        .INSTR_FILE("instructions.hex")       // 指令文件路径
+        .MEM_SIZE(4096),                      // Memory size (number of instructions)
+        .ADDR_WIDTH(64),                      // Address width
+        .INSTR_WIDTH(32),                     // Instruction width
+        .INSTR_FILE("instructions.hex")       // Instruction file path
     ) u_instruction_rom (
-        .req(mem_req),                        // 连接内存请求信号
-        .addr(mem_addr - 64'h8000_0000),      // 将地址偏移到ROM基址
-        .instr(rom_instr),                    // 输出指令
-        .valid(rom_valid)                     // 读取完成有效信号
+        .req(mem_req),                        // Connect memory request signal
+        .addr(mem_addr - 64'h8000_0000),      // Offset address to ROM base
+        .instr(rom_instr),                    // Output instruction
+        .valid(rom_valid)                     // Read completion valid signal
     );
 
-    // 简化的内存响应逻辑，直接连接到CPU的内存接口
+    // Simplified memory response logic, directly connected to CPU memory interface
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             mem_ready <= 1'b0;
             mem_rdata <= 0;
         `ifdef DEBUG
-            $display("[%0t ps] MEM LOGIC: 复位状态", $time);
+            $display("[%0t ps] MEM LOGIC: Reset state", $time);
         `endif
         end else if (mem_req) begin
-            // 当有请求时，使用ROM的输出来响应
+            // When there is a request, respond with ROM output
             mem_rdata <= {{480{1'b0}}, rom_instr};
             mem_ready <= 1'b1;
         `ifdef DEBUG
-            $display("[%0t ps] MEM LOGIC: 收到内存请求，地址=0x%h，使用ROM指令: 0x%h，mem_ready=1",
+            $display("[%0t ps] MEM LOGIC: Received memory request, address=0x%h, using ROM instruction: 0x%h, mem_ready=1",
                      $time, mem_addr, rom_instr);
         `endif
         end else begin
-            // 没有请求时保持就绪信号为0
+            // Keep ready signal 0 when no request
             mem_ready <= 1'b0;
         end
     end
 
 `ifdef DEBUG
-    // 添加请求监控，跟踪请求和响应的状态
+    // Add request monitoring to track request and response status
     reg l1_icache_req_prev;
 
     always @(posedge clk) begin
         l1_icache_req_prev <= l1_icache_req;
 
         if (l1_icache_req && !l1_icache_req_prev) begin
-            $display("[%0t ps] REQ MONITOR: 新的指令请求开始，地址=0x%h", $time, l1_icache_addr);
+            $display("[%0t ps] REQ MONITOR: New instruction request starts, address=0x%h", $time, l1_icache_addr);
         end else if (!l1_icache_req && l1_icache_req_prev) begin
-            $display("[%0t ps] REQ MONITOR: 指令请求结束", $time);
+            $display("[%0t ps] REQ MONITOR: Instruction request ends", $time);
         end
     end
 `endif
 
-    // 用于跟踪指令执行数量
+    // Used to track the number of instructions executed
     reg [7:0] instr_count;
     integer executed_instructions = 0;
 
@@ -99,20 +99,20 @@ module tb_cpu_top_single_core_no_l3;
         executed_instructions = 0;
     end
 
-    // 监控指令执行情况
+    // Monitor instruction execution
     always @(posedge clk) begin
         if (mem_req && mem_ready) begin
             executed_instructions = executed_instructions + 1;
         `ifdef DEBUG
-            $display("[%0t ps] INSTR COUNT: 已执行 %0d 条指令", $time, executed_instructions);
+            $display("[%0t ps] INSTR COUNT: %0d instructions executed", $time, executed_instructions);
         `endif
         end
     end
 
 `ifdef DEBUG
-    // 添加定期监控ROM信号的逻辑
+    // Add logic to periodically monitor ROM signals
     initial begin
-        // 每1000ps检查一次ROM信号状态
+        // Check ROM signal status every 1000ps
         forever begin
             #1000;
             if (l1_icache_req || rom_valid) begin
@@ -123,18 +123,18 @@ module tb_cpu_top_single_core_no_l3;
     end
 `endif
 
-    // 实例化被测模块 (DUT) - 配置为单核、无L2和L3缓存
+    // Instantiate Device Under Test (DUT) - configured as single core, no L2 and L3 cache
     cpu_top #(
-        .NUM_CORES(NUM_CORES),            // 设置为单核
-        .ENABLE_L2_CACHE(0),              // 禁用L2缓存
-        .ENABLE_L3_CACHE(0)               // 禁用L3缓存
+        .NUM_CORES(NUM_CORES),            // Set to single core
+        .ENABLE_L2_CACHE(0),              // Disable L2 cache
+        .ENABLE_L3_CACHE(0)               // Disable L3 cache
     ) u_cpu_top (
-        // 时钟和复位
+        // Clock and reset
         .clk                (clk),
         .rst_n              (rst_n),
         .ext_int            (ext_int),
 
-        // 内存接口
+        // Memory interface
         .mem_req            (mem_req),
         .mem_addr           (mem_addr),
         .mem_wdata          (mem_wdata),
@@ -143,14 +143,14 @@ module tb_cpu_top_single_core_no_l3;
         .mem_rdata          (mem_rdata)
     );
 
-    // ROM模块连接到CPU的内存请求信号
+    // ROM module connected to CPU memory request signal
     assign u_instruction_rom.req = mem_req;
-    assign u_instruction_rom.addr = mem_addr - 64'h8000_0000; // 将地址偏移到ROM基址
+    assign u_instruction_rom.addr = mem_addr - 64'h8000_0000; // Offset address to ROM base
 
 `ifdef DEBUG
-    // 添加定期监控CPU和ROM信号的逻辑
+    // Add logic to periodically monitor CPU and ROM signals
     initial begin
-        // 在复位后定期监控信号
+        // Monitor signals periodically after reset
         #100;
         forever begin
             #100;
@@ -163,17 +163,17 @@ module tb_cpu_top_single_core_no_l3;
 
 
 
-    // 跟踪测试通过和失败的数量
+    // Track the number of passed and failed tests
     integer test_pass = 0;
     integer test_fail = 0;
 
-    // 测试指令执行的任务
-    // 增加验证信号，用于跟踪指令执行状态
+    // Task to test instruction execution
+    // Add verification signals to track instruction execution status
     reg instruction_executed = 1'b0;
     integer instruction_count = 0;
 
-    // 监控CPU取指和执行指令的情况
-    // 直接基于内存请求和就绪信号判断
+    // Monitor CPU instruction fetching and execution
+    // Directly based on memory request and ready signals
     always @(posedge clk) begin
         if (mem_ready && mem_req) begin
             instruction_executed = 1'b1;
@@ -181,64 +181,64 @@ module tb_cpu_top_single_core_no_l3;
         end
     end
 
-    // 监控CPU的实际指令执行（从WB阶段可以观察到）
+    // Monitor actual CPU instruction execution (observable from WB stage)
     reg [7:0] wb_instruction_count = 0;
     always @(posedge clk) begin
         if ($time > 5000 && instruction_count > 0) begin
-            // 只要指令计数大于0，就认为指令被执行了
+            // As long as instruction count is greater than 0, consider instructions executed
             wb_instruction_count = wb_instruction_count + 1;
         end
     end
 
     task test_instruction_execution;
         begin
-            $display("测试: 执行指令测试");
+            $display("Test: Instruction execution test");
 
-            // 运行足够的周期让CPU执行指令
+            // Run enough cycles for CPU to execute instructions
             #5000;
 
-            // 添加具体的验证逻辑，检查是否成功执行了指令
+            // Add specific verification logic to check if instructions were executed successfully
             if (instruction_count > 0 || wb_instruction_count > 0) begin
-                $display("指令执行测试完成: 成功执行了 %0d 条指令 (取指计数)", instruction_count);
-                $display("                               %0d 条指令 (执行计数)", wb_instruction_count);
+                $display("Instruction execution test completed: %0d instructions successfully executed (fetch count)", instruction_count);
+                $display("                                  %0d instructions (execution count)", wb_instruction_count);
                 test_pass = test_pass + 1;
             end else begin
-                $display("错误: 未能成功执行任何指令！");
+                $display("Error: Failed to execute any instructions!");
                 test_fail = test_fail + 1;
             end
         end
     endtask
 
-    // 主测试程序
+    // Main test program
     initial begin
-        // 初始化
+        // Initialization
         rst_n = 1;
         ext_int = 0;
         mem_ready = 0;
         mem_rdata = 0;
 
-        // 执行复位
-        $display("执行CPU复位... [配置: 单核, 无L3缓存]");
+        // Perform reset
+        $display("Performing CPU reset... [Configuration: Single core, no L3 cache]");
         rst_n = 0;
         #20 rst_n = 1;
-        $display("CPU复位完成");
+        $display("CPU reset completed");
 
-        // 启动测试
-        $display("开始CPU单元测试...");
+        // Start tests
+        $display("Starting CPU unit tests...");
 
-        // 专注于指令执行测试，简化测试流程
-        $display("测试: 指令执行验证");
+        // Focus on instruction execution test, simplify test flow
+        $display("Test: Instruction execution verification");
 
-        // 给CPU足够的时间执行指令
+        // Give CPU enough time to execute instructions
         #25000;
 
-        // 测试完成 - 基于实际执行的指令数判断测试结果
+        // Test completion - determine test results based on actual number of instructions executed
         $display("\nTest Results Summary:");
         if (executed_instructions > 0) begin
-            $display("指令执行测试通过: 成功执行了 %0d 条指令", executed_instructions);
+            $display("Instruction execution test passed: %0d instructions successfully executed", executed_instructions);
             test_pass = 1;
         end else begin
-            $display("错误: 未能成功执行任何指令！");
+            $display("Error: Failed to execute any instructions!");
             test_fail = 1;
         end
 
@@ -252,63 +252,63 @@ module tb_cpu_top_single_core_no_l3;
             $display("\nSOME TESTS FAILED!");
         end
 
-        $display("所有CPU测试完成! [配置: 单核, 无L3缓存]");
+        $display("All CPU tests completed! [Configuration: Single core, no L3 cache]");
         $finish;
     end
 
-    // 全局超时监控，提供足够的时间执行指令
+    // Global timeout monitoring, providing enough time to execute instructions
     initial begin
         #35000;
-        $display("错误: 测试执行超时! 强制结束仿真.");
-        $display("超时前已执行 %0d 条指令", executed_instructions);
+        $display("Error: Test execution timed out! Forcibly ending simulation.");
+        $display("%0d instructions executed before timeout", executed_instructions);
         $finish;
     end
 
 `ifdef DEBUG
-    // 定期监控执行状态
+    // Periodically monitor execution status
     initial begin
         forever begin
             #2000;
             if ($time > 10000 && executed_instructions > 0) begin
-                $display("[%0t ps] STATUS: 已执行 %0d 条指令, 系统正常运行中...", $time, executed_instructions);
+                $display("[%0t ps] STATUS: %0d instructions executed, system running normally...", $time, executed_instructions);
             end
         end
     end
 `endif
 
-    // 波形输出
+    // Waveform output
     initial begin
         $dumpfile("tb_cpu_top_single_core_no_l3.vcd");
         $dumpvars(0, tb_cpu_top_single_core_no_l3);
     end
 
 `ifdef DEBUG
-    // 监控核心和缓存活动
+    // Monitor core and cache activities
     always @(posedge clk) begin
-        // 监控指令缓存请求和ROM输出
+        // Monitor instruction cache requests and ROM output
         if (l1_icache_req) begin
-            $display("时间: %t - L1指令缓存请求: 地址=0x%h, ROM输出=0x%h", $time, l1_icache_addr, rom_instr);
+            $display("Time: %t - L1 instruction cache request: address=0x%h, ROM output=0x%h", $time, l1_icache_addr, rom_instr);
         end
 
-        // 监控数据缓存请求
+        // Monitor data cache requests
         if (l1_dcache_req) begin
             if (l1_dcache_we) begin
-                $display("时间: %t - L1数据缓存写入: 地址=0x%h", $time, l1_dcache_addr);
+                $display("Time: %t - L1 data cache write: address=0x%h", $time, l1_dcache_addr);
             end else begin
-                $display("时间: %t - L1数据缓存读取: 地址=0x%h", $time, l1_dcache_addr);
+                $display("Time: %t - L1 data cache read: address=0x%h", $time, l1_dcache_addr);
             end
         end
 
-        // 监控内存操作
+        // Monitor memory operations
         if (mem_req) begin
             if (mem_we) begin
-                $display("时间: %t - 内存写请求: 地址=0x%h, 数据=0x%h", $time, mem_addr, mem_wdata);
+                $display("Time: %t - Memory write request: address=0x%h, data=0x%h", $time, mem_addr, mem_wdata);
             end else begin
-                $display("时间: %t - 内存读请求: 地址=0x%h", $time, mem_addr);
+                $display("Time: %t - Memory read request: address=0x%h", $time, mem_addr);
             end
         end
         if (mem_ready) begin
-            $display("时间: %t - 内存响应: 数据=0x%h", $time, mem_rdata);
+            $display("Time: %t - Memory response: data=0x%h", $time, mem_rdata);
         end
     end
 `endif

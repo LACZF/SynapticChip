@@ -1,25 +1,25 @@
 `include "ring_bus_params.v"
 
 module ring_single_bus #(
-    parameter NUM_NODES = 4,
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 64,
-    parameter NODE_ID_WIDTH = 8,
-    parameter OPCODE_WIDTH  = 8,        // 操作类型的宽带：read/write/reponse等
-    parameter MATCH_TYPE_WIDTH = 2,
-    parameter RING_ID_WIDTH = 4,
-    parameter RING_ID = 0,
-    parameter NODE_TX_FIFO_DEPTH = 4,   // 节点发送FIFO深度
-    parameter NODE_RX_FIFO_DEPTH = 4,   // 节点接收FIFO深度
-    parameter NODE_RSP_FIFO_DEPTH = 4   // 节点响应FIFO深度
+    parameter NUM_NODES                           = 4,
+    parameter ADDR_WIDTH                          = 32,
+    parameter DATA_WIDTH                          = 64,
+    parameter NODE_ID_WIDTH                       = 8,
+    parameter OPCODE_WIDTH                        = 8,        // Width of operation type: read/write/response, etc.
+    parameter MATCH_TYPE_WIDTH                    = 2,
+    parameter RING_ID_WIDTH                       = 4,
+    parameter RING_ID                             = 0,
+    parameter NODE_TX_FIFO_DEPTH                  = 4,   // Node transmit FIFO depth
+    parameter NODE_RX_FIFO_DEPTH                  = 4,   // Node receive FIFO depth
+    parameter NODE_RSP_FIFO_DEPTH                 = 4   // Node response FIFO depth
 ) (
-    input  wire                         clk,
-    input  wire                         rst_n,
+    input  wire                                   clk,
+    input  wire                                   rst_n,
 
     input  wire [NUM_NODES*ADDR_WIDTH-1:0]        node_start_addr_i,
     input  wire [NUM_NODES*ADDR_WIDTH-1:0]        node_end_addr_i,
 
-    // 发送请求
+    // Send requests
     input  wire [NUM_NODES-1:0]                   tx_req_valid_i,
     input  wire [NUM_NODES-1:0]                   tx_req_is_order_i,
     input  wire [NUM_NODES*OPCODE_WIDTH-1:0]      tx_req_opcode_i,
@@ -29,7 +29,7 @@ module ring_single_bus #(
     input  wire [NUM_NODES*ADDR_WIDTH-1:0]        tx_req_addr_i,
     input  wire [NUM_NODES*DATA_WIDTH-1:0]        tx_req_data_i,
 
-    // 接受请求
+    // Receive requests
     output wire [NUM_NODES-1:0]                   rx_req_valid_o,
     output wire [NUM_NODES-1:0]                   rx_req_is_order_o,
     output wire [NUM_NODES*OPCODE_WIDTH-1:0]      rx_req_opcode_o,
@@ -39,7 +39,7 @@ module ring_single_bus #(
     output wire [NUM_NODES*ADDR_WIDTH-1:0]        rx_req_addr_o,
     output wire [NUM_NODES*DATA_WIDTH-1:0]        rx_req_data_o,
 
-    // 接收响应
+    // Receive responses
     output wire [NUM_NODES-1:0]                   rsp_valid_o,
     output wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rsp_source_id_o,
     output wire [NUM_NODES*NODE_ID_WIDTH-1:0]     rsp_target_id_o,
@@ -48,7 +48,7 @@ module ring_single_bus #(
 
     output wire                                   ring_busy_o
 );
-    // 节点间连接信号
+    // Node connection signals
     wire [NUM_NODES-1:0]                   node_req_valid;
     wire [NUM_NODES-1:0]                   node_req_is_order;
     wire [NUM_NODES*OPCODE_WIDTH-1:0]      node_req_opcode;
@@ -58,15 +58,15 @@ module ring_single_bus #(
     wire [NUM_NODES*ADDR_WIDTH-1:0]        node_req_addr;
     wire [NUM_NODES*DATA_WIDTH-1:0]        node_req_data;
 
-    // 总线忙状态信号
+    // Bus busy status signal
     reg ring_busy_reg;
 
-    // 实例化ring节点
+    // Instantiate ring nodes
     genvar i;
     generate
         for (i = 0; i < (NUM_NODES - 1); i = i + 1) begin : node_gen
             ring_bus_node #(
-                .NUM_RINGS(1),  // 每个单总线上的节点只有一个环
+                .NUM_RINGS(1),  // Each node on a single bus has only one ring
                 .NODE_ID(i),
                 .DATA_WIDTH(DATA_WIDTH),
                 .ADDR_WIDTH(ADDR_WIDTH),
@@ -92,7 +92,7 @@ module ring_single_bus #(
                 .pre_req_addr_i(node_req_addr[i*ADDR_WIDTH +: ADDR_WIDTH]),
                 .pre_req_data_i(node_req_data[i*DATA_WIDTH +: DATA_WIDTH]),
 
-                // 输出端口不需要连接输入信号，它们会被连接到其他节点的pre端口
+                // Output ports don't need to connect input signals; they will be connected to pre ports of other nodes
                 .next_req_valid_o(node_req_valid[(i+1)]),
                 .next_req_is_order_o(node_req_is_order[(i+1)]),
                 .next_req_opcode_o(node_req_opcode[(i+1)*OPCODE_WIDTH +: OPCODE_WIDTH]),
@@ -128,7 +128,7 @@ module ring_single_bus #(
         end
     endgenerate
 
-    // 最后一个节点的next连接到节点0的pre，形成环
+    // Connect next of the last node to pre of node 0 to form a ring
     ring_bus_node #(
         .NUM_RINGS(1),
         .NODE_ID(NUM_NODES - 1),
@@ -156,7 +156,7 @@ module ring_single_bus #(
         .pre_req_addr_i(node_req_addr[(NUM_NODES-1)*ADDR_WIDTH +: ADDR_WIDTH]),
         .pre_req_data_i(node_req_data[(NUM_NODES-1)*DATA_WIDTH +: DATA_WIDTH]),
 
-        // 输出端口不需要连接输入信号，它们会被连接到其他节点的pre端口
+        // Output ports don't need to connect input signals; they will be connected to pre ports of other nodes
         .next_req_valid_o(node_req_valid[0]),
         .next_req_is_order_o(node_req_is_order[0]),
         .next_req_opcode_o(node_req_opcode[0*OPCODE_WIDTH +: OPCODE_WIDTH]),
@@ -190,12 +190,12 @@ module ring_single_bus #(
         .rsp_data_o(rsp_data_o[(NUM_NODES-1)*DATA_WIDTH +: DATA_WIDTH])
     );
 
-    // 总线负载监控 - 计算总线忙状态
+    // Bus load monitoring - calculate bus busy status
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             ring_busy_reg <= 1'b0;
         end else begin
-            // 简单实现：只要有请求在传输，总线就视为忙
+            // Simple implementation: Bus is considered busy as long as there are requests being transmitted
             ring_busy_reg <= |tx_req_valid_i;
         end
     end

@@ -6,11 +6,11 @@ TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv/riscv64
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/common
 
-# 参数文件
+# Parameter files
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_soc_params.v
 
-# 被测模块
+# Module under test
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 
-# 测试平台文件
+# Testbench files
 TEST_SRC += $(CUR_DIR)/tb_riscv64_register_file.v

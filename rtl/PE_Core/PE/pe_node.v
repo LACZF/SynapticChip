@@ -1,79 +1,79 @@
 // pe_node.v
-// PE顶层模块，包含存储器和接口逻辑
+// PE top-level module, containing memory and interface logic
 
 `include "pe_params.v"
 
 module pe_node #(
-    parameter ADDR_WIDTH        = 32,
-    parameter DATA_WIDTH        = 64,
-    parameter NUM_PES           = 4,
-    parameter INST_WIDTH        = 32,
-    parameter PE_ID_WIDTH       = 4,
-    parameter PE_ARRAY_ROWS     = 2,
-    parameter PE_ARRAY_COLS     = 2
+    parameter ADDR_WIDTH         = 32,
+    parameter DATA_WIDTH         = 64,
+    parameter NUM_PES            = 4,
+    parameter INST_WIDTH         = 32,
+    parameter PE_ID_WIDTH        = 4,
+    parameter PE_ARRAY_ROWS      = 2,
+    parameter PE_ARRAY_COLS      = 2
 ) (
-    input clk,
-    input rst_n,
-    input enable,
+    input                        clk,
+    input                        rst_n,
+    input                        enable,
 
-    // 指令接口
-    input [INST_WIDTH-1:0] instruction,
-    input inst_valid,
+    // Instruction interface
+    input [INST_WIDTH-1:0]       instruction,
+    input                        inst_valid,
 
-    // 数据存储器接口（连接到共享内存或上级存储器）
-    output ext_mem_req,
-    output ext_mem_we,
-    output [ADDR_WIDTH-1:0] ext_mem_addr,
-    output [DATA_WIDTH-1:0] ext_mem_data_out,
-    input [DATA_WIDTH-1:0] ext_mem_data_in,
-    input ext_mem_ack,
+    // Data memory interface (connected to shared memory or upper-level memory)
+    output                       ext_mem_req,
+    output                       ext_mem_we,
+    output [ADDR_WIDTH-1:0]      ext_mem_addr,
+    output [DATA_WIDTH-1:0]      ext_mem_data_out,
+    input  [DATA_WIDTH-1:0]      ext_mem_data_in,
+    input                        ext_mem_ack,
 
-    // 邻居PE通信接口
-    input north_valid,
-    input [DATA_WIDTH-1:0] north_data,
-    output north_ready,
+    // Neighbor PE communication interface
+    input                        north_valid,
+    input  [DATA_WIDTH-1:0]      north_data,
+    output                       north_ready,
 
-    input south_valid,
-    input [DATA_WIDTH-1:0] south_data,
-    output south_ready,
+    input                        south_valid,
+    input  [DATA_WIDTH-1:0]      south_data,
+    output                       south_ready,
 
-    input east_valid,
-    input [DATA_WIDTH-1:0] east_data,
-    output east_ready,
+    input                        east_valid,
+    input  [DATA_WIDTH-1:0]      east_data,
+    output                       east_ready,
 
-    input west_valid,
-    input [DATA_WIDTH-1:0] west_data,
-    output west_ready,
+    input                        west_valid,
+    input  [DATA_WIDTH-1:0]      west_data,
+    output                       west_ready,
 
-    output out_valid,
-    output [DATA_WIDTH-1:0] out_data,
+    output                       out_valid,
+    output [DATA_WIDTH-1:0]      out_data,
 
-    // 状态输出
-    output [DATA_WIDTH-1:0] status,
-    output busy
+    // Status output
+    output [DATA_WIDTH-1:0]      status,
+    output                       busy
 );
 
-    // 本地存储器
+    // Local memory
     reg [DATA_WIDTH-1:0] local_mem [0:`MEM_DEPTH-1];
-    reg local_mem_ack;
+    reg                  local_mem_ack;
 
-    // 存储器接口信号
-    wire mem_req;
-    wire mem_we;
+    // Memory interface signals
+    wire                  mem_req;
+    wire                  mem_we;
     wire [ADDR_WIDTH-1:0] mem_addr;
     wire [DATA_WIDTH-1:0] mem_data_out;
     wire [DATA_WIDTH-1:0] mem_data_in;
-    wire mem_ack;
+    wire                  mem_ack;
 
-    // 地址解码
+    // Address decoding
     wire local_access = (mem_addr < `MEM_DEPTH);
     wire ext_access = !local_access;
 
-    // 本地存储器访问
+    // Local memory access
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             local_mem_ack <= 0;
-            // 初始化本地存储器
+            // Initialize local memory
             for (integer i = 0; i < `MEM_DEPTH; i = i + 1) begin
                 local_mem[i] <= 0;
             end
@@ -89,17 +89,17 @@ module pe_node #(
         end
     end
 
-    // 存储器数据选择
+    // Memory data selection
     assign mem_data_in = local_access ? local_mem[mem_addr] : ext_mem_data_in;
     assign mem_ack = local_access ? local_mem_ack : ext_mem_ack;
 
-    // 外部存储器接口
+    // External memory interface
     assign ext_mem_req = mem_req && ext_access;
     assign ext_mem_we = mem_we;
     assign ext_mem_addr = mem_addr;
     assign ext_mem_data_out = mem_data_out;
 
-    // PE核心实例化
+    // PE core instantiation
     pe_core #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),

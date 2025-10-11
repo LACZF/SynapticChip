@@ -1,30 +1,30 @@
 // pe_ctrl_route_config.v
-// 路由配置模块实现
+// Routing configuration module implementation
 
 `include "pe_ctrl_params.v"
 
 module pe_route_config #(
-    parameter NUM_PES           = 4,
-    parameter PE_ID_WIDTH       = 4,
-    parameter PE_ARRAY_ROWS     = 2,
-    parameter PE_ARRAY_COLS     = 2
+    parameter NUM_PES                              = 4,
+    parameter PE_ID_WIDTH                          = 4,
+    parameter PE_ARRAY_ROWS                        = 2,
+    parameter PE_ARRAY_COLS                        = 2
 ) (
-    input clk,
-    input rst_n,
-    input cfg_valid,
-    input [(NUM_PES*4*PE_ID_WIDTH)-1:0] cfg_data,
+    input                                          clk,
+    input                                          rst_n,
+    input                                          cfg_valid,
+    input       [(NUM_PES*4*PE_ID_WIDTH)-1:0]      cfg_data,
 
-    // 到各个PE的路由配置输出
-    output reg [(NUM_PES*4*PE_ID_WIDTH)-1:0] north_routes,
-    output reg [(NUM_PES*4*PE_ID_WIDTH)-1:0] south_routes,
-    output reg [(NUM_PES*4*PE_ID_WIDTH)-1:0] east_routes,
-    output reg [(NUM_PES*4*PE_ID_WIDTH)-1:0] west_routes
+    // Routing configuration output to each PE
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      north_routes,
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      south_routes,
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      east_routes,
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      west_routes
 );
 
-    // 路由配置寄存器
+    // Routing configuration register
     reg [(NUM_PES*4*PE_ID_WIDTH)-1:0] route_table;
 
-    // 更新路由配置
+    // Update routing configuration
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             route_table <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
@@ -35,12 +35,12 @@ module pe_route_config #(
         end else if (cfg_valid) begin
             route_table <= cfg_data;
 
-            // 根据PE位置配置路由
+            // Configure routing based on PE position
             for (integer y = 0; y < PE_ARRAY_ROWS; y = y + 1) begin
                 for (integer x = 0; x < PE_ARRAY_COLS; x = x + 1) begin
                     // integer pe_idx = y * PE_ARRAY_COLS + x;
 
-                    // 北方向路由
+                    // North direction routing
                     if (y > 0) begin
                         north_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             (y-1) * PE_ARRAY_COLS + x;
@@ -49,7 +49,7 @@ module pe_route_config #(
                             cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
-                    // 南方向路由
+                    // South direction routing
                     if (y < PE_ARRAY_ROWS-1) begin
                         south_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             (y+1) * PE_ARRAY_COLS + x;
@@ -58,7 +58,7 @@ module pe_route_config #(
                             cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
-                    // 东方向路由
+                    // East direction routing
                     if (x < PE_ARRAY_COLS-1) begin
                         east_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             y * PE_ARRAY_COLS + (x+1);
@@ -67,7 +67,7 @@ module pe_route_config #(
                             cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + 2*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
-                    // 西方向路由
+                    // West direction routing
                     if (x > 0) begin
                         west_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             y * PE_ARRAY_COLS + (x-1);

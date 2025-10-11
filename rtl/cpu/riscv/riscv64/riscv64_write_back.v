@@ -3,45 +3,45 @@ module riscv64_write_back #(
     parameter ADDR_WIDTH        = 64,
     parameter DATA_WIDTH        = 64
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire stall,
+    input wire                  clk,
+    input wire                  rst_n,
+    input wire                  stall,
 
-    // 来自内存访问阶段
-    input wire [63:0] pc_in,
-    input wire [31:0] instr_in,
-    input wire [63:0] alu_result,
-    input wire [63:0] mem_result,
-    input wire [15:0] ctrl_in,
+    // From memory access stage
+    input  wire [63:0]          pc_in,
+    input  wire [31:0]          instr_in,
+    input  wire [63:0]          alu_result,
+    input  wire [63:0]          mem_result,
+    input  wire [15:0]          ctrl_in,
 
-    // 输出到寄存器文件
-    output reg [4:0] rd,
-    output reg reg_we,
-    output reg [63:0] reg_wdata,
+    // Output to register file
+    output reg  [4:0]           rd,
+    output reg                  reg_we,
+    output reg  [63:0]          reg_wdata,
 
-    // 调试输出
-    output reg [63:0] pc_out,
-    output reg [31:0] instr_out,
-    output reg wb_valid
+    // Debug output
+    output reg  [63:0]          pc_out,
+    output reg  [31:0]          instr_out,
+    output reg                  wb_valid
 );
 
-    // 控制信号
-    wire reg_write = ctrl_in[10];
-    wire mem_to_reg = ctrl_in[4];
-    wire pc_to_reg = ctrl_in[3];
-    wire alu_src_pc = ctrl_in[2];
-    wire [2:0] alu_op = ctrl_in[14:12];
+    // Control signals
+    wire       reg_write  = ctrl_in[10];
+    wire       mem_to_reg = ctrl_in[4];
+    wire       pc_to_reg  = ctrl_in[3];
+    wire       alu_src_pc = ctrl_in[2];
+    wire [2:0] alu_op     = ctrl_in[14:12];
 
-    // 指令字段
-    wire [4:0] instr_rd = instr_in[11:7];
-    wire [6:0] opcode = instr_in[6:0];
-    wire [2:0] funct3 = instr_in[14:12];
-    wire [6:0] funct7 = instr_in[31:25];
+    // Instruction fields
+    wire [4:0] instr_rd   = instr_in[11:7];
+    wire [6:0] opcode     = instr_in[6:0];
+    wire [2:0] funct3     = instr_in[14:12];
+    wire [6:0] funct7     = instr_in[31:25];
 
-    // 内部信号
+    // Internal signals
     reg [63:0] computed_result;
 
-    // 结果选择函数
+    // Result selection function
     function [63:0] select_result;
         input [63:0] alu_val;
         input [63:0] mem_val;
@@ -62,7 +62,7 @@ module riscv64_write_back #(
         end
     endfunction
 
-    // 特殊指令结果计算
+    // Special instruction result calculation
     function [63:0] compute_special_result;
         input [63:0] alu_val;
         input [63:0] pc_val;
@@ -100,37 +100,37 @@ module riscv64_write_back #(
             instr_out <= 32'h00000013;
             wb_valid <= 1'b0;
         end else if (!stall) begin
-            // 传递流水线寄存器
+            // Pass pipeline registers
             pc_out <= pc_in;
             instr_out <= instr_in;
             wb_valid <= 1'b1;
 
-            // 计算写回数据
+            // Calculate write-back data
             computed_result = select_result(alu_result, mem_result, pc_in + 4,
                                           mem_to_reg, pc_to_reg, alu_src_pc);
 
-            // 处理特殊指令
+            // Process special instructions
             reg_wdata <= compute_special_result(computed_result, pc_in, instr_in, opcode);
 
-            // 设置写回地址和使能
+            // Set write-back address and enable
             rd <= instr_rd;
 
-            // 确定是否写寄存器
+            // Determine whether to write register
             case (opcode)
                 7'b0110111, 7'b0010111, 7'b1101111, 7'b1100111: begin
-                    // LUI, AUIPC, JAL, JALR 总是写寄存器（除了x0）
+                    // LUI, AUIPC, JAL, JALR always write registers (except x0)
                     reg_we <= (instr_rd != 5'b0);
                 end
                 7'b0110011, 7'b0010011, 7'b0000011: begin
-                    // 算术、立即数、加载指令：根据控制信号
+                    // Arithmetic, immediate, load instructions: according to control signals
                     reg_we <= reg_write && (instr_rd != 5'b0);
                 end
                 7'b0100011: begin
-                    // 存储指令：不写寄存器
+                    // Store instructions: do not write registers
                     reg_we <= 1'b0;
                 end
                 7'b1100011: begin
-                    // 分支指令：不写寄存器
+                    // Branch instructions: do not write registers
                     reg_we <= 1'b0;
                 end
                 default: begin
@@ -139,7 +139,7 @@ module riscv64_write_back #(
             endcase
 
         `ifdef DEBUG
-            // 调试信息输出
+            // Debug information output
             if (reg_we && (instr_rd != 5'b0)) begin
                 $display("WB: PC=%h, Instr=%h, RD=x%0d, Value=%h",
                          pc_in, instr_in, instr_rd, reg_wdata);

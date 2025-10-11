@@ -1,30 +1,30 @@
 `timescale 1ns/1ps
 
-// RISC-V 64位寄存器文件单元测试平台
+// RISC-V 64-bit Register File Unit Test Bench
 module tb_riscv64_register_file;
 
-    // 时钟和复位信号
+    // Clock and Reset Signals
     reg         clk;
     reg         rst_n;
 
-    // 输入信号
+    // Input Signals
     reg  [4:0]  rs1;
     reg  [4:0]  rs2;
     reg  [4:0]  rd;
     reg         we;
     reg  [63:0] wdata;
 
-    // 输出信号
+    // Output Signals
     wire [63:0] rs1_data;
     wire [63:0] rs2_data;
 
-    // 时钟生成 (100MHz)
+    // Clock Generation (100MHz)
     initial begin
         clk = 0;
         forever #5 clk = ~clk;
     end
 
-    // 实例化被测模块 (DUT)
+    // Instantiate Device Under Test (DUT)
     riscv64_register_file u_riscv64_register_file (
         .clk       (clk),
         .rst_n     (rst_n),
@@ -37,12 +37,12 @@ module tb_riscv64_register_file;
         .rs2_data  (rs2_data)
     );
 
-    // 测试用例变量
+    // Test Variables
     integer test_passed;
     integer total_tests;
     integer error_count;
 
-    // 测试用例：写寄存器
+    // Test Task: Write Register
     task write_register(input [4:0] reg_addr, input [63:0] data);
         begin
             @(posedge clk);
@@ -54,7 +54,7 @@ module tb_riscv64_register_file;
         end
     endtask
 
-    // 测试用例：读寄存器
+    // Test Task: Read Register
     task read_register(input [4:0] reg_addr, output [63:0] data);
         begin
             @(posedge clk);
@@ -64,7 +64,7 @@ module tb_riscv64_register_file;
         end
     endtask
 
-    // 测试用例：验证寄存器值
+    // Test Task: Verify Register Value
     task verify_register(input [4:0] reg_addr, input [63:0] expected_value);
         reg [63:0] actual_value;
         begin
@@ -73,20 +73,20 @@ module tb_riscv64_register_file;
             if (actual_value === expected_value) begin
                 test_passed = test_passed + 1;
             `ifdef DEBUG
-                $display("时间: %t - 通过: 寄存器 x%0d 值为 0x%h (符合预期)", $time, reg_addr, actual_value);
+                $display("Time: %t - Pass: Register x%0d value is 0x%h (as expected)", $time, reg_addr, actual_value);
             `endif
             end else begin
                 error_count = error_count + 1;
             `ifdef DEBUG
-                $display("时间: %t - 错误: 寄存器 x%0d 预期值为 0x%h, 实际值为 0x%h", $time, reg_addr, expected_value, actual_value);
+                $display("Time: %t - Error: Register x%0d expected 0x%h, got 0x%h", $time, reg_addr, expected_value, actual_value);
             `endif
             end
         end
     endtask
 
-    // 主测试程序
+    // Main Test Program
     initial begin
-        // 初始化
+        // Initialization
         rst_n = 1;
         rs1 = 0;
         rs2 = 0;
@@ -97,20 +97,20 @@ module tb_riscv64_register_file;
         total_tests = 0;
         error_count = 0;
 
-        // 执行复位
-        $display("开始测试: riscv64_register_file 单元测试");
-        $display("测试1: 执行复位操作");
+        // Perform Reset
+        $display("start test: riscv64_register_file ut");
+        $display("Test 1: Perform Reset Operation");
         rst_n = 0;
         #20 rst_n = 1;
         #10;
 
-        // 测试2: 验证x0寄存器总是0
-        $display("测试2: 验证x0寄存器总是0");
-        write_register(0, 64'h1234567890ABCDEF);  // 尝试写入x0寄存器
-        verify_register(0, 64'h0000000000000000);  // 验证x0仍然为0
+        // Test 2: Verify x0 Register Always Zero
+        $display("Test 2: Verify x0 Register Always Zero");
+        write_register(0, 64'h1234567890ABCDEF);  // Attempt to write to x0 register
+        verify_register(0, 64'h0000000000000000);  // Verify x0 remains 0
 
-        // 测试3: 基本的寄存器读写测试
-        $display("测试3: 基本的寄存器读写测试");
+        // Test 3: Basic Register Read/Write Test
+        $display("Test 3: Basic Register Read/Write Test");
         write_register(1, 64'h1111111111111111);
         verify_register(1, 64'h1111111111111111);
 
@@ -120,20 +120,20 @@ module tb_riscv64_register_file;
         write_register(31, 64'h3131313131313131);
         verify_register(31, 64'h3131313131313131);
 
-        // 测试4: 同时读写多个寄存器
-        $display("测试4: 同时读写多个寄存器");
+        // Test 4: Simultaneous Read/Write of Multiple Registers
+        $display("Test 4: Simultaneous Read/Write of Multiple Registers");
         write_register(5, 64'h5555555555555555);
         write_register(6, 64'h6666666666666666);
         verify_register(5, 64'h5555555555555555);
         verify_register(6, 64'h6666666666666666);
 
-        // 测试5: 覆盖写入测试
-        $display("测试5: 覆盖写入测试");
+        // Test 5: Overwrite Test
+        $display("Test 5: Overwrite Test");
         write_register(1, 64'hAAAAAAAAAAAAAAA);
         verify_register(1, 64'h0AAAAAAAAAAAAAAA);
 
-        // 测试6: 数据前递测试（读取正在写入的寄存器）
-        $display("测试6: 数据前递测试");
+        // Test 6: Data Forwarding Test (Reading Register While Writing)
+        $display("Test 6: Data Forwarding Test");
         @(posedge clk);
         rd = 8;
         we = 1'b1;
@@ -144,65 +144,65 @@ module tb_riscv64_register_file;
         total_tests = total_tests + 2;
         if (rs1_data === wdata && rs2_data === wdata) begin
             test_passed = test_passed + 2;
-            $display("时间: %t - 通过: 数据前递功能正常工作", $time);
+            $display("Time: %t - Pass: Data forwarding working correctly", $time);
         end else begin
             error_count = error_count + 2;
-            $display("时间: %t - 错误: 数据前递功能异常, rs1_data=0x%h, rs2_data=0x%h, expected=0x%h",
+            $display("Time: %t - Error: Data forwarding not working correctly, rs1_data=0x%h, rs2_data=0x%h, expected=0x%h",
                      $time, rs1_data, rs2_data, wdata);
         end
         @(posedge clk);
         we = 1'b0;
 
-        // 测试7: 随机值测试
-        $display("测试7: 随机值测试");
+        // Test 7: Random Value Test
+        $display("Test 7: Random Value Test");
         write_register(10, 64'hA1B2C3D4E5F60718);
         verify_register(10, 64'hA1B2C3D4E5F60718);
 
         write_register(11, 64'h9182736455463728);
         verify_register(11, 64'h9182736455463728);
 
-        // 测试8: 复位功能测试
-        $display("测试8: 复位功能测试");
+        // Test 8: Reset Functionality Test
+        $display("Test 8: Reset Functionality Test");
         rst_n = 0;
         #20 rst_n = 1;
         #10;
 
-        // 验证所有寄存器在复位后的值
+        // Verify All Registers After Reset
         verify_register(1, 64'h0000000000000000);
         verify_register(2, 64'h0000000000000000);
         verify_register(31, 64'h0000000000000000);
 
-        // 测试总结
+        // Test Summary
         #100;
         $display("\n========================================");
-        $display("测试总结: riscv64_register_file 单元测试");
-        $display("总测试数: %0d", total_tests);
-        $display("通过测试: %0d", test_passed);
-        $display("失败测试: %0d", error_count);
-        $display("测试结果: %s", (error_count == 0) ? "PASS" : "FAIL");
+        $display("Test Summary: riscv64_register_file Unit Test");
+        $display("Total Tests: %0d", total_tests);
+        $display("Passed Tests: %0d", test_passed);
+        $display("Failed Tests: %0d", error_count);
+        $display("Test Result: %s", (error_count == 0) ? "PASS" : "FAIL");
         $display("========================================");
 
         $finish;
     end
 
-    // 全局超时监控
+    // Global Timeout Monitoring
     initial begin
-        #10000;  // 10ms超时
-        $display("错误: 测试执行超时! 强制结束仿真.");
+        #10000;  // 10ms timeout
+        $display("Error: Test execution timeout! Forcing simulation end.");
         $finish;
     end
 
-    // 波形输出
+    // Waveform Output
     initial begin
         $dumpfile("tb_riscv64_register_file.vcd");
         $dumpvars(0, tb_riscv64_register_file);
     end
 
 `ifdef DEBUG
-    // 实时监控
+    // Real-time Monitoring
     always @(posedge clk) begin
         if (we) begin
-            $display("时间: %t - 写操作: 寄存器 x%0d, 数据=0x%h", $time, rd, wdata);
+            $display("Time: %t - Write Operation: Register x%0d, Data=0x%h", $time, rd, wdata);
         end
     end
 `endif

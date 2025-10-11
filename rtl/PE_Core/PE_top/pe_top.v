@@ -1,21 +1,21 @@
 // pe_top.v
-// 集成PE阵列和路由的Fabric模块
+// Fabric module integrating PE array and routing
 
 module pe_top #(
-    parameter NUM_RINGS         = 2,
-    parameter ADDR_WIDTH        = 32,
-    parameter DATA_WIDTH        = 64,
-    parameter NODE_ID_WIDTH     = 8,
-    parameter OPCODE_WIDTH      = 8,
-    parameter MATCH_TYPE_WIDTH  = 2,
-    parameter NUM_PES           = 4,
-    parameter INST_WIDTH        = 32,
-    parameter PE_ID_WIDTH       = 4,
-    parameter PE_ARRAY_ROWS     = 2,
-    parameter PE_ARRAY_COLS     = 2
+    parameter NUM_RINGS                           = 2,
+    parameter ADDR_WIDTH                          = 32,
+    parameter DATA_WIDTH                          = 64,
+    parameter NODE_ID_WIDTH                       = 8,
+    parameter OPCODE_WIDTH                        = 8,
+    parameter MATCH_TYPE_WIDTH                    = 2,
+    parameter NUM_PES                             = 4,
+    parameter INST_WIDTH                          = 32,
+    parameter PE_ID_WIDTH                         = 4,
+    parameter PE_ARRAY_ROWS                       = 2,
+    parameter PE_ARRAY_COLS                       = 2
 ) (
-    input clk,
-    input rst_n,
+    input                                         clk,
+    input                                         rst_n,
 
     input  reg [NUM_PES-1:0]                      pe_enable,
     input  reg [NUM_PES-1:0]                      pe_reset,
@@ -29,7 +29,7 @@ module pe_top #(
 
     output [DATA_WIDTH-1:0]                       fabric_status
 );
-    // PE间连接信号
+    // PE interconnection signals
     wire [NUM_PES-1:0] pe_north_valid;
     wire [(NUM_PES*DATA_WIDTH)-1:0] pe_north_data;
     wire [NUM_PES-1:0] pe_north_ready;
@@ -46,7 +46,7 @@ module pe_top #(
     wire [(NUM_PES*DATA_WIDTH)-1:0] pe_west_data;
     wire [NUM_PES-1:0] pe_west_ready;
 
-    // 实例化PE阵列
+    // Instantiate PE array
     genvar i, j;
     generate
         for (i = 0; i < PE_ARRAY_ROWS; i = i + 1) begin : pe_row
@@ -87,7 +87,7 @@ module pe_top #(
         end
     endgenerate
 
-    // 实例化路由配置模块
+    // Instantiate routing configuration module
     wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] north_routes;
     wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] south_routes;
     wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] east_routes;
@@ -107,15 +107,15 @@ module pe_top #(
         .west_routes(west_routes)
     );
 
-    // PE阵列行列参数已在模块参数中定义
+    // PE array row and column parameters are defined in module parameters
 
-    // 连接PE间的路由
+    // Connect PE inter-routing
     generate
         for (i = 0; i < PE_ARRAY_ROWS; i = i + 1) begin : connect_row
             for (j = 0; j < PE_ARRAY_COLS; j = j + 1) begin : connect_col
                 localparam pe_idx = i * PE_ARRAY_COLS + j;
 
-                // 北向连接
+                // North connection
                 if (i > 0) begin
                     assign pe_north_valid[pe_idx] = pe_south_valid[(i-1)*PE_ARRAY_COLS+j];
                     assign pe_north_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
@@ -126,7 +126,7 @@ module pe_top #(
                     assign pe_north_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] = 0;
                 end
 
-                // 南向连接
+                // South connection
                 if (i < PE_ARRAY_ROWS-1) begin
                     assign pe_south_valid[pe_idx] = pe_north_valid[(i+1)*PE_ARRAY_COLS+j];
                     assign pe_south_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
@@ -137,7 +137,7 @@ module pe_top #(
                     assign pe_south_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] = 0;
                 end
 
-                // 东向连接
+                // East connection
                 if (j < PE_ARRAY_COLS-1) begin
                     assign pe_east_valid[pe_idx] = pe_west_valid[i*PE_ARRAY_COLS+(j+1)];
                     assign pe_east_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
@@ -148,7 +148,7 @@ module pe_top #(
                     assign pe_east_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] = 0;
                 end
 
-                // 西向连接
+                // West connection
                 if (j > 0) begin
                     assign pe_west_valid[pe_idx] = pe_east_valid[i*PE_ARRAY_COLS+(j-1)];
                     assign pe_west_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
@@ -162,10 +162,10 @@ module pe_top #(
         end
     endgenerate
 
-    // 状态输出
+    // Status output
     assign fabric_status = {
-        pe_busy,        // PE忙碌状态
-        pe_enable       // PE使能状态
+        pe_busy,        // PE busy status
+        pe_enable       // PE enable status
     };
 
 endmodule

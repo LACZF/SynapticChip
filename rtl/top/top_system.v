@@ -1,71 +1,71 @@
 // top_system.v
-// 顶层系统模块，集成所有组件
+// Top-level system module, integrating all components
 
 `include "top_system_params.v"
 
 module top_system #(
-    parameter BUS_TYPE                      = `BUS_TYPE_DIRECT, // 总线类型：`BUS_TYPE_RING 或 `BUS_TYPE_DIRECT
-    parameter NUM_RINGS                     = 2,        // Ring总线数量
-    parameter NUM_NODES                     = 8,        // 每个Ring的节点数
-    parameter ADDR_WIDTH                    = 32,       // 地址宽度
-    parameter DATA_WIDTH                    = 64,       // 数据宽度
-    parameter L1_ICACHE_DATA_WIDTH          = 32,
-    parameter L1_DCACHE_DATA_WIDTH          = 64,
-    parameter L2_CACHE_DATA_WIDTH           = 512,
-    parameter L3_CACHE_DATA_WIDTH           = 512,
-    parameter MEM_WIDTH                     = 512,
-    parameter OPCODE_WIDTH                  = 8,        // 操作类型的宽带：read/write/reponse等
-    parameter RING_ID_WIDTH                 = 4,        // ring ID宽度
-    parameter NODE_ID_WIDTH                 = 8,        // 节点ID宽度
-    parameter TX_FIFO_DEPTH                 = 4,        // 发送FIFO深度
-    parameter RX_FIFO_DEPTH                 = 4,        // 接收FIFO深度
-    parameter RSP_FIFO_DEPTH                = 4,        // 响应FIFO深度
-    parameter NUM_CORES                     = 1,
-    parameter MATCH_TYPE_WIDTH              = 2,        // 匹配类型宽度
-    parameter INST_WIDTH                    = 32,      // 指令宽度
-    parameter CORE_ID_WIDTH                 = 2,        // 核心ID宽度
-    parameter ENABLE_L2_CACHE               = 0,        // 启用L2缓存
-    parameter ENABLE_L3_CACHE               = 0,        // 启用L3缓存
-    parameter GPIO_WIDTH                    = 32,
-    parameter SPI_CS_NUM                    = 1,
-    parameter NUM_PES                       = 4,
-    parameter PE_ARRAY_ROWS                 = 2,
-    parameter PE_ARRAY_COLS                 = 2,
-    parameter PE_ID_WIDTH                   = 4,
-    parameter CPU_TYPE                      = 0         // CPU类型
+    parameter BUS_TYPE                        = `BUS_TYPE_DIRECT, // Bus type: `BUS_TYPE_RING or `BUS_TYPE_DIRECT
+    parameter NUM_RINGS                       = 2,        // Number of Ring buses
+    parameter NUM_NODES                       = 8,        // Number of nodes per Ring
+    parameter ADDR_WIDTH                      = 32,       // Address width
+    parameter DATA_WIDTH                      = 64,       // Data width
+    parameter L1_ICACHE_DATA_WIDTH            = 32,
+    parameter L1_DCACHE_DATA_WIDTH            = 64,
+    parameter L2_CACHE_DATA_WIDTH             = 512,
+    parameter L3_CACHE_DATA_WIDTH             = 512,
+    parameter MEM_WIDTH                       = 512,
+    parameter OPCODE_WIDTH                    = 8,        // Width of operation type: read/write/response, etc.
+    parameter RING_ID_WIDTH                   = 4,        // Ring ID width
+    parameter NODE_ID_WIDTH                   = 8,        // Node ID width
+    parameter TX_FIFO_DEPTH                   = 4,        // Transmit FIFO depth
+    parameter RX_FIFO_DEPTH                   = 4,        // Receive FIFO depth
+    parameter RSP_FIFO_DEPTH                  = 4,        // Response FIFO depth
+    parameter NUM_CORES                       = 1,
+    parameter MATCH_TYPE_WIDTH                = 2,        // Match type width
+    parameter INST_WIDTH                      = 32,      // Instruction width
+    parameter CORE_ID_WIDTH                   = 2,        // Core ID width
+    parameter ENABLE_L2_CACHE                 = 0,        // Enable L2 cache
+    parameter ENABLE_L3_CACHE                 = 0,        // Enable L3 cache
+    parameter GPIO_WIDTH                      = 32,
+    parameter SPI_CS_NUM                      = 1,
+    parameter NUM_PES                         = 4,
+    parameter PE_ARRAY_ROWS                   = 2,
+    parameter PE_ARRAY_COLS                   = 2,
+    parameter PE_ID_WIDTH                     = 4,
+    parameter CPU_TYPE                        = 0         // CPU type
 )(
-    input clk,
-    input rst_n,
+    input                                     clk,
+    input                                     rst_n,
 
-    // UART接口
-    output uart_txd,
-    input uart_rxd,
+    // UART interface
+    output                                    uart_txd,
+    input                                     uart_rxd,
 
-    // GPIO接口
-    inout [DATA_WIDTH-1:0] gpio_pins,
+    // GPIO interface
+    inout  [DATA_WIDTH-1:0]                   gpio_pins,
 
-    // 外部中断
-    input ext_int,
+    // External interrupt
+    input                                     ext_int,
 
-    // 状态输出
-    output [DATA_WIDTH-1:0] system_status,
+    // Status output
+    output [DATA_WIDTH-1:0]                   system_status,
 
-    // JTAG接口
-    input jtag_tck,
-    input jtag_tms,
-    input jtag_tdi,
-    output jtag_tdo,
-    output jtag_tdo_en,
+    // JTAG interface
+    input                                     jtag_tck,
+    input                                     jtag_tms,
+    input                                     jtag_tdi,
+    output                                    jtag_tdo,
+    output                                    jtag_tdo_en,
 
-    // JTAG调试输出
-    output [DATA_WIDTH-1:0] jtag_debug_data,
-    output jtag_debug_valid,
+    // JTAG debug outputs
+    output [DATA_WIDTH-1:0]                   jtag_debug_data,
+    output                                    jtag_debug_valid,
 
-    // SPI物理接口
-    output [SPI_CS_NUM-1:0] spi_cs_n,
-    output spi_clk,
-    output spi_mosi,
-    input spi_miso
+    // SPI physical interface
+    output [SPI_CS_NUM-1:0]                   spi_cs_n,
+    output                                    spi_clk,
+    output                                    spi_mosi,
+    input                                     spi_miso
 );
     reg [NUM_NODES*ADDR_WIDTH-1:0]        node_start_addr;
     reg [NUM_NODES*ADDR_WIDTH-1:0]        node_end_addr;
@@ -125,7 +125,7 @@ module top_system #(
     wire                                  uart_cts;
     wire                                  uart_int_out;
 
-    // 实例化Ring总线
+    // Instantiate Ring bus
     bus_top #(
         .BUS_TYPE(BUS_TYPE),
         .NUM_RINGS(NUM_RINGS),
@@ -253,7 +253,7 @@ module top_system #(
         .mem_rdata(cpu_mem_rdata)
     );
 
-    // 实例化GPIO模块
+    // Instantiate GPIO module
     gpio_module #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -271,7 +271,7 @@ module top_system #(
         .int_out(gpio_int)
     );
 
-    // 实例化UART模块
+    // Instantiate UART module
     uart_core uart (
         .clk(clk),
         .rst_n(rst_n),
@@ -289,7 +289,7 @@ module top_system #(
         .int_out(uart_int)
     );
 
-    // 实例化JTAG
+    // Instantiate JTAG
     jtag_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -343,7 +343,7 @@ module top_system #(
         .fabric_status(fabric_status)
     );
 
-    // 实例化SPI核心控制器
+    // Instantiate SPI core controller
     spi_core #(
         .DATA_WIDTH(DATA_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH),

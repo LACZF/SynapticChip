@@ -1,16 +1,16 @@
 `include "ring_bus_params.v"
 
 module ring_bus_node #(
-    parameter NUM_RINGS         = 2,        // Ring总线数量
-    parameter ADDR_WIDTH        = 32,       // 地址宽度
-    parameter DATA_WIDTH        = 64,       // 数据宽度
-    parameter NODE_ID_WIDTH     = 8,        // 节点ID宽度
-    parameter NODE_ID           = 0,        // 节点ID
-    parameter OPCODE_WIDTH      = 8,        // 操作类型的宽带：read/write/reponse等
-    parameter MATCH_TYPE_WIDTH  = 2,        // 匹配类型宽度
-    parameter TX_FIFO_DEPTH     = 4,        // 发送FIFO深度
-    parameter RX_FIFO_DEPTH     = 4,        // 接收FIFO深度
-    parameter RSP_FIFO_DEPTH    = 4         // 响应FIFO深度
+    parameter NUM_RINGS                 = 2,        // Number of Ring buses
+    parameter ADDR_WIDTH                = 32,       // Address width
+    parameter DATA_WIDTH                = 64,       // Data width
+    parameter NODE_ID_WIDTH             = 8,        // Node ID width
+    parameter NODE_ID                   = 0,        // Node ID
+    parameter OPCODE_WIDTH              = 8,        // Width of operation type: read/write/response, etc.
+    parameter MATCH_TYPE_WIDTH          = 2,        // Match type width
+    parameter TX_FIFO_DEPTH             = 4,        // Transmit FIFO depth
+    parameter RX_FIFO_DEPTH             = 4,        // Receive FIFO depth
+    parameter RSP_FIFO_DEPTH            = 4         // Response FIFO depth
 ) (
     input  wire                         clk,
     input  wire                         rst_n,
@@ -36,7 +36,7 @@ module ring_bus_node #(
     output wire [ADDR_WIDTH-1:0]        next_req_addr_o,
     output wire [DATA_WIDTH-1:0]        next_req_data_o,
 
-    // 发送请求
+    // Transmit request
     input  wire                         tx_req_valid_i,
     input  wire                         tx_req_is_order_i,
     input  wire [OPCODE_WIDTH-1:0]      tx_req_opcode_i,
@@ -45,7 +45,7 @@ module ring_bus_node #(
     input  wire [ADDR_WIDTH-1:0]        tx_req_addr_i,
     input  wire [DATA_WIDTH-1:0]        tx_req_data_i,
 
-    // 接受请求
+    // Receive request
     output wire                         rx_req_valid_o,
     output wire                         rx_req_is_order_o,
     output wire [OPCODE_WIDTH-1:0]      rx_req_opcode_o,
@@ -55,7 +55,7 @@ module ring_bus_node #(
     output wire [ADDR_WIDTH-1:0]        rx_req_addr_o,
     output wire [DATA_WIDTH-1:0]        rx_req_data_o,
 
-    // 接收响应
+    // Receive response
     output wire                         rsp_valid_o,
     output wire [NODE_ID_WIDTH-1:0]     rsp_source_id_o,
     output wire [NODE_ID_WIDTH-1:0]     rsp_target_id_o,
@@ -71,7 +71,7 @@ module ring_bus_node #(
     localparam rsp_fifo_data_width = NODE_ID_WIDTH + NODE_ID_WIDTH + ADDR_WIDTH + DATA_WIDTH;
     reg [NODE_ID_WIDTH-1:0] node_id = NODE_ID;
 
-    // 发送FIFO信号
+    // Transmit FIFO signals
     reg                         tx_req_rd_en;
     reg                         tx_req_rd_done;
     reg                         tx_fifo_full;
@@ -85,7 +85,7 @@ module ring_bus_node #(
     reg [ADDR_WIDTH-1:0]        tx_req_addr;
     reg [DATA_WIDTH-1:0]        tx_req_data;
 
-    // 接收FIFO信号
+    // Receive FIFO signals
     reg                         rx_req_rd_en;
     wire                        rx_req_rd_done;
     reg                         rx_fifo_full;
@@ -99,7 +99,7 @@ module ring_bus_node #(
     reg [ADDR_WIDTH-1:0]        rx_req_addr;
     reg [DATA_WIDTH-1:0]        rx_req_data;
 
-    // 响应FIFO信号
+    // Response FIFO signals
     reg                         rsp_rd_en;
     wire                        rsp_rd_done;
     wire                        rsp_fifo_full;
@@ -112,15 +112,15 @@ module ring_bus_node #(
     wire [NODE_ID_WIDTH-1:0]    rsp_source_id_fifo;
     wire [NODE_ID_WIDTH-1:0]    rsp_target_id_fifo;
     wire [ADDR_WIDTH-1:0]       rsp_addr_fifo;
-    wire [DATA_WIDTH-1:0]       rsp_data_fifo; // 中间wire变量，连接FIFO输出
+    wire [DATA_WIDTH-1:0]       rsp_data_fifo; // Intermediate wire variable, connecting FIFO output
 
-    // 目标匹配逻辑
+    // Target matching logic
     wire is_for_me;
     assign is_for_me = ((pre_req_match_type_i == `RING_MATCH_TYPE_ID) || (pre_req_opcode_i == `RING_OP_RESP)) ?
         (pre_req_target_id_i == node_id) :
         (node_start_addr_i <= pre_req_addr_i && pre_req_addr_i <= node_end_addr_i);
 
-    // 新增：用于转发请求的内部寄存器
+    // New: Internal registers for forwarding requests
     reg                         next_req_valid;
     reg                         next_req_is_order;
     reg [OPCODE_WIDTH-1:0]      next_req_opcode;
@@ -130,7 +130,7 @@ module ring_bus_node #(
     reg [ADDR_WIDTH-1:0]        next_req_addr;
     reg [DATA_WIDTH-1:0]        next_req_data;
 
-    /* 目的不是本节点的，转发到下一个节点 */
+    /* Not for this node, forward to next node */
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             next_req_valid <= 1'b0;
@@ -142,10 +142,10 @@ module ring_bus_node #(
             next_req_addr <= 0;
             next_req_data <= 0;
         end else if (pre_req_valid_i && pre_req_source_id_i == node_id) begin
-            // 异常处理：请求回到了源节点，说明没有节点匹配
+            // Exception handling: Request returned to source node, indicating no matching node
             next_req_valid <= 1'b0;
         end else if (!is_for_me && pre_req_valid_i) begin
-            // 转发请求
+            // Forward request
             next_req_valid <= pre_req_valid_i;
             next_req_is_order <= pre_req_is_order_i;
             next_req_opcode <= pre_req_opcode_i;
@@ -159,7 +159,7 @@ module ring_bus_node #(
         end
     end
 
-    // 发送FIFO实例化
+    // Transmit FIFO instantiation
     fifo #(
         .DATA_WIDTH(tx_fifo_data_width),
         .FIFO_DEPTH(TX_FIFO_DEPTH)
@@ -167,7 +167,7 @@ module ring_bus_node #(
         .clk(clk),
         .rst_n(rst_n),
         .wr_en(tx_req_valid_i),
-        /* TX时本节点即为源节点 */
+        /* This node is the source during TX */
         .data_in({tx_req_valid_i, tx_req_is_order_i, tx_req_opcode_i, tx_req_match_type_i, node_id, tx_req_target_id_i, tx_req_addr_i, tx_req_data_i}),
         .rd_en(tx_req_rd_en),
         .rd_done(tx_req_rd_done),
@@ -176,7 +176,7 @@ module ring_bus_node #(
         .empty(tx_fifo_empty)
     );
 
-    // 接收FIFO实例化 - 用于rx方向的接收缓存
+    // Receive FIFO instantiation - for rx direction receive buffer
     fifo #(
         .DATA_WIDTH(rx_fifo_data_width),
         .FIFO_DEPTH(RX_FIFO_DEPTH)
@@ -192,7 +192,7 @@ module ring_bus_node #(
         .empty(rx_fifo_empty)
     );
 
-    // 响应FIFO实例化 - 用于rsp的接收缓存
+    // Response FIFO instantiation - for rsp receive buffer
     fifo #(
         .DATA_WIDTH(rsp_fifo_data_width),
         .FIFO_DEPTH(RSP_FIFO_DEPTH)
@@ -208,7 +208,7 @@ module ring_bus_node #(
         .empty(rsp_fifo_empty)
     );
 
-    // 发送状态机
+    // Transmit state machine
     reg [1:0] tx_state;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -229,14 +229,14 @@ module ring_bus_node #(
                     end
                 end
                 RESPOND: begin
-                    // 清除请求信号
+                    // Clear request signal
                     tx_state <= IDLE;
                 end
             endcase
         end
     end
 
-    // 接收状态机
+    // Receive state machine
     reg [1:0] rx_state;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -255,9 +255,9 @@ module ring_bus_node #(
                 PROCESS: begin
                     if (rx_req_rd_done) begin
                         rx_req_rd_en <= 0;
-                        // 处理请求
+                        // Process request
                         if (rx_req_opcode == `RING_OP_RESP) begin
-                            // 直接输出响应
+                            // Directly output response
                             rsp_valid <= 1'b1;
                             rsp_source_id <= rx_req_source_id;
                             rsp_target_id <= rx_req_target_id;
@@ -265,7 +265,7 @@ module ring_bus_node #(
                             rsp_data <= rx_req_data;
                             rx_state <= RESPOND;
                         end else begin
-                            // 写入响应FIFO等待处理
+                            // Write to response FIFO waiting for processing
                             rx_state <= IDLE;
                         end
                     end
@@ -278,7 +278,7 @@ module ring_bus_node #(
         end
     end
 
-    // 响应处理状态机
+    // Response processing state machine
     reg [1:0] rsp_state;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -295,7 +295,7 @@ module ring_bus_node #(
                 PROCESS: begin
                     if (rsp_rd_done) begin
                         rsp_rd_en <= 0;
-                        // 处理响应
+                        // Process response
                         rsp_valid <= 1'b1;
                         rsp_source_id <= rsp_source_id_fifo;
                         rsp_target_id <= rsp_target_id_fifo;
@@ -312,7 +312,7 @@ module ring_bus_node #(
         end
     end
 
-    // 输出信号赋值
+    // Output signal assignment
     assign rsp_valid_o = rsp_valid;
     assign rsp_source_id_o = rsp_source_id;
     assign rsp_target_id_o = rsp_target_id;
@@ -328,7 +328,7 @@ module ring_bus_node #(
     assign rx_req_addr_o = rx_req_addr;
     assign rx_req_data_o = rx_req_data;
 
-    // 转发请求输出赋值
+    // Forward request output assignment
     assign next_req_valid_o = next_req_valid;
     assign next_req_is_order_o = next_req_is_order;
     assign next_req_opcode_o = next_req_opcode;

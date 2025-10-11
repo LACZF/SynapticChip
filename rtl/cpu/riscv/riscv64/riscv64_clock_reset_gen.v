@@ -1,10 +1,10 @@
 // riscv64_clock_reset_gen.v
 module riscv64_clock_reset_gen (
-    input wire clk,
-    input wire rst_n,
-    output reg soc_clk,
-    output wire soc_rst_n,
-    output reg soc_ready
+    input  wire       clk,
+    input  wire       rst_n,
+    output reg        soc_clk,
+    output wire       soc_rst_n,
+    output reg        soc_ready
 );
 
     reg [7:0] reset_counter;
@@ -19,16 +19,17 @@ module riscv64_clock_reset_gen (
             clock_divider <= 4'b0000;
             soc_clk <= 1'b0;
         end else begin
-            // 复位序列
+            // Reset sequence
             if (reset_counter < 8'hFF) begin
                 reset_counter <= reset_counter + 8'h01;
                 internal_rst_n <= 1'b0;
             end else begin
                 internal_rst_n <= 1'b1;
                 soc_ready <= 1'b1;
+
             end
 
-            // 时钟分频（从外部时钟生成SoC时钟）
+            // Clock division (generate SoC clock from external clock)
             clock_divider <= clock_divider + 4'b0001;
             if (clock_divider == 4'b1111) begin
                 soc_clk <= ~soc_clk;

@@ -1,12 +1,12 @@
 // jtag_params.v
-// JTAG和总线参数配置
+// JTAG and bus parameter configuration
 
-// JTAG参数
+// JTAG parameters
 `define DATA_WIDTH 32
 `define ADDR_WIDTH 32
 `define INSTR_WIDTH 4
 
-// JTAG TAP状态机状态定义
+// JTAG TAP state machine state definitions
 `define TEST_LOGIC_RESET 4'h0
 `define RUN_TEST_IDLE    4'h1
 `define SELECT_DR_SCAN   4'h2
@@ -24,22 +24,22 @@
 `define EXIT2_IR         4'hE
 `define UPDATE_IR        4'hF
 
-// JTAG指令定义
-`define IDCODE   4'b0001  // IDCODE指令
-`define BYPASS   4'b1111  // BYPASS指令
-`define SAMPLE   4'b0010  // SAMPLE/PRELOAD指令
-`define EXTEST   4'b0000  // EXTEST指令
+// JTAG instruction definitions
+`define IDCODE   4'b0001  // IDCODE instruction
+`define BYPASS   4'b1111  // BYPASS instruction
+`define SAMPLE   4'b0010  // SAMPLE/PRELOAD instruction
+`define EXTEST   4'b0000  // EXTEST instruction
 
-// 寄存器地址偏移
-`define REG_JTAG_CTRL  16'h0000  // JTAG控制寄存器
-`define REG_JTAG_DATA  16'h0004  // JTAG数据寄存器
-`define REG_JTAG_STAT  16'h0008  // JTAG状态寄存器
+// Register address offsets
+`define REG_JTAG_CTRL  16'h0000  // JTAG control register
+`define REG_JTAG_DATA  16'h0004  // JTAG data register
+`define REG_JTAG_STAT  16'h0008  // JTAG status register
 
-// 总线参数
+// Bus parameters
 `define NODES 16
 `define NODE_ID_WIDTH 5
 
-// 操作类型定义
+// Operation type definitions
 `define OP_READ  1'b0
 `define OP_WRITE 1'b1
 

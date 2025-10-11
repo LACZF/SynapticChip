@@ -1,45 +1,45 @@
 // uart_params.v
-// UART和总线参数配置
+// UART and bus parameter configuration
 
-// UART参数
-`define DATA_WIDTH 32      // 数据宽度
-`define ADDR_WIDTH 32      // 地址宽度
+// UART parameters
+`define DATA_WIDTH 32      // Data width
+`define ADDR_WIDTH 32      // Address width
 
-// 寄存器地址偏移
-`define REG_RBR 8'h00      // 接收缓冲寄存器 (只读)
-`define REG_THR 8'h00      // 发送保持寄存器 (只写)
-`define REG_IER 8'h04      // 中断使能寄存器
-`define REG_IIR 8'h08      // 中断标识寄存器 (只读)
-`define REG_FCR 8'h08      // FIFO控制寄存器 (只写)
-`define REG_LCR 8'h0C      // 线控制寄存器
-`define REG_MCR 8'h10      // Modem控制寄存器
-`define REG_LSR 8'h14      // 线状态寄存器 (只读)
-`define REG_MSR 8'h18      // Modem状态寄存器 (只读)
-`define REG_SCR 8'h1C      // Scratch寄存器
-`define REG_DLL 8'h00      // 分频器锁存器低字节 (当LCR[7]=1)
-`define REG_DLM 8'h04      // 分频器锁存器高字节 (当LCR[7]=1)
+// Register address offsets
+`define REG_RBR 8'h00      // Receive Buffer Register (read-only)
+`define REG_THR 8'h00      // Transmit Holding Register (write-only)
+`define REG_IER 8'h04      // Interrupt Enable Register
+`define REG_IIR 8'h08      // Interrupt Identification Register (read-only)
+`define REG_FCR 8'h08      // FIFO Control Register (write-only)
+`define REG_LCR 8'h0C      // Line Control Register
+`define REG_MCR 8'h10      // Modem Control Register
+`define REG_LSR 8'h14      // Line Status Register (read-only)
+`define REG_MSR 8'h18      // Modem Status Register (read-only)
+`define REG_SCR 8'h1C      // Scratch Register
+`define REG_DLL 8'h00      // Divisor Latch Low (when LCR[7]=1)
+`define REG_DLM 8'h04      // Divisor Latch High (when LCR[7]=1)
 
-// 中断类型
-`define INT_NONE 4'b0000   // 无中断
-`define INT_RX   4'b0100   // 接收数据可用
-`define INT_TX   4'b0010   // 发送保持寄存器空
-`define INT_LS   4'b0110   // 接收线状态
-`define INT_MS   4'b0000   // Modem状态 (通常不使用)
+// Interrupt types
+`define INT_NONE 4'b0000   // No interrupt
+`define INT_RX   4'b0100   // Receive data available
+`define INT_TX   4'b0010   // Transmit holding register empty
+`define INT_LS   4'b0110   // Receive line status
+`define INT_MS   4'b0000   // Modem status (not usually used)
 
-// 总线参数
-`define NODES 16            // 总线节点数量
-`define NODE_ID_WIDTH 5    // 节点ID宽度
+// Bus parameters
+`define NODES 16            // Number of bus nodes
+`define NODE_ID_WIDTH 5    // Node ID width
 
-// 总线状态定义
+// Bus state definitions
 `define STATE_IDLE 2'b00
 `define STATE_ARB  2'b01
 `define STATE_DATA 2'b10
 `define STATE_ACK  2'b11
 
-// 操作类型定义
+// Operation type definitions
 `define OP_READ  1'b0
 `define OP_WRITE 1'b1
 
-// FIFO参数
-`define FIFO_DEPTH 16      // FIFO深度
-`define FIFO_ADDR_WIDTH 4  // FIFO地址宽度
+// FIFO parameters
+`define FIFO_DEPTH 16      // FIFO depth
+`define FIFO_ADDR_WIDTH 4  // FIFO address width

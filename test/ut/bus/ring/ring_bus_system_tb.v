@@ -3,50 +3,50 @@ module ring_bus_system_tb;
     reg clk;
     reg rst_n;
 
-    // 内存接口
-    reg mem_req_enable;
-    reg [31:0] mem_req_addr;
-    reg [63:0] mem_req_data;
-    reg mem_req_wr;
-    wire [63:0] mem_req_data_out;
-    wire mem_req_ready;
+    // Memory Interface
+    reg          mem_req_enable;
+    reg  [31:0]  mem_req_addr;
+    reg  [63:0]  mem_req_data;
+    reg          mem_req_wr;
+    wire [63:0]  mem_req_data_out;
+    wire         mem_req_ready;
 
-    wire mem_resp_enable;
-    wire [31:0] mem_resp_addr;
-    wire [63:0] mem_resp_data;
-    wire mem_resp_wr;
-    reg [63:0] mem_resp_data_in;
-    reg mem_resp_ready;
+    wire         mem_resp_enable;
+    wire [31:0]  mem_resp_addr;
+    wire [63:0]  mem_resp_data;
+    wire         mem_resp_wr;
+    reg  [63:0]  mem_resp_data_in;
+    reg          mem_resp_ready;
 
-    // UART接口
-    reg uart_req_enable;
-    reg [31:0] uart_req_addr;
-    reg [63:0] uart_req_data;
-    reg uart_req_wr;
-    wire [63:0] uart_req_data_out;
-    wire uart_req_ready;
+    // UART Interface
+    reg          uart_req_enable;
+    reg  [31:0]  uart_req_addr;
+    reg  [63:0]  uart_req_data;
+    reg          uart_req_wr;
+    wire [63:0]  uart_req_data_out;
+    wire         uart_req_ready;
 
-    wire uart_resp_enable;
-    wire [31:0] uart_resp_addr;
-    wire [63:0] uart_resp_data;
-    wire uart_resp_wr;
-    reg [63:0] uart_resp_data_in;
-    reg uart_resp_ready;
+    wire         uart_resp_enable;
+    wire [31:0]  uart_resp_addr;
+    wire [63:0]  uart_resp_data;
+    wire         uart_resp_wr;
+    reg  [63:0]  uart_resp_data_in;
+    reg          uart_resp_ready;
 
-    // UART物理接口
-    reg uart_rx;
+    // UART Physical Interface
+    reg  uart_rx;
     wire uart_tx;
     wire uart_irq;
 
-    // 调试接口
-    wire [1:0] debug_ring_busy;
+    // Debug Interface
+    wire [1:0]  debug_ring_busy;
     wire [15:0] debug_ring_load;
 
-    // DUT实例
+    // DUT Instance
     ring_bus_system u_dut (
         .clk(clk),
         .rst_n(rst_n),
-        // 内存接口
+        // Memory Interface
         .mem_req_enable_i(mem_req_enable),
         .mem_req_addr_i(mem_req_addr),
         .mem_req_data_i(mem_req_data),
@@ -59,7 +59,7 @@ module ring_bus_system_tb;
         .mem_resp_wr_o(mem_resp_wr),
         .mem_resp_data_i(mem_resp_data_in),
         .mem_resp_ready_i(mem_resp_ready),
-        // UART接口
+        // UART Interface
         .uart_req_enable_i(uart_req_enable),
         .uart_req_addr_i(uart_req_addr),
         .uart_req_data_i(uart_req_data),
@@ -72,23 +72,23 @@ module ring_bus_system_tb;
         .uart_resp_wr_o(uart_resp_wr),
         .uart_resp_data_i(uart_resp_data_in),
         .uart_resp_ready_i(uart_resp_ready),
-        // UART物理接口
+        // UART Physical Interface
         .uart_rx_i(uart_rx),
         .uart_tx_o(uart_tx),
         .uart_irq_o(uart_irq),
-        // 调试接口
+        // Debug Interface
         .debug_ring_busy(debug_ring_busy),
         .debug_ring_load(debug_ring_load)
     );
 
-    // 时钟生成
+    // Clock Generation
     always #5 clk = ~clk;
 
-    // 提取负载值
+    // Extract Load Values
     wire [7:0] ring0_load = debug_ring_load[7:0];
     wire [7:0] ring1_load = debug_ring_load[15:8];
 
-    // 测试任务：内存操作
+    // Test Task: Memory Operation
     task test_memory_operation;
         input [31:0] addr;
         input [63:0] data;
@@ -114,7 +114,7 @@ module ring_bus_system_tb;
         end
     endtask
 
-    // 测试任务：UART操作
+    // Test Task: UART Operation
     task test_uart_operation;
         input [31:0] addr;
         input [63:0] data;
@@ -140,9 +140,9 @@ module ring_bus_system_tb;
         end
     endtask
 
-    // 主测试程序
+    // Main Test Program
     initial begin
-        // 初始化
+        // Initialization
         clk = 0;
         rst_n = 0;
         mem_req_enable = 0;
@@ -151,14 +151,14 @@ module ring_bus_system_tb;
         mem_resp_ready = 1'b1;
         uart_resp_ready = 1'b1;
 
-        // 启动全局超时监控
+        // Start Global Timeout Monitoring
         fork
             begin
-                // 主测试流程
-                // 复位
+                // Main Test Flow
+                // Reset
                 #100 rst_n = 1;
 
-                // 测试1: 内存读写
+                // Test 1: Memory Read/Write
                 $display("=== Test 1: Memory Operations ===");
                 test_memory_operation(32'h0000_1000, 64'h1234_5678_9ABC_DEF0, 1'b1);
                 $display("=== Test 1: Memory write Operations done ===");
@@ -167,27 +167,27 @@ module ring_bus_system_tb;
 
                 #100;
 
-                // 测试2: UART操作
+                // Test 2: UART Operations
                 $display("=== Test 2: UART Operations ===");
-                test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0041, 1'b1); // 发送字符'A'
-                test_uart_operation(32'h4000_0008, 64'h0, 1'b0); // 读取状态
+                test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0041, 1'b1); // Send character 'A'
+                test_uart_operation(32'h4000_0008, 64'h0, 1'b0); // Read status
 
                 #200;
 
-                // 测试3: 并发操作
+                // Test 3: Concurrent Operations
                 $display("=== Test 3: Concurrent Operations ===");
                 fork
                     begin
                         test_memory_operation(32'h0000_2000, 64'hAAAA_BBBB_CCCC_DDDD, 1'b1);
                     end
                     begin
-                        #50 test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0042, 1'b1); // 发送字符'B'
+                        #50 test_uart_operation(32'h4000_0000, 64'h0000_0000_0000_0042, 1'b1); // Send character 'B'
                     end
                 join
 
                 #100;
 
-                // 显示系统状态
+                // Display system status
                 $display("=== System Status ===");
                 $display("Ring 0: Busy=%b, Load=%d", debug_ring_busy[0], ring0_load);
                 $display("Ring 1: Busy=%b, Load=%d", debug_ring_busy[1], ring1_load);
@@ -198,16 +198,16 @@ module ring_bus_system_tb;
                 $finish;
             end
 
-            // 全局超时机制
+            // Global timeout mechanism
             begin
-                #1000000; // 1ms超时时间
+                #1000000; // 1ms timeout
                 $display("ERROR: Global test timeout reached! Forcing test termination.");
                 $finish;
             end
         join
     end
 
-    // 波形记录
+    // Waveform recording
     initial begin
         $dumpfile("ring_bus_system.vcd");
         $dumpvars(0, ring_bus_system_tb);

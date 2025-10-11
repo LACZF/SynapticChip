@@ -1,35 +1,35 @@
 // tb_router.v
-// 路由模块测试平台（纯Verilog）
+// Router Module Test Bench (Pure Verilog)
 
 `include "pe_router_params.v"
 `timescale 1ns/1ps
 
 module tb_router;
 
-    // 时钟和复位
+    // Clock and Reset
     reg clk;
     reg rst_n;
 
-    // 配置接口
-    reg cfg_valid;
-    reg [`ADDR_WIDTH-1:0] cfg_addr;
-    reg [`DATA_WIDTH-1:0] cfg_data;
-    wire cfg_ack;
+    // Configuration Interface
+    reg                    cfg_valid;
+    reg  [`ADDR_WIDTH-1:0] cfg_addr;
+    reg  [`DATA_WIDTH-1:0] cfg_data;
+    wire                   cfg_ack;
 
-    // 数据输入接口
-    reg [`NUM_PORTS-1:0] data_in_valid;
-    reg [(`NUM_PORTS*`DATA_WIDTH)-1:0] data_in;
-    wire [`NUM_PORTS-1:0] data_in_ready;
+    // Data Input Interface
+    reg  [`NUM_PORTS-1:0]               data_in_valid;
+    reg  [(`NUM_PORTS*`DATA_WIDTH)-1:0] data_in;
+    wire [`NUM_PORTS-1:0]               data_in_ready;
 
-    // 数据输出接口
-    wire [`NUM_PORTS-1:0] data_out_valid;
+    // Data Output Interface
+    wire [`NUM_PORTS-1:0]               data_out_valid;
     wire [(`NUM_PORTS*`DATA_WIDTH)-1:0] data_out;
-    reg [`NUM_PORTS-1:0] data_out_ready;
+    reg  [`NUM_PORTS-1:0]               data_out_ready;
 
-    // 状态输出
+    // Status Output
     wire [`DATA_WIDTH-1:0] status;
 
-    // 实例化DUT - 显式传递参数以确保一致性
+    // Instantiate DUT - Explicitly Pass Parameters for Consistency
     pe_router_top #(
         .NUM_PORTS(`NUM_PORTS)
     ) dut (
@@ -48,13 +48,13 @@ module tb_router;
         .status(status)
     );
 
-    // 时钟生成
+    // Clock Generation
     always #5 clk = ~clk;
 
-    // 定义超时周期参数
+    // Define Timeout Period Parameter
     localparam TIMEOUT_CYCLES = 1000;
 
-    // 测试任务：发送配置（带超时机制）
+    // Test Task: Send Configuration (with Timeout Mechanism)
     task send_config;
         input [`ADDR_WIDTH-1:0] addr;
         input [`DATA_WIDTH-1:0] data;
@@ -80,7 +80,7 @@ module tb_router;
         end
     endtask
 
-    // 测试任务：发送数据（带超时机制）
+    // Test Task: Send Data (with Timeout Mechanism)
     task send_data;
         input integer port;
         input [`DATA_WIDTH-1:0] data;
@@ -105,7 +105,7 @@ module tb_router;
         end
     endtask
 
-    // 测试任务：接收数据（带超时机制）
+    // Test Task: Receive Data (with Timeout Mechanism)
     task receive_data;
         input integer port;
         output [`DATA_WIDTH-1:0] data;
@@ -119,7 +119,7 @@ module tb_router;
 
             if (timeout >= TIMEOUT_CYCLES) begin
                 $display("ERROR: Receive data timeout on port %0d", port);
-                data = 32'hDEADBEEF; // 超时标志值
+                data = 32'hDEADBEEF; // Timeout flag value
             end else begin
                 data = data_out[port*`DATA_WIDTH +: `DATA_WIDTH];
             end
@@ -131,11 +131,11 @@ module tb_router;
         end
     endtask
 
-    // 主测试程序
+    // Main Test Program
     reg [`DATA_WIDTH-1:0] received_data;
 
     initial begin
-        // 初始化
+        // Initialization
         clk = 0;
         rst_n = 0;
         cfg_valid = 0;
@@ -143,36 +143,36 @@ module tb_router;
         cfg_data = 0;
         data_in_valid = 5'b00000;
         data_in = 0;
-        data_out_ready = 5'b11111; // 默认所有输出端口就绪
+        data_out_ready = 5'b11111; // By default, all output ports are ready
 
-        // 复位
+        // Reset
         #20 rst_n = 1;
 
         fork
-            // 主测试流程
+            // Main Test Flow
             begin
                 $display("Starting Router Test");
 
-                // 测试1: 配置路由算法
+                // Test 1: Configure Routing Algorithm
                 $display("Test 1: Configure routing algorithm");
                 send_config(`REG_ROUTE_ALGO, `ROUTE_XY);
                 $display("Routing algorithm configured to XY");
 
-                // 测试2: 配置路由表
+                // Test 2: Configure Routing Table
                 $display("Test 2: Configure routing table");
-                // 设置路由表: 本地端口 -> 北端口
+                // Set Routing Table: Local Port -> North Port
                 send_config(`REG_ROUTE_TABLE, 25'b0000100000000000000000000);
                 $display("Routing table configured");
 
-                // 测试3: 发送数据从本地到北
+                // Test 3: Send Data from Local to North
                 $display("Test 3: Send data from local to north");
                 fork
                     begin
-                        send_data(4, 32'hAABBCCDD); // 从本地端口发送数据
+                        send_data(4, 32'hAABBCCDD); // Send data from local port
                         $display("Data sent from local port: 0x%h", 32'hAABBCCDD);
                     end
                     begin
-                        receive_data(0, received_data); // 从北端口接收数据
+                        receive_data(0, received_data); // Receive data from north port
                         if (received_data !== 32'hAABBCCDD && received_data !== 32'hDEADBEEF) begin
                             $display("ERROR: Received 0x%h, expected 0xAABBCCDD", received_data);
                         end else if (received_data === 32'hAABBCCDD) begin
@@ -181,28 +181,28 @@ module tb_router;
                     end
                 join
 
-                // 测试4: 测试背压机制
+                // Test 4: Test Backpressure Mechanism
                 $display("Test 4: Test backpressure mechanism");
 
-                // 先填满北端口的输出缓冲区
-                data_out_ready[0] = 1'b0; // 不让北端口接收数据
+                // First fill the output buffer of north port
+                data_out_ready[0] = 1'b0; // Prevent north port from receiving data
 
-                // 发送多个数据包
+                // Send multiple data packets
                 send_data(4, 32'h11223344);
                 send_data(4, 32'h55667788);
                 send_data(4, 32'h99AABBCC);
 
-                // 检查本地端口的ready信号是否变低（背压）
+                // Check if local port ready signal is low (backpressure)
                 if (data_in_ready[4] !== 1'b0) begin
                     $display("ERROR: Backpressure not working, local port ready: %b", data_in_ready[4]);
                 end else begin
                     $display("Backpressure working correctly");
                 end
 
-                // 释放北端口
+                // Release north port
                 data_out_ready[0] = 1'b1;
 
-                // 接收所有数据
+                // Receive all data
                 receive_data(0, received_data);
                 $display("Received: 0x%h", received_data);
                 receive_data(0, received_data);
@@ -210,45 +210,44 @@ module tb_router;
                 receive_data(0, received_data);
                 $display("Received: 0x%h", received_data);
 
-                // 测试5: 测试端口禁用
+                // Test 5: Test Port Disable
                 $display("Test 5: Test port disable");
 
-                // 禁用北端口
-                send_config(`REG_PORT_CTRL, 5'b01111); // 只有北端口禁用
+                // Disable north port
+                send_config(`REG_PORT_CTRL, 5'b01111); // Only north port disabled
 
-                // 尝试发送数据到北端口
+                // Try to send data to north port
                 send_data(4, 32'hDEADBEEF);
-
-                // 检查数据是否没有被路由到北端口
-                #50; // 等待一段时间
+                // Check if data is not routed to disabled north port
+                #50; // Wait for a period
                 if (data_out_valid[0] !== 1'b0) begin
                     $display("ERROR: Data routed to disabled north port");
                 end else begin
                     $display("Port disable working correctly");
                 end
 
-                // 重新启用北端口
-                send_config(`REG_PORT_CTRL, 5'b11111); // 所有端口启用
+                // Re-enable north port
+                send_config(`REG_PORT_CTRL, 5'b11111); // All ports enabled
 
-                // 测试6: 读取状态寄存器
+                // Test 6: Read Status Register
                 $display("Test 6: Read status register");
-                // 状态寄存器包含缓冲区状态和端口使能状态
+                // Status register contains buffer status and port enable status
                 $display("Status register: 0x%h", status);
 
                 $display("All tests completed!");
                 $finish;
             end
 
-            // 全局超时机制
+            // Global Timeout Mechanism
             begin
-                #1000000; // 1毫秒超时 (假设时间单位是ns)
+                #1000000; // 1ms timeout (assuming time unit is ns)
                 $display("ERROR: Global test timeout after 1ms");
                 $finish;
             end
         join
     end
 
-    // 波形输出
+    // Waveform Output
     initial begin
         $dumpfile("router.vcd");
         $dumpvars(0, tb_router);

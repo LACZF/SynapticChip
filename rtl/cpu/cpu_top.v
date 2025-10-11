@@ -1,12 +1,12 @@
 // cpu_top.v
-// CPU顶层模块，包含CPU核心和缓存层次结构
-// 直接与外界通信，不再通过ring总线
+// CPU top-level module, containing CPU cores and cache hierarchy
+// Communicates directly with external world, no longer through ring bus
 
 `include "cache_params.v"
 `include "cache_system_params.v"
 
 module cpu_top #(
-    parameter ADDR_WIDTH                    = 64,  // 与64位RISC-V架构保持一致
+    parameter ADDR_WIDTH                    = 64,  // Consistent with 64-bit RISC-V architecture
     parameter DATA_WIDTH                    = 64,
     parameter MEM_WIDTH                     = 512,
     parameter INST_WIDTH                    = 32,
@@ -16,30 +16,30 @@ module cpu_top #(
     parameter L1_DCACHE_DATA_WIDTH          = 64,
     parameter L2_CACHE_DATA_WIDTH           = 512,
     parameter L3_CACHE_DATA_WIDTH           = 512,
-    parameter ENABLE_L2_CACHE               = 1, // 使能L2缓存，默认为1
-    parameter ENABLE_L3_CACHE               = 1, // 使能L3缓存，默认为1
-    parameter CPU_TYPE                      = 0  // 0: RISC-V, 1: 预留其他CPU类型
+    parameter ENABLE_L2_CACHE               = 1,   // Enable L2 cache, default is 1
+    parameter ENABLE_L3_CACHE               = 1,   // Enable L3 cache, default is 1
+    parameter CPU_TYPE                      = 0    // 0: RISC-V, 1: Reserved for other CPU types
 ) (
-    input clk,
-    input rst_n,
+    input                                   clk,
+    input                                   rst_n,
 
-    // 外部中断
-    input                              ext_int,
+    // External interrupt
+    input                                   ext_int,
 
-    // 内存接口信号 - 直接引出与外界通信
-    output wire                        mem_req,
-    output wire [ADDR_WIDTH-1:0]       mem_addr,
-    output wire [MEM_WIDTH-1:0]        mem_wdata,
-    output wire                        mem_we,
-    input  wire                        mem_ready,
-    input  wire  [MEM_WIDTH-1:0]       mem_rdata
+    // Memory interface signals - Directly exposed for external communication
+    output wire                             mem_req,
+    output wire [ADDR_WIDTH-1:0]            mem_addr,
+    output wire [MEM_WIDTH-1:0]             mem_wdata,
+    output wire                             mem_we,
+    input  wire                             mem_ready,
+    input  wire  [MEM_WIDTH-1:0]            mem_rdata
 );
     localparam L2_OUT_WIDTH = ENABLE_L3_CACHE ? L3_CACHE_DATA_WIDTH : MEM_WIDTH;
     localparam L1_OUT_WIDTH = ENABLE_L2_CACHE ? L2_CACHE_DATA_WIDTH : ENABLE_L3_CACHE ? L3_CACHE_DATA_WIDTH : MEM_WIDTH;
-    // 计算L1缓存的最大数据宽度，用于L2缓存的输入位宽
+    // Calculate maximum L1 cache data width for L2 cache input bit width
     localparam MAX_L1_DATA_WIDTH = L1_ICACHE_DATA_WIDTH > L1_DCACHE_DATA_WIDTH ? L1_ICACHE_DATA_WIDTH : L1_DCACHE_DATA_WIDTH;
 
-    // 更改为每个核心独立的信号，避免索引访问问题
+    // Changed to per-core independent signals to avoid index access issues
     wire [NUM_CORES-1:0]                                l1_icache_req;
     wire [NUM_CORES*ADDR_WIDTH-1:0]                     l1_icache_addr;
     wire [NUM_CORES*L1_OUT_WIDTH-1:0]                   l1_icache_wdata;
@@ -54,7 +54,7 @@ module cpu_top #(
     wire [NUM_CORES*2-1:0]                              l1_dcache_req_type;
     wire [NUM_CORES-1:0]                                l1_dcache_ready;
 
-    // 监听接口信号
+    // Snoop interface signals
     wire [NUM_CORES-1:0]                                snoop_valid;
     wire [NUM_CORES*ADDR_WIDTH-1:0]                     snoop_addr;
     wire [NUM_CORES*2-1:0]                              snoop_req_type;
@@ -63,7 +63,7 @@ module cpu_top #(
     wire [NUM_CORES*2-1:0]                              snoop_state;
     wire [NUM_CORES*512-1:0]                            snoop_data;
 
-    // L2-L3接口信号
+    // L2-L3 interface signals
     wire                                                l2_l3_req;
     wire [ADDR_WIDTH-1:0]                               l2_l3_addr;
     wire [L2_OUT_WIDTH-1:0]                             l2_l3_wdata;
@@ -71,25 +71,25 @@ module cpu_top #(
     wire                                                l2_l3_we;
     wire                                                l2_l3_ready;
 
-    // 核心与L2缓存之间的接口信号
+    // Interface signals between cores and L2 cache
     wire [NUM_CORES-1:0]                                core_l2_ready;
     wire [NUM_CORES*512-1:0]                            core_l2_data;
 
-    // 内存接口信号 - 已在模块端口中声明
+    // Memory interface signals - Already declared in module ports
 
-    // 缓存层次结构连接逻辑
+    // Cache hierarchy connection logic
     generate
-        // 当有L2缓存时
+        // When L2 cache is enabled
         if (ENABLE_L2_CACHE) begin : l2_cache_gen
-            // 中间信号用于L2缓存一致性状态
+            // Intermediate signals for L2 cache coherency state
             wire [2:0] l2_coh_rsp_state;
 
-            // 用于L2缓存位宽适配的中间信号
+            // Intermediate signals for L2 cache width adaptation
             wire [MAX_L1_DATA_WIDTH-1:0] l2_cpu_req_data;
             wire [MAX_L1_DATA_WIDTH/8-1:0] l2_cpu_req_strb;
             wire [MAX_L1_DATA_WIDTH-1:0] l2_cpu_rsp_data;
 
-            // 赋值L2缓存请求数据和字节使能
+            // Assign L2 cache request data and byte enables
             assign l2_cpu_req_data = |l1_dcache_req ?
                 {{(MAX_L1_DATA_WIDTH-L1_DCACHE_DATA_WIDTH){1'b0}}, l1_dcache_wdata[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH]} :
                 {{(MAX_L1_DATA_WIDTH-L1_ICACHE_DATA_WIDTH){1'b0}}, l1_icache_wdata[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH]};
@@ -98,34 +98,34 @@ module cpu_top #(
                 {{(MAX_L1_DATA_WIDTH/8-L1_DCACHE_DATA_WIDTH/8){1'b0}}, {L1_DCACHE_DATA_WIDTH/8{1'b1}}} :
                 {{(MAX_L1_DATA_WIDTH/8-L1_ICACHE_DATA_WIDTH/8){1'b0}}, {L1_ICACHE_DATA_WIDTH/8{1'b1}}};
 
-            // 共享L2缓存实例（使用通用cache模块）
+            // Shared L2 cache instance (using generic cache module)
             cache #(
                 .CACHE_LINE_SIZE(`L2_CACHE_LINE_SIZE),
                 .CACHE_SIZE(`L2_CACHE_SIZE),
                 .ASSOCIATIVITY(`L2_CACHE_ASSOCIATIVITY),
                 .ADDR_WIDTH(ADDR_WIDTH),
-                // L2缓存使用L1缓存的最大数据宽度作为输入位宽
+                // L2 cache uses maximum L1 cache data width as input bit width
                 .INPUT_DATA_WIDTH(MAX_L1_DATA_WIDTH),
                 .OUTPUT_DATA_WIDTH(L2_OUT_WIDTH),
-                .SUPPORT_COHERENCY(0),  // L2缓存是共享的，不需要一致性
+                .SUPPORT_COHERENCY(0),  // L2 cache is shared, doesn't need coherency
                 .CACHE_LEVEL(`CACHE_LEVEL_L2),
                 .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
             ) u_l2_cache (
                 .clk(clk),
                 .rst_n(rst_n),
 
-                // CPU接口
+                // CPU interface
                 .cpu_req_valid(|l1_dcache_req || |l1_icache_req),
                 .cpu_req_addr(|l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
                 .cpu_req_rw(|l1_dcache_req && l1_dcache_we[0]),
-                // 使用中间信号连接
+                // Use intermediate signals for connection
                 .cpu_req_data(l2_cpu_req_data),
                 .cpu_req_strb(l2_cpu_req_strb),
                 .cpu_rsp_valid(core_l2_ready[0]),
                 .cpu_rsp_data(l2_cpu_rsp_data),
                 .cpu_rsp_error(),
 
-                // 内存接口
+                // Memory interface
                 .mem_req_valid(l2_l3_req),
                 .mem_req_addr(l2_l3_addr),
                 .mem_req_rw(l2_l3_we),
@@ -134,7 +134,7 @@ module cpu_top #(
                 .mem_rsp_data(l2_l3_rdata),
                 .mem_rsp_error(),
 
-                // 一致性接口（不使用，连接到0）
+                // Coherency interface (not used, connected to 0)
                 .coh_req_addr({ADDR_WIDTH{1'b0}}),
                 .coh_req_valid(1'b0),
                 .coh_req_type(3'd0),
@@ -142,21 +142,21 @@ module cpu_top #(
                 .coh_rsp_state()
             );
 
-            // L2缓存不需要一致性，直接设置snoop_state为默认值
+            // L2 cache doesn't need coherency, directly set snoop_state to default value
             assign snoop_state[0*2 +: 2] = 2'b00;
 
-            // 根据不同的L1缓存位宽进行响应数据连接
-            // 针对指令缓存的连接
+            // Connect response data according to different L1 cache bit widths
+            // Connection for instruction cache
             assign l1_icache_data[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH];
 
-            // 针对数据缓存的连接
+            // Connection for data cache
             assign l1_dcache_data[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH];
 
             assign l1_dcache_ready[0] = core_l2_ready[0];
             assign l1_icache_ready[0] = core_l2_ready[0];
 
             if (NUM_CORES > 1) begin
-                // 针对多核的连接，同样考虑不同位宽
+                // Connection for multi-core, also considering different bit widths
                 for (genvar j = 1; j < NUM_CORES; j = j + 1) begin
                     assign l1_icache_data[j*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_ICACHE_DATA_WIDTH +: L1_ICACHE_DATA_WIDTH];
                     assign l1_dcache_data[j*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH] = l2_cpu_rsp_data[0*L1_DCACHE_DATA_WIDTH +: L1_DCACHE_DATA_WIDTH];
@@ -165,7 +165,7 @@ module cpu_top #(
                 end
             end
 
-            // L3缓存实例（使用通用cache模块，可选）
+            // L3 cache instance (using generic cache module, optional)
             if (ENABLE_L3_CACHE) begin : l3_cache_gen
                 cache #(
                     .CACHE_LINE_SIZE(`L3_CACHE_LINE_SIZE),
@@ -174,14 +174,14 @@ module cpu_top #(
                     .ADDR_WIDTH(ADDR_WIDTH),
                     .INPUT_DATA_WIDTH(L2_CACHE_DATA_WIDTH),
                     .OUTPUT_DATA_WIDTH(MEM_WIDTH),
-                    .SUPPORT_COHERENCY(0),  // L3缓存是共享的，不需要一致性
+                    .SUPPORT_COHERENCY(0),  // L3 cache is shared, doesn't need coherency
                     .CACHE_LEVEL(`CACHE_LEVEL_L3),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l3_cache (
                     .clk(clk),
                     .rst_n(rst_n),
 
-                    // CPU接口（连接L2）
+                    // CPU interface (connect to L2)
                     .cpu_req_valid(l2_l3_req),
                     .cpu_req_addr(l2_l3_addr),
                     .cpu_req_rw(l2_l3_we),
@@ -191,7 +191,7 @@ module cpu_top #(
                     .cpu_rsp_data(l2_l3_rdata),
                     .cpu_rsp_error(),
 
-                    // 内存接口
+                    // Memory interface
                     .mem_req_valid(mem_req),
                     .mem_req_addr(mem_addr),
                     .mem_req_rw(mem_we),
@@ -200,7 +200,7 @@ module cpu_top #(
                     .mem_rsp_data(mem_rdata),
                     .mem_rsp_error(),
 
-                    // 一致性接口
+                    // Coherency interface
                     .coh_req_addr({ADDR_WIDTH{1'b0}}),
                     .coh_req_valid(1'b0),
                     .coh_req_type(3'd0),
@@ -208,7 +208,7 @@ module cpu_top #(
                     .coh_rsp_state()
                 );
             end else begin : direct_l2_to_mem
-                // 直接连接L2到内存
+                // Directly connect L2 to memory
                 assign mem_req = l2_l3_req;
                 assign mem_addr = l2_l3_addr;
                 assign mem_wdata = l2_l3_wdata;
@@ -217,8 +217,8 @@ module cpu_top #(
                 assign l2_l3_ready = mem_ready;
             end
         end else begin : direct_l1_to_mem
-            // 没有L2缓存时，L1直接连接到内存
-            // 为每个核心创建请求仲裁逻辑
+            // Without L2 cache, L1 directly connects to memory
+            // Create request arbitration logic for each core
             wire [NUM_CORES-1:0] core_mem_req;
             wire [NUM_CORES*ADDR_WIDTH-1:0] core_mem_addr;
             wire [NUM_CORES*512-1:0] core_mem_wdata;
@@ -226,8 +226,8 @@ module cpu_top #(
             wire [NUM_CORES-1:0] core_mem_ready;
             wire [NUM_CORES*512-1:0] core_mem_rdata;
 
-            // 简化的仲裁逻辑，仅连接第一个核心到内存
-            // 实际应用中应实现更复杂的仲裁器
+            // Simplified arbitration logic, only connect first core to memory
+            // More complex arbiter should be implemented in practical applications
             assign mem_req = core_mem_req[0];
             assign mem_addr = core_mem_addr[0*ADDR_WIDTH +: ADDR_WIDTH];
             assign mem_wdata = core_mem_wdata[0*512 +: 512];
@@ -235,7 +235,7 @@ module cpu_top #(
             assign core_mem_rdata[0*512 +: 512] = mem_rdata;
             assign core_mem_ready[0] = mem_ready;
 
-            // 直接连接L1缓存到内存接口
+            // Directly connect L1 cache to memory interface
             genvar i;
             for (i = 0; i < NUM_CORES; i = i + 1) begin : l1_to_mem_conn
                 assign core_mem_req[i] = l1_dcache_req[i] || l1_icache_req[i];
@@ -244,13 +244,13 @@ module cpu_top #(
                 assign core_mem_we[i] = l1_dcache_req[i] && l1_dcache_we[i];
                 assign core_mem_wdata[i*512 +: 512] = l1_dcache_wdata[i*512 +: 512];
 
-                // 连接响应信号
+                // Connect response signals
                 assign l1_dcache_data[i*512 +: 512] = core_mem_rdata[i*512 +: 512];
                 assign l1_icache_data[i*512 +: 512] = core_mem_rdata[i*512 +: 512];
                 assign l1_dcache_ready[i] = core_mem_ready[i];
                 assign l1_icache_ready[i] = core_mem_ready[i];
 
-                // 不使用监听接口，设置默认值
+                // Not using snoop interface, set default values
                 assign snoop_ready[i] = 1'b1;
                 assign snoop_state[i*2 +: 2] = 2'b00;
             end
@@ -264,43 +264,43 @@ module cpu_top #(
         end
     endgenerate
 
-    // 生成多个带L1缓存的CPU核
+    // Generate multiple CPU cores with L1 cache
     generate
         genvar i;
         for (i = 0; i < NUM_CORES; i = i + 1) begin : core_gen
             if (CPU_TYPE == 0) begin : riscv_implementation
-                // 创建中间信号，用于32位到64位的零扩展
+                // Create intermediate signals for 32-bit to 64-bit zero extension
                 wire [ADDR_WIDTH-1:0] l1_icache_addr_64;
                 wire [ADDR_WIDTH-1:0] l1_dcache_addr_64;
                 wire icache_mem_req_rw;
 
-                // CPU核心与L1缓存之间的中间信号
+                // Intermediate signals between CPU core and L1 cache
                 wire icache_req;
                 wire [ADDR_WIDTH-1:0] icache_addr;
-                wire [L1_ICACHE_DATA_WIDTH-1:0] icache_data;  // 使用指令缓存专用数据宽度
+                wire [L1_ICACHE_DATA_WIDTH-1:0] icache_data;  // Using instruction cache dedicated data width
                 wire icache_ready;
                 wire dcache_req;
                 wire [ADDR_WIDTH-1:0] dcache_addr;
                 wire dcache_we;
                 wire dcache_ready;
 
-                // 缓存侧使用专用数据宽度
+                // Cache side uses dedicated data width
                 wire [L1_DCACHE_DATA_WIDTH-1:0] dcache_wdata;
                 wire [L1_DCACHE_DATA_WIDTH-1:0] dcache_rdata;
                 wire [L1_DCACHE_DATA_WIDTH/8-1:0] dcache_byte_en;
 
                 assign l1_icache_addr_64 = {{32{1'b0}}, l1_icache_addr[i*32 +: 32]};
                 assign l1_dcache_addr_64 = {{32{1'b0}}, l1_dcache_addr[i*32 +: 32]};
-                assign icache_mem_req_rw = 1'b0;  // 指令缓存始终是读操作
+                assign icache_mem_req_rw = 1'b0;  // Instruction cache is always read operation
 
-                // 创建中间信号用于一致性接口（3位宽）
+                // Create intermediate signals for coherency interface (3-bit width)
                 wire [2:0] icache_coh_rsp_state;
                 wire [2:0] dcache_coh_rsp_state;
 
-                // 将3位一致性状态连接到2位snoop_state
+                // Connect 3-bit coherency state to 2-bit snoop_state
                 assign snoop_state[i*2 +: 2] = icache_coh_rsp_state[1:0] | dcache_coh_rsp_state[1:0];
 
-                // RISC-V CPU核心实例
+                // RISC-V CPU core instance
                 riscv64_core #(
                     .ADDR_WIDTH(ADDR_WIDTH),
                     .DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
@@ -311,13 +311,13 @@ module cpu_top #(
                     .clk(clk),
                     .rst_n(rst_n),
 
-                    // 指令缓存接口
+                    // Instruction cache interface
                     .icache_req(icache_req),
                     .icache_addr(icache_addr),
                     .icache_data(icache_data),
                     .icache_ready(icache_ready),
 
-                    // 数据缓存接口
+                    // Data cache interface
                     .dcache_req(dcache_req),
                     .dcache_addr(dcache_addr),
                     .dcache_wdata(dcache_wdata),
@@ -326,7 +326,7 @@ module cpu_top #(
                     .dcache_byte_en(dcache_byte_en),
                     .dcache_ready(dcache_ready),
 
-                    // 监听接口
+                    // Snoop interface
                     .snoop_valid(snoop_valid[i]),
                     .snoop_addr(snoop_addr[i*ADDR_WIDTH +: ADDR_WIDTH]),
                     .snoop_req_type(snoop_req_type[i*2 +: 2]),
@@ -335,12 +335,12 @@ module cpu_top #(
                     .snoop_state(snoop_state[i*2 +: 2]),
                     .snoop_data(snoop_data[i*512 +: 512]),
 
-                    // 中断和调试
+                    // Interrupt and debugging
                     .timer_interrupt(1'b0),
                     .external_interrupt(ext_int),
                     .software_interrupt(1'b0),
 
-                    // Debug interface - 可以连接到调试模块
+                    // Debug interface - Can be connected to debug module
                     .debug_pc(),
                     .debug_instr(),
                     .debug_wb_valid(),
@@ -349,7 +349,7 @@ module cpu_top #(
                 );
 
             `ifdef DEBUG
-                // 添加调试信息，追踪指令请求信号流
+                // Add debug information to track instruction request signal flow
                 always @(posedge clk) begin
                     if (icache_req) begin
                         $display("[%0t ps] CPU CORE %d: icache_req=%b, icache_addr=0x%h",
@@ -362,7 +362,7 @@ module cpu_top #(
                 end
             `endif
 
-                // L1指令缓存实例（使用通用cache模块）
+                // L1 instruction cache instance (using generic cache module)
                 cache #(
                     .CACHE_LINE_SIZE(`L1_ICACHE_LINE_SIZE),
                     .CACHE_SIZE(`L1_ICACHE_SIZE),
@@ -370,14 +370,14 @@ module cpu_top #(
                     .ADDR_WIDTH(ADDR_WIDTH),
                     .INPUT_DATA_WIDTH(L1_ICACHE_DATA_WIDTH),
                     .OUTPUT_DATA_WIDTH(L1_OUT_WIDTH),
-                    .SUPPORT_COHERENCY(1),  // L1缓存是核心独享的，多核间需要一致性
+                    .SUPPORT_COHERENCY(1),  // L1 cache is core-private, requires coherency between multiple cores
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l1_icache (
                     .clk(clk),
                     .rst_n(rst_n),
 
-                    // CPU接口
+                    // CPU interface
                     .cpu_req_valid(icache_req),
                     .cpu_req_addr(icache_addr),
                     .cpu_req_rw(1'b0),
@@ -387,18 +387,18 @@ module cpu_top #(
                     .cpu_rsp_data(icache_data),
                     .cpu_rsp_error(),
 
-                    // 内存接口（连接到位宽适配器）
+                    // Memory interface (connected to width adapter)
                     .mem_req_valid(l1_icache_req[i]),
                     .mem_req_addr(l1_icache_addr_64),
                     .mem_req_rw(icache_mem_req_rw),
-                    // 简化的索引访问方式
+                    // Simplified indexed access method
                     .mem_req_data(l1_icache_wdata[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
                     .mem_rsp_valid(l1_icache_ready[i]),
-                    // 简化的索引访问方式
+                    // Simplified indexed access method
                     .mem_rsp_data(l1_icache_data[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
                     .mem_rsp_error(),
 
-                    // 一致性接口（连接到snoop信号）
+                    // Coherency interface (connected to snoop signals)
                     .coh_req_addr(l1_icache_addr_64),
                     .coh_req_valid(snoop_valid[i]),
                     .coh_req_type({1'b0, snoop_req_type[i*2 +: 2]}),
@@ -406,7 +406,7 @@ module cpu_top #(
                     .coh_rsp_state(icache_coh_rsp_state)
                 );
 
-                // L1数据缓存实例（使用通用cache模块）
+                // L1 data cache instance (using generic cache module)
                 cache #(
                     .CACHE_LINE_SIZE(`L1_DCACHE_LINE_SIZE),
                     .CACHE_SIZE(`L1_DCACHE_SIZE),
@@ -414,14 +414,14 @@ module cpu_top #(
                     .ADDR_WIDTH(ADDR_WIDTH),
                     .INPUT_DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
                     .OUTPUT_DATA_WIDTH(L1_OUT_WIDTH),
-                    .SUPPORT_COHERENCY(1),  // L1缓存是核心独享的，多核间需要一致性
+                    .SUPPORT_COHERENCY(1),  // L1 cache is core-private, requires coherency between multiple cores
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l1_dcache (
                     .clk(clk),
                     .rst_n(rst_n),
 
-                    // CPU接口
+                    // CPU interface
                     .cpu_req_valid(dcache_req),
                     .cpu_req_addr(dcache_addr),
                     .cpu_req_rw(dcache_we),
@@ -431,18 +431,18 @@ module cpu_top #(
                     .cpu_rsp_data(dcache_rdata),
                     .cpu_rsp_error(),
 
-                    // 内存接口（连接到位宽适配器）
+                    // Memory interface (connected to width adapter)
                     .mem_req_valid(l1_dcache_req[i]),
                     .mem_req_addr(l1_dcache_addr_64),
                     .mem_req_rw(l1_dcache_we[i]),
-                    // 简化的索引访问方式
+                    // Simplified indexed access method
                     .mem_req_data(l1_dcache_wdata[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
                     .mem_rsp_valid(l1_dcache_ready[i]),
-                    // 简化的索引访问方式
+                    // Simplified indexed access method
                     .mem_rsp_data(l1_dcache_data[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
                     .mem_rsp_error(),
 
-                    // 一致性接口（连接到snoop信号）
+                    // Coherency interface (connected to snoop signals)
                     .coh_req_addr(l1_dcache_addr_64),
                     .coh_req_valid(snoop_valid[i]),
                     .coh_req_type({1'b0, snoop_req_type[i*2 +: 2]}),
@@ -450,10 +450,10 @@ module cpu_top #(
                     .coh_rsp_state(dcache_coh_rsp_state)
                 );
             end
-            // 预留其他CPU类型的实现
+            // Reserved for other CPU type implementations
             else if (CPU_TYPE == 1) begin : other_cpu_implementation
-                // 其他CPU类型的实现可以在这里添加
-                // 当前只是占位，实际实现需要根据具体的CPU架构来编写
+                // Other CPU type implementations can be added here
+                // This is just a placeholder, actual implementation needs to be written according to specific CPU architecture
                 assign mem_req = 1'b0;
                 assign mem_addr = {ADDR_WIDTH{1'b0}};
                 assign mem_wdata = {512{1'b0}};

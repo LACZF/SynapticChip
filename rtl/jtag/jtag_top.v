@@ -1,60 +1,60 @@
 // jtag_top.v
-// JTAG TAP控制器实现
+// JTAG TAP controller implementation
 
 `include "jtag_params.v"
 
 module jtag_top #(
-    parameter ADDR_WIDTH  = 32,
-    parameter DATA_WIDTH  = 32,
-    parameter INST_WIDTH  = 32
+    parameter ADDR_WIDTH            = 32,
+    parameter DATA_WIDTH            = 32,
+    parameter INST_WIDTH            = 32
 )(
-    input clk,
-    input rst_n,
+    input                           clk,
+    input                           rst_n,
 
-    // JTAG接口
-    input tck,      // JTAG测试时钟
-    input tms,      // JTAG测试模式选择
-    input tdi,      // JTAG测试数据输入
-    output reg tdo, // JTAG测试数据输出
-    output reg tdo_en, // JTAG测试数据输出使能
+    // JTAG interface
+    input                           tck,      // JTAG test clock
+    input                           tms,      // JTAG test mode select
+    input                           tdi,      // JTAG test data input
+    output reg                      tdo,      // JTAG test data output
+    output reg                      tdo_en,   // JTAG test data output enable
 
-    // 控制接口
-    input req,
-    input we,
-    input [ADDR_WIDTH-1:0] addr,
-    input [DATA_WIDTH-1:0] data_in,
-    output reg [DATA_WIDTH-1:0] data_out,
-    output reg ack,
+    // Control interface
+    input                           req,
+    input                           we,
+    input       [ADDR_WIDTH-1:0]    addr,
+    input       [DATA_WIDTH-1:0]    data_in,
+    output reg  [DATA_WIDTH-1:0]    data_out,
+    output reg                      ack,
 
-    // 调试接口
-    output reg [DATA_WIDTH-1:0] debug_data,
-    output reg debug_valid
+    // Debug interface
+    output reg  [DATA_WIDTH-1:0]    debug_data,
+    output reg                      debug_valid
 );
 
-    // TAP状态机状态寄存器
+    // TAP state machine state register
     reg [3:0] tap_state;
     reg [3:0] next_tap_state;
 
-    // 指令寄存器
+    // Instruction register
     reg [INST_WIDTH-1:0] instruction_reg;
     reg [INST_WIDTH-1:0] next_instruction;
 
-    // 数据寄存器
+    // Data register
     reg [DATA_WIDTH-1:0] data_reg;
     reg [DATA_WIDTH-1:0] next_data;
 
-    // 移位寄存器
+    // Shift register
     reg [DATA_WIDTH-1:0] shift_reg;
     reg [DATA_WIDTH-1:0] next_shift_reg;
 
-    // 计数器
+    // Counter
     reg [5:0] bit_count;
     reg [5:0] next_bit_count;
 
-    // IDCODE值
+    // IDCODE value
     parameter IDCODE_VALUE = 32'h12345678;
 
-    // TAP状态机转换
+    // TAP state machine transitions
     always @(posedge tck or negedge rst_n) begin
         if (!rst_n) begin
             tap_state <= `TEST_LOGIC_RESET;
@@ -63,7 +63,7 @@ module jtag_top #(
         end
     end
 
-    // TAP状态机组合逻辑
+    // TAP state machine combinational logic
     always @(*) begin
         next_tap_state = tap_state;
 
@@ -87,7 +87,7 @@ module jtag_top #(
         endcase
     end
 
-    // 指令寄存器更新
+    // Instruction register update
     always @(posedge tck or negedge rst_n) begin
         if (!rst_n) begin
             instruction_reg <= `BYPASS;
@@ -96,7 +96,7 @@ module jtag_top #(
         end
     end
 
-    // 数据寄存器更新
+    // Data register update
     always @(posedge tck or negedge rst_n) begin
         if (!rst_n) begin
             data_reg <= 0;
@@ -105,7 +105,7 @@ module jtag_top #(
         end
     end
 
-    // 移位寄存器处理
+    // Shift register handling
     always @(posedge tck or negedge rst_n) begin
         if (!rst_n) begin
             shift_reg <= 0;
@@ -116,7 +116,7 @@ module jtag_top #(
         end
     end
 
-    // 移位逻辑
+    // Shift logic
     always @(*) begin
         next_shift_reg = shift_reg;
         next_bit_count = bit_count;
@@ -127,7 +127,7 @@ module jtag_top #(
 
         case (tap_state)
             `CAPTURE_DR: begin
-                // 捕获数据阶段
+                // Capture data stage
                 case (instruction_reg)
                     `IDCODE: next_shift_reg = IDCODE_VALUE;
                     `BYPASS: next_shift_reg = 1'b0;
@@ -137,7 +137,7 @@ module jtag_top #(
             end
 
             `SHIFT_DR: begin
-                // 移位数据阶段
+                // Shift data stage
                 tdo = shift_reg[0];
                 tdo_en = 1'b1;
                 next_shift_reg = {tdi, shift_reg[DATA_WIDTH-1:1]};
@@ -145,18 +145,18 @@ module jtag_top #(
             end
 
             `UPDATE_DR: begin
-                // 更新数据阶段
+                // Update data stage
                 next_data = shift_reg;
             end
 
             `CAPTURE_IR: begin
-                // 捕获指令阶段
-                next_shift_reg = {4'b0001, {(DATA_WIDTH-4){1'b0}}}; // 固定模式
+                // Capture instruction stage
+                next_shift_reg = {4'b0001, {(DATA_WIDTH-4){1'b0}}}; // Fixed pattern
                 next_bit_count = 0;
             end
 
             `SHIFT_IR: begin
-                // 移位指令阶段
+                // Shift instruction stage
                 tdo = shift_reg[0];
                 tdo_en = 1'b1;
                 next_shift_reg = {tdi, shift_reg[DATA_WIDTH-1:1]};
@@ -164,13 +164,13 @@ module jtag_top #(
             end
 
             `UPDATE_IR: begin
-                // 更新指令阶段
+                // Update instruction stage
                 next_instruction = shift_reg[INST_WIDTH-1:0];
             end
         endcase
     end
 
-    // 总线接口处理
+    // Bus interface handling
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             data_out <= 0;
@@ -185,25 +185,25 @@ module jtag_top #(
                 ack <= 1;
 
                 if (we) begin
-                    // 写操作
+                    // Write operation
                     case (addr)
                         `REG_JTAG_CTRL: begin
-                            // 控制寄存器写入
-                            // 这里可以添加控制逻辑
+                            // Control register write
+                            // Control logic can be added here
                         end
                         `REG_JTAG_DATA: begin
-                            // 数据寄存器写入
+                            // Data register write
                             data_reg <= data_in;
                             debug_data <= data_in;
                             debug_valid <= 1;
                         end
                     endcase
                 end else begin
-                    // 读操作
+                    // Read operation
                     case (addr)
-                        `REG_JTAG_CTRL: data_out <= {28'b0, tap_state}; // 返回TAP状态
-                        `REG_JTAG_DATA: data_out <= data_reg; // 返回数据寄存器值
-                        `REG_JTAG_STAT: data_out <= {31'b0, tdo_en}; // 返回状态
+                        `REG_JTAG_CTRL: data_out <= {28'b0, tap_state}; // Return TAP state
+                        `REG_JTAG_DATA: data_out <= data_reg; // Return data register value
+                        `REG_JTAG_STAT: data_out <= {31'b0, tdo_en}; // Return status
                     endcase
                 end
             end

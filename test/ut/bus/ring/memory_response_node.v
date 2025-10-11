@@ -1,12 +1,12 @@
 module memory_response_node #(
-    parameter NODE_ID        = 3,
-    parameter ADDR_WIDTH     = 32,
-    parameter DATA_WIDTH     = 64
+    parameter NODE_ID                   = 3,
+    parameter ADDR_WIDTH                = 32,
+    parameter DATA_WIDTH                = 64
 ) (
     input  wire                         clk,
     input  wire                         rst_n,
 
-    // Ring总线接口
+    // Ring bus interface
     output reg                          ring_req_valid_o,
     input  wire                         ring_req_ready_i,
     output reg  [ADDR_WIDTH-1:0]        ring_req_addr_o,
@@ -19,7 +19,7 @@ module memory_response_node #(
     input  wire [DATA_WIDTH-1:0]        ring_resp_data_i,
     input  wire                         ring_resp_error_i,
 
-    // 外部响应接口（到内存控制器）
+    // External response interface (to memory controller)
     output reg                          ext_resp_enable_o,
     output reg  [ADDR_WIDTH-1:0]        ext_resp_addr_o,
     output reg  [DATA_WIDTH-1:0]        ext_resp_data_o,
@@ -28,11 +28,11 @@ module memory_response_node #(
     input  wire                         ext_resp_ready_i
 );
 
-    // 内存阵列
-    reg [DATA_WIDTH-1:0] memory [0:1023]; // 4KB内存
+    // Memory array
+    reg [DATA_WIDTH-1:0] memory [0:1023]; // 4KB memory
     reg [DATA_WIDTH-1:0] response_data;
 
-    // 状态机
+    // State machine
     typedef enum logic [1:0] {
         IDLE = 2'b00,
         PROCESS_REQUEST = 2'b01,
@@ -41,13 +41,13 @@ module memory_response_node #(
 
     state_t current_state;
 
-    // 请求信息寄存器
+    // Request information registers
     reg [ADDR_WIDTH-1:0] saved_addr;
     reg [DATA_WIDTH-1:0] saved_data;
     reg saved_wr;
     reg [7:0] saved_src_node;
 
-    // 初始化内存
+    // Initialize memory
     integer i;
     initial begin
         for (i = 0; i < 1024; i = i + 1) begin
@@ -64,13 +64,13 @@ module memory_response_node #(
         end else begin
             case (current_state)
                 IDLE: begin
-                    // 修复：响应节点应该通过ring_resp_valid_i接收请求
+                    // Fix: Response node should receive requests via ring_resp_valid_i
                     if (ring_resp_valid_i) begin
-                        // 正确读取请求信息
+                        // Correctly read request information
                         saved_addr <= ring_resp_data_i[ADDR_WIDTH-1:0];
                         saved_wr <= ring_resp_data_i[32];
                         saved_data <= ring_resp_data_i[63:32];
-                        // 修复：正确设置源节点ID为MEM_REQ_NODE_ID(0)
+                        // Fix: Correctly set source node ID to MEM_REQ_NODE_ID(0)
                         saved_src_node <= 0;
 
                         ring_resp_ready_o <= 1'b1;
@@ -81,17 +81,17 @@ module memory_response_node #(
                 PROCESS_REQUEST: begin
                     ring_resp_ready_o <= 1'b0;
 
-                    // 处理内存请求
+                    // Process memory request
                     if (saved_wr) begin
-                        // 写操作
-                        if (saved_addr < 4096) begin // 地址在4KB范围内
-                            memory[saved_addr[11:3]] <= saved_data; // 8字节对齐
+                        // Write operation
+                        if (saved_addr < 4096) begin // Address within 4KB range
+                            memory[saved_addr[11:3]] <= saved_data; // 8-byte alignment
                             response_data <= {saved_data[DATA_WIDTH-1:32], 32'hACCE_55ED};
                         end else begin
                             response_data <= {saved_data[DATA_WIDTH-1:32], 32'hDEAD_BEEF};
                         end
                     end else begin
-                        // 读操作
+                        // Read operation
                         if (saved_addr < 4096) begin
                             response_data <= memory[saved_addr[11:3]];
                         end else begin
@@ -99,7 +99,7 @@ module memory_response_node #(
                         end
                     end
 
-                    // 通知外部内存控制器（可选）
+                    // Notify external memory controller (optional)
                     ext_resp_enable_o <= 1'b1;
                     ext_resp_addr_o <= saved_addr;
                     ext_resp_data_o <= saved_data;
@@ -111,10 +111,10 @@ module memory_response_node #(
                 SEND_RESPONSE: begin
                     ext_resp_enable_o <= 1'b0;
 
-                    // 发送响应回源节点
+                    // Send response back to source node
                     ring_req_valid_o <= 1'b1;
                     ring_req_data_o <= response_data;
-                    ring_req_wr_o <= 1'b0; // 响应是读操作
+                    ring_req_wr_o <= 1'b0; // Response is read operation
                     ring_req_dest_o <= saved_src_node;
 
                     if (ring_req_ready_i) begin

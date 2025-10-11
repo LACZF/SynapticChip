@@ -3,22 +3,22 @@ module riscv64_execution #(
     parameter ADDR_WIDTH        = 64,
     parameter DATA_WIDTH        = 64
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire stall,
-    input wire flush,
-    input wire [63:0] pc_in,
-    input wire [31:0] instr_in,
-    input wire [63:0] rs1_data,
-    input wire [63:0] rs2_data,
-    input wire [63:0] imm,
-    input wire [15:0] ctrl_in,
-    output reg [63:0] pc_out,
-    output reg [31:0] instr_out,
-    output reg [63:0] alu_result,
-    output reg branch_taken,
-    output reg [63:0] branch_target,
-    output reg [15:0] ctrl_out
+    input wire                  clk,
+    input wire                  rst_n,
+    input wire                  stall,
+    input wire                  flush,
+    input wire [63:0]           pc_in,
+    input wire [31:0]           instr_in,
+    input wire [63:0]           rs1_data,
+    input wire [63:0]           rs2_data,
+    input wire [63:0]           imm,
+    input wire [15:0]           ctrl_in,
+    output reg [63:0]           pc_out,
+    output reg [31:0]           instr_out,
+    output reg [63:0]           alu_result,
+    output reg                  branch_taken,
+    output reg [63:0]           branch_target,
+    output reg [15:0]           ctrl_out
 );
 
     wire [2:0] alu_op = ctrl_in[14:12];
@@ -42,7 +42,7 @@ module riscv64_execution #(
             instr_out <= instr_in;
             ctrl_out <= ctrl_in;
 
-            // ALU操作
+            // ALU operations
             case (alu_op)
                 3'b000: alu_result <= rs1_data + alu_src2; // ADD
                 3'b001: alu_result <= rs1_data - alu_src2; // SUB
@@ -54,11 +54,11 @@ module riscv64_execution #(
                 3'b111: alu_result <= alu_src2 << rs1_data[5:0]; // SLL
             endcase
 
-            // 分支判断 - 只有当指令是分支指令时才进行判断
+            // Branch judgment - Only judge when the instruction is a branch instruction
             branch_taken <= 1'b0;
             branch_target <= pc_in + imm;
 
-            // RISC-V架构中，分支指令的opcode是7'b1100011
+            // In RISC-V architecture, the opcode of branch instructions is 7'b1100011
             if (instr_in[6:0] == 7'b1100011) begin
                 case (instr_in[14:12]) // funct3
                     3'b000: branch_taken <= (rs1_data == rs2_data); // BEQ

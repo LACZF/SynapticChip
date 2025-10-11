@@ -1,25 +1,25 @@
 `include "top_system_params.v"
 
 module direct_bus_top #(
-    parameter NUM_RINGS        = 2,
-    parameter NUM_NODES        = 4,
-    parameter ADDR_WIDTH       = 32,
-    parameter DATA_WIDTH       = 64,
-    parameter OPCODE_WIDTH     = 8,
-    parameter RING_ID_WIDTH    = 4,
-    parameter NODE_ID_WIDTH    = 8,
-    parameter TX_FIFO_DEPTH    = 4,
-    parameter RX_FIFO_DEPTH    = 4,
-    parameter RSP_FIFO_DEPTH   = 4,
-    parameter NUM_CORES        = 4,
-    parameter GPIO_WIDTH       = 32,
-    parameter SPI_CS_NUM       = 1,
-    parameter MATCH_TYPE_WIDTH = 2,
-    parameter NUM_PES          = 4,
-    parameter PE_ARRAY_ROWS    = 2,
-    parameter PE_ARRAY_COLS    = 2,
-    parameter INST_WIDTH       = 32,
-    parameter PE_ID_WIDTH      = 4
+    parameter NUM_RINGS                           = 2,
+    parameter NUM_NODES                           = 4,
+    parameter ADDR_WIDTH                          = 32,
+    parameter DATA_WIDTH                          = 64,
+    parameter OPCODE_WIDTH                        = 8,
+    parameter RING_ID_WIDTH                       = 4,
+    parameter NODE_ID_WIDTH                       = 8,
+    parameter TX_FIFO_DEPTH                       = 4,
+    parameter RX_FIFO_DEPTH                       = 4,
+    parameter RSP_FIFO_DEPTH                      = 4,
+    parameter NUM_CORES                           = 4,
+    parameter GPIO_WIDTH                          = 32,
+    parameter SPI_CS_NUM                          = 1,
+    parameter MATCH_TYPE_WIDTH                    = 2,
+    parameter NUM_PES                             = 4,
+    parameter PE_ARRAY_ROWS                       = 2,
+    parameter PE_ARRAY_COLS                       = 2,
+    parameter INST_WIDTH                          = 32,
+    parameter PE_ID_WIDTH                         = 4
 ) (
     input  wire                                   clk,
     input  wire                                   rst_n,
@@ -57,7 +57,7 @@ module direct_bus_top #(
     inout       [GPIO_WIDTH-1:0]                  gpio_pins,
     input  reg                                    gpio_int_i,
 
-    // JTAG接口
+    // JTAG interface
     output                                        jtag_tck_o,
     output                                        jtag_tms_o,
     output                                        jtag_tdi_o,
@@ -79,7 +79,7 @@ module direct_bus_top #(
     output reg  [DATA_WIDTH-1:0]                  spi_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  spi_data_out_i,
     input  reg                                    spi_ack_i,
-    input  reg  [SPI_CS_NUM-1:0]                 spi_cs_n_i,
+    input  reg  [SPI_CS_NUM-1:0]                  spi_cs_n_i,
     input  reg                                    spi_clk_i,
     input  reg                                    spi_mosi_i,
     output wire                                   spi_miso_o,
@@ -98,33 +98,33 @@ module direct_bus_top #(
     input  reg                                    uart_int_i
 );
 
-    // 内部信号定义
-    // wire [ADDR_WIDTH-1:0]                          sys_addr; // 从bus_top传递的地址
-    wire [DATA_WIDTH-1:0]                         sys_wdata; // 从bus_top传递的写数据
-    wire [DATA_WIDTH-1:0]                         sys_rdata; // 返回给bus_top的读数据
-    wire                                          sys_we; // 写使能信号
-    wire [7:0]                                    sys_byte_en; // 字节使能信号
-    wire                                          sys_req; // 请求有效信号
-    wire                                          sys_ready; // 响应就绪信号
-    reg [2:0] state;
-    reg [ADDR_WIDTH-1:0] saved_addr;
-    reg [DATA_WIDTH-1:0] saved_wdata;
-    reg saved_we;
-    reg [7:0] saved_byte_en;
-    reg [NODE_ID_WIDTH-1:0] target_device;
+    // Internal signal definition
+    // wire [ADDR_WIDTH-1:0]                          sys_addr; // Address passed from bus_top
+    wire [DATA_WIDTH-1:0]                         sys_wdata; // Write data passed from bus_top
+    wire [DATA_WIDTH-1:0]                         sys_rdata; // Read data returned to bus_top
+    wire                                          sys_we; // Write enable signal
+    wire [7:0]                                    sys_byte_en; // Byte enable signals
+    wire                                          sys_req; // Request valid signal
+    wire                                          sys_ready; // Response ready signal
+    reg  [2:0]                                    state;
+    reg  [ADDR_WIDTH-1:0]                         saved_addr;
+    reg  [DATA_WIDTH-1:0]                         saved_wdata;
+    reg                                           saved_we;
+    reg  [7:0]                                    saved_byte_en;
+    reg  [NODE_ID_WIDTH-1:0]                      target_device;
 
-    // 内部信号定义
-    wire [ADDR_WIDTH-1:0] effective_addr; // 实际使用的地址
-    wire [DATA_WIDTH-1:0] cpu_rdata; // CPU读取的数据
-    reg cpu_ready; // CPU请求就绪信号
+    // Internal signal definition
+    wire [ADDR_WIDTH-1:0]                         effective_addr; // Effective address used
+    wire [DATA_WIDTH-1:0]                         cpu_rdata; // Data read by CPU
+    reg                                           cpu_ready; // CPU request ready signal
 
-    // 状态机定义
-    localparam STATE_IDLE = 3'b000;
-    localparam STATE_DECODE = 3'b001;
-    localparam STATE_ACCESS = 3'b010;
-    localparam STATE_RESPONSE = 3'b011;
+    // State machine definition
+    localparam STATE_IDLE         = 3'b000;
+    localparam STATE_DECODE       = 3'b001;
+    localparam STATE_ACCESS       = 3'b010;
+    localparam STATE_RESPONSE     = 3'b011;
 
-    // 地址范围解码
+    // Address range decoding
     always @(*) begin
         if (cpu_mem_addr_i >= `GPIO_BASE && cpu_mem_addr_i <= `GPIO_END) begin
             target_device = `NODE_GPIO;
@@ -141,11 +141,11 @@ module direct_bus_top #(
         end else if (cpu_mem_addr_i >= `SPI_BASE && cpu_mem_addr_i <= `SPI_END) begin
             target_device = `NODE_SPI;
         end else begin
-            target_device = {NODE_ID_WIDTH{1'b1}}; // 未定义地址
+            target_device = {NODE_ID_WIDTH{1'b1}}; // Undefined address
         end
     end
 
-    // 计算有效地址（去除基地址）
+    // Calculate effective address (remove base address)
     assign effective_addr = cpu_mem_addr_i - (
         target_device == `NODE_GPIO ? `GPIO_BASE :
         target_device == `NODE_UART ? `UART_BASE :
@@ -156,7 +156,7 @@ module direct_bus_top #(
         target_device == `NODE_SPI ? `SPI_BASE : 0
     );
 
-    // 状态机实现
+    // State machine implementation
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= STATE_IDLE;
@@ -180,42 +180,42 @@ module direct_bus_top #(
 
                 STATE_DECODE: begin
                     case (target_device)
-                        `NODE_UART: begin // UART模块
+                        `NODE_UART: begin // UART module
                             uart_req_o <= 1'b1;
                             uart_we_o <= saved_we;
                             uart_addr_o <= saved_addr;
                             uart_data_in_o <= saved_wdata;
                             state <= STATE_ACCESS;
                         end
-                        `NODE_GPIO: begin // GPIO模块
+                        `NODE_GPIO: begin // GPIO module
                             gpio_req_o <= 1'b1;
                             gpio_we_o <= saved_we;
                             gpio_addr_o <= saved_addr;
                             gpio_data_in_o <= saved_wdata;
                             state <= STATE_ACCESS;
                         end
-                        `NODE_PE: begin // PE阵列
-                            // 处理PE控制请求
-                            // 这里假设已经有相关逻辑处理PE控制
+                        `NODE_PE: begin // PE array
+                            // Handle PE control requests
+                            // Assuming relevant logic for PE control already exists
                             cpu_ready <= 1'b1;
                             state <= STATE_IDLE;
                         end
-                        `NODE_JTAG: begin // JTAG模块
+                        `NODE_JTAG: begin // JTAG module
                             jtag_req_o <= 1'b1;
                             jtag_we_o <= saved_we;
                             jtag_addr_o <= saved_addr;
                             jtag_data_in_o <= saved_wdata;
                             state <= STATE_ACCESS;
                         end
-                        `NODE_SPI: begin // SPI模块
+                        `NODE_SPI: begin // SPI module
                             spi_req_o <= 1'b1;
                             spi_we_o <= saved_we;
                             spi_addr_o <= saved_addr;
                             spi_data_in_o <= saved_wdata;
                             state <= STATE_ACCESS;
                         end
-                        default: begin // 未定义地址或其他模块
-                            cpu_ready <= 1'b1; // 立即返回，读操作返回0，写操作忽略
+                        default: begin // Undefined address or other modules
+                            cpu_ready <= 1'b1; // Return immediately, read returns 0, write is ignored
                             state <= STATE_IDLE;
                         end
                     endcase
@@ -264,7 +264,7 @@ module direct_bus_top #(
         end
     end
 
-    // 连接CPU接口
+    // Connect CPU interface
     assign cpu_mem_ready_o = cpu_ready;
     assign cpu_mem_rdata_o = (
         target_device == `NODE_UART ? uart_data_out_i :
@@ -274,10 +274,10 @@ module direct_bus_top #(
         0
     );
 
-    // 其他接口连接
+    // Other interface connections
     assign cpu_ext_int_o = uart_int_i || gpio_int_i;
 
-    // 初始化输出信号
+    // Initialize output signals
     initial begin
         pe_enable_o = 0;
         pe_reset_o = 0;

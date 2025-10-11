@@ -1,84 +1,84 @@
 // pe_core.v
-// PE核心模块实现
+// PE core module implementation
 
 `include "pe_params.v"
 
 module pe_core #(
-    parameter ADDR_WIDTH        = 32,
-    parameter DATA_WIDTH        = 64,
-    parameter NUM_PES           = 4,
-    parameter INST_WIDTH        = 32,
-    parameter PE_ID_WIDTH       = 4,
-    parameter PE_ARRAY_ROWS     = 2,
-    parameter PE_ARRAY_COLS     = 2
+    parameter ADDR_WIDTH            = 32,
+    parameter DATA_WIDTH            = 64,
+    parameter NUM_PES               = 4,
+    parameter INST_WIDTH            = 32,
+    parameter PE_ID_WIDTH           = 4,
+    parameter PE_ARRAY_ROWS         = 2,
+    parameter PE_ARRAY_COLS         = 2
 ) (
-    input clk,
-    input rst_n,
-    input enable,
+    input                           clk,
+    input                           rst_n,
+    input                           enable,
 
-    // 指令接口
-    input [INST_WIDTH-1:0] instruction,
-    input inst_valid,
+    // Instruction interface
+    input       [INST_WIDTH-1:0]    instruction,
+    input                           inst_valid,
 
-    // 数据存储器接口
-    output mem_req,
-    output mem_we,
-    output [ADDR_WIDTH-1:0] mem_addr,
-    output [DATA_WIDTH-1:0] mem_data_out,
-    input [DATA_WIDTH-1:0] mem_data_in,
-    input mem_ack,
+    // Data memory interface
+    output                          mem_req,
+    output                          mem_we,
+    output      [ADDR_WIDTH-1:0]    mem_addr,
+    output      [DATA_WIDTH-1:0]    mem_data_out,
+    input       [DATA_WIDTH-1:0]    mem_data_in,
+    input                           mem_ack,
 
-    // 邻居PE通信接口
-    input north_valid,
-    input [DATA_WIDTH-1:0] north_data,
-    output north_ready,
+    // Neighbor PE communication interface
+    input                           north_valid,
+    input       [DATA_WIDTH-1:0]    north_data,
+    output                          north_ready,
 
-    input south_valid,
-    input [DATA_WIDTH-1:0] south_data,
-    output south_ready,
+    input                           south_valid,
+    input       [DATA_WIDTH-1:0]    south_data,
+    output                          south_ready,
 
-    input east_valid,
-    input [DATA_WIDTH-1:0] east_data,
-    output east_ready,
+    input                           east_valid,
+    input       [DATA_WIDTH-1:0]    east_data,
+    output                          east_ready,
 
-    input west_valid,
-    input [DATA_WIDTH-1:0] west_data,
-    output west_ready,
+    input                            west_valid,
+    input       [DATA_WIDTH-1:0]     west_data,
+    output                           west_ready,
 
-    output reg out_valid,
-    output reg [DATA_WIDTH-1:0] out_data,
+    output reg                       out_valid,
+    output reg  [DATA_WIDTH-1:0]     out_data,
 
-    // 状态输出
-    output reg [DATA_WIDTH-1:0] status,
-    output reg busy
+    // Status output
+    output reg  [DATA_WIDTH-1:0]     status,
+    output reg                       busy
 );
 
-    // 内部寄存器文件
+    // Internal register file
     reg [DATA_WIDTH-1:0] reg_file [0:`NUM_REGS-1];
 
-    // 指令解码
-    wire [`OPCODE_WIDTH-1:0] opcode = instruction[31:26];
-    wire [`REG_ADDR_WIDTH-1:0] rd = instruction[25:22];
-    wire [`REG_ADDR_WIDTH-1:0] rs1 = instruction[21:18];
-    wire [`REG_ADDR_WIDTH-1:0] rs2 = instruction[17:14];
-    wire [13:0] immediate = instruction[13:0];
+    // Instruction decoding
+    wire [`OPCODE_WIDTH-1:0]   opcode    = instruction[31:26];
+    wire [`REG_ADDR_WIDTH-1:0] rd        = instruction[25:22];
+    wire [`REG_ADDR_WIDTH-1:0] rs1       = instruction[21:18];
+    wire [`REG_ADDR_WIDTH-1:0] rs2       = instruction[17:14];
+    wire [13:0]                immediate = instruction[13:0];
 
-    // 内部信号
+    // Internal signals
     reg [DATA_WIDTH-1:0] alu_out;
     reg [DATA_WIDTH-1:0] alu_a, alu_b;
     reg alu_zero, alu_neg;
 
-    // 状态寄存器
+    // Status registers
     reg [1:0] mode;
-    reg [DATA_WIDTH-1:0] pc; // 程序计数器
-    reg [DATA_WIDTH-1:0] mar; // 存储器地址寄存器
-    reg [DATA_WIDTH-1:0] mdr; // 存储器数据寄存器
+    reg [DATA_WIDTH-1:0] pc; // Program counter
+    reg [DATA_WIDTH-1:0] mar; // Memory address register
+    reg [DATA_WIDTH-1:0] mdr; // Memory data register
 
-    // 通信缓冲区
-    reg [DATA_WIDTH-1:0] comm_buffer [0:3]; // 0:北, 1:南, 2:东, 3:西
+    // Communication buffers - storage for incoming data from neighboring PEs
+    reg [DATA_WIDTH-1:0] comm_buffer [0:3]; // 0: North, 1: South, 2: East, 3: West
     reg comm_ready [0:3];
 
-    // 状态机
+    // State machine
     reg [2:0] state;
     parameter S_IDLE = 3'b000;
     parameter S_FETCH = 3'b001;
@@ -87,7 +87,7 @@ module pe_core #(
     parameter S_MEMORY = 3'b100;
     parameter S_COMM = 3'b101;
 
-    // ALU操作
+    // ALU operations
     always @(*) begin
         alu_zero = 0;
         alu_neg = 0;
@@ -109,7 +109,7 @@ module pe_core #(
         if (alu_out[DATA_WIDTH-1]) alu_neg = 1;
     end
 
-    // 主状态机
+    // Main state machine
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= S_IDLE;
@@ -122,12 +122,12 @@ module pe_core #(
             busy <= 0;
             status <= 0;
 
-            // 初始化寄存器文件
+            // Initialize register file
             for (integer i = 0; i < `NUM_REGS; i = i + 1) begin
                 reg_file[i] <= 0;
             end
 
-            // 初始化通信缓冲区
+            // Initialize communication buffers
             for (integer j = 0; j < 4; j = j + 1) begin
                 comm_buffer[j] <= 0;
                 comm_ready[j] <= 0;
@@ -143,19 +143,19 @@ module pe_core #(
                 end
 
                 S_FETCH: begin
-                    // 指令已输入，直接解码
+                    // Instruction already input, decode directly
                     state <= S_DECODE;
                 end
 
                 S_DECODE: begin
-                    // 准备操作数
+                    // Prepare operands
                     alu_a <= reg_file[rs1];
                     alu_b <= (opcode == `OP_LOAD || opcode == `OP_STORE ||
                              opcode == `OP_JUMP || opcode[5:4] == 2'b01) ?
                              {{(DATA_WIDTH-14){immediate[13]}}, immediate} :
                              reg_file[rs2];
 
-                    // 设置存储器地址（用于LOAD/STORE）
+                    // Set memory address (for LOAD/STORE)
                     if (opcode == `OP_LOAD || opcode == `OP_STORE) begin
                         mar <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
                     end
@@ -167,13 +167,13 @@ module pe_core #(
                     case (opcode)
                         `OP_ADD, `OP_SUB, `OP_MUL, `OP_AND, `OP_OR, `OP_XOR,
                         `OP_NOT, `OP_SHL, `OP_SHR: begin
-                            // 算术/逻辑运算
+                            // Arithmetic/logic operations
                             reg_file[rd] <= alu_out;
                             state <= S_IDLE;
                         end
 
                         `OP_LOAD: begin
-                            // 存储器读取
+                            // Memory read
                             mdr <= mem_data_in;
                             if (mem_ack) begin
                                 reg_file[rd] <= mem_data_in;
@@ -184,7 +184,7 @@ module pe_core #(
                         end
 
                         `OP_STORE: begin
-                            // 存储器写入
+                            // Memory write
                             mdr <= reg_file[rs2];
                             if (mem_ack) begin
                                 state <= S_IDLE;
@@ -194,19 +194,19 @@ module pe_core #(
                         end
 
                         `OP_MOVE: begin
-                            // 寄存器间移动
+                            // Inter-register move
                             reg_file[rd] <= reg_file[rs1];
                             state <= S_IDLE;
                         end
 
                         `OP_JUMP: begin
-                            // 无条件跳转
+                            // Unconditional jump
                             pc <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
                             state <= S_IDLE;
                         end
 
                         `OP_BEQ: begin
-                            // 条件跳转：相等
+                            // Conditional jump: equal
                             if (alu_zero) begin
                                 pc <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
                             end
@@ -214,7 +214,7 @@ module pe_core #(
                         end
 
                         `OP_BNE: begin
-                            // 条件跳转：不相等
+                            // Conditional jump: not equal
                             if (!alu_zero) begin
                                 pc <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
                             end
@@ -222,7 +222,7 @@ module pe_core #(
                         end
 
                         `OP_BLT: begin
-                            // 条件跳转：小于
+                            // Conditional jump: less than
                             if (alu_neg) begin
                                 pc <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
                             end
@@ -230,7 +230,7 @@ module pe_core #(
                         end
 
                         `OP_BGT: begin
-                            // 条件跳转：大于
+                            // Conditional jump: greater than
                             if (!alu_neg && !alu_zero) begin
                                 pc <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
                             end
@@ -238,14 +238,14 @@ module pe_core #(
                         end
 
                         default: begin
-                            // NOP或其他未定义操作
+                            // NOP or other undefined operations
                             state <= S_IDLE;
                         end
                     endcase
                 end
 
                 S_MEMORY: begin
-                    // 处理存储器访问
+                    // Handle memory access
                     if (mem_ack) begin
                         if (opcode == `OP_LOAD) begin
                             reg_file[rd] <= mdr;
@@ -255,13 +255,13 @@ module pe_core #(
                 end
 
                 S_COMM: begin
-                    // 处理通信
-                    // 这里简化处理，实际实现会更复杂
+                    // Handle communication
+                    // Simplified handling here, actual implementation is more complex
                     state <= S_IDLE;
                 end
             endcase
 
-            // 处理通信输入
+            // Handle communication input
             if (north_valid && north_ready) begin
                 comm_buffer[0] <= north_data;
                 comm_ready[0] <= 1;
@@ -284,14 +284,14 @@ module pe_core #(
         end
     end
 
-    // 存储器接口
+    // Memory interface
     assign mem_req = (state == S_EXECUTE && (opcode == `OP_LOAD || opcode == `OP_STORE)) ||
                     (state == S_MEMORY);
     assign mem_we = (opcode == `OP_STORE);
     assign mem_addr = mar[ADDR_WIDTH-1:0];
     assign mem_data_out = mdr;
 
-    // 通信接口
+    // Communication interface
     assign north_ready = !comm_ready[0];
     assign south_ready = !comm_ready[1];
     assign east_ready = !comm_ready[2];

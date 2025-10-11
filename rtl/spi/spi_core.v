@@ -1,31 +1,31 @@
 // spi_core.v
-// SPI控制器核心实现
+// SPI controller core implementation
 
 `include "spi_params.v"
 
 module spi_core #(
-    parameter DATA_WIDTH = `SPI_DATA_WIDTH,
-    parameter ADDR_WIDTH = `SPI_ADDR_WIDTH,
-    parameter CS_NUM     = 1
+    parameter DATA_WIDTH             = `SPI_DATA_WIDTH,
+    parameter ADDR_WIDTH             = `SPI_ADDR_WIDTH,
+    parameter CS_NUM                 = 1
 ) (
-    input wire clk,
-    input wire rst_n,
+    input wire                       clk,
+    input wire                       rst_n,
 
-    // 控制接口
-    input wire req,
-    input wire we,
-    input wire [ADDR_WIDTH-1:0] addr,
-    input wire [DATA_WIDTH-1:0] data_in,
-    output reg [DATA_WIDTH-1:0] data_out,
-    output reg ack,
+    // Control interface
+    input  wire                      req,
+    input  wire                      we,
+    input  wire [ADDR_WIDTH-1:0]     addr,
+    input  wire [DATA_WIDTH-1:0]     data_in,
+    output reg  [DATA_WIDTH-1:0]     data_out,
+    output reg                       ack,
 
-    // SPI物理接口
-    output reg [CS_NUM-1:0] spi_cs_n,
-    output reg spi_clk,
-    output reg spi_mosi,
-    input wire spi_miso
+    // SPI physical interface
+    output reg  [CS_NUM-1:0]         spi_cs_n,
+    output reg                       spi_clk,
+    output reg                       spi_mosi,
+    input  wire                      spi_miso
 );
-    // 内部寄存器
+    // Internal registers
     reg [DATA_WIDTH-1:0] control_reg;
     reg [DATA_WIDTH-1:0] status_reg;
     reg [DATA_WIDTH-1:0] data_reg;
@@ -33,9 +33,9 @@ module spi_core #(
     reg [DATA_WIDTH-1:0] cmd_reg;
     reg [DATA_WIDTH-1:0] clk_div_reg;
     reg [DATA_WIDTH-1:0] config_reg;
-    reg [DATA_WIDTH-1:0] cs_sel_reg;  // 片选选择寄存器
+    reg [DATA_WIDTH-1:0] cs_sel_reg;  // Chip select register
 
-    // SPI状态机变量
+    // SPI state machine variables
     reg [2:0] state;
     reg [7:0] bit_counter;
     reg [7:0] byte_counter;
@@ -46,14 +46,14 @@ module spi_core #(
     reg [3:0] clk_divider;
     reg clk_gen;
 
-    // 控制信号
+    // Control signals
     wire spi_en = control_reg[`SPI_CTRL_EN];
     wire irq_en = control_reg[`SPI_CTRL_IRQ_EN];
     wire master_mode = control_reg[`SPI_CTRL_MASTER];
     wire [1:0] spi_mode = config_reg[1:0];
     wire [7:0] clk_div = clk_div_reg[7:0];
 
-    // SPI时钟生成
+    // SPI clock generation
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             clk_divider <= 4'h0;
@@ -65,7 +65,7 @@ module spi_core #(
                 clk_divider <= 4'h0;
                 clk_gen <= ~clk_gen;
 
-                // 根据SPI模式设置时钟相位和极性
+                // Set clock phase and polarity according to SPI mode
                 case (spi_mode)
                     `SPI_MODE_0: spi_clk <= clk_gen;
                     `SPI_MODE_1: spi_clk <= ~clk_gen;
@@ -83,7 +83,7 @@ module spi_core #(
                         (clk_divider == clk_div && !clk_gen) :
                         (clk_divider == clk_div && clk_gen);
 
-    // 寄存器读写逻辑
+    // Register read/write logic
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             control_reg <= 32'h0;
@@ -91,8 +91,8 @@ module spi_core #(
             data_reg <= 32'h0;
             addr_reg <= 32'h0;
             cmd_reg <= 32'h0;
-            clk_div_reg <= 32'h00000007; // 默认分频值
-            config_reg <= 32'h0; // 默认SPI模式0
+            clk_div_reg <= 32'h00000007; // Default clock divider
+            config_reg <= 32'h0; // Default SPI mode 0
             ack <= 1'b0;
             data_out <= 32'h0;
         end else begin
@@ -100,7 +100,7 @@ module spi_core #(
 
             if (req && !ack) begin
                 if (we) begin
-                    // 写操作
+                    // Write operation
                     case (addr[7:0])
                         `SPI_REG_CONTROL: begin
                             control_reg <= data_in;
@@ -117,7 +117,7 @@ module spi_core #(
                         `SPI_REG_CMD: begin
                             cmd_reg <= data_in;
                             ack <= 1'b1;
-                            // 启动SPI操作
+                            // Start SPI operation
                             if (spi_en) begin
                                 current_cmd <= data_in[7:0];
                                 current_addr <= addr_reg[23:0];
@@ -126,10 +126,10 @@ module spi_core #(
                                 bit_counter <= 8'h0;
                                 byte_counter <= 8'h0;
                                 if (CS_NUM > 1) begin
-                                    // 多片选模式：只拉低选中的片选信号
+                                    // Multi-chip select mode: only pull down selected CS
                                     spi_cs_n <= ~(1 << cs_sel_reg[$clog2(CS_NUM)-1:0]);
                                 end else begin
-                                    // 单片选模式：兼容原有行为
+                                    // Single-chip select mode: compatible with previous behavior
                                     spi_cs_n <= 1'b0;
                                 end
                                 status_reg[`SPI_STATUS_BUSY] <= 1'b1;
@@ -144,13 +144,13 @@ module spi_core #(
                             config_reg <= data_in;
                             ack <= 1'b1;
                         end
-                        `SPI_REG_CS_SEL: begin  // 片选选择寄存器
+                        `SPI_REG_CS_SEL: begin  // Chip select register
                             cs_sel_reg <= data_in;
                             ack <= 1'b1;
                         end
                     endcase
                 end else begin
-                    // 读操作
+                    // Read operation
                     case (addr[7:0])
                         `SPI_REG_CONTROL: begin
                             data_out <= control_reg;
@@ -181,7 +181,7 @@ module spi_core #(
                             data_out <= config_reg;
                             ack <= 1'b1;
                         end
-                        `SPI_REG_CS_SEL: begin  // 片选选择寄存器
+                        `SPI_REG_CS_SEL: begin  // Chip select register
                             data_out <= cs_sel_reg;
                             ack <= 1'b1;
                         end
@@ -191,7 +191,7 @@ module spi_core #(
         end
     end
 
-    // SPI主状态机
+    // SPI master state machine
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= `SPI_STATE_IDLE;
@@ -213,14 +213,14 @@ module spi_core #(
                     begin
                         if (spi_clk_edge) begin
                             if (bit_counter < 8) begin
-                                // 发送命令字节
+                                // Send command byte
                                 spi_mosi <= current_cmd[7 - bit_counter[2:0]];
                                 bit_counter <= bit_counter + 1;
                             end else begin
                                 bit_counter <= 8'h0;
                                 byte_counter <= 8'h0;
 
-                                // 根据命令类型决定下一个状态
+                                // Determine next state based on command type
                                 if (current_cmd == `SPI_CMD_READ_DATA ||
                                     current_cmd == `SPI_CMD_FAST_READ ||
                                     current_cmd == `SPI_CMD_READ_DUAL ||
@@ -231,7 +231,7 @@ module spi_core #(
                                     if (current_cmd == `SPI_CMD_WRITE_DATA) begin
                                         state <= `SPI_STATE_ADDR;
                                     end else begin
-                                        // 写使能命令不需要地址
+                                        // Write enable command doesn't need address
                                         state <= `SPI_STATE_DONE;
                                     end
                                 end else begin
@@ -244,8 +244,8 @@ module spi_core #(
                 `SPI_STATE_ADDR:
                     begin
                         if (spi_clk_edge) begin
-                            if (bit_counter < 24) begin  // 24位地址
-                                // 发送地址位
+                            if (bit_counter < 24) begin  // 24-bit address
+                                // Send address bits
                                 spi_mosi <= current_addr[23 - bit_counter[4:0]];
                                 bit_counter <= bit_counter + 1;
                             end else begin
@@ -267,7 +267,7 @@ module spi_core #(
                 `SPI_STATE_DUMMY:
                     begin
                         if (spi_clk_edge) begin
-                            if (bit_counter < 8) begin  // 8个dummy周期
+                            if (bit_counter < 8) begin  // 8 dummy cycles
                                 bit_counter <= bit_counter + 1;
                             end else begin
                                 bit_counter <= 8'h0;
@@ -279,11 +279,11 @@ module spi_core #(
                 `SPI_STATE_READ:
                     begin
                         if (spi_clk_edge) begin
-                            // 读取数据位
+                            // Read data bits
                             rx_data <= {rx_data[30:0], spi_miso};
                             bit_counter <= bit_counter + 1;
 
-                            if (bit_counter >= 31) begin  // 读取32位完成
+                            if (bit_counter >= 31) begin  // 32-bit read complete
                                 state <= `SPI_STATE_DONE;
                                 status_reg[`SPI_STATUS_RX_READY] <= 1'b1;
                             end
@@ -293,11 +293,11 @@ module spi_core #(
                 `SPI_STATE_WRITE:
                     begin
                         if (spi_clk_edge) begin
-                            // 发送数据位
+                            // Send data bits
                             spi_mosi <= tx_data[31 - bit_counter[4:0]];
                             bit_counter <= bit_counter + 1;
 
-                            if (bit_counter >= 31) begin  // 发送32位完成
+                            if (bit_counter >= 31) begin  // 32-bit send complete
                                 state <= `SPI_STATE_DONE;
                             end
                         end
@@ -306,16 +306,16 @@ module spi_core #(
                 `SPI_STATE_DONE:
                     begin
                         if (CS_NUM > 1) begin
-                            // 多片选模式：拉高所有片选信号
+                            // Multi-chip select mode: pull up all CS signals
                             spi_cs_n <= {CS_NUM{1'b1}};
                         end else begin
-                            // 单片选模式：兼容原有行为
+                            // Single-chip select mode: compatible with previous behavior
                             spi_cs_n <= 1'b1;
                         end
                         status_reg[`SPI_STATUS_BUSY] <= 1'b0;
                         status_reg[`SPI_STATUS_TX_READY] <= 1'b1;
 
-                        // 触发中断
+                        // Trigger interrupt
                         if (irq_en) begin
                             status_reg[`SPI_STATUS_IRQ_PEND] <= 1'b1;
                         end
@@ -326,10 +326,10 @@ module spi_core #(
         end else begin
             state <= `SPI_STATE_IDLE;
             if (CS_NUM > 1) begin
-                // 多片选模式：拉高所有片选信号
+                // Multi-chip select mode: pull up all CS signals
                 spi_cs_n <= {CS_NUM{1'b1}};
             end else begin
-                // 单片选模式：兼容原有行为
+                // Single-chip select mode: compatible with previous behavior
                 spi_cs_n <= 1'b1;
             end
             status_reg[`SPI_STATUS_BUSY] <= 1'b0;

@@ -1,5 +1,5 @@
 // uart_node.v
-// 完整的UART节点，包含UART模块和总线接口
+// Complete UART node, including UART module and bus interface
 
 `include "uart_params.v"
 
@@ -12,29 +12,29 @@ module uart_node #(
     parameter OPCODE_WIDTH      = 8,
     parameter MATCH_TYPE_WIDTH  = 2
 ) (
-    input clk,
-    input rst_n,
-    input [NODE_ID_WIDTH-1:0] node_id,
+    input                               clk,
+    input                               rst_n,
+    input [NODE_ID_WIDTH-1:0]           node_id,
 
-    // Ring接口 - 输入
-    input ring_in_valid,
-    input [NODE_ID_WIDTH-1:0] ring_in_src,
-    input [NODE_ID_WIDTH-1:0] ring_in_dest,
-    input [ADDR_WIDTH-1:0] ring_in_addr,
-    input [DATA_WIDTH-1:0] ring_in_data,
-    input ring_in_we,
-    input [3:0] ring_in_be,
-    input ring_in_ack,
+    // Ring interface - Input
+    input                               ring_in_valid,
+    input [NODE_ID_WIDTH-1:0]           ring_in_src,
+    input [NODE_ID_WIDTH-1:0]           ring_in_dest,
+    input [ADDR_WIDTH-1:0]              ring_in_addr,
+    input [DATA_WIDTH-1:0]              ring_in_data,
+    input                               ring_in_we,
+    input       [3:0]                   ring_in_be,
+    input                               ring_in_ack,
 
-    // Ring接口 - 输出
-    output ring_out_valid,
-    output [NODE_ID_WIDTH-1:0] ring_out_src,
-    output [NODE_ID_WIDTH-1:0] ring_out_dest,
-    output [ADDR_WIDTH-1:0] ring_out_addr,
-    output [DATA_WIDTH-1:0] ring_out_data,
-    output ring_out_we,
-    output [3:0] ring_out_be,
-    output ring_out_ack,
+    // Ring interface - Output
+    output                              ring_out_valid,
+    output      [NODE_ID_WIDTH-1:0]     ring_out_src,
+    output      [NODE_ID_WIDTH-1:0]     ring_out_dest,
+    output      [ADDR_WIDTH-1:0]        ring_out_addr,
+    output      [DATA_WIDTH-1:0]        ring_out_data,
+    output                              ring_out_we,
+    output      [3:0]                   ring_out_be,
+    output                              ring_out_ack,
 
     output                              req_o,
     output                              we_o,
@@ -48,9 +48,9 @@ module uart_node #(
     output                              cts_o,
     input  reg                          int_i,
 
-    // 发送请求
-    output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // 指定使用的Ring
-    output wire [NUM_RINGS-1:0]         tx_req_ring_disable_o,   // 禁用的Ring
+    // Send requests
+    output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // Specify Ring to use
+    output wire [NUM_RINGS-1:0]         tx_req_ring_disable_o,   // Disable Ring
     output wire                         tx_req_valid_o,
     output wire                         tx_req_is_order_o,
     output wire [OPCODE_WIDTH-1:0]      tx_req_opcode_o,
@@ -60,7 +60,7 @@ module uart_node #(
     output wire [ADDR_WIDTH-1:0]        tx_req_addr_o,
     output wire [DATA_WIDTH-1:0]        tx_req_data_o,
 
-    // 接受请求
+    // Receive requests
     input  wire                         rx_req_valid_i,
     input  wire                         rx_req_is_order_i,
     input  wire [OPCODE_WIDTH-1:0]      rx_req_opcode_i,
@@ -71,14 +71,14 @@ module uart_node #(
     input  wire [ADDR_WIDTH-1:0]        rx_req_addr_i,
     input  wire [DATA_WIDTH-1:0]        rx_req_data_i,
 
-    // 接收响应
+    // Receive responses
     input  wire                         rsp_valid_i,
     input  wire [NODE_ID_WIDTH-1:0]     rsp_source_id_i,
     input  wire [NODE_ID_WIDTH-1:0]     rsp_target_id_i,
     input  wire [ADDR_WIDTH-1:0]        rsp_addr_i,
     input  wire [DATA_WIDTH-1:0]        rsp_data_i
 );
-    // 实例化UART Ring节点
+    // Instantiate UART Ring node
     uart_ring_node ring_node_inst (
         .clk(clk),
         .rst_n(rst_n),

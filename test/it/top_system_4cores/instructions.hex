@@ -1,3 +1,7 @@
+// Sample RISC-V instruction file (hexadecimal format)
+// Contains basic arithmetic, logical, memory access and control flow instructions
+
+// Set initial register values
 001000b3    // ADDI x1, x0, 1       // x1 = 1
 00200113    // ADDI x2, x0, 2       // x2 = 2
 00300193    // ADDI x3, x0, 3       // x3 = 3
@@ -13,8 +17,8 @@
 002404b3    // SLTU x9, x8, x2      // x9 = (x8 < x2) ? 1 : 0 = 1
 00348533    // SLTI x10, x9, 3      // x10 = (x9 < 3) ? 1 : 0 = 1
 001505b3    // SLLI x11, x10, 1     // x11 = x10 << 1 = 2
-00158633    // SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (逻辑右移)
-401606b3    // SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (算术右移)
+00158633    // SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (logical right shift)
+401606b3    // SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (arithmetic right shift)
 00168733    // ADDI x14, x13, 1     // x14 = x13 + 1 = 1
 002707b3    // ADDI x15, x14, 2     // x15 = x14 + 2 = 3
 00378833    // ADDI x16, x15, 3     // x16 = x15 + 3 = 6
@@ -33,13 +37,13 @@
 00ee0eb3    // ADDI x29, x28, 16    // x29 = x28 + 16 = 136
 00ee8f33    // ADDI x30, x29, 17    // x30 = x29 + 17 = 153
 00ff0fb3    // ADDI x31, x30, 18    // x31 = x30 + 18 = 171
-00000073    // ECALL                // 系统调用指令
+00000073    // ECALL                // system call instruction
 
-// ===== GPIO测试指令 =====
-00400313    // ADDI x6, x0, 0x04    // x6 = 4 (REG_DIR地址偏移)
-00300393    // ADDI x7, x0, 0x03    // x7 = 3 (要设置为输出的引脚)
-F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
-000038B7    // LUI x25, 0x3         // x25 = 0x3000 (GPIO0_BASE低32位)
+// ===== GPIO Test Instructions =====
+00400313    // ADDI x6, x0, 0x04    // x6 = 4 (REG_DIR address offset)
+00300393    // ADDI x7, x0, 0x03    // x7 = 3 (pins to set as output)
+F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (upper 32 bits of MMIO_BASE_ADDR)
+000038B7    // LUI x25, 0x3         // x25 = 0x3000 (lower 32 bits of GPIO0_BASE)
 00088893    // ADDI x25, x25, 0     // x25 = 0x3000
 00180937    // LUI x26, 0x1         // x26 = 0x10000000
 000009B7    // LUI x27, 0x0         // x27 = 0x0
@@ -55,25 +59,25 @@ F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
 00098A33    // ADD x20, x28, x29    // x20 = 0x0
 000A0AB3    // ADD x21, x30, x31    // x21 = 0x0
 00068913    // ADDI x18, x18, x6    // x18 = GPIO0_BASE + REG_DIR
-000788B3    // SW x7, 0(x18)        // 写入GPIO方向寄存器，设置引脚0和1为输出
-00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_DATA地址偏移)
+000788B3    // SW x7, 0(x18)        // Write to GPIO direction register, set pins 0 and 1 as output
+00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_DATA address offset)
 00088913    // ADDI x18, x18, -x6   // x18 = GPIO0_BASE + REG_DATA
-000188B3    // SW x1, 0(x18)        // 写入GPIO数据寄存器，设置引脚0为高电平
-00000013    // NOP                  // 短暂延迟
-000008B3    // SW x0, 0(x18)        // 写入GPIO数据寄存器，设置引脚0为低电平
-00000013    // NOP                  // 短暂延迟
+000188B3    // SW x1, 0(x18)        // Write to GPIO data register, set pin 0 to high
+00000013    // NOP                  // Short delay
+000008B3    // SW x0, 0(x18)        // Write to GPIO data register, set pin 0 to low
+00000013    // NOP                  // short delay
 
-// ===== UART测试指令 =====
-00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_THR/REG_RBR地址偏移)
-00000393    // ADDI x7, x0, 0x04    // x7 = 4 (REG_IER地址偏移)
-00000413    // ADDI x8, x0, 0x0C    // x8 = 12 (REG_LCR地址偏移)
-00000493    // ADDI x9, x0, 0x55    // x9 = 0x55 (测试数据 'U')
-00000513    // ADDI x10, x0, 0x80   // x10 = 0x80 (LCR[7] = 1，访问除数寄存器)
-00000593    // ADDI x11, x0, 0x01   // x11 = 1 (波特率除数低字节)
-00000613    // ADDI x12, x0, 0x00   // x12 = 0 (波特率除数高字节)
-00000693    // ADDI x13, x0, 0x03   // x13 = 3 (8位数据，1位停止位，无校验)
-F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
-000018B7    // LUI x25, 0x1         // x25 = 0x1000 (UART0_BASE低32位)
+// ===== UART Test Instructions =====
+00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_THR/REG_RBR address offset)
+00000393    // ADDI x7, x0, 0x04    // x7 = 4 (REG_IER address offset)
+00000413    // ADDI x8, x0, 0x0C    // x8 = 12 (REG_LCR address offset)
+00000493    // ADDI x9, x0, 0x55    // x9 = 0x55 (test data 'U')
+00000513    // ADDI x10, x0, 0x80   // x10 = 0x80 (LCR[7] = 1, access divisor register)
+00000593    // ADDI x11, x0, 0x01   // x11 = 1 (baud rate divisor low byte)
+00000613    // ADDI x12, x0, 0x00   // x12 = 0 (baud rate divisor high byte)
+00000693    // ADDI x13, x0, 0x03   // x13 = 3 (8 data bits, 1 stop bit, no parity)
+F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (upper 32 bits of MMIO_BASE_ADDR)
+000018B7    // LUI x25, 0x1         // x25 = 0x1000 (lower 32 bits of UART0_BASE)
 00088893    // ADDI x25, x25, 0     // x25 = 0x1000
 00180937    // LUI x26, 0x1         // x26 = 0x10000000
 000009B7    // LUI x27, 0x0         // x27 = 0x0
@@ -89,30 +93,30 @@ F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
 00098A33    // ADD x20, x28, x29    // x20 = 0x0
 000A0AB3    // ADD x21, x30, x31    // x21 = 0x0
 00088913    // ADDI x18, x18, x8    // x18 = UART0_BASE + REG_LCR
-000A88B3    // SW x10, 0(x18)       // 设置LCR[7] = 1，访问除数寄存器
+000A88B3    // SW x10, 0(x18)       // Set LCR[7] = 1, access divisor register
 00088913    // ADDI x18, x18, -x8   // x18 = UART0_BASE + REG_DLL
-000B88B3    // SW x11, 0(x18)       // 设置除数寄存器低字节
+000B88B3    // SW x11, 0(x18)       // Set divisor register low byte
 00078913    // ADDI x18, x18, x7    // x18 = UART0_BASE + REG_DLM
-000C88B3    // SW x12, 0(x18)       // 设置除数寄存器高字节
+000C88B3    // SW x12, 0(x18)       // Set divisor register high byte
 00088913    // ADDI x18, x18, -x7   // x18 = UART0_BASE + REG_LCR
-000D88B3    // SW x13, 0(x18)       // 设置线控制寄存器：8位数据，1位停止位，无校验
+000D88B3    // SW x13, 0(x18)       // Set line control register: 8 data bits, 1 stop bit, no parity
 00068913    // ADDI x18, x18, -x8   // x18 = UART0_BASE + REG_THR
-000988B3    // SW x9, 0(x18)        // 发送数据 'U'
-00000013    // NOP                  // 短暂延迟
-00000013    // NOP                  // 短暂延迟
+000988B3    // SW x9, 0(x18)        // Send data 'U'
+00000013    // NOP                  // short delay
+00000013    // NOP                  // short delay
 
-// ===== SPI测试指令 =====
-00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_CONTROL地址偏移)
-00000393    // ADDI x7, x0, 0x04    // x7 = 4 (REG_STATUS地址偏移)
-00000413    // ADDI x8, x0, 0x08    // x8 = 8 (REG_DATA地址偏移)
-00000493    // ADDI x9, x0, 0x10    // x9 = 16 (REG_CMD地址偏移)
-00000513    // ADDI x10, x0, 0x14   // x10 = 20 (REG_CLK_DIV地址偏移)
-00000593    // ADDI x11, x0, 0x18   // x11 = 24 (REG_CONFIG地址偏移)
-00000613    // ADDI x12, x0, 0x01    // x12 = 1 (SPI使能)
-00000693    // ADDI x13, x0, 0x04    // x13 = 4 (主机模式)
-00000713    // ADDI x14, x0, 0x55    // x14 = 0x55 (测试数据)
-00000793    // ADDI x15, x0, 0x02    // x15 = 2 (SPI写命令)
-00000813    // ADDI x16, x0, 0x08    // x16 = 8 (时钟分频值)
+// ===== SPI Test Instructions =====
+00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_CONTROL address offset)
+00000393    // ADDI x7, x0, 0x04    // x7 = 4 (REG_STATUS address offset)
+00000413    // ADDI x8, x0, 0x08    // x8 = 8 (REG_DATA address offset)
+00000493    // ADDI x9, x0, 0x10    // x9 = 16 (REG_CMD address offset)
+00000513    // ADDI x10, x0, 0x14   // x10 = 20 (REG_CLK_DIV address offset)
+00000593    // ADDI x11, x0, 0x18   // x11 = 24 (REG_CONFIG address offset)
+00000613    // ADDI x12, x0, 0x01    // x12 = 1 (SPI enable)
+00000693    // ADDI x13, x0, 0x04    // x13 = 4 (master mode)
+00000713    // ADDI x14, x0, 0x55    // x14 = 0x55 (test data)
+00000793    // ADDI x15, x0, 0x02    // x15 = 2 (SPI write command)
+00000813    // ADDI x16, x0, 0x08    // x16 = 8 (clock divider value)
 00000893    // ADDI x17, x0, 0x00    // x17 = 0 (SPI MODE 0)
 F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
 000028B7    // LUI x25, 0x2         // x25 = 0x2000 (SPI0_BASE低32位)
@@ -130,23 +134,23 @@ F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
 000909B3    // ADD x19, x26, x27    // x19 = 0x10000000
 00098A33    // ADD x20, x28, x29    // x20 = 0x0
 000A0AB3    // ADD x21, x30, x31    // x21 = 0x0
-000A8893    // ADDI x17, x17, x13   // x17 = SPI MODE 0 | 主机模式
+000A8893    // ADDI x17, x17, x13   // x17 = SPI MODE 0 | master mode
 00088913    // ADDI x18, x18, x11   // x18 = SPI0_BASE + REG_CONFIG
-001188B3    // SW x17, 0(x18)       // 设置SPI配置：主机模式，MODE 0
+001188B3    // SW x17, 0(x18)       // Set SPI configuration: master mode, MODE 0
 00088913    // ADDI x18, x18, -x11   // x18 = SPI0_BASE + REG_CLK_DIV
-001088B3    // SW x16, 0(x18)       // 设置SPI时钟分频
+001088B3    // SW x16, 0(x18)       // Set SPI clock divider
 00088913    // ADDI x18, x18, -x10   // x18 = SPI0_BASE + REG_CMD
-000F88B3    // SW x15, 0(x18)       // 设置SPI命令：写数据
+000F88B3    // SW x15, 0(x18)       // Set SPI command: write data
 00088913    // ADDI x18, x18, -x9   // x18 = SPI0_BASE + REG_DATA
-000E88B3    // SW x14, 0(x18)       // 写入要发送的数据
+000E88B3    // SW x14, 0(x18)       // Write data to be sent
 00088913    // ADDI x18, x18, -x8   // x18 = SPI0_BASE + REG_CONTROL
-000C88B3    // SW x12, 0(x18)       // 使能SPI
-00000013    // NOP                  // 短暂延迟
-00000013    // NOP                  // 短暂延迟
+000C88B3    // SW x12, 0(x18)       // Enable SPI
+00000013    // NOP                  // short delay
+00000013    // NOP                  // short delay
 
-// ===== 保持少量NOP指令用于测试稳定性 =====
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
-00000013    // NOP                  // 空操作指令
+// ===== Keep some NOP instructions for test stability =====
+00000013    // NOP                  // No-operation instruction
+00000013    // NOP                  // no-operation instruction
+00000013    // NOP                  // no-operation instruction
+00000013    // NOP                  // no-operation instruction
+00000013    // NOP                  // no-operation instruction

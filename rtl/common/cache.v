@@ -11,8 +11,8 @@ module cache #(
     parameter CACHE_LEVEL                   = 2,        // Cache level (1=L1, 2=L2, 3=L3, etc.)
     parameter REPLACEMENT_POLICY            = "LRU"     // Replacement policy ("LRU", "FIFO", "RANDOM")
 )(
-    input wire clk,
-    input wire rst_n,
+    input wire                              clk,
+    input wire                              rst_n,
 
     // CPU interface
     input  wire                             cpu_req_valid,
@@ -43,18 +43,18 @@ module cache #(
 
     // Calculate cache parameters
     localparam LINE_WIDTH = $clog2(CACHE_LINE_SIZE);
-    localparam NUM_SETS = (CACHE_SIZE / CACHE_LINE_SIZE) / ASSOCIATIVITY;
-    localparam SET_WIDTH = $clog2(NUM_SETS);
-    localparam TAG_WIDTH = ADDR_WIDTH - SET_WIDTH - LINE_WIDTH;
-    localparam WAY_WIDTH = $clog2(ASSOCIATIVITY);
+    localparam NUM_SETS   = (CACHE_SIZE / CACHE_LINE_SIZE) / ASSOCIATIVITY;
+    localparam SET_WIDTH  = $clog2(NUM_SETS);
+    localparam TAG_WIDTH  = ADDR_WIDTH - SET_WIDTH - LINE_WIDTH;
+    localparam WAY_WIDTH  = $clog2(ASSOCIATIVITY);
 
     // Calculate transfer parameters for handling different data widths
-    // 计算从CPU数据宽度到内存数据宽度需要的传输次数
+    // Calculate number of transfers needed from CPU data width to memory data width
     localparam TRANSFER_COUNT = (INPUT_DATA_WIDTH > OUTPUT_DATA_WIDTH) ?
                               ((INPUT_DATA_WIDTH + OUTPUT_DATA_WIDTH - 1) / OUTPUT_DATA_WIDTH) : 1;
     localparam TRANSFER_COUNT_WIDTH = $clog2(TRANSFER_COUNT + 1);
 
-    // 安全计算内存数据宽度到CPU数据宽度的截断偏移量
+    // Safely calculate truncation offset from memory data width to CPU data width
     localparam MEM_TO_CPU_TRUNC_OFFSET = (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) ?
                                         (OUTPUT_DATA_WIDTH - INPUT_DATA_WIDTH) : 0;
 
@@ -108,7 +108,7 @@ module cache #(
     // Multi-transfer signals
     reg [TRANSFER_COUNT_WIDTH-1:0] transfer_count;
     reg [CACHE_LINE_SIZE-1:0] multi_transfer_buffer;
-    reg [CACHE_LINE_SIZE-1:0] cpu_data_buffer; // 用于存储完整的CPU数据
+    reg [CACHE_LINE_SIZE-1:0] cpu_data_buffer; // Used to store complete CPU data
 
     // FSM state transition
     always @(posedge clk or negedge rst_n) begin
@@ -263,7 +263,7 @@ module cache #(
                     endcase
                 end
             end
-            // Update cache on memory read completion - 确保在收到内存响应后才更新缓存
+            // Update cache on memory read completion - Ensure cache is updated only after receiving memory response
             if (state == UPDATE_CACHE) begin
                 // Update valid, tag, and data
                 valid[evict_way][set_index] <= 1'b1;
@@ -271,7 +271,7 @@ module cache #(
                 if (TRANSFER_COUNT > 1) begin
                     data_array[evict_way][set_index] <= multi_transfer_buffer;
                 end else begin
-                    // 对于内存数据宽度大于CPU数据宽度的情况，我们只使用低位数据
+                    // For cases where memory data width is greater than CPU data width, we only use lower bits
                     if (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) begin
                         data_array[evict_way][set_index] <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, mem_rsp_data[0 +: INPUT_DATA_WIDTH]};
                     end else begin
@@ -300,14 +300,14 @@ module cache #(
         end
     end
 
-    // CPU数据缓冲区 - 用于多传输操作时存储完整的CPU数据
+    // CPU data buffer - Used to store complete CPU data during multi-transfer operations
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             cpu_data_buffer <= {CACHE_LINE_SIZE{1'b0}};
         end else if (state == IDLE && cpu_req_valid) begin
-            // 存储完整的CPU请求数据
+            // Store complete CPU request data
             if (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) begin
-                // 当内存数据宽度大于CPU数据宽度时，只使用低位
+                // When memory data width is greater than CPU data width, only use lower bits
                 cpu_data_buffer <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, cpu_req_data};
             end else begin
                 cpu_data_buffer <= cpu_req_data;
@@ -359,14 +359,14 @@ module cache #(
                     end
                 MEM_WRITE:
                     if (mem_rsp_valid && TRANSFER_COUNT > 1) begin
-                        // 初始化多传输缓冲区
+                        // Initialize multi-transfer buffer
                         multi_transfer_buffer <= data_array[evict_way][set_index];
                     end
             endcase
         end
     end
 
-    // Output assignments - 重新设计CPU响应逻辑，确保可靠的时序
+    // Output assignments - Redesigned CPU response logic to ensure reliable timing
     reg cpu_rsp_valid_reg;
     reg [INPUT_DATA_WIDTH-1:0] cpu_rsp_data_reg;
 
@@ -374,34 +374,34 @@ module cache #(
         if (!rst_n) begin
             cpu_rsp_valid_reg <= 1'b0;
         end else begin
-            // CPU读命中立即响应
+            // Immediate response for CPU read hit
             if (state == CHECK_HIT && hit && !cpu_req_rw) begin
                 cpu_rsp_valid_reg <= 1'b1;
                 cpu_rsp_data_reg <= data_array[hit_way][set_index][0 +: INPUT_DATA_WIDTH];
             end
-            // CPU写操作立即响应（回写式缓存）
+            // Immediate response for CPU write operation (write-back cache)
             else if (state == CHECK_HIT && hit && cpu_req_rw) begin
                 cpu_rsp_valid_reg <= 1'b1;
-                cpu_rsp_data_reg <= cpu_req_data; // 写操作返回写入的数据
+                cpu_rsp_data_reg <= cpu_req_data; // Write operation returns the written data
             end
-            // 缓存更新完成后响应（读未命中）
+            // Response after cache update completion (read miss)
             else if (state == UPDATE_CACHE) begin
                 cpu_rsp_valid_reg <= 1'b1;
                 if (TRANSFER_COUNT > 1) begin
                     cpu_rsp_data_reg <= multi_transfer_buffer[0 +: INPUT_DATA_WIDTH];
                 end else begin
-                    // 对于内存数据宽度大于CPU数据宽度的情况，我们只使用低位数据
+                    // For cases where memory data width is greater than CPU data width, we only use lower bits
                     cpu_rsp_data_reg <= mem_rsp_data[0 +: INPUT_DATA_WIDTH];
                 end
             end
-            // 其他情况清除响应
+            // Clear response in other cases
             else begin
                 cpu_rsp_valid_reg <= 1'b0;
             end
         end
     end
 
-    // 输出赋值
+    // Output assignments
     assign cpu_rsp_valid = cpu_rsp_valid_reg;
     assign cpu_rsp_data = cpu_rsp_data_reg;
     assign cpu_rsp_error = 1'b0; // Simplified, no error handling
@@ -424,7 +424,7 @@ module cache #(
             reg coh_rsp_valid_reg;
             reg [2:0] coh_rsp_state_reg;
 
-            // 确保coh_rsp_valid有适当的时序，而不是直接连接到coh_req_valid
+            // Ensure coh_rsp_valid has proper timing instead of directly connecting to coh_req_valid
             assign coh_rsp_valid = coh_rsp_valid_reg;
             assign coh_rsp_state = coh_rsp_state_reg;
 
@@ -435,20 +435,20 @@ module cache #(
                     coh_rsp_valid_reg <= 1'b0;
                     coh_rsp_state_reg <= INVALID;
                 end else begin
-                    // 默认情况下清除响应
+                    // Clear response by default
                     coh_rsp_valid_reg <= 1'b0;
 
                     if (coh_req_valid) begin
-                        // 先查找地址是否在缓存中
+                        // First check if address is in cache
                         way_found = -1;
                         for (integer i = 0; i < ASSOCIATIVITY; i = i + 1) begin
                             if (way_found == -1 && valid[i][set_index] && (tag_array[i][set_index] == tag)) begin
                                 way_found = i;
-                                // 使用条件而不是break来提前结束查找
+                                // Use condition instead of break to terminate search early
                             end
                         end
 
-                        // 根据找到的路和请求类型处理一致性操作
+                        // Handle coherency operations based on found way and request type
                         if (way_found != -1) begin
                             case (coh_req_type)
                                 3'd0: begin // Read request
@@ -486,11 +486,11 @@ module cache #(
                                     end
                                 end
                             endcase
-                            // 输出一致性响应
+                            // Output coherency response
                             coh_rsp_valid_reg <= 1'b1;
                             coh_rsp_state_reg <= coherency_state[way_found][set_index];
                         end else begin
-                            // 地址不在缓存中，返回无效状态
+                            // Address not in cache, return invalid state
                             coh_rsp_valid_reg <= 1'b1;
                             coh_rsp_state_reg <= INVALID;
                         end

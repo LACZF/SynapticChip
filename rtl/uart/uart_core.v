@@ -1,74 +1,74 @@
 // uart_core.v
-// UART核心模块实现
+// UART core module implementation
 
 `include "uart_params.v"
 
 module uart_core #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32,
-    parameter FIFO_DEPTH = 16,
-    parameter FIFO_ADDR_WIDTH = 4
+    parameter ADDR_WIDTH             = 32,
+    parameter DATA_WIDTH             = 32,
+    parameter FIFO_DEPTH             = 16,
+    parameter FIFO_ADDR_WIDTH        = 4
 ) (
-    input clk,
-    input rst_n,
+    input                            clk,
+    input                            rst_n,
 
-    // 控制接口
-    input req,
-    input we,
-    input [ADDR_WIDTH-1:0] addr,
-    input [DATA_WIDTH-1:0] data_in,
-    output reg [DATA_WIDTH-1:0] data_out,
-    output reg ack,
+    // Control interface
+    input                            req,
+    input                            we,
+    input       [ADDR_WIDTH-1:0]     addr,
+    input       [DATA_WIDTH-1:0]     data_in,
+    output reg  [DATA_WIDTH-1:0]     data_out,
+    output reg                       ack,
 
-    // 串行接口
-    output reg txd,        // 发送数据线
-    input rxd,             // 接收数据线
-    output reg rts,        // 请求发送 (可选)
-    input cts,             // 清除发送 (可选)
+    // Serial interface
+    output reg                       txd,        // Transmit data line
+    input                            rxd,        // Receive data line
+    output reg                       rts,        // Request to send (optional)
+    input                            cts,        // Clear to send (optional)
 
-    // 中断输出
-    output reg int_out
+    // Interrupt output
+    output reg                       int_out
 );
 
-    // 内部寄存器
-    reg [7:0] rbr;         // 接收缓冲寄存器
-    reg [7:0] thr;         // 发送保持寄存器
-    reg [7:0] ier;         // 中断使能寄存器
-    reg [7:0] iir;         // 中断标识寄存器
-    reg [7:0] fcr;         // FIFO控制寄存器
-    reg [7:0] lcr;         // 线控制寄存器
-    reg [7:0] mcr;         // Modem控制寄存器
-    reg [7:0] lsr;         // 线状态寄存器
-    reg [7:0] msr;         // Modem状态寄存器
-    reg [7:0] scr;         // Scratch寄存器
-    reg [15:0] dll_dlm;    // 分频器锁存器
+    // Internal registers
+    reg [7:0]  rbr;         // Receive buffer register
+    reg [7:0]  thr;         // Transmit holding register
+    reg [7:0]  ier;         // Interrupt enable register
+    reg [7:0]  iir;         // Interrupt identification register
+    reg [7:0]  fcr;         // FIFO control register
+    reg [7:0]  lcr;         // Line control register
+    reg [7:0]  mcr;         // Modem control register
+    reg [7:0]  lsr;         // Line status register
+    reg [7:0]  msr;         // Modem status register
+    reg [7:0]  scr;         // Scratch register
+    reg [15:0] dll_dlm;     // Divisor latch registers
 
-    // 波特率生成
+    // Baud rate generation
     reg [15:0] baud_counter;
-    reg baud_tick;
+    reg        baud_tick;
 
-    // 发送状态机
+    // Transmit state machine
     reg [3:0] tx_state;
     reg [7:0] tx_shift;
     reg [3:0] tx_bit_count;
-    reg tx_parity;
+    reg       tx_parity;
 
-    // 接收状态机
+    // Receive state machine
     reg [3:0] rx_state;
     reg [7:0] rx_shift;
     reg [3:0] rx_bit_count;
-    reg rx_parity;
-    reg rxd_sync;
+    reg       rx_parity;
+    reg       rxd_sync;
 
-    // FIFO缓冲区
-    reg [7:0] rx_fifo [0:FIFO_DEPTH-1];
-    reg [7:0] tx_fifo [0:FIFO_DEPTH-1];
+    // FIFO buffers
+    reg [7:0]                 rx_fifo [0:FIFO_DEPTH-1];
+    reg [7:0]                 tx_fifo [0:FIFO_DEPTH-1];
     reg [FIFO_ADDR_WIDTH-1:0] rx_head, rx_tail;
     reg [FIFO_ADDR_WIDTH-1:0] tx_head, tx_tail;
-    reg rx_full, rx_empty;
-    reg tx_full, tx_empty;
+    reg                       rx_full, rx_empty;
+    reg                       tx_full, tx_empty;
 
-    // 同步输入信号
+    // Input signal synchronization
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rxd_sync <= 1'b1;
@@ -77,7 +77,7 @@ module uart_core #(
         end
     end
 
-    // 波特率生成器
+    // Baud rate generator
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             baud_counter <= 0;
@@ -93,7 +93,7 @@ module uart_core #(
         end
     end
 
-    // 发送状态机
+    // Transmit state machine
     parameter TX_IDLE = 4'b0000;
     parameter TX_START = 4'b0001;
     parameter TX_DATA = 4'b0010;
@@ -111,14 +111,14 @@ module uart_core #(
             case (tx_state)
                 TX_IDLE: begin
                     if (!tx_empty) begin
-                        // 从FIFO读取数据
+                        // Read data from FIFO
                         tx_shift <= tx_fifo[tx_tail];
                         tx_tail <= tx_tail + 1;
                         tx_empty <= (tx_tail + 1 == tx_head);
                         tx_full <= 0;
 
                         tx_state <= TX_START;
-                        txd <= 1'b0; // 起始位
+                        txd <= 1'b0; // Start bit
                         tx_bit_count <= 0;
                         tx_parity <= 0;
                     end
@@ -136,9 +136,9 @@ module uart_core #(
                     if (tx_bit_count == (lcr[1:0] + 4'd5)) begin
                         tx_bit_count <= 0;
                         if (lcr[3]) begin
-                            tx_state <= TX_PARITY; // 有奇偶校验
+                            tx_state <= TX_PARITY; // With parity
                         end else begin
-                            tx_state <= TX_STOP; // 无奇偶校验
+                            tx_state <= TX_STOP; // Without parity
                         end
                     end else begin
                         tx_bit_count <= tx_bit_count + 1;
@@ -146,12 +146,12 @@ module uart_core #(
                 end
 
                 TX_PARITY: begin
-                    txd <= (lcr[4] ? ~tx_parity : tx_parity); // 奇偶校验位
+                    txd <= (lcr[4] ? ~tx_parity : tx_parity); // Parity bit
                     tx_state <= TX_STOP;
                 end
 
                 TX_STOP: begin
-                    txd <= 1'b1; // 停止位
+                    txd <= 1'b1; // Stop bit
                     if (tx_bit_count == (lcr[2] ? 1'd1 : 1'd0)) begin
                         tx_state <= TX_IDLE;
                     end else begin
@@ -162,7 +162,7 @@ module uart_core #(
         end
     end
 
-    // 接收状态机
+    // Receive state machine
     parameter RX_IDLE = 4'b0000;
     parameter RX_START = 4'b0001;
     parameter RX_DATA = 4'b0010;
@@ -179,11 +179,11 @@ module uart_core #(
             rx_tail <= 0;
             rx_empty <= 1;
             rx_full <= 0;
-            lsr <= 8'b0; // 初始化线状态寄存器
+            lsr <= 8'b0; // Initialize line status register
         end else if (baud_tick) begin
             case (rx_state)
                 RX_IDLE: begin
-                    if (!rxd_sync) begin // 检测起始位
+                    if (!rxd_sync) begin // Detect start bit
                         rx_state <= RX_START;
                         rx_bit_count <= 0;
                         rx_parity <= 0;
@@ -191,11 +191,11 @@ module uart_core #(
                 end
 
                 RX_START: begin
-                    if (!rxd_sync) begin // 确认起始位
+                    if (!rxd_sync) begin // Confirm start bit
                         rx_state <= RX_DATA;
                         rx_shift <= 8'b0;
                     end else begin
-                        rx_state <= RX_IDLE; // 假起始位
+                        rx_state <= RX_IDLE; // False start bit
                     end
                 end
 
@@ -206,9 +206,9 @@ module uart_core #(
                     if (rx_bit_count == 7) begin
                         rx_bit_count <= 0;
                         if (lcr[3]) begin
-                            rx_state <= RX_PARITY; // 有奇偶校验
+                            rx_state <= RX_PARITY; // With parity
                         end else begin
-                            rx_state <= RX_STOP; // 无奇偶校验
+                            rx_state <= RX_STOP; // Without parity
                         end
                     end else begin
                         rx_bit_count <= rx_bit_count + 1;
@@ -217,7 +217,7 @@ module uart_core #(
 
                 RX_PARITY: begin
                     if (lcr[4] ? (rx_parity != rxd_sync) : (rx_parity == rxd_sync)) begin
-                        // 奇偶校验错误
+                        // Parity error
                         lsr[2] <= 1'b1;
                     end
                     rx_state <= RX_STOP;
@@ -225,21 +225,21 @@ module uart_core #(
 
                 RX_STOP: begin
                     if (!rxd_sync) begin
-                        // 帧错误 (停止位不是1)
+                        // Frame error (stop bit not 1)
                         lsr[3] <= 1'b1;
                     end
 
-                    // 将数据存入FIFO
+                    // Store data into FIFO
                     if (!rx_full) begin
                         rx_fifo[rx_head] <= rx_shift;
                         rx_head <= rx_head + 1;
                         rx_empty <= 0;
                         rx_full <= (rx_head + 1 == rx_tail);
 
-                        // 设置数据就绪标志
+                        // Set data ready flag
                         lsr[0] <= 1'b1;
                     end else begin
-                        // FIFO溢出
+                        // FIFO overflow
                         lsr[1] <= 1'b1;
                     end
 
@@ -249,19 +249,19 @@ module uart_core #(
         end
     end
 
-    // 中断生成
+    // Interrupt generation
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             iir <= {4'b0, `INT_NONE};
             int_out <= 0;
         end else begin
-            // 检查中断条件
-            if ((ier[0] && !rx_empty) ||          // 接收数据可用
-                (ier[1] && !tx_full) ||           // 发送保持寄存器空
-                (ier[2] && (lsr[2] || lsr[3])) || // 接收线状态错误
-                (ier[3] && msr[0])) begin         // Modem状态变化
+            // Check interrupt conditions
+            if ((ier[0] && !rx_empty) ||          // Receive data available
+                (ier[1] && !tx_full) ||           // Transmit holding register empty
+                (ier[2] && (lsr[2] || lsr[3])) || // Receive line status error
+                (ier[3] && msr[0])) begin         // Modem status change
 
-                // 设置最高优先级中断
+                // Set highest priority interrupt
                 if (ier[2] && (lsr[2] || lsr[3])) begin
                     iir <= {4'b0, `INT_LS};
                 end else if (ier[0] && !rx_empty) begin
@@ -280,7 +280,7 @@ module uart_core #(
         end
     end
 
-    // 寄存器读写
+    // Register read/write
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             thr <= 8'b0;
@@ -289,7 +289,7 @@ module uart_core #(
             lcr <= 8'b0;
             mcr <= 8'b0;
             scr <= 8'b0;
-            dll_dlm <= 16'd12; // 默认波特率 115200 @ 100MHz
+            dll_dlm <= 16'd12; // Default baud rate 115200 @ 100MHz
             ack <= 1'b0;
             data_out <= {DATA_WIDTH{1'b0}};
         end else begin
@@ -297,7 +297,7 @@ module uart_core #(
 
             if (req) begin
                 if (we) begin
-                    // 写操作
+                    // Write operation
                     case (addr)
                         `REG_THR: begin
                             if (!tx_full) begin
@@ -316,7 +316,7 @@ module uart_core #(
                         `REG_DLM: if (lcr[7]) dll_dlm[15:8] <= data_in[7:0];
                     endcase
                 end else begin
-                    // 读操作
+                    // Read operation
                     case (addr)
                         `REG_RBR: begin
                             if (!rx_empty) begin
@@ -326,7 +326,7 @@ module uart_core #(
                                 rx_empty <= (rx_tail + 1 == rx_head);
 
                                 if (rx_tail + 1 == rx_head) begin
-                                    lsr[0] <= 1'b0; // 清除数据就绪标志
+                                    lsr[0] <= 1'b0; // Clear data ready flag
                                 end
                             end
                         end

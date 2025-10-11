@@ -1,63 +1,63 @@
-// 集成CPU和Ring总线接口的顶层模块示例
-// 展示如何连接cpu_top和cpu_ring_interface
+// Top-level module example integrating CPU and Ring bus interface
+// Demonstrates how to connect cpu_top and cpu_ring_interface
 
 module cpu_with_ring #(
-    parameter NUM_RINGS         = 2,
-    parameter ADDR_WIDTH        = 64,
-    parameter DATA_WIDTH        = 64,
-    parameter NODE_ID_WIDTH     = 8,
-    parameter NODE_ID           = 0,
-    parameter OPCODE_WIDTH      = 8,
-    parameter MATCH_TYPE_WIDTH  = 2,
-    parameter INST_WIDTH        = 32,
-    parameter NUM_CORES         = 4,
-    parameter CORE_ID_WIDTH     = 2,
-    parameter ENABLE_L2_CACHE   = 1,
-    parameter ENABLE_L3_CACHE   = 1,
-    parameter CPU_TYPE          = 0
+    parameter NUM_RINGS                      = 2,
+    parameter ADDR_WIDTH                     = 64,
+    parameter DATA_WIDTH                     = 64,
+    parameter NODE_ID_WIDTH                  = 8,
+    parameter NODE_ID                        = 0,
+    parameter OPCODE_WIDTH                   = 8,
+    parameter MATCH_TYPE_WIDTH               = 2,
+    parameter INST_WIDTH                     = 32,
+    parameter NUM_CORES                      = 4,
+    parameter CORE_ID_WIDTH                  = 2,
+    parameter ENABLE_L2_CACHE                = 1,
+    parameter ENABLE_L3_CACHE                = 1,
+    parameter CPU_TYPE                       = 0
 ) (
-    input clk,
-    input rst_n,
+    input                                    clk,
+    input                                    rst_n,
 
-    output                            cpu_ext_int_o,
-    input  wire                       cpu_mem_req_i,
-    input  wire [ADDR_WIDTH-1:0]      cpu_mem_addr_i,
-    input  wire [511:0]               cpu_mem_wdata_i,
-    input  wire                       cpu_mem_we_i,
-    output wire                       cpu_mem_ready_o,
-    output wire [511:0]               cpu_mem_rdata_o,
+    output                                   cpu_ext_int_o,
+    input  wire                              cpu_mem_req_i,
+    input  wire [ADDR_WIDTH-1:0]             cpu_mem_addr_i,
+    input  wire [511:0]                      cpu_mem_wdata_i,
+    input  wire                              cpu_mem_we_i,
+    output wire                              cpu_mem_ready_o,
+    output wire [511:0]                      cpu_mem_rdata_o,
 
-    // Ring总线接口
-    // 发送请求
-    output wire [NUM_RINGS-1:0]       tx_req_ring_mask_o,
-    output wire [NUM_RINGS-1:0]       tx_req_ring_disable_o,
-    output wire                       tx_req_valid_o,
-    output wire                       tx_req_is_order_o,
-    output wire [OPCODE_WIDTH-1:0]    tx_req_opcode_o,
-    output wire [MATCH_TYPE_WIDTH-1:0] tx_req_match_type_o,
-    output wire [NODE_ID_WIDTH-1:0]   tx_req_source_id_o,
-    output wire [NODE_ID_WIDTH-1:0]   tx_req_target_id_o,
-    output wire [ADDR_WIDTH-1:0]      tx_req_addr_o,
-    output wire [DATA_WIDTH-1:0]      tx_req_data_o,
+    // Ring bus interface
+    // Send requests
+    output wire [NUM_RINGS-1:0]              tx_req_ring_mask_o,
+    output wire [NUM_RINGS-1:0]              tx_req_ring_disable_o,
+    output wire                              tx_req_valid_o,
+    output wire                              tx_req_is_order_o,
+    output wire [OPCODE_WIDTH-1:0]           tx_req_opcode_o,
+    output wire [MATCH_TYPE_WIDTH-1:0]       tx_req_match_type_o,
+    output wire [NODE_ID_WIDTH-1:0]          tx_req_source_id_o,
+    output wire [NODE_ID_WIDTH-1:0]          tx_req_target_id_o,
+    output wire [ADDR_WIDTH-1:0]             tx_req_addr_o,
+    output wire [DATA_WIDTH-1:0]             tx_req_data_o,
 
-    // 接受请求
-    input wire                        rx_req_valid_i,
-    input wire                        rx_req_is_order_i,
-    input wire [OPCODE_WIDTH-1:0]     rx_req_opcode_i,
-    input wire [MATCH_TYPE_WIDTH-1:0] rx_req_match_type_i,
-    input wire [NODE_ID_WIDTH-1:0]    rx_req_source_id_i,
-    input wire [NODE_ID_WIDTH-1:0]    rx_req_target_id_i,
-    input wire [ADDR_WIDTH-1:0]       rx_req_addr_i,
-    input wire [DATA_WIDTH-1:0]       rx_req_data_i,
+    // Receive requests
+    input wire                               rx_req_valid_i,
+    input wire                               rx_req_is_order_i,
+    input wire [OPCODE_WIDTH-1:0]            rx_req_opcode_i,
+    input wire [MATCH_TYPE_WIDTH-1:0]        rx_req_match_type_i,
+    input wire [NODE_ID_WIDTH-1:0]           rx_req_source_id_i,
+    input wire [NODE_ID_WIDTH-1:0]           rx_req_target_id_i,
+    input wire [ADDR_WIDTH-1:0]              rx_req_addr_i,
+    input wire [DATA_WIDTH-1:0]              rx_req_data_i,
 
-    // 接收响应
-    input wire                        rsp_valid_i,
-    input wire [NODE_ID_WIDTH-1:0]    rsp_source_id_i,
-    input wire [NODE_ID_WIDTH-1:0]    rsp_target_id_i,
-    input wire [ADDR_WIDTH-1:0]       rsp_addr_i,
-    input wire [DATA_WIDTH-1:0]       rsp_data_i
+    // Receive responses
+    input wire                               rsp_valid_i,
+    input wire [NODE_ID_WIDTH-1:0]           rsp_source_id_i,
+    input wire [NODE_ID_WIDTH-1:0]           rsp_target_id_i,
+    input wire [ADDR_WIDTH-1:0]              rsp_addr_i,
+    input wire [DATA_WIDTH-1:0]              rsp_data_i
 );
-    // CPU-Ring总线接口模块实例
+    // CPU-Ring bus interface module instance
     cpu_ring_interface #(
         .NUM_RINGS(NUM_RINGS),
         .ADDR_WIDTH(ADDR_WIDTH),
@@ -70,7 +70,7 @@ module cpu_with_ring #(
         .clk(clk),
         .rst_n(rst_n),
 
-        // 连接到CPU顶层模块
+        // Connect to CPU top module
         .cpu_mem_req(cpu_mem_req_i),
         .cpu_mem_addr(cpu_mem_addr_i),
         .cpu_mem_wdata(cpu_mem_wdata_i),
@@ -78,7 +78,7 @@ module cpu_with_ring #(
         .cpu_mem_ready(cpu_mem_ready_o),
         .cpu_mem_rdata(cpu_mem_rdata_o),
 
-        // 连接到Ring总线
+        // Connect to Ring bus
         .tx_req_ring_mask_o(tx_req_ring_mask_o),
         .tx_req_ring_disable_o(tx_req_ring_disable_o),
         .tx_req_valid_o(tx_req_valid_o),

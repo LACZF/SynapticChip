@@ -4,26 +4,26 @@
 `include "top_system_params.v"
 
 module bus_top #(
-    parameter BUS_TYPE         = `BUS_TYPE_RING, // 总线类型：`BUS_TYPE_RING 或 `BUS_TYPE_DIRECT
-    parameter NUM_RINGS        = 2,        // Ring总线数量 (当BUS_TYPE为`BUS_TYPE_RING时有效)
-    parameter NUM_NODES        = 4,        // 每个Ring的节点数 (当BUS_TYPE为`BUS_TYPE_RING时有效)
-    parameter ADDR_WIDTH       = 32,       // 地址宽度
-    parameter DATA_WIDTH       = 64,       // 数据宽度
-    parameter OPCODE_WIDTH     = 8,        // 操作类型的宽带：read/write/reponse等
-    parameter RING_ID_WIDTH    = 4,        // ring ID宽度
-    parameter NODE_ID_WIDTH    = 8,        // 节点ID宽度
-    parameter TX_FIFO_DEPTH    = 4,        // 发送FIFO深度
-    parameter RX_FIFO_DEPTH    = 4,        // 接收FIFO深度
-    parameter RSP_FIFO_DEPTH   = 4,        // 响应FIFO深度
-    parameter NUM_CORES        = 4,
-    parameter GPIO_WIDTH       = 32,
-    parameter SPI_CS_NUM       = 1,
-    parameter NUM_PES          = 4,
-    parameter PE_ARRAY_ROWS    = 2,
-    parameter PE_ARRAY_COLS    = 2,
-    parameter INST_WIDTH       = 32,
-    parameter PE_ID_WIDTH      = 4,
-    parameter MATCH_TYPE_WIDTH = 2         // 匹配类型宽度
+    parameter BUS_TYPE                            = `BUS_TYPE_RING, // Bus type: `BUS_TYPE_RING or `BUS_TYPE_DIRECT
+    parameter NUM_RINGS                           = 2,        // Number of Ring buses (valid when BUS_TYPE is `BUS_TYPE_RING)
+    parameter NUM_NODES                           = 4,        // Number of nodes per Ring (valid when BUS_TYPE is `BUS_TYPE_RING)
+    parameter ADDR_WIDTH                          = 32,       // Address width
+    parameter DATA_WIDTH                          = 64,       // Data width
+    parameter OPCODE_WIDTH                        = 8,        // Width of operation type: read/write/response, etc.
+    parameter RING_ID_WIDTH                       = 4,        // Ring ID width
+    parameter NODE_ID_WIDTH                       = 8,        // Node ID width
+    parameter TX_FIFO_DEPTH                       = 4,        // Transmit FIFO depth
+    parameter RX_FIFO_DEPTH                       = 4,        // Receive FIFO depth
+    parameter RSP_FIFO_DEPTH                      = 4,        // Response FIFO depth
+    parameter NUM_CORES                           = 4,
+    parameter GPIO_WIDTH                          = 32,
+    parameter SPI_CS_NUM                          = 1,
+    parameter NUM_PES                             = 4,
+    parameter PE_ARRAY_ROWS                       = 2,
+    parameter PE_ARRAY_COLS                       = 2,
+    parameter INST_WIDTH                          = 32,
+    parameter PE_ID_WIDTH                         = 4,
+    parameter MATCH_TYPE_WIDTH                    = 2         // Match type width
 ) (
     input  wire                                   clk,
     input  wire                                   rst_n,
@@ -61,7 +61,7 @@ module bus_top #(
     inout       [GPIO_WIDTH-1:0]                  gpio_pins,
     input  reg                                    gpio_int_i,
 
-    // JTAG接口
+    // JTAG interface
     output                                        jtag_tck_o,
     output                                        jtag_tms_o,
     output                                        jtag_tdi_o,
@@ -83,7 +83,7 @@ module bus_top #(
     output wire [DATA_WIDTH-1:0]                  spi_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  spi_data_out_i,
     input  reg                                    spi_ack_i,
-    input  reg  [SPI_CS_NUM-1:0]                 spi_cs_n_i,
+    input  reg  [SPI_CS_NUM-1:0]                  spi_cs_n_i,
     input  reg                                    spi_clk_i,
     input  reg                                    spi_mosi_i,
     output wire                                   spi_miso_o,
@@ -101,7 +101,7 @@ module bus_top #(
     output                                        uart_cts_o,
     input  reg                                    uart_int_i
 );
-    // 内部信号定义
+    // Internal signal definitions
     wire                                          req_valid;
     wire [ADDR_WIDTH-1:0]                         req_addr;
     wire [MATCH_TYPE_WIDTH-1:0]                   req_match_type;
@@ -157,7 +157,7 @@ module bus_top #(
     wire [7:0]                                    mmio_byte_en;
     wire                                          mmio_ready;
 
-    // 扩展总线接口信号
+    // Extended bus interface signals
     wire [ADDR_WIDTH-1:0]                         ext_bus_addr;
     wire [DATA_WIDTH-1:0]                         ext_bus_wdata;
     wire [DATA_WIDTH-1:0]                         ext_bus_rdata;
@@ -166,10 +166,10 @@ module bus_top #(
     wire                                          ext_bus_req;
     wire                                          ext_bus_ready;
     wire [OPCODE_WIDTH-1:0]                       ext_bus_opcode;
-    // 根据总线类型选择实例化方式
+    // Select instantiation method based on bus type
     generate
         if (BUS_TYPE == `BUS_TYPE_RING) begin : ring_bus_instance
-            // Ring总线模式
+            // Ring bus mode
             ring_bus_top #(
                 .NUM_RINGS(NUM_RINGS),
                 .NUM_NODES(NUM_NODES),
@@ -227,7 +227,7 @@ module bus_top #(
                 .gpio_pins(gpio_pins),
                 .gpio_int_i(gpio_int_i),
 
-                // JTAG接口
+                // JTAG interface
                 .jtag_tck_o(jtag_tck_o),
                 .jtag_tms_o(jtag_tms_o),
                 .jtag_tdi_o(jtag_tdi_o),
@@ -325,7 +325,7 @@ module bus_top #(
                 .gpio_pins(gpio_pins),
                 .gpio_int_i(gpio_int_i),
 
-                // JTAG接口
+                // JTAG interface
                 .jtag_tck_o(jtag_tck_o),
                 .jtag_tms_o(jtag_tms_o),
                 .jtag_tdi_o(jtag_tdi_o),

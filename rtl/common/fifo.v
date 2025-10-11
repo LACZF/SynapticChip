@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
 
 module fifo #(
-    parameter DATA_WIDTH = 32,
-    parameter FIFO_DEPTH = 8
+    parameter DATA_WIDTH                = 32,
+    parameter FIFO_DEPTH                = 8
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire wr_en,
-    input wire [DATA_WIDTH-1:0] data_in,
-    input wire rd_en,
-    output wire rd_done,
-    output wire [DATA_WIDTH-1:0] data_out,
-    output wire full,
-    output wire empty
+    input  wire                         clk,
+    input  wire                         rst_n,
+    input  wire                         wr_en,
+    input  wire [DATA_WIDTH-1:0]        data_in,
+    input  wire                         rd_en,
+    output wire                         rd_done,
+    output wire [DATA_WIDTH-1:0]        data_out,
+    output wire                         full,
+    output wire                         empty
 );
 
     reg [DATA_WIDTH-1:0] fifo [FIFO_DEPTH-1:0];

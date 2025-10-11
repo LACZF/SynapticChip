@@ -2,60 +2,60 @@
 
 module tb_riscv64_core;
 
-    // 时钟和复位信号
-    reg clk;
-    reg rst_n;
+    // Clock and Reset Signals
+    reg          clk;
+    reg          rst_n;
 
-    // 指令缓存接口
-    wire icache_req;
-    wire [63:0] icache_addr;
-    reg [63:0] icache_data;
-    reg icache_ready;
+    // Instruction Cache Interface
+    wire         icache_req;
+    wire [63:0]  icache_addr;
+    reg  [63:0]  icache_data;
+    reg          icache_ready;
 
-    // 数据缓存接口
-    wire dcache_req;
-    wire [63:0] dcache_addr;
-    wire dcache_we;
-    wire [63:0] dcache_wdata;
-    wire [7:0] dcache_byte_en;
-    reg [63:0] dcache_rdata;
-    reg dcache_ready;
+    // Data Cache Interface
+    wire         dcache_req;
+    wire [63:0]  dcache_addr;
+    wire         dcache_we;
+    wire [63:0]  dcache_wdata;
+    wire [7:0]   dcache_byte_en;
+    reg  [63:0]  dcache_rdata;
+    reg          dcache_ready;
 
-    // 监听接口
-    wire snoop_valid;
-    wire [63:0] snoop_addr;
-    wire [1:0] snoop_req_type;
-    wire snoop_ready;
-    wire snoop_hit;
-    wire [1:0] snoop_state;
+    // Snoop Interface
+    wire         snoop_valid;
+    wire [63:0]  snoop_addr;
+    wire [1:0]   snoop_req_type;
+    wire         snoop_ready;
+    wire         snoop_hit;
+    wire [1:0]   snoop_state;
     wire [511:0] snoop_data;
 
-    // 中断接口
+    // Interrupt Interface
     wire timer_interrupt;
     wire external_interrupt;
     wire software_interrupt;
 
-    // 调试接口
+    // Debug Interface
     wire [63:0] debug_pc;
     wire [31:0] debug_instr;
-    wire [4:0] debug_wb_rd;
+    wire [4:0]  debug_wb_rd;
     wire [63:0] debug_wb_value;
-    wire debug_wb_valid;
+    wire        debug_wb_valid;
 
-    // 时钟生成
+    // Clock Generation
     initial begin
         clk = 0;
-        forever #5 clk = ~clk; // 100MHz时钟
+        forever #5 clk = ~clk; // 100MHz clock
     end
 
-    // 复位生成
+    // Reset Generation
     initial begin
         rst_n = 0;
         #20 rst_n = 1;
     end
 
-    // 模拟指令缓存
-    reg [31:0] instr_memory [0:4095]; // 简单的指令内存模拟
+    // Simulate Instruction Cache
+    reg [31:0] instr_memory [0:4095]; // Simple instruction memory simulation
 
     always @(*) begin
         if (icache_req) begin
@@ -90,12 +90,12 @@ module tb_riscv64_core;
         end
     end
 
-    // 模拟数据缓存
-    reg [63:0] data_memory [0:4095]; // 简单的数据内存模拟
+    // Simulate Data Cache
+    reg [63:0] data_memory [0:4095]; // Simple data memory simulation
 
     always @(posedge clk) begin
         if (dcache_req && dcache_we) begin
-            // 处理写操作
+            // Process write operation
             if (dcache_byte_en[0]) data_memory[dcache_addr[31:3]][7:0] <= dcache_wdata[7:0];
             if (dcache_byte_en[1]) data_memory[dcache_addr[31:3]][15:8] <= dcache_wdata[15:8];
             if (dcache_byte_en[2]) data_memory[dcache_addr[31:3]][23:16] <= dcache_wdata[23:16];
@@ -121,17 +121,17 @@ module tb_riscv64_core;
         end
     end
 
-    // 连接监听接口（简化测试）
-    assign snoop_valid = 1'b0; // 简化测试，无监听请求
+    // Connect snoop interface (simplified test)
+    assign snoop_valid = 1'b0; // Simplified test, no snoop requests
     assign snoop_addr = 64'h0;
     assign snoop_req_type = 2'b00;
 
-    // 连接中断接口（简化测试）
+    // Connect interrupt interface (simplified test)
     assign timer_interrupt = 1'b0;
     assign external_interrupt = 1'b0;
     assign software_interrupt = 1'b0;
 
-    // 被测模块实例化
+    // Instantiate DUT
     riscv64_core #(
         .ADDR_WIDTH(64),
         .DATA_WIDTH(64),
@@ -139,17 +139,17 @@ module tb_riscv64_core;
         .L1_DCACHE_DATA_WIDTH(64),
         .CORE_ID(0)
     ) u_dut (
-        // 时钟和复位
+        // Clock and reset
         .clk(clk),
         .rst_n(rst_n),
 
-        // 指令缓存接口
+        // Instruction cache interface
         .icache_req(icache_req),
         .icache_addr(icache_addr),
         .icache_data(icache_data),
         .icache_ready(icache_ready),
 
-        // 数据缓存接口
+        // Data cache interface
         .dcache_req(dcache_req),
         .dcache_addr(dcache_addr),
         .dcache_we(dcache_we),
@@ -158,7 +158,7 @@ module tb_riscv64_core;
         .dcache_rdata(dcache_rdata),
         .dcache_ready(dcache_ready),
 
-        // 监听接口
+        // Snoop interface
         .snoop_valid(snoop_valid),
         .snoop_addr(snoop_addr),
         .snoop_req_type(snoop_req_type),
@@ -167,12 +167,12 @@ module tb_riscv64_core;
         .snoop_state(snoop_state),
         .snoop_data(snoop_data),
 
-        // 中断接口
+        // Interrupt interface
         .timer_interrupt(timer_interrupt),
         .external_interrupt(external_interrupt),
         .software_interrupt(software_interrupt),
 
-        // 调试输出
+        // Debug outputs
         .debug_pc(debug_pc),
         .debug_instr(debug_instr),
         .debug_wb_valid(debug_wb_valid),
@@ -180,17 +180,17 @@ module tb_riscv64_core;
         .debug_wb_value(debug_wb_value)
     );
 
-    // 测试用例
+    // Test Cases
     integer test_pass = 0;
     integer test_fail = 0;
 
-    // 测试用例1: 基本的算术指令测试
+    // Test Case 1: Basic Arithmetic Instructions Test
     task test_arithmetic;
         begin
             $display("Starting arithmetic instructions test...");
             $display("Time: %0t, Writing test instructions to instr_memory", $time);
 
-            // 初始化指令内存（使用偏移量100来避免与其他测试用例冲突）
+            // Initialize instruction memory (use offset 100 to avoid conflicts with other test cases)
             // ADD x1, x0, x0 (x1 = 0)
             instr_memory[100] = 32'h000000b3;
             // ADDI x2, x0, 10 (x2 = 10)
@@ -198,26 +198,26 @@ module tb_riscv64_core;
             // ADD x3, x1, x2 (x3 = 10)
             instr_memory[102] = 32'h002081b3;
             // SUB x4, x2, x1 (x4 = 10)
-            instr_memory[103] = 32'h40108233;
             // ADDI x5, x3, 5 (x5 = 15)
             instr_memory[104] = 32'h00508293;
 
-            // 显示写入的指令
+            // Display written instructions
             $display("Time: %0t, Test instructions written:", $time);
             for (int i = 100; i < 105; i = i + 1) begin
                 $display("  instr_memory[%0d] = 0x%0h", i, instr_memory[i]);
             end
 
-            // 设置处理器从我们的测试指令开始执行
-            // 注意：这里需要通过修改处理器的PC寄存器来实现，但通常在RTL设计中不直接暴露PC寄存器
-            // 所以我们需要通过debug接口或者其他方式来设置初始PC
+            // Set processor to start execution from our test instructions
+            // Note: This needs to be achieved by modifying the processor's PC register,
+            // but PC registers are usually not directly exposed in RTL designs
+            // So we need to set the initial PC through the debug interface or other means
             $display("Time: %0t, Note: Need to set PC to 0x%0h to start test", $time, 64'h80000000 + (100 << 2));
 
-            // 等待处理器执行
+            // Wait for processor execution
             $display("Time: %0t, Waiting for instruction execution", $time);
             #2000;
 
-            // 检查结果
+            // Check results
             $display("Time: %0t, Checking test results", $time);
             $display("  Current debug_wb_valid: %0d, debug_wb_rd: %0d, debug_wb_value: %0h",
                      debug_wb_valid, debug_wb_rd, debug_wb_value);
@@ -232,12 +232,12 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 测试用例2: 内存访问指令测试
+    // Test Case 2: Memory Access Instructions Test
     task test_memory;
         begin
             $display("Starting memory access instructions test...");
 
-            // 初始化指令内存
+            // Initialize instruction memory
             // ADDI x1, x0, 100 (x1 = 100)
             instr_memory[5] = 32'h064000b3;
             // ADDI x2, x0, 0x1000 (x2 = 4096)
@@ -247,10 +247,10 @@ module tb_riscv64_core;
             // LD x3, 0(x2) (load x3 from memory[4096])
             instr_memory[8] = 32'h00012183;
 
-            // 运行几个周期
+            // Run for several cycles
             #200;
 
-            // 检查结果
+            // Check results
             if (debug_wb_valid && debug_wb_rd == 3 && debug_wb_value == 100) begin
                 $display("  Test memory passed!");
                 test_pass = test_pass + 1;
@@ -261,31 +261,31 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 测试用例3: 分支指令测试
+    // Test Case 3: Branch Instructions Test
     task test_branch;
         begin
             $display("Starting branch instructions test...");
 
-            // 初始化指令内存
+            // Initialize instruction memory
             // ADDI x1, x0, 5 (x1 = 5)
             instr_memory[9] = 32'h005000b3;
             // ADDI x2, x0, 5 (x2 = 5)
             instr_memory[10] = 32'h00500113;
             // BEQ x1, x2, 4 (branch to 15 if x1 == x2)
             instr_memory[11] = 32'h00208463;
-            // ADDI x3, x0, 1 (不应该执行到这里)
+            // ADDI x3, x0, 1 (should not reach here)
             instr_memory[12] = 32'h00100193;
-            // ADDI x4, x0, 2 (不应该执行到这里)
+            // ADDI x4, x0, 2 (should not reach here)
             instr_memory[13] = 32'h00200213;
-            // ADDI x5, x0, 3 (不应该执行到这里)
+            // ADDI x5, x0, 3 (should not reach here)
             instr_memory[14] = 32'h00300293;
-            // ADDI x6, x0, 4 (这里是分支目标)
+            // ADDI x6, x0, 4 (branch target)
             instr_memory[15] = 32'h00400313;
 
-            // 运行几个周期
+            // Run for several cycles
             #200;
 
-            // 检查结果
+            // Check results
             if (debug_wb_valid && debug_wb_rd == 6 && debug_wb_value == 4) begin
                 $display("  Test branch passed!");
                 test_pass = test_pass + 1;
@@ -296,12 +296,12 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 测试用例4: 逻辑指令测试
+    // Test Case 4: Logic Instructions Test
     task test_logic;
         begin
             $display("Starting logic instructions test...");
 
-            // 初始化指令内存
+            // Initialize instruction memory
             // ADDI x1, x0, 0xAAAA (x1 = 0xAAAA)
             instr_memory[16] = 32'hAAA000b3;
             // ADDI x2, x0, 0x5555 (x2 = 0x5555)
@@ -313,10 +313,10 @@ module tb_riscv64_core;
             // XOR x5, x1, x2 (x5 = 0xFFFF)
             instr_memory[20] = 32'h0020e293;
 
-            // 运行几个周期
+            // Run for several cycles
             #200;
 
-            // 检查结果
+            // Check results
             if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 65535) begin
                 $display("  Test logic passed!");
                 test_pass = test_pass + 1;
@@ -327,12 +327,12 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 测试用例5: 移位指令测试
+    // Test Case 5: Shift Instructions Test
     task test_shift;
         begin
             $display("Starting shift instructions test...");
 
-            // 初始化指令内存
+            // Initialize instruction memory
             // ADDI x1, x0, 1 (x1 = 1)
             instr_memory[21] = 32'h001000b3;
             // SLLI x2, x1, 4 (x2 = 16)
@@ -344,10 +344,10 @@ module tb_riscv64_core;
             // SRAI x5, x4, 2 (x5 = -2)
             instr_memory[25] = 32'h4020f293;
 
-            // 运行几个周期
+            // Run for several cycles
             #200;
 
-            // 检查结果
+            // Check results
             if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 64'hFFFFFFFFFFFFFFFE) begin
                 $display("  Test shift passed!");
                 test_pass = test_pass + 1;
@@ -358,12 +358,12 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 测试用例6: 比较指令测试
+    // Test Case 6: Compare Instructions Test
     task test_compare;
         begin
             $display("Starting compare instructions test...");
 
-            // 初始化指令内存
+            // Initialize instruction memory
             // ADDI x1, x0, 5 (x1 = 5)
             instr_memory[26] = 32'h005000b3;
             // ADDI x2, x0, 10 (x2 = 10)
@@ -375,10 +375,10 @@ module tb_riscv64_core;
             // SLTI x5, x2, 15 (x5 = 1)
             instr_memory[30] = 32'h00f11293;
 
-            // 运行几个周期
+            // Run for several cycles
             #200;
 
-            // 检查结果
+            // Check results
             if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 1) begin
                 $display("  Test compare passed!");
                 test_pass = test_pass + 1;
@@ -389,33 +389,32 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 测试用例7: 跳转指令测试
+    // Test Case 7: Jump Instructions Test
     task test_jump;
         begin
             $display("Starting jump instructions test...");
 
-            // 初始化指令内存
-            // JAL x1, 8 (跳转到 38, x1 = 33)
+            // Initialize instruction memory
+            // JAL x1, 8 (jump to 38, x1 = 33)
             instr_memory[31] = 32'h004000ef;
-            // ADDI x2, x0, 1 (不应该执行到这里)
             instr_memory[32] = 32'h00100113;
-            // ADDI x3, x0, 2 (不应该执行到这里)
+            // ADDI x3, x0, 2 (should not reach here)
             instr_memory[33] = 32'h00200193;
-            // ADDI x4, x0, 3 (不应该执行到这里)
+            // ADDI x4, x0, 3 (should not reach here)
             instr_memory[34] = 32'h00300213;
-            // ADDI x5, x0, 4 (不应该执行到这里)
+            // ADDI x5, x0, 4 (should not reach here)
             instr_memory[35] = 32'h00400293;
-            // ADDI x6, x0, 5 (不应该执行到这里)
+            // ADDI x6, x0, 5 (should not reach here)
             instr_memory[36] = 32'h00500313;
-            // ADDI x7, x0, 6 (不应该执行到这里)
+            // ADDI x7, x0, 6 (should not reach here)
             instr_memory[37] = 32'h00600393;
-            // ADDI x8, x0, 7 (这里是跳转目标)
+            // ADDI x8, x0, 7 (jump target)
             instr_memory[38] = 32'h00700413;
 
-            // 运行几个周期
+            // Run for several cycles
             #200;
 
-            // 检查结果
+            // Check results
             if (debug_wb_valid && (debug_wb_rd == 1 || debug_wb_rd == 8)) begin
                 if ((debug_wb_rd == 1 && debug_wb_value == 33) ||
                     (debug_wb_rd == 8 && debug_wb_value == 7)) begin
@@ -433,23 +432,23 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 测试用例8: 冒险检测和处理测试
+    // Test Case 8: Hazard Detection and Handling Test
     task test_hazard;
         begin
             $display("Starting hazard detection and handling test...");
 
-            // 初始化指令内存
-            // LD x1, 0(x0) (加载数据到x1)
+            // Initialize instruction memory
+            // LD x1, 0(x0) (load data to x1)
             instr_memory[39] = 32'h00000083;
-            // ADD x2, x1, x1 (使用x1，应该触发加载-使用冒险)
+            // ADD x2, x1, x1 (use x1, should trigger load-use hazard)
             instr_memory[40] = 32'h00108113;
-            // ADD x3, x2, x2 (使用x2)
+            // ADD x3, x2, x2 (use x2)
             instr_memory[41] = 32'h00210193;
 
-            // 运行几个周期
+            // Run for several cycles
             #200;
 
-            // 检查结果（这里主要验证流水线是否正常工作，而不是具体值）
+            // Check results (mainly verify pipeline works properly, not specific values)
             if (debug_wb_valid) begin
                 $display("  Test hazard passed!");
                 test_pass = test_pass + 1;
@@ -460,20 +459,20 @@ module tb_riscv64_core;
         end
     endtask
 
-    // 运行所有测试用例
+    // Run all test cases
     initial begin
         $display("Initial block started at time %0t", $time);
 
-        // 初始化内存
+        // Initialize memory
         $display("Initializing memory...");
         for (int i = 0; i < 4096; i = i + 1) begin
-            instr_memory[i] = 32'h00000013; // NOP指令
+            instr_memory[i] = 32'h00000013; // NOP instruction
             data_memory[i] = 64'h0;
         end
 
         $display("Memory initialization completed.");
 
-        // 等待复位完成
+        // Wait for reset to complete
         $display("Waiting for reset...");
         @(posedge rst_n);
         $display("Reset deasserted at time %0t", $time);
@@ -487,7 +486,7 @@ module tb_riscv64_core;
         end
     `endif
 
-        // 运行测试用例
+        // Run test cases
         test_arithmetic;
         test_memory;
         test_branch;
@@ -497,10 +496,10 @@ module tb_riscv64_core;
         test_jump;
         test_hazard;
 
-        // 等待所有测试完成
+        // Wait for all tests to complete
         #500;
 
-        // 输出测试结果
+        // Output test results summary
         $display("\nTest Results Summary:");
         $display("Total tests: %0d", test_pass + test_fail);
         $display("Passed tests: %0d", test_pass);
@@ -512,16 +511,16 @@ module tb_riscv64_core;
             $display("\nSOME TESTS FAILED!");
         end
 
-        // 生成波形文件
+        // Generate waveform file
         $dumpfile("tb_riscv64_core.vcd");
         $dumpvars(0, tb_riscv64_core);
 
-        // 结束仿真
+        // End simulation
         #100;
         $finish;
     end
 
-    // 超时检测
+    // Timeout detection
     initial begin
         #20000;
         $display("\nSimulation timeout!");
@@ -529,7 +528,7 @@ module tb_riscv64_core;
     end
 
 `ifdef DEBUG
-    // 调试监控
+    // Debug monitoring
     always @(posedge clk) begin
         if (debug_wb_valid) begin
             $display("Time: %0t, PC: %0h, Instr: %0h, WB: x%0d = %0h",

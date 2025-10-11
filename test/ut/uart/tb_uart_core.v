@@ -1,32 +1,32 @@
-// UART核心模块测试平台
+// UART Core Module Test Bench
 
 `include "uart_params.v"
 `timescale 1ns/1ps
 
 module tb_uart_core;
 
-    // 时钟和复位
+    // Clock and Reset
     reg clk;
     reg rst_n;
 
-    // 控制接口信号
-    reg req;
-    reg we;
-    reg [`ADDR_WIDTH-1:0] addr;
-    reg [`DATA_WIDTH-1:0] data_in;
+    // Control Interface Signals
+    reg                    req;
+    reg                    we;
+    reg  [`ADDR_WIDTH-1:0] addr;
+    reg  [`DATA_WIDTH-1:0] data_in;
     wire [`DATA_WIDTH-1:0] data_out;
-    wire ack;
+    wire                   ack;
 
-    // 串行接口
+    // Serial Interface
     wire txd;
-    reg rxd;
+    reg  rxd;
     wire rts;
-    reg cts;
+    reg  cts;
 
-    // 中断信号
+    // Interrupt Signal
     wire int_out;
 
-    // 实例化DUT
+    // DUT Instantiation
     uart_core dut (
         .clk(clk),
         .rst_n(rst_n),
@@ -43,10 +43,10 @@ module tb_uart_core;
         .int_out(int_out)
     );
 
-    // 时钟生成
+    // Clock Generation
     always #5 clk = ~clk;
 
-    // 测试任务：发送写请求
+    // Test Task: Send Write Request
     task write_reg;
         input [`ADDR_WIDTH-1:0] reg_addr;
         input [`DATA_WIDTH-1:0] reg_data;
@@ -57,7 +57,7 @@ module tb_uart_core;
             addr <= reg_addr;
             data_in <= reg_data;
 
-            // 等待确认
+            // Wait for acknowledgment
             wait(ack);
             @(posedge clk);
             req <= 1'b0;
@@ -65,7 +65,7 @@ module tb_uart_core;
         end
     endtask
 
-    // 测试任务：发送读请求
+    // Test Task: Send Read Request
     task read_reg;
         input [`ADDR_WIDTH-1:0] reg_addr;
         output [`DATA_WIDTH-1:0] reg_data;
@@ -75,7 +75,7 @@ module tb_uart_core;
             we <= 1'b0;
             addr <= reg_addr;
 
-            // 等待数据
+            // Wait for data
             wait(ack);
             reg_data = data_out;
             @(posedge clk);
@@ -83,16 +83,16 @@ module tb_uart_core;
         end
     endtask
 
-    // 模拟UART接收数据
+    // Simulate UART Data Reception
     task uart_send_byte;
         input [7:0] data;
         integer i;
         begin
-            // 起始位
+            // Start bit
             rxd <= 1'b0;
-            #8680; // 115200波特率的位时间 (1/115200 ≈ 8.68μs)
+            #8680; // Bit time for 115200 baud (1/115200 ≈ 8.68μs)
 
-            // 数据位
+            // Data bits
             for (i = 0; i < 8; i = i + 1) begin
                 rxd <= data[i];
             `ifdef DEBUG
@@ -101,17 +101,17 @@ module tb_uart_core;
                 #8680;
             end
 
-            // 停止位
+            // Stop bit
             rxd <= 1'b1;
             #8680;
         end
     endtask
 
-    // 主测试程序
+    // Main Test Program
     reg [`DATA_WIDTH-1:0] read_data;
 
     initial begin
-        // 初始化
+        // Initialization
         clk = 0;
         rst_n = 0;
         req = 0;
@@ -121,67 +121,67 @@ module tb_uart_core;
         rxd = 1'b1;
         cts = 1'b0;
 
-        // 复位
+        // Reset
         #20 rst_n = 1;
 
         $display("Starting UART Core Test");
 
-        // 测试1: 配置UART
+        // Test 1: Configure UART
         $display("Test 1: Configure UART");
-        write_reg(`REG_LCR, 32'h00000083); // 8位数据，1位停止位，无奇偶校验，使能DLAB
-        write_reg(`REG_DLL, 32'h0000000C); // 设置波特率为115200
-        write_reg(`REG_DLM, 32'h00000000); // 高位为0
-        write_reg(`REG_LCR, 32'h00000003); // 禁用DLAB
-        write_reg(`REG_IER, 32'h00000001); // 使能接收中断
+        write_reg(`REG_LCR, 32'h00000083); // 8 data bits, 1 stop bit, no parity, enable DLAB
+        write_reg(`REG_DLL, 32'h0000000C); // Set baud rate to 115200
+        write_reg(`REG_DLM, 32'h00000000); // Higher bits are 0
+        write_reg(`REG_LCR, 32'h00000003); // Disable DLAB
+        write_reg(`REG_IER, 32'h00000001); // Enable receive interrupt
 
-        // 读取线状态寄存器确认配置成功
+        // Read line status register to confirm successful configuration
         read_reg(`REG_LSR, read_data);
         $display("Initial line status: 0x%h", read_data[7:0]);
 
-        // 测试2: 发送数据
+        // Test 2: Send data
         $display("Test 2: Send data");
-        write_reg(`REG_THR, 32'h00000041); // 发送字符'A'
-        write_reg(`REG_THR, 32'h00000042); // 发送字符'B'
-        write_reg(`REG_THR, 32'h00000043); // 发送字符'C'
+        write_reg(`REG_THR, 32'h00000041); // Send character 'A'
+        write_reg(`REG_THR, 32'h00000042); // Send character 'B'
+        write_reg(`REG_THR, 32'h00000043); // Send character 'C'
 
-        // 等待发送完成
+        // Wait for transmission to complete
         #100000;
 
-        // 测试3: 接收数据
+        // Test 3: Receive data
         $display("Test 3: Receive data");
 
-        // 检查接收FIFO是否为空
+        // Check if receive FIFO is empty
         read_reg(`REG_LSR, read_data);
         $display("Line status before receive: 0x%h", read_data[7:0]);
 
-        // 发送数据
-        uart_send_byte(8'h31); // 发送字符'1'
+        // Send data
+        uart_send_byte(8'h31); // Send character '1'
         #100000;
 
-        // 检查接收FIFO状态
+        // Check receive FIFO status
         read_reg(`REG_LSR, read_data);
         $display("Line status after first byte: 0x%h", read_data[7:0]);
 
-        uart_send_byte(8'h32); // 发送字符'2'
+        uart_send_byte(8'h32); // Send character '2'
         #100000;
 
         read_reg(`REG_LSR, read_data);
         $display("Line status after second byte: 0x%h", read_data[7:0]);
 
-        uart_send_byte(8'h33); // 发送字符'3'
+        uart_send_byte(8'h33); // Send character '3'
         #100000;
 
         read_reg(`REG_LSR, read_data);
         $display("Line status after third byte: 0x%h", read_data[7:0]);
 
-        // 测试4: 读取接收数据
+        // Test 4: Read received data
         $display("Test 4: Read received data");
 
-        // 再次检查线状态寄存器
+        // Check line status register again
         read_reg(`REG_LSR, read_data);
         $display("Line status before read: 0x%h", read_data[7:0]);
 
-        // 读取第一个字符
+        // Read first character
         read_reg(`REG_RBR, read_data);
         $display("Read from RBR: 0x%h", read_data[7:0]);
         if (read_data[7:0] !== 8'h31) begin
@@ -190,11 +190,11 @@ module tb_uart_core;
             $display("Received: 0x%h ('%c')", read_data[7:0], read_data[7:0]);
         end
 
-        // 检查线状态寄存器
+        // Check line status register
         read_reg(`REG_LSR, read_data);
         $display("Line status after first read: 0x%h", read_data[7:0]);
 
-        // 读取第二个字符
+        // Read second character
         read_reg(`REG_RBR, read_data);
         if (read_data[7:0] !== 8'h32) begin
             $display("ERROR: Received 0x%h, expected 0x32", read_data[7:0]);
@@ -202,11 +202,11 @@ module tb_uart_core;
             $display("Received: 0x%h ('%c')", read_data[7:0], read_data[7:0]);
         end
 
-        // 检查线状态寄存器
+        // Check line status register
         read_reg(`REG_LSR, read_data);
         $display("Line status after second read: 0x%h", read_data[7:0]);
 
-        // 读取第三个字符
+        // Read third character
         read_reg(`REG_RBR, read_data);
         if (read_data[7:0] !== 8'h33) begin
             $display("ERROR: Received 0x%h, expected 0x33", read_data[7:0]);
@@ -214,16 +214,16 @@ module tb_uart_core;
             $display("Received: 0x%h ('%c')", read_data[7:0], read_data[7:0]);
         end
 
-        // 检查接收FIFO是否为空
+        // Check if receive FIFO is empty
         read_reg(`REG_LSR, read_data);
         $display("Final line status: 0x%h", read_data[7:0]);
 
-        // 测试5: 检查线状态
+        // Test 5: Check line status
         $display("Test 5: Check line status");
         read_reg(`REG_LSR, read_data);
         $display("Line status: 0x%h", read_data[7:0]);
 
-        // 测试6: 检查中断状态
+        // Test 6: Check interrupt status
         $display("Test 6: Check interrupt status");
         read_reg(`REG_IIR, read_data);
         $display("Interrupt status: 0x%h", read_data[7:0]);
@@ -232,29 +232,29 @@ module tb_uart_core;
         $finish;
     end
 
-    // 监控TX输出
+    // Monitor TX Output
     reg [7:0] tx_byte;
     integer tx_bit_count;
     initial begin
         forever begin
-            // 等待起始位
+            // Wait for start bit
             wait(txd === 1'b0);
-            #4340; // 等待到位中间
+            #4340; // Wait to the middle of the bit
 
-            // 接收数据位
+            // Receive data bits
             for (tx_bit_count = 0; tx_bit_count < 8; tx_bit_count = tx_bit_count + 1) begin
                 #8680;
                 tx_byte[tx_bit_count] = txd;
             end
 
-            // 等待停止位
+            // Wait for stop bit
             #8680;
 
             $display("TX: 0x%h ('%c')", tx_byte, tx_byte);
         end
     end
 
-    // 波形输出
+    // Waveform Output
     initial begin
         $dumpfile("uart_core.vcd");
         $dumpvars(0, tb_uart_core);
