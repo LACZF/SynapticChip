@@ -7,7 +7,7 @@ module tb_riscv64_register_file;
     reg         clk;
     reg         rst_n;
 
-    // Input Signals
+    // Local Test Signals
     reg  [4:0]  rs1;
     reg  [4:0]  rs2;
     reg  [4:0]  rd;
@@ -28,13 +28,13 @@ module tb_riscv64_register_file;
     riscv64_register_file u_riscv64_register_file (
         .clk       (clk),
         .rst_n     (rst_n),
-        .rs1       (rs1),
-        .rs2       (rs2),
-        .rd        (rd),
-        .we        (we),
-        .wdata     (wdata),
-        .rs1_data  (rs1_data),
-        .rs2_data  (rs2_data)
+        .rs1_i     (rs1),
+        .rs2_i     (rs2),
+        .rd_i      (rd),
+        .we_i      (we),
+        .wdata_i   (wdata),
+        .rs1_data_o(rs1_data),
+        .rs2_data_o(rs2_data)
     );
 
     // Test Variables

@@ -5,38 +5,38 @@ module riscv64_write_back #(
 )(
     input wire                  clk,
     input wire                  rst_n,
-    input wire                  stall,
+    input wire                  stall_i,
 
     // From memory access stage
-    input  wire [63:0]          pc_in,
-    input  wire [31:0]          instr_in,
-    input  wire [63:0]          alu_result,
-    input  wire [63:0]          mem_result,
-    input  wire [15:0]          ctrl_in,
+    input  wire [63:0]          pc_in_i,
+    input  wire [31:0]          instr_in_i,
+    input  wire [63:0]          alu_result_i,
+    input  wire [63:0]          mem_result_i,
+    input  wire [15:0]          ctrl_in_i,
 
     // Output to register file
-    output reg  [4:0]           rd,
-    output reg                  reg_we,
-    output reg  [63:0]          reg_wdata,
+    output reg  [4:0]           rd_o,
+    output reg                  reg_we_o,
+    output reg  [63:0]          reg_wdata_o,
 
     // Debug output
-    output reg  [63:0]          pc_out,
-    output reg  [31:0]          instr_out,
-    output reg                  wb_valid
+    output reg  [63:0]          pc_out_o,
+    output reg  [31:0]          instr_out_o,
+    output reg                  wb_valid_o
 );
 
     // Control signals
-    wire       reg_write  = ctrl_in[10];
-    wire       mem_to_reg = ctrl_in[4];
-    wire       pc_to_reg  = ctrl_in[3];
-    wire       alu_src_pc = ctrl_in[2];
-    wire [2:0] alu_op     = ctrl_in[14:12];
+    wire       reg_write  = ctrl_in_i[10];
+    wire       mem_to_reg = ctrl_in_i[4];
+    wire       pc_to_reg  = ctrl_in_i[3];
+    wire       alu_src_pc = ctrl_in_i[2];
+    wire [2:0] alu_op     = ctrl_in_i[14:12];
 
     // Instruction fields
-    wire [4:0] instr_rd   = instr_in[11:7];
-    wire [6:0] opcode     = instr_in[6:0];
-    wire [2:0] funct3     = instr_in[14:12];
-    wire [6:0] funct7     = instr_in[31:25];
+    wire [4:0] instr_rd   = instr_in_i[11:7];
+    wire [6:0] opcode     = instr_in_i[6:0];
+    wire [2:0] funct3     = instr_in_i[14:12];
+    wire [6:0] funct7     = instr_in_i[31:25];
 
     // Internal signals
     reg [63:0] computed_result;
@@ -93,60 +93,60 @@ module riscv64_write_back #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            rd <= 5'b0;
-            reg_we <= 1'b0;
-            reg_wdata <= 64'b0;
-            pc_out <= 64'b0;
-            instr_out <= 32'h00000013;
-            wb_valid <= 1'b0;
-        end else if (!stall) begin
+            rd_o <= 5'b0;
+            reg_we_o <= 1'b0;
+            reg_wdata_o <= 64'b0;
+            pc_out_o <= 64'b0;
+            instr_out_o <= 32'h00000013;
+            wb_valid_o <= 1'b0;
+        end else if (!stall_i) begin
             // Pass pipeline registers
-            pc_out <= pc_in;
-            instr_out <= instr_in;
-            wb_valid <= 1'b1;
+            pc_out_o <= pc_in_i;
+            instr_out_o <= instr_in_i;
+            wb_valid_o <= 1'b1;
 
             // Calculate write-back data
-            computed_result = select_result(alu_result, mem_result, pc_in + 4,
+            computed_result = select_result(alu_result_i, mem_result_i, pc_in_i + 4,
                                           mem_to_reg, pc_to_reg, alu_src_pc);
 
             // Process special instructions
-            reg_wdata <= compute_special_result(computed_result, pc_in, instr_in, opcode);
+            reg_wdata_o <= compute_special_result(computed_result, pc_in_i, instr_in_i, opcode);
 
             // Set write-back address and enable
-            rd <= instr_rd;
+            rd_o <= instr_rd;
 
             // Determine whether to write register
             case (opcode)
                 7'b0110111, 7'b0010111, 7'b1101111, 7'b1100111: begin
                     // LUI, AUIPC, JAL, JALR always write registers (except x0)
-                    reg_we <= (instr_rd != 5'b0);
+                    reg_we_o <= (instr_rd != 5'b0);
                 end
                 7'b0110011, 7'b0010011, 7'b0000011: begin
                     // Arithmetic, immediate, load instructions: according to control signals
-                    reg_we <= reg_write && (instr_rd != 5'b0);
+                    reg_we_o <= reg_write && (instr_rd != 5'b0);
                 end
                 7'b0100011: begin
                     // Store instructions: do not write registers
-                    reg_we <= 1'b0;
+                    reg_we_o <= 1'b0;
                 end
                 7'b1100011: begin
                     // Branch instructions: do not write registers
-                    reg_we <= 1'b0;
+                    reg_we_o <= 1'b0;
                 end
                 default: begin
-                    reg_we <= 1'b0;
+                    reg_we_o <= 1'b0;
                 end
             endcase
 
         `ifdef DEBUG
             // Debug information output
-            if (reg_we && (instr_rd != 5'b0)) begin
+            if (reg_we_o && (instr_rd != 5'b0)) begin
                 $display("WB: PC=%h, Instr=%h, RD=x%0d, Value=%h",
-                         pc_in, instr_in, instr_rd, reg_wdata);
+                         pc_in_i, instr_in_i, instr_rd, reg_wdata_o);
             end
         `endif
         end else begin
-            wb_valid <= 1'b0;
+            wb_valid_o <= 1'b0;
         end
     end
 

@@ -13,40 +13,40 @@ module riscv64_core #(
     input wire                                       rst_n,
 
     // Instruction cache interface - now connected to L1 cache in cpu_top
-    output wire                                      icache_req,
-    output wire [ADDR_WIDTH-1:0]                     icache_addr,
-    input  wire [L1_ICACHE_DATA_WIDTH-1:0]           icache_data,
-    input  wire                                      icache_ready,
+    output wire                                      icache_req_o,
+    output wire [ADDR_WIDTH-1:0]                     icache_addr_o,
+    input  wire [L1_ICACHE_DATA_WIDTH-1:0]           icache_data_i,
+    input  wire                                      icache_ready_i,
 
     // Data cache interface - now connected to L1 cache in cpu_top
-    output wire                                      dcache_req,
-    output wire [ADDR_WIDTH-1:0]                     dcache_addr,
-    output wire [L1_DCACHE_DATA_WIDTH-1:0]           dcache_wdata,
-    input  wire [L1_DCACHE_DATA_WIDTH-1:0]           dcache_rdata,
-    output wire                                      dcache_we,
-    output wire [L1_DCACHE_DATA_WIDTH/8-1:0]         dcache_byte_en,
-    input  wire                                      dcache_ready,
+    output wire                                      dcache_req_o,
+    output wire [ADDR_WIDTH-1:0]                     dcache_addr_o,
+    output wire [L1_DCACHE_DATA_WIDTH-1:0]           dcache_wdata_o,
+    input  wire [L1_DCACHE_DATA_WIDTH-1:0]           dcache_rdata_i,
+    output wire                                      dcache_we_o,
+    output wire [L1_DCACHE_DATA_WIDTH/8-1:0]         dcache_byte_en_o,
+    input  wire                                      dcache_ready_i,
 
     // Snoop interface
-    input  wire                                      snoop_valid,
-    input  wire [ADDR_WIDTH-1:0]                     snoop_addr,
-    input  wire [1:0]                                snoop_req_type,
-    output wire                                      snoop_ready,
-    output wire                                      snoop_hit,
-    output wire [1:0]                                snoop_state,
-    output wire [511:0]                              snoop_data,
+    input  wire                                      snoop_valid_i,
+    input  wire [ADDR_WIDTH-1:0]                     snoop_addr_i,
+    input  wire [1:0]                                snoop_req_type_i,
+    output wire                                      snoop_ready_o,
+    output wire                                      snoop_hit_o,
+    output wire [1:0]                                snoop_state_o,
+    output wire [511:0]                              snoop_data_o,
 
     // Interrupt and debugging
-    input  wire                                      timer_interrupt,
-    input  wire                                      external_interrupt,
-    input  wire                                      software_interrupt,
+    input  wire                                      timer_interrupt_i,
+    input  wire                                      external_interrupt_i,
+    input  wire                                      software_interrupt_i,
 
     // Debug interface
-    output wire [63:0]                               debug_pc,
-    output wire [31:0]                               debug_instr,
-    output wire                                      debug_wb_valid,
-    output wire [4:0]                                debug_wb_rd,
-    output wire [63:0]                               debug_wb_value
+    output wire [63:0]                               debug_pc_o,
+    output wire [31:0]                               debug_instr_o,
+    output wire                                      debug_wb_valid_o,
+    output wire [4:0]                                debug_wb_rd_o,
+    output wire [63:0]                               debug_wb_value_o
 );
 
     // Internal signal definition
@@ -104,19 +104,19 @@ module riscv64_core #(
     wire l1_l2_ready;
 
     // When L1 cache is instantiated in cpu_top, these L1-L2 signals are directly connected to L1 cache in cpu_top
-    assign l1_icache_req = icache_req;
-    assign l1_icache_addr = icache_addr;
-    assign l1_dcache_req = dcache_req;
-    assign l1_dcache_addr = dcache_addr;
-    assign l1_dcache_wdata = {{448{1'b0}}, dcache_wdata};
-    assign l1_dcache_we = dcache_we;
+    assign l1_icache_req = icache_req_o;
+    assign l1_icache_addr = icache_addr_o;
+    assign l1_dcache_req = dcache_req_o;
+    assign l1_dcache_addr = dcache_addr_o;
+    assign l1_dcache_wdata = {{448{1'b0}}, dcache_wdata_o};
+    assign l1_dcache_we = dcache_we_o;
     assign l1_dcache_req_type = 2'b00;
 
     // Coherence state handling
-    assign snoop_state = dcache_coh_rsp_state[1:0];
-    assign snoop_hit = 1'b0;
-    assign snoop_ready = 1'b1;
-    assign snoop_data = 512'd0;
+    assign snoop_state_o = dcache_coh_rsp_state[1:0];
+    assign snoop_hit_o = 1'b0;
+    assign snoop_ready_o = 1'b1;
+    assign snoop_data_o = 512'd0;
 
     // Instruction fetch stage
     riscv64_instruction_fetch #(
@@ -126,16 +126,16 @@ module riscv64_core #(
     ) u_if (
         .clk(clk),
         .rst_n(rst_n),
-        .stall(stall_if),
-        .flush(flush_if),
-        .branch_target(branch_target),
-        .branch_taken(branch_taken),
-        .pc(pc_if),
-        .instr(instr_if),
-        .cache_req(icache_req),
-        .cache_addr(icache_addr),
-        .cache_data(icache_data),
-        .cache_ready(icache_ready)
+        .stall_i(stall_if),
+        .flush_i(flush_if),
+        .branch_target_i(branch_target),
+        .branch_taken_i(branch_taken),
+        .pc_o(pc_if),
+        .instr_o(instr_if),
+        .cache_req_o(icache_req_o),
+        .cache_addr_o(icache_addr_o),
+        .cache_data_i(icache_data_i),
+        .cache_ready_i(icache_ready_i)
     );
 
     // Instruction decode stage
@@ -145,16 +145,16 @@ module riscv64_core #(
     ) u_id (
         .clk(clk),
         .rst_n(rst_n),
-        .stall(stall_id),
-        .flush(flush_id),
-        .pc_in(pc_if),
-        .instr_in(instr_if),
-        .pc_out(pc_id),
-        .instr_out(instr_id),
-        .rs1(rs1),
-        .rs2(rs2),
-        .imm(imm_id),
-        .ctrl_signals(ctrl_id)
+        .stall_i(stall_id),
+        .flush_i(flush_id),
+        .pc_in_i(pc_if),
+        .instr_in_i(instr_if),
+        .pc_out_o(pc_id),
+        .instr_out_o(instr_id),
+        .rs1_o(rs1),
+        .rs2_o(rs2),
+        .imm_o(imm_id),
+        .ctrl_signals_o(ctrl_id)
     );
 
     // Execution stage
@@ -164,20 +164,20 @@ module riscv64_core #(
     ) u_ex (
         .clk(clk),
         .rst_n(rst_n),
-        .stall(stall_ex),
-        .flush(flush_ex),
-        .pc_in(pc_id),
-        .instr_in(instr_id),
-        .rs1_data(rs1_data),
-        .rs2_data(rs2_data),
-        .imm(imm_id),
-        .ctrl_in(ctrl_id),
-        .pc_out(pc_ex),
-        .instr_out(instr_ex),
-        .alu_result(alu_result),
-        .branch_taken(branch_taken),
-        .branch_target(branch_target),
-        .ctrl_out(ctrl_ex)
+        .stall_i(stall_ex),
+        .flush_i(flush_ex),
+        .pc_in_i(pc_id),
+        .instr_in_i(instr_id),
+        .rs1_data_i(rs1_data),
+        .rs2_data_i(rs2_data),
+        .imm_i(imm_id),
+        .ctrl_in_i(ctrl_id),
+        .pc_out_o(pc_ex),
+        .instr_out_o(instr_ex),
+        .alu_result_o(alu_result),
+        .branch_taken_o(branch_taken),
+        .branch_target_o(branch_target),
+        .ctrl_out_o(ctrl_ex)
     );
 
     // Memory access stage
@@ -188,24 +188,24 @@ module riscv64_core #(
     ) u_mem (
         .clk(clk),
         .rst_n(rst_n),
-        .stall(stall_mem),
-        .flush(flush_mem),
-        .pc_in(pc_ex),
-        .instr_in(instr_ex),
-        .alu_result(alu_result),
-        .rs2_data(rs2_data),
-        .ctrl_in(ctrl_ex),
-        .cache_addr(dcache_addr),
-        .cache_wdata(dcache_wdata),
-        .cache_rdata(dcache_rdata),
-        .cache_req(dcache_req),
-        .cache_we(dcache_we),
-        .cache_byte_en(dcache_byte_en),
-        .cache_ready(dcache_ready),
-        .pc_out(pc_mem),
-        .instr_out(instr_mem),
-        .mem_result(mem_result),
-        .ctrl_out(ctrl_mem)
+        .stall_i(stall_mem),
+        .flush_i(flush_mem),
+        .pc_in_i(pc_ex),
+        .instr_in_i(instr_ex),
+        .alu_result_i(alu_result),
+        .rs2_data_i(rs2_data),
+        .ctrl_in_i(ctrl_ex),
+        .cache_addr_o(dcache_addr_o),
+        .cache_wdata_o(dcache_wdata_o),
+        .cache_rdata_i(dcache_rdata_i),
+        .cache_req_o(dcache_req_o),
+        .cache_we_o(dcache_we_o),
+        .cache_byte_en_o(dcache_byte_en_o),
+        .cache_ready_i(dcache_ready_i),
+        .pc_out_o(pc_mem),
+        .instr_out_o(instr_mem),
+        .mem_result_o(mem_result),
+        .ctrl_out_o(ctrl_mem)
     );
 
     // Write back stage
@@ -215,18 +215,18 @@ module riscv64_core #(
     ) u_wb (
         .clk(clk),
         .rst_n(rst_n),
-        .stall(stall_wb),
-        .pc_in(pc_mem),
-        .instr_in(instr_mem),
-        .alu_result(alu_result),
-        .mem_result(mem_result),
-        .ctrl_in(ctrl_mem),
-        .rd(wb_rd),
-        .reg_we(wb_reg_we),
-        .reg_wdata(wb_reg_wdata),
-        .pc_out(pc_wb),
-        .instr_out(instr_wb),
-        .wb_valid(debug_wb_valid)
+        .stall_i(stall_wb),
+        .pc_in_i(pc_mem),
+        .instr_in_i(instr_mem),
+        .alu_result_i(alu_result),
+        .mem_result_i(mem_result),
+        .ctrl_in_i(ctrl_mem),
+        .rd_o(wb_rd),
+        .reg_we_o(wb_reg_we),
+        .reg_wdata_o(wb_reg_wdata),
+        .pc_out_o(pc_wb),
+        .instr_out_o(instr_wb),
+        .wb_valid_o(debug_wb_valid_o)
     );
 
     // Register file
@@ -236,13 +236,13 @@ module riscv64_core #(
     ) u_regfile (
         .clk(clk),
         .rst_n(rst_n),
-        .rs1(instr_id[19:15]),
-        .rs2(instr_id[24:20]),
-        .rd(wb_rd),
-        .we(wb_reg_we),
-        .wdata(wb_reg_wdata),
-        .rs1_data(rs1_data),
-        .rs2_data(rs2_data)
+        .rs1_i(instr_id[19:15]),
+        .rs2_i(instr_id[24:20]),
+        .rd_i(wb_rd),
+        .we_i(wb_reg_we),
+        .wdata_i(wb_reg_wdata),
+        .rs1_data_o(rs1_data),
+        .rs2_data_o(rs2_data)
     );
 
     // Hazard detection unit
@@ -250,33 +250,33 @@ module riscv64_core #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH)
     ) u_hazard (
-        .rs1_id(instr_id[19:15]),
-        .rs2_id(instr_id[24:20]),
-        .rd_ex(instr_ex[11:7]),
-        .rd_mem(instr_mem[11:7]),
-        .rd_wb(wb_rd),
-        .reg_we_ex(ctrl_ex[10]),
-        .reg_we_mem(ctrl_mem[10]),
-        .reg_we_wb(wb_reg_we),
-        .mem_read_ex(ctrl_ex[9]),
-        .branch_taken(branch_taken),
-        .data_hazard(),
-        .control_hazard(),
-        .stall_if(stall_if),
-        .stall_id(stall_id),
-        .stall_ex(stall_ex),
-        .stall_mem(stall_mem),
-        .stall_wb(stall_wb),
-        .flush_if(flush_if),
-        .flush_id(flush_id),
-        .flush_ex(flush_ex),
-        .flush_mem(flush_mem)
+        .rs1_id_i(instr_id[19:15]),
+        .rs2_id_i(instr_id[24:20]),
+        .rd_ex_i(instr_ex[11:7]),
+        .rd_mem_i(instr_mem[11:7]),
+        .rd_wb_i(wb_rd),
+        .reg_we_ex_i(ctrl_ex[10]),
+        .reg_we_mem_i(ctrl_mem[10]),
+        .reg_we_wb_i(wb_reg_we),
+        .mem_read_ex_i(ctrl_ex[9]),
+        .branch_taken_i(branch_taken),
+        .data_hazard_o(),
+        .control_hazard_o(),
+        .stall_if_o(stall_if),
+        .stall_id_o(stall_id),
+        .stall_ex_o(stall_ex),
+        .stall_mem_o(stall_mem),
+        .stall_wb_o(stall_wb),
+        .flush_if_o(flush_if),
+        .flush_id_o(flush_id),
+        .flush_ex_o(flush_ex),
+        .flush_mem_o(flush_mem)
     );
 
     // Debug output
-    assign debug_pc = pc_wb;
-    assign debug_instr = instr_wb;
-    assign debug_wb_rd = wb_rd;
-    assign debug_wb_value = wb_reg_wdata;
+    assign debug_pc_o = pc_wb;
+    assign debug_instr_o = instr_wb;
+    assign debug_wb_rd_o = wb_rd;
+    assign debug_wb_value_o = wb_reg_wdata;
 
 endmodule

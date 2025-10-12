@@ -312,40 +312,40 @@ module cpu_top #(
                     .rst_n(rst_n),
 
                     // Instruction cache interface
-                    .icache_req(icache_req),
-                    .icache_addr(icache_addr),
-                    .icache_data(icache_data),
-                    .icache_ready(icache_ready),
+                    .icache_req_o(icache_req),
+                    .icache_addr_o(icache_addr),
+                    .icache_data_i(icache_data),
+                    .icache_ready_i(icache_ready),
 
                     // Data cache interface
-                    .dcache_req(dcache_req),
-                    .dcache_addr(dcache_addr),
-                    .dcache_wdata(dcache_wdata),
-                    .dcache_rdata(dcache_rdata),
-                    .dcache_we(dcache_we),
-                    .dcache_byte_en(dcache_byte_en),
-                    .dcache_ready(dcache_ready),
+                    .dcache_req_o(dcache_req),
+                    .dcache_addr_o(dcache_addr),
+                    .dcache_wdata_o(dcache_wdata),
+                    .dcache_rdata_i(dcache_rdata),
+                    .dcache_we_o(dcache_we),
+                    .dcache_byte_en_o(dcache_byte_en),
+                    .dcache_ready_i(dcache_ready),
 
                     // Snoop interface
-                    .snoop_valid(snoop_valid[i]),
-                    .snoop_addr(snoop_addr[i*ADDR_WIDTH +: ADDR_WIDTH]),
-                    .snoop_req_type(snoop_req_type[i*2 +: 2]),
-                    .snoop_ready(snoop_ready[i]),
-                    .snoop_hit(snoop_hit[i]),
-                    .snoop_state(snoop_state[i*2 +: 2]),
-                    .snoop_data(snoop_data[i*512 +: 512]),
+                    .snoop_valid_i(snoop_valid[i]),
+                    .snoop_addr_i(snoop_addr[i*ADDR_WIDTH +: ADDR_WIDTH]),
+                    .snoop_req_type_i(snoop_req_type[i*2 +: 2]),
+                    .snoop_ready_o(snoop_ready[i]),
+                    .snoop_hit_o(snoop_hit[i]),
+                    .snoop_state_o(snoop_state[i*2 +: 2]),
+                    .snoop_data_o(snoop_data[i*512 +: 512]),
 
                     // Interrupt and debugging
-                    .timer_interrupt(1'b0),
-                    .external_interrupt(ext_int),
-                    .software_interrupt(1'b0),
+                    .timer_interrupt_i(1'b0),
+                    .external_interrupt_i(ext_int),
+                    .software_interrupt_i(1'b0),
 
                     // Debug interface - Can be connected to debug module
-                    .debug_pc(),
-                    .debug_instr(),
-                    .debug_wb_valid(),
-                    .debug_wb_rd(),
-                    .debug_wb_value()
+                    .debug_pc_o(),
+                    .debug_instr_o(),
+                    .debug_wb_valid_o(),
+                    .debug_wb_rd_o(),
+                    .debug_wb_value_o()
                 );
 
             `ifdef DEBUG

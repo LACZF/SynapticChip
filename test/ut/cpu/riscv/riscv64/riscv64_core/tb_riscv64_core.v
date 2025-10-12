@@ -9,7 +9,7 @@ module tb_riscv64_core;
     // Instruction Cache Interface
     wire         icache_req;
     wire [63:0]  icache_addr;
-    reg  [63:0]  icache_data;
+    reg  [31:0]  icache_data;
     reg          icache_ready;
 
     // Data Cache Interface
@@ -136,7 +136,7 @@ module tb_riscv64_core;
     riscv64_core #(
         .ADDR_WIDTH(64),
         .DATA_WIDTH(64),
-        .L1_ICACHE_DATA_WIDTH(64),
+        .L1_ICACHE_DATA_WIDTH(32),
         .L1_DCACHE_DATA_WIDTH(64),
         .CORE_ID(0)
     ) u_dut (
@@ -145,40 +145,40 @@ module tb_riscv64_core;
         .rst_n(rst_n),
 
         // Instruction cache interface
-        .icache_req(icache_req),
-        .icache_addr(icache_addr),
-        .icache_data(icache_data),
-        .icache_ready(icache_ready),
+        .icache_req_o(icache_req),
+        .icache_addr_o(icache_addr),
+        .icache_data_i(icache_data),
+        .icache_ready_i(icache_ready),
 
         // Data cache interface
-        .dcache_req(dcache_req),
-        .dcache_addr(dcache_addr),
-        .dcache_we(dcache_we),
-        .dcache_wdata(dcache_wdata),
-        .dcache_byte_en(dcache_byte_en),
-        .dcache_rdata(dcache_rdata),
-        .dcache_ready(dcache_ready),
+        .dcache_req_o(dcache_req),
+        .dcache_addr_o(dcache_addr),
+        .dcache_we_o(dcache_we),
+        .dcache_wdata_o(dcache_wdata),
+        .dcache_byte_en_o(dcache_byte_en),
+        .dcache_rdata_i(dcache_rdata),
+        .dcache_ready_i(dcache_ready),
 
         // Snoop interface
-        .snoop_valid(snoop_valid),
-        .snoop_addr(snoop_addr),
-        .snoop_req_type(snoop_req_type),
-        .snoop_ready(snoop_ready),
-        .snoop_hit(snoop_hit),
-        .snoop_state(snoop_state),
-        .snoop_data(snoop_data),
+        .snoop_valid_i(snoop_valid),
+        .snoop_addr_i(snoop_addr),
+        .snoop_req_type_i(snoop_req_type),
+        .snoop_ready_o(snoop_ready),
+        .snoop_hit_o(snoop_hit),
+        .snoop_state_o(snoop_state),
+        .snoop_data_o(snoop_data),
 
         // Interrupt interface
-        .timer_interrupt(timer_interrupt),
-        .external_interrupt(external_interrupt),
-        .software_interrupt(software_interrupt),
+        .timer_interrupt_i(timer_interrupt),
+        .external_interrupt_i(external_interrupt),
+        .software_interrupt_i(software_interrupt),
 
         // Debug outputs
-        .debug_pc(debug_pc),
-        .debug_instr(debug_instr),
-        .debug_wb_valid(debug_wb_valid),
-        .debug_wb_rd(debug_wb_rd),
-        .debug_wb_value(debug_wb_value)
+        .debug_pc_o(debug_pc),
+        .debug_instr_o(debug_instr),
+        .debug_wb_valid_o(debug_wb_valid),
+        .debug_wb_rd_o(debug_wb_rd),
+        .debug_wb_value_o(debug_wb_value)
     );
 
     // Test Cases
