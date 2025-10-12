@@ -56,6 +56,7 @@ module tb_riscv64_core;
 
     // Simulate Instruction Cache
     reg [31:0] instr_memory [0:4095]; // Simple instruction memory simulation
+    parameter INSTR_FILE = "instructions.hex"; // Path to instruction hex file
 
     always @(*) begin
         if (icache_req) begin
@@ -96,8 +97,8 @@ module tb_riscv64_core;
     always @(posedge clk) begin
         if (dcache_req && dcache_we) begin
             // Process write operation
-            if (dcache_byte_en[0]) data_memory[dcache_addr[31:3]][7:0] <= dcache_wdata[7:0];
-            if (dcache_byte_en[1]) data_memory[dcache_addr[31:3]][15:8] <= dcache_wdata[15:8];
+            if (dcache_byte_en[0]) data_memory[dcache_addr[31:3]][7:0]   <= dcache_wdata[7:0];
+            if (dcache_byte_en[1]) data_memory[dcache_addr[31:3]][15:8]  <= dcache_wdata[15:8];
             if (dcache_byte_en[2]) data_memory[dcache_addr[31:3]][23:16] <= dcache_wdata[23:16];
             if (dcache_byte_en[3]) data_memory[dcache_addr[31:3]][31:24] <= dcache_wdata[31:24];
             if (dcache_byte_en[4]) data_memory[dcache_addr[31:3]][39:32] <= dcache_wdata[39:32];
@@ -188,40 +189,18 @@ module tb_riscv64_core;
     task test_arithmetic;
         begin
             $display("Starting arithmetic instructions test...");
-            $display("Time: %0t, Writing test instructions to instr_memory", $time);
 
-            // Initialize instruction memory (use offset 100 to avoid conflicts with other test cases)
-            // ADD x1, x0, x0 (x1 = 0)
-            instr_memory[100] = 32'h000000b3;
-            // ADDI x2, x0, 10 (x2 = 10)
-            instr_memory[101] = 32'h00a00113;
-            // ADD x3, x1, x2 (x3 = 10)
-            instr_memory[102] = 32'h002081b3;
-            // SUB x4, x2, x1 (x4 = 10)
-            // ADDI x5, x3, 5 (x5 = 15)
-            instr_memory[104] = 32'h00508293;
+            // Set PC to the start of arithmetic test instructions (index 100)
+            $display("Jumping to arithmetic test instructions at address 0x%0h", 64'h80000000 + (100 << 2));
+            // Use JAL instruction to jump to the test address
+            instr_memory[0] = 32'h0190006f; // JAL x0, 0x19 (jump to address 0x74 = 100*4)
 
-            // Display written instructions
-            $display("Time: %0t, Test instructions written:", $time);
-            for (int i = 100; i < 105; i = i + 1) begin
-                $display("  instr_memory[%0d] = 0x%0h", i, instr_memory[i]);
-            end
-
-            // Set processor to start execution from our test instructions
-            // Note: This needs to be achieved by modifying the processor's PC register,
-            // but PC registers are usually not directly exposed in RTL designs
-            // So we need to set the initial PC through the debug interface or other means
-            $display("Time: %0t, Note: Need to set PC to 0x%0h to start test", $time, 64'h80000000 + (100 << 2));
-
+            rst_n = 0;
+            #20 rst_n = 1;
             // Wait for processor execution
-            $display("Time: %0t, Waiting for instruction execution", $time);
             #2000;
 
             // Check results
-            $display("Time: %0t, Checking test results", $time);
-            $display("  Current debug_wb_valid: %0d, debug_wb_rd: %0d, debug_wb_value: %0h",
-                     debug_wb_valid, debug_wb_rd, debug_wb_value);
-
             if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 15) begin
                 $display("  Test arithmetic passed!");
                 test_pass = test_pass + 1;
@@ -237,15 +216,12 @@ module tb_riscv64_core;
         begin
             $display("Starting memory access instructions test...");
 
-            // Initialize instruction memory
-            // ADDI x1, x0, 100 (x1 = 100)
-            instr_memory[5] = 32'h064000b3;
-            // ADDI x2, x0, 0x1000 (x2 = 4096)
-            instr_memory[6] = 32'h10000113;
-            // SD x1, 0(x2) (store x1 to memory[4096])
-            instr_memory[7] = 32'h00112023;
-            // LD x3, 0(x2) (load x3 from memory[4096])
-            instr_memory[8] = 32'h00012183;
+            // Set PC to the start of memory test instructions (index 5)
+            $display("Jumping to memory test instructions at address 0x%0h", 64'h80000000 + (5 << 2));
+            instr_memory[0] = 32'h0050006f; // JAL x0, 0x5 (jump to address 0x14 = 5*4)
+
+            rst_n = 0;
+            #20 rst_n = 1;
 
             // Run for several cycles
             #200;
@@ -266,21 +242,12 @@ module tb_riscv64_core;
         begin
             $display("Starting branch instructions test...");
 
-            // Initialize instruction memory
-            // ADDI x1, x0, 5 (x1 = 5)
-            instr_memory[9] = 32'h005000b3;
-            // ADDI x2, x0, 5 (x2 = 5)
-            instr_memory[10] = 32'h00500113;
-            // BEQ x1, x2, 4 (branch to 15 if x1 == x2)
-            instr_memory[11] = 32'h00208463;
-            // ADDI x3, x0, 1 (should not reach here)
-            instr_memory[12] = 32'h00100193;
-            // ADDI x4, x0, 2 (should not reach here)
-            instr_memory[13] = 32'h00200213;
-            // ADDI x5, x0, 3 (should not reach here)
-            instr_memory[14] = 32'h00300293;
-            // ADDI x6, x0, 4 (branch target)
-            instr_memory[15] = 32'h00400313;
+            // Set PC to the start of branch test instructions (index 9)
+            $display("Jumping to branch test instructions at address 0x%0h", 64'h80000000 + (9 << 2));
+            instr_memory[0] = 32'h0090006f; // JAL x0, 0x9 (jump to address 0x24 = 9*4)
+
+            rst_n = 0;
+            #20 rst_n = 1;
 
             // Run for several cycles
             #200;
@@ -301,17 +268,12 @@ module tb_riscv64_core;
         begin
             $display("Starting logic instructions test...");
 
-            // Initialize instruction memory
-            // ADDI x1, x0, 0xAAAA (x1 = 0xAAAA)
-            instr_memory[16] = 32'hAAA000b3;
-            // ADDI x2, x0, 0x5555 (x2 = 0x5555)
-            instr_memory[17] = 32'h55500113;
-            // AND x3, x1, x2 (x3 = 0)
-            instr_memory[18] = 32'h0020a1b3;
-            // OR x4, x1, x2 (x4 = 0xFFFF)
-            instr_memory[19] = 32'h0020c233;
-            // XOR x5, x1, x2 (x5 = 0xFFFF)
-            instr_memory[20] = 32'h0020e293;
+            // Set PC to the start of logic test instructions (index 16)
+            $display("Jumping to logic test instructions at address 0x%0h", 64'h80000000 + (16 << 2));
+            instr_memory[0] = 32'h0100006f; // JAL x0, 0x10 (jump to address 0x40 = 16*4)
+
+            rst_n = 0;
+            #20 rst_n = 1;
 
             // Run for several cycles
             #200;
@@ -332,17 +294,12 @@ module tb_riscv64_core;
         begin
             $display("Starting shift instructions test...");
 
-            // Initialize instruction memory
-            // ADDI x1, x0, 1 (x1 = 1)
-            instr_memory[21] = 32'h001000b3;
-            // SLLI x2, x1, 4 (x2 = 16)
-            instr_memory[22] = 32'h00409113;
-            // SRLI x3, x2, 2 (x3 = 4)
-            instr_memory[23] = 32'h0020d193;
-            // ADDI x4, x0, -8 (x4 = -8)
-            instr_memory[24] = 32'hFF800213;
-            // SRAI x5, x4, 2 (x5 = -2)
-            instr_memory[25] = 32'h4020f293;
+            // Set PC to the start of shift test instructions (index 21)
+            $display("Jumping to shift test instructions at address 0x%0h", 64'h80000000 + (21 << 2));
+            instr_memory[0] = 32'h0150006f; // JAL x0, 0x15 (jump to address 0x54 = 21*4)
+
+            rst_n = 0;
+            #20 rst_n = 1;
 
             // Run for several cycles
             #200;
@@ -363,17 +320,12 @@ module tb_riscv64_core;
         begin
             $display("Starting compare instructions test...");
 
-            // Initialize instruction memory
-            // ADDI x1, x0, 5 (x1 = 5)
-            instr_memory[26] = 32'h005000b3;
-            // ADDI x2, x0, 10 (x2 = 10)
-            instr_memory[27] = 32'h00a00113;
-            // SLT x3, x1, x2 (x3 = 1)
-            instr_memory[28] = 32'h0020e1b3;
-            // SLTU x4, x2, x1 (x4 = 0)
-            instr_memory[29] = 32'h00114233;
-            // SLTI x5, x2, 15 (x5 = 1)
-            instr_memory[30] = 32'h00f11293;
+            // Set PC to the start of compare test instructions (index 26)
+            $display("Jumping to compare test instructions at address 0x%0h", 64'h80000000 + (26 << 2));
+            instr_memory[0] = 32'h01a0006f; // JAL x0, 0x1a (jump to address 0x68 = 26*4)
+
+            rst_n = 0;
+            #20 rst_n = 1;
 
             // Run for several cycles
             #200;
@@ -394,22 +346,12 @@ module tb_riscv64_core;
         begin
             $display("Starting jump instructions test...");
 
-            // Initialize instruction memory
-            // JAL x1, 8 (jump to 38, x1 = 33)
-            instr_memory[31] = 32'h004000ef;
-            instr_memory[32] = 32'h00100113;
-            // ADDI x3, x0, 2 (should not reach here)
-            instr_memory[33] = 32'h00200193;
-            // ADDI x4, x0, 3 (should not reach here)
-            instr_memory[34] = 32'h00300213;
-            // ADDI x5, x0, 4 (should not reach here)
-            instr_memory[35] = 32'h00400293;
-            // ADDI x6, x0, 5 (should not reach here)
-            instr_memory[36] = 32'h00500313;
-            // ADDI x7, x0, 6 (should not reach here)
-            instr_memory[37] = 32'h00600393;
-            // ADDI x8, x0, 7 (jump target)
-            instr_memory[38] = 32'h00700413;
+            // Set PC to the start of jump test instructions (index 31)
+            $display("Jumping to jump test instructions at address 0x%0h", 64'h80000000 + (31 << 2));
+            instr_memory[0] = 32'h01f0006f; // JAL x0, 0x1f (jump to address 0x7c = 31*4)
+
+            rst_n = 0;
+            #20 rst_n = 1;
 
             // Run for several cycles
             #200;
@@ -437,13 +379,12 @@ module tb_riscv64_core;
         begin
             $display("Starting hazard detection and handling test...");
 
-            // Initialize instruction memory
-            // LD x1, 0(x0) (load data to x1)
-            instr_memory[39] = 32'h00000083;
-            // ADD x2, x1, x1 (use x1, should trigger load-use hazard)
-            instr_memory[40] = 32'h00108113;
-            // ADD x3, x2, x2 (use x2)
-            instr_memory[41] = 32'h00210193;
+            // Set PC to the start of hazard test instructions (index 39)
+            $display("Jumping to hazard test instructions at address 0x%0h", 64'h80000000 + (39 << 2));
+            instr_memory[0] = 32'h0270006f; // JAL x0, 0x27 (jump to address 0x9c = 39*4)
+
+            rst_n = 0;
+            #20 rst_n = 1;
 
             // Run for several cycles
             #200;
@@ -464,13 +405,21 @@ module tb_riscv64_core;
         $display("Initial block started at time %0t", $time);
 
         // Initialize memory
-        $display("Initializing memory...");
+        $display("Initializing memory from %s...", INSTR_FILE);
+        // First fill with NOP instructions
         for (int i = 0; i < 4096; i = i + 1) begin
             instr_memory[i] = 32'h00000013; // NOP instruction
             data_memory[i] = 64'h0;
         end
-
-        $display("Memory initialization completed.");
+        // Then load instructions from hex file
+        $readmemh(INSTR_FILE, instr_memory);
+        $display("Memory initialization from %s completed.", INSTR_FILE);
+    `ifdef DEBUG
+        $display("Initial instructions: ");
+        for (int i = 0; i < 128; i = i + 1) begin
+            $display("Instr[0x%0h] = 0x%0h", i, instr_memory[i]);
+        end
+    `endif
 
         // Wait for reset to complete
         $display("Waiting for reset...");
@@ -479,12 +428,6 @@ module tb_riscv64_core;
         #10;
 
         $display("Reset completed. Starting test execution...");
-    `ifdef DEBUG
-        $display("Initial instructions: ");
-        for (int i = 0; i < 10; i = i + 1) begin
-            $display("Instr[0x%0h] = 0x%0h", i, instr_memory[i]);
-        end
-    `endif
 
         // Run test cases
         test_arithmetic;
@@ -511,13 +454,16 @@ module tb_riscv64_core;
             $display("\nSOME TESTS FAILED!");
         end
 
-        // Generate waveform file
-        $dumpfile("tb_riscv64_core.vcd");
-        $dumpvars(0, tb_riscv64_core);
-
         // End simulation
         #100;
         $finish;
+    end
+
+    initial begin
+        $dumpfile("tb_riscv64_core.vcd");
+        $dumpvars(0, tb_riscv64_core);
+        $dumpon;
+        $dumpall;
     end
 
     // Timeout detection

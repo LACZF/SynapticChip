@@ -19,6 +19,7 @@ module riscv64_instruction_fetch #(
 );
 
     reg [63:0] pc_next;
+`ifdef DEBUG
     reg cache_req_prev; // Register for detecting cache_req changes
 
     // Track previous state of cache_req
@@ -30,7 +31,6 @@ module riscv64_instruction_fetch #(
         end
     end
 
-`ifdef DEBUG
     // Debug information
     always @(posedge clk) begin
         if (rst_n) begin
@@ -83,7 +83,7 @@ module riscv64_instruction_fetch #(
             `endif
                 // Ensure correct instruction loading
                 if (cache_data !== {L1_ICACHE_DATA_WIDTH{1'bz}} && cache_data !== {L1_ICACHE_DATA_WIDTH{1'bx}}) begin
-                    instr <= cache_data[0 +: 31];; // Fetch instruction data from cache
+                    instr <= cache_data[0 +: 32];; // Fetch instruction data from cache
                 `ifdef DEBUG
                     $display("[%0t ps] IF: Loading instruction from cache: 0x%h", $time, cache_data);
                 `endif
