@@ -67,9 +67,9 @@ module riscv64_core #(
     wire [2:0] funct3;
     wire [6:0] funct7;
 
-    assign rd = instr_id[11:7];
-    assign rs1 = instr_id[19:15];
-    assign rs2 = instr_id[24:20];
+    assign rd     = instr_id[11:7];
+    assign rs1    = instr_id[19:15];
+    assign rs2    = instr_id[24:20];
     assign funct3 = instr_id[14:12];
     assign funct7 = instr_id[31:25];
 
@@ -151,8 +151,11 @@ module riscv64_core #(
         .instr_in_i(instr_if),
         .pc_out_o(pc_id),
         .instr_out_o(instr_id),
+        .funct3_i(funct3),
         .rs1_o(rs1),
         .rs2_o(rs2),
+        /* TODO */
+        // .rd_o(rd),
         .imm_o(imm_id),
         .ctrl_signals_o(ctrl_id)
     );
@@ -250,6 +253,8 @@ module riscv64_core #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH)
     ) u_hazard (
+        .clk(clk),
+        .rst_n(rst_n),
         .rs1_id_i(instr_id[19:15]),
         .rs2_id_i(instr_id[24:20]),
         .rd_ex_i(instr_ex[11:7]),
