@@ -78,7 +78,7 @@ all_it_list:
 
 all_it:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/it -name makefile.txt | xargs dirname); do \
-		make test M=$$M; \
+		make test M=$$M || exit 1; \
 	done
 
 all_ut_list:
@@ -88,7 +88,7 @@ all_ut_list:
 
 all_ut:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/ut -name makefile.txt | xargs dirname); do \
-		make test M=$$M; \
+		make test M=$$M || exit 1; \
 	done
 
 all_test: all_ut all_it
