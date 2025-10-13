@@ -145,16 +145,16 @@ module tb_top_system_direct_4core;
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .uart_txd(uart_txd),
-        .uart_rxd(uart_rxd),
+        .uart_txd_o(uart_txd),
+        .uart_rxd_i(uart_rxd),
         .gpio_pins(gpio_pins),
-        .ext_int(ext_int),
-        .system_status(system_status),
+        .ext_int_i(ext_int),
+        .system_status_o(system_status),
         // SPI Interface Connected to SPI Flash Model
-        .spi_cs_n(spi_cs_n),
-        .spi_clk(spi_clk),
-        .spi_mosi(spi_mosi),
-        .spi_miso(spi_miso)
+        .spi_cs_n_o(spi_cs_n),
+        .spi_clk_o(spi_clk),
+        .spi_mosi_o(spi_mosi),
+        .spi_miso_i(spi_miso)
     );
 
     // Clock Generation

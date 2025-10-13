@@ -68,15 +68,15 @@ module tb_cpu_top;
         // Clock and Reset
         .clk                (clk),
         .rst_n              (rst_n),
-        .ext_int            (ext_int),
+        .ext_int_i          (ext_int),
 
         // Memory Interface
-        .mem_req            (mem_req),
-        .mem_addr           (mem_addr),
-        .mem_wdata          (mem_wdata),
-        .mem_we             (mem_we),
-        .mem_ready          (mem_ready),
-        .mem_rdata          (mem_rdata)
+        .mem_req_o          (mem_req),
+        .mem_addr_o         (mem_addr),
+        .mem_wdata_o        (mem_wdata),
+        .mem_we_o           (mem_we),
+        .mem_ready_i        (mem_ready),
+        .mem_rdata_i        (mem_rdata)
     );
 
     // Use Memory Interface Instead of Direct Internal Signal Access

@@ -17,17 +17,17 @@ module pe_top #(
     input                                         clk,
     input                                         rst_n,
 
-    input  reg [NUM_PES-1:0]                      pe_enable,
-    input  reg [NUM_PES-1:0]                      pe_reset,
-    input  reg [(NUM_PES*INST_WIDTH)-1:0]         pe_instructions,
-    input  reg                                    pe_inst_valid,
-    output     [(NUM_PES*DATA_WIDTH)-1:0]         pe_status,
-    output     [(NUM_PES*DATA_WIDTH)-1:0]         pe_outputs,
-    output     [NUM_PES-1:0]                      pe_busy,
-    input  reg [(NUM_PES*4*PE_ID_WIDTH)-1:0]      route_config,
-    input  reg                                    route_cfg_valid,
+    input  reg [NUM_PES-1:0]                      pe_enable_i,
+    input  reg [NUM_PES-1:0]                      pe_reset_i,
+    input  reg [(NUM_PES*INST_WIDTH)-1:0]         pe_instructions_i,
+    input  reg                                    pe_inst_valid_i,
+    output     [(NUM_PES*DATA_WIDTH)-1:0]         pe_status_o,
+    output     [(NUM_PES*DATA_WIDTH)-1:0]         pe_outputs_o,
+    output     [NUM_PES-1:0]                      pe_busy_o,
+    input  reg [(NUM_PES*4*PE_ID_WIDTH)-1:0]      route_config_i,
+    input  reg                                    route_cfg_valid_i,
 
-    output [DATA_WIDTH-1:0]                       fabric_status
+    output [DATA_WIDTH-1:0]                       fabric_status_o
 );
     // PE interconnection signals
     wire [NUM_PES-1:0] pe_north_valid;
@@ -62,36 +62,36 @@ module pe_top #(
                     .PE_ARRAY_COLS(PE_ARRAY_COLS)
                 ) pe (
                     .clk(clk),
-                    .rst_n(rst_n & !pe_reset[pe_idx]),
-                    .enable(pe_enable[pe_idx]),
-                    .instruction(pe_instructions[pe_idx*INST_WIDTH +: INST_WIDTH]),
-                    .inst_valid(pe_inst_valid),
-                    .north_valid(pe_north_valid[pe_idx]),
-                    .north_data(pe_north_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
-                    .north_ready(pe_north_ready[pe_idx]),
-                    .south_valid(pe_south_valid[pe_idx]),
-                    .south_data(pe_south_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
-                    .south_ready(pe_south_ready[pe_idx]),
-                    .east_valid(pe_east_valid[pe_idx]),
-                    .east_data(pe_east_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
-                    .east_ready(pe_east_ready[pe_idx]),
-                    .west_valid(pe_west_valid[pe_idx]),
-                    .west_data(pe_west_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
-                    .west_ready(pe_west_ready[pe_idx]),
-                    .out_data(pe_outputs[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
-                    .out_valid(),
-                    .busy(pe_busy[pe_idx]),
-                    .status(pe_status[pe_idx*DATA_WIDTH +: DATA_WIDTH])
+                    .rst_n(rst_n & !pe_reset_i[pe_idx]),
+                    .enable_i(pe_enable_i[pe_idx]),
+                    .instruction_i(pe_instructions_i[pe_idx*INST_WIDTH +: INST_WIDTH]),
+                    .inst_valid_i(pe_inst_valid_i),
+                    .north_valid_i(pe_north_valid[pe_idx]),
+                    .north_data_i(pe_north_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
+                    .north_ready_o(pe_north_ready[pe_idx]),
+                    .south_valid_i(pe_south_valid[pe_idx]),
+                    .south_data_i(pe_south_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
+                    .south_ready_o(pe_south_ready[pe_idx]),
+                    .east_valid_i(pe_east_valid[pe_idx]),
+                    .east_data_i(pe_east_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
+                    .east_ready_o(pe_east_ready[pe_idx]),
+                    .west_valid_i(pe_west_valid[pe_idx]),
+                    .west_data_i(pe_west_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
+                    .west_ready_o(pe_west_ready[pe_idx]),
+                    .out_data_o(pe_outputs_o[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
+                    .out_valid_o(),
+                    .busy_o(pe_busy_o[pe_idx]),
+                    .status_o(pe_status_o[pe_idx*DATA_WIDTH +: DATA_WIDTH])
                 );
             end
         end
     endgenerate
 
     // Instantiate routing configuration module
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] north_routes;
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] south_routes;
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] east_routes;
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] west_routes;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] north_routes_o;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] south_routes_o;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] east_routes_o;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] west_routes_o;
 
     pe_route_config #(
         .NUM_PES(NUM_PES),
@@ -99,12 +99,12 @@ module pe_top #(
     ) route_cfg (
         .clk(clk),
         .rst_n(rst_n),
-        .cfg_valid(route_cfg_valid),
-        .cfg_data(route_config),
-        .north_routes(north_routes),
-        .south_routes(south_routes),
-        .east_routes(east_routes),
-        .west_routes(west_routes)
+        .cfg_valid_i(route_cfg_valid_i),
+        .cfg_data_i(route_config_i),
+        .north_routes_o(north_routes_o),
+        .south_routes_o(south_routes_o),
+        .east_routes_o(east_routes_o),
+        .west_routes_o(west_routes_o)
     );
 
     // PE array row and column parameters are defined in module parameters
@@ -163,9 +163,9 @@ module pe_top #(
     endgenerate
 
     // Status output
-    assign fabric_status = {
-        pe_busy,        // PE busy status
-        pe_enable       // PE enable status
+    assign fabric_status_o = {
+        pe_busy_o,        // PE busy status
+        pe_enable_i       // PE enable status
     };
 
 endmodule

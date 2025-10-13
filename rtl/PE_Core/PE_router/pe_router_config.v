@@ -12,20 +12,20 @@ module router_config #(
     input                            rst_n,
 
     // Configuration bus interface
-    input                            cfg_valid,
-    input       [ADDR_WIDTH-1:0]     cfg_addr,
-    input       [DATA_WIDTH-1:0]     cfg_data,
-    output                           cfg_ack,
+    input                            cfg_valid_i,
+    input       [ADDR_WIDTH-1:0]     cfg_addr_i,
+    input       [DATA_WIDTH-1:0]     cfg_data_i,
+    output                           cfg_ack_o,
 
     // Configuration outputs to router core
-    output reg                       route_cfg_valid,
-    output reg  [ADDR_WIDTH-1:0]     route_cfg_addr,
-    output reg  [DATA_WIDTH-1:0]     route_cfg_data,
-    input                            route_cfg_ack,
+    output reg                       route_cfg_valid_o,
+    output reg  [ADDR_WIDTH-1:0]     route_cfg_addr_o,
+    output reg  [DATA_WIDTH-1:0]     route_cfg_data_o,
+    input                            route_cfg_ack_i,
 
     // Status inputs
-    input       [DATA_WIDTH-1:0]     route_status,
-    output reg  [DATA_WIDTH-1:0]     status_out
+    input       [DATA_WIDTH-1:0]     route_status_i,
+    output reg  [DATA_WIDTH-1:0]     status_out_o
 );
 
     // Configuration registers
@@ -50,16 +50,16 @@ module router_config #(
     reg [1:0] state;
 
     // Configuration interface handling
-    assign cfg_ack = (state == `STATE_ACK);
+    assign cfg_ack_o = (state == `STATE_ACK);
 
     // Configuration interface state machine
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= `STATE_IDLE;
-            route_cfg_valid <= 1'b0;
-            route_cfg_addr <= 0;
-            route_cfg_data <= 0;
-            status_out <= 0;
+            route_cfg_valid_o <= 1'b0;
+            route_cfg_addr_o <= 0;
+            route_cfg_data_o <= 0;
+            status_out_o <= 0;
 
             // Initialize configuration registers
             config_registers_0 <= 0;
@@ -81,46 +81,46 @@ module router_config #(
         end else begin
             case (state)
                 `STATE_IDLE: begin
-                    route_cfg_valid <= 1'b0;
+                    route_cfg_valid_o <= 1'b0;
 
-                    if (cfg_valid) begin
-                        if (cfg_addr < 16) begin
+                    if (cfg_valid_i) begin
+                        if (cfg_addr_i < 16) begin
                             // Local configuration register access
-                            case (cfg_addr)
-                                0: config_registers_0 <= cfg_data;
-                                1: config_registers_1 <= cfg_data;
-                                2: config_registers_2 <= cfg_data;
-                                3: config_registers_3 <= cfg_data;
-                                4: config_registers_4 <= cfg_data;
-                                5: config_registers_5 <= cfg_data;
-                                6: config_registers_6 <= cfg_data;
-                                7: config_registers_7 <= cfg_data;
-                                8: config_registers_8 <= cfg_data;
-                                9: config_registers_9 <= cfg_data;
-                                10: config_registers_10 <= cfg_data;
-                                11: config_registers_11 <= cfg_data;
-                                12: config_registers_12 <= cfg_data;
-                                13: config_registers_13 <= cfg_data;
-                                14: config_registers_14 <= cfg_data;
-                                15: config_registers_15 <= cfg_data;
+                            case (cfg_addr_i)
+                                0: config_registers_0 <= cfg_data_i;
+                                1: config_registers_1 <= cfg_data_i;
+                                2: config_registers_2 <= cfg_data_i;
+                                3: config_registers_3 <= cfg_data_i;
+                                4: config_registers_4 <= cfg_data_i;
+                                5: config_registers_5 <= cfg_data_i;
+                                6: config_registers_6 <= cfg_data_i;
+                                7: config_registers_7 <= cfg_data_i;
+                                8: config_registers_8 <= cfg_data_i;
+                                9: config_registers_9 <= cfg_data_i;
+                                10: config_registers_10 <= cfg_data_i;
+                                11: config_registers_11 <= cfg_data_i;
+                                12: config_registers_12 <= cfg_data_i;
+                                13: config_registers_13 <= cfg_data_i;
+                                14: config_registers_14 <= cfg_data_i;
+                                15: config_registers_15 <= cfg_data_i;
                             endcase
                             state <= `STATE_ACK;
                         end else begin
                             // Router core configuration access
-                            route_cfg_valid <= 1'b1;
-                            route_cfg_addr <= cfg_addr;
-                            route_cfg_data <= cfg_data;
+                            route_cfg_valid_o <= 1'b1;
+                            route_cfg_addr_o <= cfg_addr_i;
+                            route_cfg_data_o <= cfg_data_i;
                             state <= `STATE_DATA;
                         end
                     end
 
                     // Update status output
-                    status_out <= route_status;
+                    status_out_o <= route_status_i;
                 end
 
                 `STATE_DATA: begin
-                    if (route_cfg_ack) begin
-                        route_cfg_valid <= 1'b0;
+                    if (route_cfg_ack_i) begin
+                        route_cfg_valid_o <= 1'b0;
                         state <= `STATE_ACK;
                     end
                 end

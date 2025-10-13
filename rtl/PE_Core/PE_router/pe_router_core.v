@@ -12,23 +12,23 @@ module pe_router_core #(
     input                                         rst_n,
 
     // Configuration interface
-    input                                         cfg_valid,
-    input       [ADDR_WIDTH-1:0]                  cfg_addr,
-    input       [DATA_WIDTH-1:0]                  cfg_data,
-    output                                        cfg_ack,
+    input                                         cfg_valid_i,
+    input       [ADDR_WIDTH-1:0]                  cfg_addr_i,
+    input       [DATA_WIDTH-1:0]                  cfg_data_i,
+    output                                        cfg_ack_o,
 
     // Data input interface (North, South, East, West, Local)
-    input       [NUM_PORTS-1:0]                   data_in_valid,
-    input       [(NUM_PORTS*DATA_WIDTH)-1:0]      data_in,
-    output reg  [NUM_PORTS-1:0]                   data_in_ready,
+    input       [NUM_PORTS-1:0]                   data_in_valid_i,
+    input       [(NUM_PORTS*DATA_WIDTH)-1:0]      data_in_i,
+    output reg  [NUM_PORTS-1:0]                   data_in_ready_o,
 
     // Data output interface (North, South, East, West, Local)
-    output reg  [NUM_PORTS-1:0]                   data_out_valid,
-    output reg  [(NUM_PORTS*DATA_WIDTH)-1:0]      data_out,
-    input       [NUM_PORTS-1:0]                   data_out_ready,
+    output reg  [NUM_PORTS-1:0]                   data_out_valid_o,
+    output reg  [(NUM_PORTS*DATA_WIDTH)-1:0]      data_out_o,
+    input       [NUM_PORTS-1:0]                   data_out_ready_i,
 
     // Status output
-    output reg  [DATA_WIDTH-1:0]                  status
+    output reg  [DATA_WIDTH-1:0]                  status_o
 );
 
     // Configuration registers
@@ -81,11 +81,11 @@ module pe_router_core #(
     reg [`PORT_ID_WIDTH-1:0] current_grant_4;
 
     // Destination address extraction
-    wire [ADDR_WIDTH-1:0] dest_addr_0 = data_in[0*DATA_WIDTH +: ADDR_WIDTH];
-    wire [ADDR_WIDTH-1:0] dest_addr_1 = data_in[1*DATA_WIDTH +: ADDR_WIDTH];
-    wire [ADDR_WIDTH-1:0] dest_addr_2 = data_in[2*DATA_WIDTH +: ADDR_WIDTH];
-    wire [ADDR_WIDTH-1:0] dest_addr_3 = data_in[3*DATA_WIDTH +: ADDR_WIDTH];
-    wire [ADDR_WIDTH-1:0] dest_addr_4 = data_in[4*DATA_WIDTH +: ADDR_WIDTH];
+    wire [ADDR_WIDTH-1:0] dest_addr_0 = data_in_i[0*DATA_WIDTH +: ADDR_WIDTH];
+    wire [ADDR_WIDTH-1:0] dest_addr_1 = data_in_i[1*DATA_WIDTH +: ADDR_WIDTH];
+    wire [ADDR_WIDTH-1:0] dest_addr_2 = data_in_i[2*DATA_WIDTH +: ADDR_WIDTH];
+    wire [ADDR_WIDTH-1:0] dest_addr_3 = data_in_i[3*DATA_WIDTH +: ADDR_WIDTH];
+    wire [ADDR_WIDTH-1:0] dest_addr_4 = data_in_i[4*DATA_WIDTH +: ADDR_WIDTH];
 
     // Routing decision signals
     reg [`PORT_ID_WIDTH-1:0] route_decision_0;
@@ -95,7 +95,7 @@ module pe_router_core #(
     reg [`PORT_ID_WIDTH-1:0] route_decision_4;
 
     // Configuration interface handling
-    assign cfg_ack = cfg_valid;
+    assign cfg_ack_o = cfg_valid_i;
 
     // Configuration register update
     always @(posedge clk or negedge rst_n) begin
@@ -103,11 +103,11 @@ module pe_router_core #(
             route_algorithm <= `ROUTE_XY;
             route_table <= {(NUM_PORTS*NUM_PORTS){1'b0}};
             port_enable <= {NUM_PORTS{1'b1}};
-        end else if (cfg_valid) begin
-            case (cfg_addr)
-                `REG_ROUTE_ALGO: route_algorithm <= cfg_data[1:0];
-                `REG_ROUTE_TABLE: route_table <= cfg_data[(NUM_PORTS*NUM_PORTS)-1:0];
-                `REG_PORT_CTRL: port_enable <= cfg_data[NUM_PORTS-1:0];
+        end else if (cfg_valid_i) begin
+            case (cfg_addr_i)
+                `REG_ROUTE_ALGO: route_algorithm <= cfg_data_i[1:0];
+                `REG_ROUTE_TABLE: route_table <= cfg_data_i[(NUM_PORTS*NUM_PORTS)-1:0];
+                `REG_PORT_CTRL: port_enable <= cfg_data_i[NUM_PORTS-1:0];
             endcase
         end
     end
@@ -169,8 +169,8 @@ module pe_router_core #(
             buffer_full_0 <= 1'b0;
         end else begin
             // Write to buffer
-            if (data_in_valid[0] && data_in_ready[0] && port_enable[0]) begin
-                input_buffers_0[write_ptr_0] <= data_in[0*DATA_WIDTH +: DATA_WIDTH];
+            if (data_in_valid_i[0] && data_in_ready_o[0] && port_enable[0]) begin
+                input_buffers_0[write_ptr_0] <= data_in_i[0*DATA_WIDTH +: DATA_WIDTH];
                 write_ptr_0 <= write_ptr_0 + 1;
                 buffer_empty_0 <= 1'b0;
 
@@ -199,8 +199,8 @@ module pe_router_core #(
             buffer_full_1 <= 1'b0;
         end else begin
             // Write to buffer
-            if (data_in_valid[1] && data_in_ready[1] && port_enable[1]) begin
-                input_buffers_1[write_ptr_1] <= data_in[1*DATA_WIDTH +: DATA_WIDTH];
+            if (data_in_valid_i[1] && data_in_ready_o[1] && port_enable[1]) begin
+                input_buffers_1[write_ptr_1] <= data_in_i[1*DATA_WIDTH +: DATA_WIDTH];
                 write_ptr_1 <= write_ptr_1 + 1;
                 buffer_empty_1 <= 1'b0;
 
@@ -229,8 +229,8 @@ module pe_router_core #(
             buffer_full_2 <= 1'b0;
         end else begin
             // Write to buffer
-            if (data_in_valid[2] && data_in_ready[2] && port_enable[2]) begin
-                input_buffers_2[write_ptr_2] <= data_in[2*DATA_WIDTH +: DATA_WIDTH];
+            if (data_in_valid_i[2] && data_in_ready_o[2] && port_enable[2]) begin
+                input_buffers_2[write_ptr_2] <= data_in_i[2*DATA_WIDTH +: DATA_WIDTH];
                 write_ptr_2 <= write_ptr_2 + 1;
                 buffer_empty_2 <= 1'b0;
 
@@ -259,8 +259,8 @@ module pe_router_core #(
             buffer_full_3 <= 1'b0;
         end else begin
             // Write to buffer
-            if (data_in_valid[3] && data_in_ready[3] && port_enable[3]) begin
-                input_buffers_3[write_ptr_3] <= data_in[3*DATA_WIDTH +: DATA_WIDTH];
+            if (data_in_valid_i[3] && data_in_ready_o[3] && port_enable[3]) begin
+                input_buffers_3[write_ptr_3] <= data_in_i[3*DATA_WIDTH +: DATA_WIDTH];
                 write_ptr_3 <= write_ptr_3 + 1;
                 buffer_empty_3 <= 1'b0;
 
@@ -289,8 +289,8 @@ module pe_router_core #(
             buffer_full_4 <= 1'b0;
         end else begin
             // Write to buffer
-            if (data_in_valid[4] && data_in_ready[4] && port_enable[4]) begin
-                input_buffers_4[write_ptr_4] <= data_in[4*DATA_WIDTH +: DATA_WIDTH];
+            if (data_in_valid_i[4] && data_in_ready_o[4] && port_enable[4]) begin
+                input_buffers_4[write_ptr_4] <= data_in_i[4*DATA_WIDTH +: DATA_WIDTH];
                 write_ptr_4 <= write_ptr_4 + 1;
                 buffer_empty_4 <= 1'b0;
 
@@ -312,11 +312,11 @@ module pe_router_core #(
 
     // Ready to receive data when buffer is not full
     always @(*) begin
-        data_in_ready[0] = !buffer_full_0 && port_enable[0];
-        data_in_ready[1] = !buffer_full_1 && port_enable[1];
-        data_in_ready[2] = !buffer_full_2 && port_enable[2];
-        data_in_ready[3] = !buffer_full_3 && port_enable[3];
-        data_in_ready[4] = !buffer_full_4 && port_enable[4];
+        data_in_ready_o[0] = !buffer_full_0 && port_enable[0];
+        data_in_ready_o[1] = !buffer_full_1 && port_enable[1];
+        data_in_ready_o[2] = !buffer_full_2 && port_enable[2];
+        data_in_ready_o[3] = !buffer_full_3 && port_enable[3];
+        data_in_ready_o[4] = !buffer_full_4 && port_enable[4];
     end
 
     // Arbitration and data forwarding for output port 0
@@ -324,12 +324,12 @@ module pe_router_core #(
         if (!rst_n) begin
             arbiter_state_0 <= `STATE_IDLE;
             current_grant_0 <= 0;
-            data_out_valid[0] <= 1'b0;
-            data_out[0*DATA_WIDTH +: DATA_WIDTH] <= 0;
+            data_out_valid_o[0] <= 1'b0;
+            data_out_o[0*DATA_WIDTH +: DATA_WIDTH] <= 0;
         end else begin
             case (arbiter_state_0)
                 `STATE_IDLE: begin
-                    data_out_valid[0] <= 1'b0;
+                    data_out_valid_o[0] <= 1'b0;
 
                     // Check if any input ports have data to send to current output port
                     if (!buffer_empty_0 && port_enable[0] && route_decision_0 == 0) begin
@@ -352,25 +352,25 @@ module pe_router_core #(
 
                 `STATE_ARB: begin
                     // Arbitration state, waiting for output port to be ready
-                    if (data_out_ready[0]) begin
+                    if (data_out_ready_i[0]) begin
                         arbiter_state_0 <= `STATE_DATA;
-                        data_out_valid[0] <= 1'b1;
+                        data_out_valid_o[0] <= 1'b1;
 
                         // Select data based on granted port
                         case (current_grant_0)
-                            0: data_out[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_0[read_ptr_0];
-                            1: data_out[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_1[read_ptr_1];
-                            2: data_out[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_2[read_ptr_2];
-                            3: data_out[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_3[read_ptr_3];
-                            4: data_out[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_4[read_ptr_4];
+                            0: data_out_o[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_0[read_ptr_0];
+                            1: data_out_o[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_1[read_ptr_1];
+                            2: data_out_o[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_2[read_ptr_2];
+                            3: data_out_o[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_3[read_ptr_3];
+                            4: data_out_o[0*DATA_WIDTH +: DATA_WIDTH] <= input_buffers_4[read_ptr_4];
                         endcase
                     end
                 end
 
                 `STATE_DATA: begin
                     // Data transfer state
-                    if (data_out_ready[0]) begin
-                        data_out_valid[0] <= 1'b0;
+                    if (data_out_ready_i[0]) begin
+                        data_out_valid_o[0] <= 1'b0;
                         arbiter_state_0 <= `STATE_IDLE;
                     end
                 end
@@ -386,10 +386,10 @@ module pe_router_core #(
     // Status monitoring
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            status <= 0;
+            status_o <= 0;
         end else begin
             // Summarize status information
-            status <= {
+            status_o <= {
                 buffer_empty_0, buffer_empty_1, buffer_empty_2, buffer_empty_3, buffer_empty_4,
                 buffer_full_0, buffer_full_1, buffer_full_2, buffer_full_3, buffer_full_4,
                 port_enable,

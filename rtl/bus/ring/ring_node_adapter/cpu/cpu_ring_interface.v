@@ -16,12 +16,12 @@ module cpu_ring_interface #(
     input                                     rst_n,
 
     // CPU_TOP interface
-    input wire                                cpu_mem_req,
-    input wire [ADDR_WIDTH-1:0]               cpu_mem_addr,
-    input wire [511:0]                        cpu_mem_wdata,
-    input wire                                cpu_mem_we,
-    output wire                               cpu_mem_ready,
-    output wire [511:0]                       cpu_mem_rdata,
+    input wire                                cpu_mem_req_i,
+    input wire [ADDR_WIDTH-1:0]               cpu_mem_addr_i,
+    input wire [511:0]                        cpu_mem_wdata_i,
+    input wire                                cpu_mem_we_i,
+    output wire                               cpu_mem_ready_o,
+    output wire [511:0]                       cpu_mem_rdata_o,
 
     // Ring bus interface
     // Send requests
@@ -67,7 +67,7 @@ module cpu_ring_interface #(
     reg                      is_cache_miss;       // Flag indicating cache miss
 
     // Determine if address is an instruction address (assuming instructions start at 0x8000_0000)
-    assign is_instruction_addr = (cpu_mem_addr[31:28] == 4'h8);
+    assign is_instruction_addr = (cpu_mem_addr_i[31:28] == 4'h8);
 
     // Detect cache miss: Considered a cache miss when a request is sent but no response is received within a certain time
     // Simple implementation: Use counter to detect timeout
@@ -99,20 +99,20 @@ module cpu_ring_interface #(
     assign tx_req_match_type_o = 2'b00;  // Default match type
 
     // Target ID: Memory controller under normal circumstances, SPI node when SPI instruction read is needed
-    assign tx_req_target_id_o = (state == IDLE && is_instruction_addr && !cpu_mem_we) ?
+    assign tx_req_target_id_o = (state == IDLE && is_instruction_addr && !cpu_mem_we_i) ?
                                 `NODE_SPI : {NODE_ID_WIDTH{1'b0}};  // 0 is memory controller, `NODE_SPI is SPI node
 
     // Convert CPU memory request to Ring bus request
-    assign tx_req_valid_o = (state == IDLE) && cpu_mem_req;
-    assign tx_req_opcode_o = cpu_mem_we ? {OPCODE_WIDTH{1'b1}} : {OPCODE_WIDTH{1'b0}};  // Write operation is all 1s, read operation is all 0s
-    assign tx_req_addr_o = cpu_mem_addr;
-    assign tx_req_data_o = cpu_mem_wdata[0+:DATA_WIDTH];  // Extract lower 64 bits from 512 bits
+    assign tx_req_valid_o = (state == IDLE) && cpu_mem_req_i;
+    assign tx_req_opcode_o = cpu_mem_we_i ? {OPCODE_WIDTH{1'b1}} : {OPCODE_WIDTH{1'b0}};  // Write operation is all 1s, read operation is all 0s
+    assign tx_req_addr_o = cpu_mem_addr_i;
+    assign tx_req_data_o = cpu_mem_wdata_i[0+:DATA_WIDTH];  // Extract lower 64 bits from 512 bits
 
     // Convert Ring bus response to CPU memory response
     // Note: Simplified response handling logic is used here; more complex processing based on address matching should be implemented in actual systems
-    assign cpu_mem_ready = ((state == WAITING_RESP) && rsp_valid_i && (rsp_target_id_i == NODE_ID)) ||
-                          ((state == WAITING_SPI_RESP) && rsp_valid_i && (rsp_source_id_i == `NODE_SPI));
-    assign cpu_mem_rdata = cpu_mem_ready ? {512{1'b0}} | rsp_data_i : {512{1'b0}};  // Extend 64-bit response to 512 bits
+    assign cpu_mem_ready_o = ((state == WAITING_RESP) && rsp_valid_i && (rsp_target_id_i == NODE_ID)) ||
+                            ((state == WAITING_SPI_RESP) && rsp_valid_i && (rsp_source_id_i == `NODE_SPI));
+    assign cpu_mem_rdata_o = cpu_mem_ready_o ? {512{1'b0}} | rsp_data_i : {512{1'b0}};  // Extend 64-bit response to 512 bits
 
     // State machine logic
     always @(posedge clk or negedge rst_n) begin
@@ -123,12 +123,12 @@ module cpu_ring_interface #(
         end else begin
             case (state)
                 IDLE:
-                    if (cpu_mem_req) begin
-                        state <= WAITING_RESP;
-                        pending_addr <= cpu_mem_addr;
-                        // Flag indicating if it's an instruction read
-                        is_instruction_read <= is_instruction_addr && !cpu_mem_we;
-                    end
+                    if (cpu_mem_req_i) begin
+                            state <= WAITING_RESP;
+                            pending_addr <= cpu_mem_addr_i;
+                            // Flag indicating if it's an instruction read
+                            is_instruction_read <= is_instruction_addr && !cpu_mem_we_i;
+                        end
                 WAITING_RESP:
                     if (rsp_valid_i && (rsp_target_id_i == NODE_ID)) begin
                         // Normal memory response
@@ -165,13 +165,13 @@ module cpu_ring_interface #(
             $display("[%0t ps] CPU_RING_INTERFACE: Cache miss detected for instruction at address 0x%h, switching to SPI read",
                      $time, pending_addr);
         end
-        if (cpu_mem_ready) begin
+        if (cpu_mem_ready_o) begin
             if (state == WAITING_SPI_RESP) begin
                 $display("[%0t ps] CPU_RING_INTERFACE: Received SPI response - Addr=0x%h, Data=0x%h",
-                         $time, pending_addr, cpu_mem_rdata);
+                         $time, pending_addr, cpu_mem_rdata_o);
             end else begin
                 $display("[%0t ps] CPU_RING_INTERFACE: Received memory response - Addr=0x%h, Data=0x%h",
-                         $time, pending_addr, cpu_mem_rdata);
+                         $time, pending_addr, cpu_mem_rdata_o);
             end
         end
     end

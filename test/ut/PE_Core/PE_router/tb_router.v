@@ -31,21 +31,23 @@ module tb_router;
 
     // Instantiate DUT - Explicitly Pass Parameters for Consistency
     pe_router_top #(
-        .NUM_PORTS(`NUM_PORTS)
+        .NUM_PORTS(`NUM_PORTS),
+        .ADDR_WIDTH(`ADDR_WIDTH),
+        .DATA_WIDTH(`DATA_WIDTH)
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .cfg_valid(cfg_valid),
-        .cfg_addr(cfg_addr),
-        .cfg_data(cfg_data),
-        .cfg_ack(cfg_ack),
-        .data_in_valid(data_in_valid),
-        .data_in(data_in),
-        .data_in_ready(data_in_ready),
-        .data_out_valid(data_out_valid),
-        .data_out(data_out),
-        .data_out_ready(data_out_ready),
-        .status(status)
+        .cfg_valid_i(cfg_valid),
+        .cfg_addr_i(cfg_addr),
+        .cfg_data_i(cfg_data),
+        .cfg_ack_o(cfg_ack),
+        .data_in_valid_i(data_in_valid),
+        .data_in_i(data_in),
+        .data_in_ready_o(data_in_ready),
+        .data_out_valid_o(data_out_valid),
+        .data_out_o(data_out),
+        .data_out_ready_i(data_out_ready),
+        .status_o(status)
     );
 
     // Clock Generation

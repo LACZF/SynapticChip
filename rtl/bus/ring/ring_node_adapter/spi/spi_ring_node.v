@@ -77,7 +77,7 @@ module spi_ring_node #(
     ) u_spi_node (
         .clk(clk),
         .rst_n(rst_n),
-        .node_id(NODE_ID[NODE_ID_WIDTH-1:0]),
+        .node_id_i(NODE_ID[NODE_ID_WIDTH-1:0]),
 
         .spi_req_o(spi_req_o),
         .spi_we_o(spi_we_o),
@@ -90,17 +90,17 @@ module spi_ring_node #(
         .spi_mosi_i(spi_mosi_i),
         .spi_miso_o(spi_miso_o),
 
-        .req_valid(rx_req_valid_i && rx_req_opcode_i != `RING_OP_RESP),
-        .req_source_id(rx_req_source_id_i),
-        .req_target_id(rx_req_target_id_i),
-        .req_addr(rx_req_addr_i),
-        .req_data(rx_req_data_i),
-        .req_we(rx_req_opcode_i == `RING_OP_WRITE),
-        .rsp_valid(spi_node_rsp_valid),
-        .rsp_source_id(spi_node_rsp_source_id),
-        .rsp_target_id(spi_node_rsp_target_id),
-        .rsp_addr(spi_node_rsp_addr),
-        .rsp_data(spi_node_rsp_data)
+        .req_valid_i(rx_req_valid_i && rx_req_opcode_i != `RING_OP_RESP),
+        .req_source_id_i(rx_req_source_id_i),
+        .req_target_id_i(rx_req_target_id_i),
+        .req_addr_i(rx_req_addr_i),
+        .req_data_i(rx_req_data_i),
+        .req_we_i(rx_req_opcode_i == `RING_OP_WRITE),
+        .rsp_valid_o(spi_node_rsp_valid),
+        .rsp_source_id_o(spi_node_rsp_source_id),
+        .rsp_target_id_o(spi_node_rsp_target_id),
+        .rsp_addr_o(spi_node_rsp_addr),
+        .rsp_data_o(spi_node_rsp_data)
     );
 
     // Process SPI node responses and forward them to Ring bus

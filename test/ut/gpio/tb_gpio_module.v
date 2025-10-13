@@ -40,17 +40,21 @@ module tb_gpio_module;
     wire int_out;
 
     // Instantiate DUT
-    gpio_module dut (
+    gpio_module #(
+        .ADDR_WIDTH(`ADDR_WIDTH),
+        .DATA_WIDTH(`DATA_WIDTH),
+        .GPIO_WIDTH(`GPIO_WIDTH)
+    ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .req(req),
-        .we(we),
-        .addr(addr),
-        .data_in(data_in),
-        .data_out(data_out),
-        .ack(ack),
+        .req_i(req),
+        .we_i(we),
+        .addr_i(addr),
+        .data_in_i(data_in),
+        .data_out_o(data_out),
+        .ack_o(ack),
         .gpio_pins(gpio_pins),
-        .int_out(int_out)
+        .int_out_o(int_out)
     );
 
     // Clock Generation

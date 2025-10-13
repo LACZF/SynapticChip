@@ -10,25 +10,25 @@ module ring_arbiter #(
     input  wire                                    rst_n,
 
     // Main request interface
-    input  wire                                    req_valid,
-    input  wire [ADDR_WIDTH-1:0]                   req_addr,
-    input  wire [MATCH_TYPE_WIDTH-1:0]             req_match_type,
-    input  wire [NODE_ID_WIDTH-1:0]                req_target_id,
-    input  wire [DATA_WIDTH-1:0]                   req_data,
-    input  wire [NUM_RINGS-1:0]                    req_ring_mask,      // Optional bus mask
-    input  wire [NUM_RINGS-1:0]                    req_ring_disable,   // Disabled buses
-    output wire                                    req_ready,
+    input  wire                                    req_valid_i,
+    input  wire [ADDR_WIDTH-1:0]                   req_addr_i,
+    input  wire [MATCH_TYPE_WIDTH-1:0]             req_match_type_i,
+    input  wire [NODE_ID_WIDTH-1:0]                req_target_id_i,
+    input  wire [DATA_WIDTH-1:0]                   req_data_i,
+    input  wire [NUM_RINGS-1:0]                    req_ring_mask_i,      // Optional bus mask
+    input  wire [NUM_RINGS-1:0]                    req_ring_disable_i,   // Disabled buses
+    output wire                                    req_ready_o,
 
     // Ring bus interface
-    output reg  [NUM_RINGS-1:0]                    ring_req_valid,
-    input  wire [NUM_RINGS-1:0]                    ring_req_ready,
-    output reg  [NUM_RINGS*ADDR_WIDTH-1:0]         ring_req_addr,
-    output reg  [NUM_RINGS*MATCH_TYPE_WIDTH-1:0]   ring_req_match_type,
-    output reg  [NUM_RINGS*NODE_ID_WIDTH-1:0]      ring_req_target_id,
-    output reg  [NUM_RINGS*DATA_WIDTH-1:0]         ring_req_data,
+    output reg  [NUM_RINGS-1:0]                    ring_req_valid_o,
+    input  wire [NUM_RINGS-1:0]                    ring_req_ready_i,
+    output reg  [NUM_RINGS*ADDR_WIDTH-1:0]         ring_req_addr_o,
+    output reg  [NUM_RINGS*MATCH_TYPE_WIDTH-1:0]   ring_req_match_type_o,
+    output reg  [NUM_RINGS*NODE_ID_WIDTH-1:0]      ring_req_target_id_o,
+    output reg  [NUM_RINGS*DATA_WIDTH-1:0]         ring_req_data_o,
 
     // Status outputs
-    output wire [NUM_RINGS-1:0]                    ring_busy
+    output wire [NUM_RINGS-1:0]                    ring_busy_o
 );
 
     reg  [NUM_RINGS-1:0]                           ring_priority;   // Polling priority pointer
@@ -37,7 +37,7 @@ module ring_arbiter #(
     reg  [NUM_RINGS*3-1:0]                         load_count;      // Load count for each bus, in 1D array format
 
     // Calculate available Ring buses
-    assign available_rings = ring_req_ready & ~req_ring_disable;
+    assign available_rings = ring_req_ready_i & ~req_ring_disable_i;
 
     // Loop variable declaration
     integer i;
@@ -49,7 +49,7 @@ module ring_arbiter #(
         end else begin
             for (i = 0; i < NUM_RINGS; i = i + 1) begin
                 // Increase load count
-                if (ring_req_valid[i] && ring_req_ready[i]) begin
+                if (ring_req_valid_o[i] && ring_req_ready_i[i]) begin
                     load_count[i*3 +: 3] <= load_count[i*3 +: 3] + 1;
                 end
                 // Periodically decrease load count (simulate load decay)
@@ -100,28 +100,28 @@ module ring_arbiter #(
 
     // Priority arbitration logic
     always @(*) begin
-        ring_req_valid = {NUM_RINGS{1'b0}};
+        ring_req_valid_o = {NUM_RINGS{1'b0}};
 
-        if (req_valid) begin
+        if (req_valid_i) begin
             // Use load-based dynamic selection function
-            ring_req_valid = select_best_ring(available_rings, req_ring_mask);
+            ring_req_valid_o = select_best_ring(available_rings, req_ring_mask_i);
         end
     end
 
     // Output data to selected Ring bus
     always @(*) begin
         for (i = 0; i < NUM_RINGS; i = i + 1) begin
-            ring_req_addr[i*ADDR_WIDTH +: ADDR_WIDTH] = req_addr;
-            ring_req_match_type[i*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] = req_match_type;
-            ring_req_target_id[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = req_target_id;
-            ring_req_data[i*DATA_WIDTH +: DATA_WIDTH] = req_data;
+            ring_req_addr_o[i*ADDR_WIDTH +: ADDR_WIDTH] = req_addr_i;
+            ring_req_match_type_o[i*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH] = req_match_type_i;
+            ring_req_target_id_o[i*NODE_ID_WIDTH +: NODE_ID_WIDTH] = req_target_id_i;
+            ring_req_data_o[i*DATA_WIDTH +: DATA_WIDTH] = req_data_i;
         end
     end
 
     // Ready signal
-    assign req_ready = |(ring_req_valid & ring_req_ready);
+    assign req_ready_o = |(ring_req_valid_o & ring_req_ready_i);
 
     // Bus busy status
-    assign ring_busy = ~ring_req_ready;
+    assign ring_busy_o = ~ring_req_ready_i;
 
 endmodule

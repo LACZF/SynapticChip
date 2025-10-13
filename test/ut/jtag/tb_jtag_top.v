@@ -30,22 +30,26 @@ module tb_jtag_top;
     wire                   debug_valid;
 
     // DUT Instantiation
-    jtag_top dut (
+    jtag_top #(
+        .ADDR_WIDTH(`ADDR_WIDTH),
+        .DATA_WIDTH(`DATA_WIDTH),
+        .INST_WIDTH(`INSTR_WIDTH)
+    ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .tck(tck),
-        .tms(tms),
-        .tdi(tdi),
-        .tdo(tdo),
-        .tdo_en(tdo_en),
-        .req(req),
-        .we(we),
-        .addr(addr),
-        .data_in(data_in),
-        .data_out(data_out),
-        .ack(ack),
-        .debug_data(debug_data),
-        .debug_valid(debug_valid)
+        .tck_i(tck),
+        .tms_i(tms),
+        .tdi_i(tdi),
+        .tdo_o(tdo),
+        .tdo_en_o(tdo_en),
+        .req_i(req),
+        .we_i(we),
+        .addr_i(addr),
+        .data_in_i(data_in),
+        .data_out_o(data_out),
+        .ack_o(ack),
+        .debug_data_o(debug_data),
+        .debug_valid_o(debug_valid)
     );
 
     // Clock Generation

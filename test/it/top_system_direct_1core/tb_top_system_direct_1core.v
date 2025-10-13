@@ -8,10 +8,11 @@
 // SPI Flash Model - Simulating SPI ROM Device
 module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output wire miso);
     parameter MEM_SIZE = 4096; // Memory Size (Instruction Count)
+    parameter INSTR_WIDTH = 32; // Instruction width
     parameter INSTR_FILE = "instructions.hex"; // Instruction File Path
 
     // Internal Memory
-    reg [31:0] mem [0:MEM_SIZE-1];
+    reg [INSTR_WIDTH-1:0] mem [0:MEM_SIZE-1];
     reg [31:0] current_addr;
     reg [7:0]  current_cmd;
     reg [1:0]  state;
@@ -19,6 +20,7 @@ module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output
     reg [31:0] rx_data;
     reg [31:0] tx_data;
     reg        miso_reg;
+    integer    i;
 
     localparam IDLE = 2'b00;
     localparam CMD  = 2'b01;
@@ -27,9 +29,16 @@ module spi_flash_model(input wire cs_n, input wire sclk, input wire mosi, output
 
     // Initialize by Loading Instructions from File
     initial begin
+        // Try to read instructions from file, ignore warnings about not enough words
         $readmemh(INSTR_FILE, mem);
         state = IDLE;
         miso_reg = 1'b0;
+        // Fill remaining memory with NOP instructions if file has fewer words
+        for (i = 0; i < MEM_SIZE; i = i + 1) begin
+            if (mem[i] === {INSTR_WIDTH{1'bx}}) begin
+                mem[i] = 32'h00000013; // NOP instruction
+            end
+        end
     end
 
     // SPI Communication Processing
@@ -137,16 +146,16 @@ module tb_top_system_direct_1core;
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .uart_txd(uart_txd),
-        .uart_rxd(uart_rxd),
+        .uart_txd_o(uart_txd),
+        .uart_rxd_i(uart_rxd),
         .gpio_pins(gpio_pins),
-        .ext_int(ext_int),
-        .system_status(system_status),
+        .ext_int_i(ext_int),
+        .system_status_o(system_status),
         // SPI Interface Connected to SPI Flash Model
-        .spi_cs_n(spi_cs_n),
-        .spi_clk(spi_clk),
-        .spi_mosi(spi_mosi),
-        .spi_miso(spi_miso)
+        .spi_cs_n_o(spi_cs_n),
+        .spi_clk_o(spi_clk),
+        .spi_mosi_o(spi_mosi),
+        .spi_miso_i(spi_miso)
     );
 
     // Clock Generation

@@ -108,25 +108,25 @@ module ring_bus #(
                 .rst_n(rst_n),
 
                 // Main request interface
-                .req_valid(tx_req_valid_i[j]),
-                .req_addr(tx_req_addr_i[j*ADDR_WIDTH +: ADDR_WIDTH]),
-                .req_match_type(tx_req_match_type_i[j*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
-                .req_target_id(tx_req_target_id_i[j*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
-                .req_data(tx_req_data_i[j*DATA_WIDTH +: DATA_WIDTH]),
-                .req_ring_mask(tx_req_ring_mask_i[j*NUM_RINGS +: NUM_RINGS]),
-                .req_ring_disable(tx_req_ring_disable_i[j*NUM_RINGS +: NUM_RINGS]),
-                .req_ready(tx_req_ready_o[j]),
+                .req_valid_i(tx_req_valid_i[j]),
+                .req_addr_i(tx_req_addr_i[j*ADDR_WIDTH +: ADDR_WIDTH]),
+                .req_match_type_i(tx_req_match_type_i[j*MATCH_TYPE_WIDTH +: MATCH_TYPE_WIDTH]),
+                .req_target_id_i(tx_req_target_id_i[j*NODE_ID_WIDTH +: NODE_ID_WIDTH]),
+                .req_data_i(tx_req_data_i[j*DATA_WIDTH +: DATA_WIDTH]),
+                .req_ring_mask_i(tx_req_ring_mask_i[j*NUM_RINGS +: NUM_RINGS]),
+                .req_ring_disable_i(tx_req_ring_disable_i[j*NUM_RINGS +: NUM_RINGS]),
+                .req_ready_o(tx_req_ready_o[j]),
 
                 // Ring bus interface
-                .ring_req_valid(node_ring_req_valid),
-                .ring_req_ready(node_ring_req_ready),
-                .ring_req_addr(ring_req_addr),
-                .ring_req_match_type(ring_req_match_type),
-                .ring_req_target_id(ring_req_target_id),
-                .ring_req_data(ring_req_data),
+                .ring_req_valid_o(node_ring_req_valid),
+                .ring_req_ready_i(node_ring_req_ready),
+                .ring_req_addr_o(ring_req_addr),
+                .ring_req_match_type_o(ring_req_match_type),
+                .ring_req_target_id_o(ring_req_target_id),
+                .ring_req_data_o(ring_req_data),
 
                 // Status output
-                .ring_busy(node_ring_busy)
+                .ring_busy_o(node_ring_busy)
             );
 
             // Convert 2D array ports of node arbiter to 1D vector signals
@@ -298,14 +298,14 @@ module ring_bus #(
                 ) rx_fifo (
                     .clk(clk),
                     .rst_n(rst_n),
-                    .wr_en(rx_fifo_wr_en[m]),
-                    .data_in(rx_req_combined),
-                    .full(rx_fifo_full[m]),
-                    .rd_en(rx_fifo_rd_en[m]),
-                    .data_out(rx_fifo_data[m*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) +
+                    .wr_en_i(rx_fifo_wr_en[m]),
+                    .data_in_i(rx_req_combined),
+                    .full_o(rx_fifo_full[m]),
+                    .rd_en_i(rx_fifo_rd_en[m]),
+                    .data_out_o(rx_fifo_data[m*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) +
                              (OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) - 1 :
                              m*(OPCODE_WIDTH+MATCH_TYPE_WIDTH+2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH)]),
-                    .empty(rx_fifo_empty[m])
+                    .empty_o(rx_fifo_empty[m])
                 );
             end
 
@@ -350,13 +350,13 @@ module ring_bus #(
                 ) rsp_fifo (
                     .clk(clk),
                     .rst_n(rst_n),
-                    .wr_en(rsp_fifo_wr_en[m]),
-                    .data_in(rsp_combined),
-                    .full(rsp_fifo_full[m]),
+                    .wr_en_i(rsp_fifo_wr_en[m]),
+                    .data_in_i(rsp_combined),
+                    .full_o(rsp_fifo_full[m]),
                     // Use correct scope path
-                    .rd_en(rsp_fifo_rd_en[k][m]),
-                    .data_out(rsp_fifo_data[m*(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + (2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) - 1 : m*(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH)]),
-                    .empty(rsp_fifo_empty[m])
+                    .rd_en_i(rsp_fifo_rd_en[k][m]),
+                    .data_out_o(rsp_fifo_data[m*(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) + (2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH) - 1 : m*(2*NODE_ID_WIDTH+ADDR_WIDTH+DATA_WIDTH)]),
+                    .empty_o(rsp_fifo_empty[m])
                 );
 
             end

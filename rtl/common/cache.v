@@ -15,30 +15,30 @@ module cache #(
     input wire                              rst_n,
 
     // CPU interface
-    input  wire                             cpu_req_valid,
-    input  wire [ADDR_WIDTH-1:0]            cpu_req_addr,
-    input  wire                             cpu_req_rw,                   // 0=read, 1=write
-    input  wire [INPUT_DATA_WIDTH-1:0]      cpu_req_data,
-    input  wire [INPUT_DATA_WIDTH/8-1:0]    cpu_req_strb,
-    output wire                             cpu_rsp_valid,
-    output wire [INPUT_DATA_WIDTH-1:0]      cpu_rsp_data,
-    output wire                             cpu_rsp_error,
+    input  wire                             cpu_req_valid_i,
+    input  wire [ADDR_WIDTH-1:0]            cpu_req_addr_i,
+    input  wire                             cpu_req_rw_i,                   // 0=read, 1=write
+    input  wire [INPUT_DATA_WIDTH-1:0]      cpu_req_data_i,
+    input  wire [INPUT_DATA_WIDTH/8-1:0]    cpu_req_strb_i,
+    output wire                             cpu_rsp_valid_o,
+    output wire [INPUT_DATA_WIDTH-1:0]      cpu_rsp_data_o,
+    output wire                             cpu_rsp_error_o,
 
     // Memory interface
-    output wire                             mem_req_valid,
-    output wire [ADDR_WIDTH-1:0]            mem_req_addr,
-    output wire                             mem_req_rw,
-    output wire [OUTPUT_DATA_WIDTH-1:0]     mem_req_data,
-    input  wire                             mem_rsp_valid,
-    input  wire [OUTPUT_DATA_WIDTH-1:0]     mem_rsp_data,
-    input  wire                             mem_rsp_error,
+    output wire                             mem_req_valid_o,
+    output wire [ADDR_WIDTH-1:0]            mem_req_addr_o,
+    output wire                             mem_req_rw_o,
+    output wire [OUTPUT_DATA_WIDTH-1:0]     mem_req_data_o,
+    input  wire                             mem_rsp_valid_i,
+    input  wire [OUTPUT_DATA_WIDTH-1:0]     mem_rsp_data_i,
+    input  wire                             mem_rsp_error_i,
 
     // Coherency interface (only used if SUPPORT_COHERENCY=1)
-    input  wire [ADDR_WIDTH-1:0]            coh_req_addr,
-    input  wire                             coh_req_valid,
-    input  wire [2:0]                       coh_req_type,          // 0=Read, 1=Write, 2=Invalidate
-    output wire                             coh_rsp_valid,
-    output wire [2:0]                       coh_rsp_state          // 0=Invalid, 1=Shared, 2=Exclusive, 3=Modified
+    input  wire [ADDR_WIDTH-1:0]            coh_req_addr_i,
+    input  wire                             coh_req_valid_i,
+    input  wire [2:0]                       coh_req_type_i,          // 0=Read, 1=Write, 2=Invalidate
+    output wire                             coh_rsp_valid_o,
+    output wire [2:0]                       coh_rsp_state_o          // 0=Invalid, 1=Shared, 2=Exclusive, 3=Modified
 );
 
     // Calculate cache parameters
@@ -59,11 +59,11 @@ module cache #(
                                         (OUTPUT_DATA_WIDTH - INPUT_DATA_WIDTH) : 0;
 
     // Cache line offset
-    wire [LINE_WIDTH-1:0] line_offset = cpu_req_addr[LINE_WIDTH-1:0];
+    wire [LINE_WIDTH-1:0] line_offset = cpu_req_addr_i[LINE_WIDTH-1:0];
     // Cache set index
-    wire [SET_WIDTH-1:0] set_index = cpu_req_addr[LINE_WIDTH+SET_WIDTH-1:LINE_WIDTH];
+    wire [SET_WIDTH-1:0] set_index = cpu_req_addr_i[LINE_WIDTH+SET_WIDTH-1:LINE_WIDTH];
     // Cache tag
-    wire [TAG_WIDTH-1:0] tag = cpu_req_addr[ADDR_WIDTH-1:LINE_WIDTH+SET_WIDTH];
+    wire [TAG_WIDTH-1:0] tag = cpu_req_addr_i[ADDR_WIDTH-1:LINE_WIDTH+SET_WIDTH];
 
     // Cache memory arrays
     // Valid, Dirty, Tag, Data, and LRU bits
@@ -124,7 +124,7 @@ module cache #(
         next_state = state;
         case (state)
             IDLE:
-                if (cpu_req_valid) begin
+                if (cpu_req_valid_i) begin
                     next_state = CHECK_HIT;
                 end
             CHECK_HIT:
@@ -139,7 +139,7 @@ module cache #(
                     end
                 end
             MEM_WRITE:
-                if (mem_rsp_valid) begin
+                if (mem_rsp_valid_i) begin
                     if (TRANSFER_COUNT > 1) begin
                         next_state = MEM_WRITE_MULTI;
                     end else begin
@@ -147,13 +147,13 @@ module cache #(
                     end
                 end
             MEM_WRITE_MULTI:
-                if (mem_rsp_valid) begin
+                if (mem_rsp_valid_i) begin
                     if (transfer_count == TRANSFER_COUNT - 1) begin
                         next_state = MEM_READ;
                     end
                 end
             MEM_READ:
-                if (mem_rsp_valid) begin
+                if (mem_rsp_valid_i) begin
                     if (TRANSFER_COUNT > 1) begin
                         next_state = MEM_READ_MULTI;
                     end else begin
@@ -161,7 +161,7 @@ module cache #(
                     end
                 end
             MEM_READ_MULTI:
-                if (mem_rsp_valid) begin
+                if (mem_rsp_valid_i) begin
                     if (transfer_count == TRANSFER_COUNT - 1) begin
                         next_state = UPDATE_CACHE;
                     end
@@ -249,7 +249,7 @@ module cache #(
             end
         end else begin
             // Handle cache write on CPU write hit
-            if (state == CHECK_HIT && hit && cpu_req_rw) begin
+            if (state == CHECK_HIT && hit && cpu_req_rw_i) begin
                 // Update data
                 data_array[hit_way][set_index] <= write_data;
                 // Mark as dirty
@@ -273,9 +273,9 @@ module cache #(
                 end else begin
                     // For cases where memory data width is greater than CPU data width, we only use lower bits
                     if (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) begin
-                        data_array[evict_way][set_index] <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, mem_rsp_data[0 +: INPUT_DATA_WIDTH]};
+                        data_array[evict_way][set_index] <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, mem_rsp_data_i[0 +: INPUT_DATA_WIDTH]};
                     end else begin
-                        data_array[evict_way][set_index] <= mem_rsp_data[0 +: CACHE_LINE_SIZE];
+                        data_array[evict_way][set_index] <= mem_rsp_data_i[0 +: CACHE_LINE_SIZE];
                     end
                 end
                 // Clear dirty bit
@@ -294,8 +294,8 @@ module cache #(
         write_data = data_array[hit_way][set_index];
         // Update only the bytes specified by the strobe
         for (integer i = 0; i < INPUT_DATA_WIDTH/8; i = i + 1) begin
-            if (cpu_req_strb[i]) begin
-                write_data[i*8 +: 8] = cpu_req_data[i*8 +: 8];
+            if (cpu_req_strb_i[i]) begin
+                write_data[i*8 +: 8] = cpu_req_data_i[i*8 +: 8];
             end
         end
     end
@@ -304,13 +304,13 @@ module cache #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             cpu_data_buffer <= {CACHE_LINE_SIZE{1'b0}};
-        end else if (state == IDLE && cpu_req_valid) begin
+        end else if (state == IDLE && cpu_req_valid_i) begin
             // Store complete CPU request data
             if (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) begin
                 // When memory data width is greater than CPU data width, only use lower bits
-                cpu_data_buffer <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, cpu_req_data};
+                cpu_data_buffer <= {{(CACHE_LINE_SIZE-INPUT_DATA_WIDTH){1'b0}}, cpu_req_data_i};
             end else begin
-                cpu_data_buffer <= cpu_req_data;
+                cpu_data_buffer <= cpu_req_data_i;
             end
         end
     end
@@ -322,19 +322,19 @@ module cache #(
         end else begin
             case (state)
                 MEM_WRITE:
-                    if (mem_rsp_valid && TRANSFER_COUNT > 1) begin
+                    if (mem_rsp_valid_i && TRANSFER_COUNT > 1) begin
                         transfer_count <= 1;
                     end
                 MEM_READ:
-                    if (mem_rsp_valid && TRANSFER_COUNT > 1) begin
+                    if (mem_rsp_valid_i && TRANSFER_COUNT > 1) begin
                         transfer_count <= 1;
                     end
                 MEM_WRITE_MULTI:
-                    if (mem_rsp_valid) begin
+                    if (mem_rsp_valid_i) begin
                         transfer_count <= transfer_count + 1;
                     end
                 MEM_READ_MULTI:
-                    if (mem_rsp_valid) begin
+                    if (mem_rsp_valid_i) begin
                         transfer_count <= transfer_count + 1;
                     end
                 default:
@@ -350,15 +350,15 @@ module cache #(
         end else begin
             case (state)
                 MEM_READ:
-                    if (mem_rsp_valid) begin
-                        multi_transfer_buffer[0 +: OUTPUT_DATA_WIDTH] <= mem_rsp_data;
+                    if (mem_rsp_valid_i) begin
+                        multi_transfer_buffer[0 +: OUTPUT_DATA_WIDTH] <= mem_rsp_data_i;
                     end
                 MEM_READ_MULTI:
-                    if (mem_rsp_valid) begin
-                        multi_transfer_buffer[transfer_count*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH] <= mem_rsp_data;
+                    if (mem_rsp_valid_i) begin
+                        multi_transfer_buffer[transfer_count*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH] <= mem_rsp_data_i;
                     end
                 MEM_WRITE:
-                    if (mem_rsp_valid && TRANSFER_COUNT > 1) begin
+                    if (mem_rsp_valid_i && TRANSFER_COUNT > 1) begin
                         // Initialize multi-transfer buffer
                         multi_transfer_buffer <= data_array[evict_way][set_index];
                     end
@@ -375,14 +375,14 @@ module cache #(
             cpu_rsp_valid_reg <= 1'b0;
         end else begin
             // Immediate response for CPU read hit
-            if (state == CHECK_HIT && hit && !cpu_req_rw) begin
+            if (state == CHECK_HIT && hit && !cpu_req_rw_i) begin
                 cpu_rsp_valid_reg <= 1'b1;
                 cpu_rsp_data_reg <= data_array[hit_way][set_index][0 +: INPUT_DATA_WIDTH];
             end
             // Immediate response for CPU write operation (write-back cache)
-            else if (state == CHECK_HIT && hit && cpu_req_rw) begin
+            else if (state == CHECK_HIT && hit && cpu_req_rw_i) begin
                 cpu_rsp_valid_reg <= 1'b1;
-                cpu_rsp_data_reg <= cpu_req_data; // Write operation returns the written data
+                cpu_rsp_data_reg <= cpu_req_data_i; // Write operation returns the written data
             end
             // Response after cache update completion (read miss)
             else if (state == UPDATE_CACHE) begin
@@ -391,7 +391,7 @@ module cache #(
                     cpu_rsp_data_reg <= multi_transfer_buffer[0 +: INPUT_DATA_WIDTH];
                 end else begin
                     // For cases where memory data width is greater than CPU data width, we only use lower bits
-                    cpu_rsp_data_reg <= mem_rsp_data[0 +: INPUT_DATA_WIDTH];
+                    cpu_rsp_data_reg <= mem_rsp_data_i[0 +: INPUT_DATA_WIDTH];
                 end
             end
             // Clear response in other cases
@@ -402,18 +402,18 @@ module cache #(
     end
 
     // Output assignments
-    assign cpu_rsp_valid = cpu_rsp_valid_reg;
-    assign cpu_rsp_data = cpu_rsp_data_reg;
-    assign cpu_rsp_error = 1'b0; // Simplified, no error handling
+    assign cpu_rsp_valid_o = cpu_rsp_valid_reg;
+    assign cpu_rsp_data_o = cpu_rsp_data_reg;
+    assign cpu_rsp_error_o = 1'b0; // Simplified, no error handling
 
-    assign mem_req_valid = (state == MEM_READ) || (state == MEM_WRITE) || (state == MEM_READ_MULTI) || (state == MEM_WRITE_MULTI);
-    assign mem_req_addr = (state == MEM_WRITE || state == MEM_WRITE_MULTI) ?
+    assign mem_req_valid_o = (state == MEM_READ) || (state == MEM_WRITE) || (state == MEM_READ_MULTI) || (state == MEM_WRITE_MULTI);
+    assign mem_req_addr_o = (state == MEM_WRITE || state == MEM_WRITE_MULTI) ?
                           {tag_array[evict_way][set_index], set_index, {LINE_WIDTH{1'b0}}} + (transfer_count * OUTPUT_DATA_WIDTH/8) :
                           {tag, set_index, {LINE_WIDTH{1'b0}}} + (transfer_count * OUTPUT_DATA_WIDTH/8);
-    assign mem_req_rw = (state == MEM_WRITE || state == MEM_WRITE_MULTI) ? 1'b1 : 1'b0;
-    assign mem_req_data = (state == MEM_WRITE) ?
+    assign mem_req_rw_o = (state == MEM_WRITE || state == MEM_WRITE_MULTI) ? 1'b1 : 1'b0;
+    assign mem_req_data_o = (state == MEM_WRITE) ?
                          (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH) ?
-                           {{MEM_TO_CPU_TRUNC_OFFSET{1'b0}}, cpu_req_data} :
+                           {{MEM_TO_CPU_TRUNC_OFFSET{1'b0}}, cpu_req_data_i} :
                            data_array[evict_way][set_index][0 +: OUTPUT_DATA_WIDTH] :
                           (state == MEM_WRITE_MULTI) ? data_array[evict_way][set_index][transfer_count*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH] :
                           {OUTPUT_DATA_WIDTH{1'b0}};
@@ -425,8 +425,8 @@ module cache #(
             reg [2:0] coh_rsp_state_reg;
 
             // Ensure coh_rsp_valid has proper timing instead of directly connecting to coh_req_valid
-            assign coh_rsp_valid = coh_rsp_valid_reg;
-            assign coh_rsp_state = coh_rsp_state_reg;
+            assign coh_rsp_valid_o = coh_rsp_valid_reg;
+            assign coh_rsp_state_o = coh_rsp_state_reg;
 
             // MESI protocol coherency response logic
             integer way_found;
@@ -438,7 +438,7 @@ module cache #(
                     // Clear response by default
                     coh_rsp_valid_reg <= 1'b0;
 
-                    if (coh_req_valid) begin
+                    if (coh_req_valid_i) begin
                         // First check if address is in cache
                         way_found = -1;
                         for (integer i = 0; i < ASSOCIATIVITY; i = i + 1) begin
@@ -450,7 +450,7 @@ module cache #(
 
                         // Handle coherency operations based on found way and request type
                         if (way_found != -1) begin
-                            case (coh_req_type)
+                            case (coh_req_type_i)
                                 3'd0: begin // Read request
                                     case (coherency_state[way_found][set_index])
                                         MODIFIED: begin
@@ -498,8 +498,8 @@ module cache #(
                 end
             end
         end else begin
-            assign coh_rsp_valid = 1'b0;
-            assign coh_rsp_state = INVALID;
+            assign coh_rsp_valid_o = 1'b0;
+            assign coh_rsp_state_o = INVALID;
         end
     endgenerate
 

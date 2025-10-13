@@ -31,13 +31,13 @@ module tb_fifo;
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .wr_en(wr_en),
-        .data_in(data_in),
-        .rd_en(rd_en),
-        .rd_done(rd_done),
-        .data_out(data_out),
-        .full(full),
-        .empty(empty)
+        .wr_en_i(wr_en),
+        .data_in_i(data_in),
+        .rd_en_i(rd_en),
+        .rd_done_o(rd_done),
+        .data_out_o(data_out),
+        .full_o(full),
+        .empty_o(empty)
     );
 
     // Clock generation

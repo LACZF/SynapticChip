@@ -11,14 +11,14 @@ module pe_route_config #(
 ) (
     input                                          clk,
     input                                          rst_n,
-    input                                          cfg_valid,
-    input       [(NUM_PES*4*PE_ID_WIDTH)-1:0]      cfg_data,
+    input                                          cfg_valid_i,
+    input       [(NUM_PES*4*PE_ID_WIDTH)-1:0]      cfg_data_i,
 
     // Routing configuration output to each PE
-    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      north_routes,
-    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      south_routes,
-    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      east_routes,
-    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      west_routes
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      north_routes_o,
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      south_routes_o,
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      east_routes_o,
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]      west_routes_o
 );
 
     // Routing configuration register
@@ -28,12 +28,12 @@ module pe_route_config #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             route_table <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-            north_routes <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-            south_routes <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-            east_routes <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-            west_routes <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-        end else if (cfg_valid) begin
-            route_table <= cfg_data;
+            north_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+            south_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+            east_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+            west_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+        end else if (cfg_valid_i) begin
+            route_table <= cfg_data_i;
 
             // Configure routing based on PE position
             for (integer y = 0; y < PE_ARRAY_ROWS; y = y + 1) begin
@@ -42,38 +42,38 @@ module pe_route_config #(
 
                     // North direction routing
                     if (y > 0) begin
-                        north_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                        north_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             (y-1) * PE_ARRAY_COLS + x;
                     end else begin
-                        north_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH];
+                        north_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data_i[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
                     // South direction routing
                     if (y < PE_ARRAY_ROWS-1) begin
-                        south_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                        south_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             (y+1) * PE_ARRAY_COLS + x;
                     end else begin
-                        south_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + PE_ID_WIDTH +: PE_ID_WIDTH];
+                        south_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data_i[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
                     // East direction routing
                     if (x < PE_ARRAY_COLS-1) begin
-                        east_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                        east_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             y * PE_ARRAY_COLS + (x+1);
                     end else begin
-                        east_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + 2*PE_ID_WIDTH +: PE_ID_WIDTH];
+                        east_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data_i[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + 2*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
 
                     // West direction routing
                     if (x > 0) begin
-                        west_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                        west_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
                             y * PE_ARRAY_COLS + (x-1);
                     end else begin
-                        west_routes[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
-                            cfg_data[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + 3*PE_ID_WIDTH +: PE_ID_WIDTH];
+                        west_routes_o[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH +: PE_ID_WIDTH] =
+                            cfg_data_i[(y * PE_ARRAY_COLS + x)*4*PE_ID_WIDTH + 3*PE_ID_WIDTH +: PE_ID_WIDTH];
                     end
                 end
             end

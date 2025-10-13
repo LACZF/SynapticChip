@@ -27,20 +27,23 @@ module tb_uart_core;
     wire int_out;
 
     // DUT Instantiation
-    uart_core dut (
+    uart_core #(
+        .ADDR_WIDTH(`ADDR_WIDTH),
+        .DATA_WIDTH(`DATA_WIDTH)
+    ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .req(req),
-        .we(we),
-        .addr(addr),
-        .data_in(data_in),
-        .data_out(data_out),
-        .ack(ack),
-        .txd(txd),
-        .rxd(rxd),
-        .rts(rts),
-        .cts(cts),
-        .int_out(int_out)
+        .req_i(req),
+        .we_i(we),
+        .addr_i(addr),
+        .data_in_i(data_in),
+        .data_out_o(data_out),
+        .ack_o(ack),
+        .txd_o(txd),
+        .rxd_i(rxd),
+        .rts_o(rts),
+        .cts_i(cts),
+        .int_out_o(int_out)
     );
 
     // Clock Generation

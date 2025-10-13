@@ -12,18 +12,18 @@ module gpio_module #(
     input                           rst_n,
 
     // Control interface
-    input                           req,
-    input                           we,
-    input       [ADDR_WIDTH-1:0]    addr,
-    input       [DATA_WIDTH-1:0]    data_in,
-    output reg  [DATA_WIDTH-1:0]    data_out,
-    output reg                      ack,
+    input                           req_i,
+    input                           we_i,
+    input       [ADDR_WIDTH-1:0]    addr_i,
+    input       [DATA_WIDTH-1:0]    data_in_i,
+    output reg  [DATA_WIDTH-1:0]    data_out_o,
+    output reg                      ack_o,
 
     // GPIO pins
     inout       [GPIO_WIDTH-1:0]    gpio_pins,
 
     // Interrupt output
-    output reg                      int_out
+    output reg                      int_out_o
 );
 
     // Internal registers
@@ -103,7 +103,7 @@ module gpio_module #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             intstat_reg <= {GPIO_WIDTH{1'b0}};
-            int_out <= 1'b0;
+            int_out_o <= 1'b0;
         end else begin
             // Detect interrupt conditions
             for (integer j = 0; j < GPIO_WIDTH; j = j + 1) begin
@@ -123,7 +123,7 @@ module gpio_module #(
             end
 
             // Generate interrupt signal
-            int_out <= |(intstat_reg & inten_reg);
+            int_out_o <= |(intstat_reg & inten_reg);
         end
     end
 
@@ -136,47 +136,47 @@ module gpio_module #(
             intpol_reg <= {GPIO_WIDTH{1'b0}};
             inttype_reg <= {GPIO_WIDTH{1'b0}};
             debounce_reg <= 16'd1000; // Default debounce period
-            ack <= 1'b0;
-            data_out <= {DATA_WIDTH{1'b0}};
+            ack_o <= 1'b0;
+            data_out_o <= {DATA_WIDTH{1'b0}};
         end else begin
-            ack <= 1'b0;
+            ack_o <= 1'b0;
 
-            if (req) begin
-                if (we) begin
+            if (req_i) begin
+                if (we_i) begin
                     // Write operation
-                    case (addr)
-                        `REG_DATA: data_reg <= data_in[GPIO_WIDTH-1:0];
-                        `REG_DIR: dir_reg <= data_in[GPIO_WIDTH-1:0];
-                        `REG_INTEN: inten_reg <= data_in[GPIO_WIDTH-1:0];
-                        `REG_INTPOL: intpol_reg <= data_in[GPIO_WIDTH-1:0];
-                        `REG_INTTYPE: inttype_reg <= data_in[GPIO_WIDTH-1:0];
-                        `REG_INTSTAT: intstat_reg <= intstat_reg & ~data_in[GPIO_WIDTH-1:0]; // Write 1 to clear
-                        `REG_DEBOUNCE: debounce_reg <= data_in[15:0];
+                    case (addr_i)
+                        `REG_DATA: data_reg <= data_in_i[GPIO_WIDTH-1:0];
+                        `REG_DIR: dir_reg <= data_in_i[GPIO_WIDTH-1:0];
+                        `REG_INTEN: inten_reg <= data_in_i[GPIO_WIDTH-1:0];
+                        `REG_INTPOL: intpol_reg <= data_in_i[GPIO_WIDTH-1:0];
+                        `REG_INTTYPE: inttype_reg <= data_in_i[GPIO_WIDTH-1:0];
+                        `REG_INTSTAT: intstat_reg <= intstat_reg & ~data_in_i[GPIO_WIDTH-1:0]; // Write 1 to clear
+                        `REG_DEBOUNCE: debounce_reg <= data_in_i[15:0];
                     endcase
                 end else begin
                     // Read operation
-                    case (addr)
+                    case (addr_i)
                         `REG_DATA: begin
                             // Set data register values bit by bit
                             for (integer k = 0; k < GPIO_WIDTH; k = k + 1) begin
-                                data_out[k] <= dir_reg[k] ? data_reg[k] : gpio_debounced[k];
+                                data_out_o[k] <= dir_reg[k] ? data_reg[k] : gpio_debounced[k];
                             end
                             // If data width is greater than GPIO width, upper bits are zero-filled
                             if (DATA_WIDTH > GPIO_WIDTH) begin
-                                data_out[DATA_WIDTH-1:GPIO_WIDTH] <= {(DATA_WIDTH-GPIO_WIDTH){1'b0}};
+                                data_out_o[DATA_WIDTH-1:GPIO_WIDTH] <= {(DATA_WIDTH-GPIO_WIDTH){1'b0}};
                             end
                         end
-                        `REG_DIR: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, dir_reg};
-                        `REG_INTEN: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, inten_reg};
-                        `REG_INTPOL: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, intpol_reg};
-                        `REG_INTTYPE: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, inttype_reg};
-                        `REG_INTSTAT: data_out <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, intstat_reg};
-                        `REG_DEBOUNCE: data_out <= {{(DATA_WIDTH-16){1'b0}}, debounce_reg};
-                        default: data_out <= {DATA_WIDTH{1'b0}};
+                        `REG_DIR: data_out_o <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, dir_reg};
+                        `REG_INTEN: data_out_o <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, inten_reg};
+                        `REG_INTPOL: data_out_o <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, intpol_reg};
+                        `REG_INTTYPE: data_out_o <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, inttype_reg};
+                        `REG_INTSTAT: data_out_o <= {{(DATA_WIDTH-GPIO_WIDTH){1'b0}}, intstat_reg};
+                        `REG_DEBOUNCE: data_out_o <= {{(DATA_WIDTH-16){1'b0}}, debounce_reg};
+                        default: data_out_o <= {DATA_WIDTH{1'b0}};
                     endcase
                 end
 
-                ack <= 1'b1;
+                ack_o <= 1'b1;
             end
         end
     end

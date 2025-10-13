@@ -71,12 +71,12 @@ module cpu_with_ring #(
         .rst_n(rst_n),
 
         // Connect to CPU top module
-        .cpu_mem_req(cpu_mem_req_i),
-        .cpu_mem_addr(cpu_mem_addr_i),
-        .cpu_mem_wdata(cpu_mem_wdata_i),
-        .cpu_mem_we(cpu_mem_we_i),
-        .cpu_mem_ready(cpu_mem_ready_o),
-        .cpu_mem_rdata(cpu_mem_rdata_o),
+        .cpu_mem_req_i(cpu_mem_req_i),
+        .cpu_mem_addr_i(cpu_mem_addr_i),
+        .cpu_mem_wdata_i(cpu_mem_wdata_i),
+        .cpu_mem_we_i(cpu_mem_we_i),
+        .cpu_mem_ready_o(cpu_mem_ready_o),
+        .cpu_mem_rdata_o(cpu_mem_rdata_o),
 
         // Connect to Ring bus
         .tx_req_ring_mask_o(tx_req_ring_mask_o),

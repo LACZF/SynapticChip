@@ -13,21 +13,21 @@ module uart_core #(
     input                            rst_n,
 
     // Control interface
-    input                            req,
-    input                            we,
-    input       [ADDR_WIDTH-1:0]     addr,
-    input       [DATA_WIDTH-1:0]     data_in,
-    output reg  [DATA_WIDTH-1:0]     data_out,
-    output reg                       ack,
+    input                            req_i,
+    input                            we_i,
+    input       [ADDR_WIDTH-1:0]     addr_i,
+    input       [DATA_WIDTH-1:0]     data_in_i,
+    output reg  [DATA_WIDTH-1:0]     data_out_o,
+    output reg                       ack_o,
 
     // Serial interface
-    output reg                       txd,        // Transmit data line
-    input                            rxd,        // Receive data line
-    output reg                       rts,        // Request to send (optional)
-    input                            cts,        // Clear to send (optional)
+    output reg                       txd_o,        // Transmit data line
+    input                            rxd_i,        // Receive data line
+    output reg                       rts_o,        // Request to send (optional)
+    input                            cts_i,        // Clear to send (optional)
 
     // Interrupt output
-    output reg                       int_out
+    output reg                       int_out_o
 );
 
     // Internal registers
@@ -73,7 +73,7 @@ module uart_core #(
         if (!rst_n) begin
             rxd_sync <= 1'b1;
         end else begin
-            rxd_sync <= rxd;
+            rxd_sync <= rxd_i;
         end
     end
 
@@ -103,7 +103,7 @@ module uart_core #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             tx_state <= TX_IDLE;
-            txd <= 1'b1;
+            txd_o <= 1'b1;
             tx_shift <= 8'b0;
             tx_bit_count <= 0;
             tx_parity <= 0;
@@ -118,7 +118,7 @@ module uart_core #(
                         tx_full <= 0;
 
                         tx_state <= TX_START;
-                        txd <= 1'b0; // Start bit
+                        txd_o <= 1'b0; // Start bit
                         tx_bit_count <= 0;
                         tx_parity <= 0;
                     end
@@ -129,7 +129,7 @@ module uart_core #(
                 end
 
                 TX_DATA: begin
-                    txd <= tx_shift[0];
+                    txd_o <= tx_shift[0];
                     tx_shift <= {1'b0, tx_shift[7:1]};
                     tx_parity <= tx_parity ^ tx_shift[0];
 
@@ -146,12 +146,12 @@ module uart_core #(
                 end
 
                 TX_PARITY: begin
-                    txd <= (lcr[4] ? ~tx_parity : tx_parity); // Parity bit
+                    txd_o <= (lcr[4] ? ~tx_parity : tx_parity); // Parity bit
                     tx_state <= TX_STOP;
                 end
 
                 TX_STOP: begin
-                    txd <= 1'b1; // Stop bit
+                    txd_o <= 1'b1; // Stop bit
                     if (tx_bit_count == (lcr[2] ? 1'd1 : 1'd0)) begin
                         tx_state <= TX_IDLE;
                     end else begin
@@ -253,7 +253,7 @@ module uart_core #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             iir <= {4'b0, `INT_NONE};
-            int_out <= 0;
+            int_out_o <= 0;
         end else begin
             // Check interrupt conditions
             if ((ier[0] && !rx_empty) ||          // Receive data available
@@ -272,10 +272,10 @@ module uart_core #(
                     iir <= {4'b0, `INT_MS};
                 end
 
-                int_out <= 1;
+                int_out_o <= 1;
             end else begin
                 iir <= {4'b0, `INT_NONE};
-                int_out <= 0;
+                int_out_o <= 0;
             end
         end
     end
@@ -290,37 +290,37 @@ module uart_core #(
             mcr <= 8'b0;
             scr <= 8'b0;
             dll_dlm <= 16'd12; // Default baud rate 115200 @ 100MHz
-            ack <= 1'b0;
-            data_out <= {DATA_WIDTH{1'b0}};
+            ack_o <= 1'b0;
+            data_out_o <= {DATA_WIDTH{1'b0}};
         end else begin
-            ack <= 1'b0;
+            ack_o <= 1'b0;
 
-            if (req) begin
-                if (we) begin
+            if (req_i) begin
+                if (we_i) begin
                     // Write operation
-                    case (addr)
+                    case (addr_i)
                         `REG_THR: begin
                             if (!tx_full) begin
-                                tx_fifo[tx_head] <= data_in[7:0];
+                                tx_fifo[tx_head] <= data_in_i[7:0];
                                 tx_head <= tx_head + 1;
                                 tx_empty <= 0;
                                 tx_full <= (tx_head + 1 == tx_tail);
                             end
                         end
-                        `REG_IER: ier <= data_in[7:0];
-                        `REG_FCR: fcr <= data_in[7:0];
-                        `REG_LCR: lcr <= data_in[7:0];
-                        `REG_MCR: mcr <= data_in[7:0];
-                        `REG_SCR: scr <= data_in[7:0];
-                        `REG_DLL: if (lcr[7]) dll_dlm[7:0] <= data_in[7:0];
-                        `REG_DLM: if (lcr[7]) dll_dlm[15:8] <= data_in[7:0];
+                        `REG_IER: ier <= data_in_i[7:0];
+                        `REG_FCR: fcr <= data_in_i[7:0];
+                        `REG_LCR: lcr <= data_in_i[7:0];
+                        `REG_MCR: mcr <= data_in_i[7:0];
+                        `REG_SCR: scr <= data_in_i[7:0];
+                        `REG_DLL: if (lcr[7]) dll_dlm[7:0] <= data_in_i[7:0];
+                        `REG_DLM: if (lcr[7]) dll_dlm[15:8] <= data_in_i[7:0];
                     endcase
                 end else begin
                     // Read operation
-                    case (addr)
+                    case (addr_i)
                         `REG_RBR: begin
                             if (!rx_empty) begin
-                                data_out <= {24'b0, rx_fifo[rx_tail]};
+                                data_out_o <= {24'b0, rx_fifo[rx_tail]};
                                 rx_tail <= rx_tail + 1;
                                 rx_full <= 0;
                                 rx_empty <= (rx_tail + 1 == rx_head);
@@ -330,20 +330,20 @@ module uart_core #(
                                 end
                             end
                         end
-                        `REG_IER: data_out <= {24'b0, ier};
-                        `REG_IIR: data_out <= {24'b0, iir};
-                        `REG_LCR: data_out <= {24'b0, lcr};
-                        `REG_MCR: data_out <= {24'b0, mcr};
-                        `REG_LSR: data_out <= {24'b0, lsr};
-                        `REG_MSR: data_out <= {24'b0, msr};
-                        `REG_SCR: data_out <= {24'b0, scr};
-                        `REG_DLL: if (lcr[7]) data_out <= {24'b0, dll_dlm[7:0]};
-                        `REG_DLM: if (lcr[7]) data_out <= {24'b0, dll_dlm[15:8]};
-                        default: data_out <= {DATA_WIDTH{1'b0}};
+                        `REG_IER: data_out_o <= {24'b0, ier};
+                        `REG_IIR: data_out_o <= {24'b0, iir};
+                        `REG_LCR: data_out_o <= {24'b0, lcr};
+                        `REG_MCR: data_out_o <= {24'b0, mcr};
+                        `REG_LSR: data_out_o <= {24'b0, lsr};
+                        `REG_MSR: data_out_o <= {24'b0, msr};
+                        `REG_SCR: data_out_o <= {24'b0, scr};
+                        `REG_DLL: if (lcr[7]) data_out_o <= {24'b0, dll_dlm[7:0]};
+                        `REG_DLM: if (lcr[7]) data_out_o <= {24'b0, dll_dlm[15:8]};
+                        default: data_out_o <= {DATA_WIDTH{1'b0}};
                     endcase
                 end
 
-                ack <= 1'b1;
+                ack_o <= 1'b1;
             end
         end
     end

@@ -27,31 +27,31 @@ module tb_pe_controller;
     ) pe_dut (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(enable),
-        .instruction(32'h12345678), // Test Instruction
-        .inst_valid(1'b1),
-        .ext_mem_req(),
-        .ext_mem_we(),
-        .ext_mem_addr(),
-        .ext_mem_data_out(),
-        .ext_mem_data_in(32'h00000000),
-        .ext_mem_ack(1'b0),
-        .north_valid(1'b0),
-        .north_data(0),
-        .north_ready(),
-        .south_valid(1'b0),
-        .south_data(0),
-        .south_ready(),
-        .east_valid(1'b0),
-        .east_data(0),
-        .east_ready(),
-        .west_valid(1'b0),
-        .west_data(0),
-        .west_ready(),
-        .out_valid(),
-        .out_data(),
-        .status(),
-        .busy()
+        .enable_i(enable),
+        .instruction_i(32'h12345678), // Test Instruction
+        .inst_valid_i(1'b1),
+        .ext_mem_req_o(),
+        .ext_mem_we_o(),
+        .ext_mem_addr_o(),
+        .ext_mem_data_out_o(),
+        .ext_mem_data_in_i(32'h00000000),
+        .ext_mem_ack_i(1'b0),
+        .north_valid_i(1'b0),
+        .north_data_i(0),
+        .north_ready_o(),
+        .south_valid_i(1'b0),
+        .south_data_i(0),
+        .south_ready_o(),
+        .east_valid_i(1'b0),
+        .east_data_i(0),
+        .east_ready_o(),
+        .west_valid_i(1'b0),
+        .west_data_i(0),
+        .west_ready_o(),
+        .out_valid_o(),
+        .out_data_o(),
+        .status_o(),
+        .busy_o()
     );
 
     // Clock Generation
@@ -97,7 +97,7 @@ module tb_pe_controller;
                 #100;
 
                 // Verify if PE is in busy state
-                if (!pe_dut.busy) begin
+                if (!pe_dut.busy_o) begin
                     $display("WARNING: PE not busy after enabling");
                 end else begin
                     $display("PASS: PE entered busy state after enabling");
@@ -109,7 +109,7 @@ module tb_pe_controller;
                 #100;
 
                 // Verify if PE exited busy state
-                if (pe_dut.busy) begin
+                if (pe_dut.busy_o) begin
                     $display("WARNING: PE still busy after disabling");
                 end else begin
                     $display("PASS: PE exited busy state after disabling");
@@ -122,8 +122,8 @@ module tb_pe_controller;
                 #500;
 
                 // Observe PE status changes
-                $display("PE status after instruction execution: 0x%h", pe_dut.status);
-                $display("PE busy state: %b", pe_dut.busy);
+                $display("PE status after instruction execution: 0x%h", pe_dut.status_o);
+                $display("PE busy state: %b", pe_dut.busy_o);
                 $display("PASS: Instruction execution test completed");
 
                 // Test 4: Reset Test
@@ -136,7 +136,7 @@ module tb_pe_controller;
                 #200;  // Increase stabilization time after reset
 
                 // Verify if PE is correctly reset
-                if (pe_dut.busy) begin
+                if (pe_dut.busy_o) begin
                     $display("INFO: PE is still busy after reset, which might be normal if busy is registered");
                     // No longer consider this an error because the busy signal might be a registered output
                     // error_count = error_count + 1;

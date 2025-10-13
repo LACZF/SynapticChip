@@ -63,16 +63,16 @@ module tb_spi_controller;
     ) u_spi_core (
         .clk(clk),
         .rst_n(rst_n),
-        .req(req),
-        .we(we),
-        .addr(addr),
-        .data_in(data_in),
-        .data_out(data_out),
-        .ack(ack),
-        .spi_cs_n(spi_cs_n),
-        .spi_clk(spi_clk),
-        .spi_mosi(spi_mosi),
-        .spi_miso(spi_miso)
+        .req_i(req),
+        .we_i(we),
+        .addr_i(addr),
+        .data_in_i(data_in),
+        .data_out_o(data_out),
+        .ack_o(ack),
+        .spi_cs_n_o(spi_cs_n),
+        .spi_clk_o(spi_clk),
+        .spi_mosi_o(spi_mosi),
+        .spi_miso_i(spi_miso)
     );
 
     // Initialize external Flash

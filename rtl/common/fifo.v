@@ -6,13 +6,13 @@ module fifo #(
 )(
     input  wire                         clk,
     input  wire                         rst_n,
-    input  wire                         wr_en,
-    input  wire [DATA_WIDTH-1:0]        data_in,
-    input  wire                         rd_en,
-    output wire                         rd_done,
-    output wire [DATA_WIDTH-1:0]        data_out,
-    output wire                         full,
-    output wire                         empty
+    input  wire                         wr_en_i,
+    input  wire [DATA_WIDTH-1:0]        data_in_i,
+    input  wire                         rd_en_i,
+    output wire                         rd_done_o,
+    output wire [DATA_WIDTH-1:0]        data_out_o,
+    output wire                         full_o,
+    output wire                         empty_o
 );
 
     reg [DATA_WIDTH-1:0] fifo [FIFO_DEPTH-1:0];
@@ -24,8 +24,8 @@ module fifo #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             wr_ptr <= 0;
-        end else if (wr_en && !full) begin
-            fifo[wr_ptr] <= data_in;
+        end else if (wr_en_i && !full_o) begin
+            fifo[wr_ptr] <= data_in_i;
             wr_ptr <= wr_ptr + 1;
         end
     end
@@ -34,7 +34,7 @@ module fifo #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rd_ptr <= 0;
-        end else if (rd_en && !empty) begin
+        end else if (rd_en_i && !empty_o) begin
             rd_ptr <= rd_ptr + 1;
         end
     end
@@ -44,7 +44,7 @@ module fifo #(
         if (!rst_n) begin
             count <= 0;
         end else begin
-            case ({wr_en && !full, rd_en && !empty})
+            case ({wr_en_i && !full_o, rd_en_i && !empty_o})
                 2'b01: count <= count - 1;
                 2'b10: count <= count + 1;
                 default: count <= count;
@@ -53,9 +53,9 @@ module fifo #(
     end
 
     // Output assignments
-    assign data_out = (rd_en && !empty) ? fifo[rd_ptr] : {DATA_WIDTH{1'b0}};
-    assign full = (count == FIFO_DEPTH);
-    assign empty = (count == 0);
-    assign rd_done = (rd_en && !empty) ? 1'b1 : 1'b0;
+    assign data_out_o = (rd_en_i && !empty_o) ? fifo[rd_ptr] : {DATA_WIDTH{1'b0}};
+    assign full_o = (count == FIFO_DEPTH);
+    assign empty_o = (count == 0);
+    assign rd_done_o = (rd_en_i && !empty_o) ? 1'b1 : 1'b0;
 
 endmodule

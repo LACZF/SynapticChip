@@ -24,15 +24,15 @@ module cpu_top #(
     input                                   rst_n,
 
     // External interrupt
-    input                                   ext_int,
+    input                                   ext_int_i,
 
     // Memory interface signals - Directly exposed for external communication
-    output wire                             mem_req,
-    output wire [ADDR_WIDTH-1:0]            mem_addr,
-    output wire [MEM_WIDTH-1:0]             mem_wdata,
-    output wire                             mem_we,
-    input  wire                             mem_ready,
-    input  wire  [MEM_WIDTH-1:0]            mem_rdata
+    output wire                             mem_req_o,
+    output wire [ADDR_WIDTH-1:0]            mem_addr_o,
+    output wire [MEM_WIDTH-1:0]             mem_wdata_o,
+    output wire                             mem_we_o,
+    input  wire                             mem_ready_i,
+    input  wire  [MEM_WIDTH-1:0]            mem_rdata_i
 );
     localparam L2_OUT_WIDTH = ENABLE_L3_CACHE ? L3_CACHE_DATA_WIDTH : MEM_WIDTH;
     localparam L1_OUT_WIDTH = ENABLE_L2_CACHE ? L2_CACHE_DATA_WIDTH : ENABLE_L3_CACHE ? L3_CACHE_DATA_WIDTH : MEM_WIDTH;
@@ -115,31 +115,31 @@ module cpu_top #(
                 .rst_n(rst_n),
 
                 // CPU interface
-                .cpu_req_valid(|l1_dcache_req || |l1_icache_req),
-                .cpu_req_addr(|l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
-                .cpu_req_rw(|l1_dcache_req && l1_dcache_we[0]),
+                .cpu_req_valid_i(|l1_dcache_req || |l1_icache_req),
+                .cpu_req_addr_i(|l1_dcache_req ? l1_dcache_addr[0*ADDR_WIDTH +: ADDR_WIDTH] : l1_icache_addr[0*ADDR_WIDTH +: ADDR_WIDTH]),
+                .cpu_req_rw_i(|l1_dcache_req && l1_dcache_we[0]),
                 // Use intermediate signals for connection
-                .cpu_req_data(l2_cpu_req_data),
-                .cpu_req_strb(l2_cpu_req_strb),
-                .cpu_rsp_valid(core_l2_ready[0]),
-                .cpu_rsp_data(l2_cpu_rsp_data),
-                .cpu_rsp_error(),
+                .cpu_req_data_i(l2_cpu_req_data),
+                .cpu_req_strb_i(l2_cpu_req_strb),
+                .cpu_rsp_valid_o(core_l2_ready[0]),
+                .cpu_rsp_data_o(l2_cpu_rsp_data),
+                .cpu_rsp_error_o(),
 
                 // Memory interface
-                .mem_req_valid(l2_l3_req),
-                .mem_req_addr(l2_l3_addr),
-                .mem_req_rw(l2_l3_we),
-                .mem_req_data(l2_l3_wdata),
-                .mem_rsp_valid(l2_l3_ready),
-                .mem_rsp_data(l2_l3_rdata),
-                .mem_rsp_error(),
+                .mem_req_valid_o(l2_l3_req),
+                .mem_req_addr_o(l2_l3_addr),
+                .mem_req_rw_o(l2_l3_we),
+                .mem_req_data_o(l2_l3_wdata),
+                .mem_rsp_valid_i(l2_l3_ready),
+                .mem_rsp_data_i(l2_l3_rdata),
+                .mem_rsp_error_i(),
 
                 // Coherency interface (not used, connected to 0)
-                .coh_req_addr({ADDR_WIDTH{1'b0}}),
-                .coh_req_valid(1'b0),
-                .coh_req_type(3'd0),
-                .coh_rsp_valid(),
-                .coh_rsp_state()
+                .coh_req_addr_i({ADDR_WIDTH{1'b0}}),
+                .coh_req_valid_i(1'b0),
+                .coh_req_type_i(3'd0),
+                .coh_rsp_valid_o(),
+                .coh_rsp_state_o()
             );
 
             // L2 cache doesn't need coherency, directly set snoop_state to default value
@@ -182,39 +182,39 @@ module cpu_top #(
                     .rst_n(rst_n),
 
                     // CPU interface (connect to L2)
-                    .cpu_req_valid(l2_l3_req),
-                    .cpu_req_addr(l2_l3_addr),
-                    .cpu_req_rw(l2_l3_we),
-                    .cpu_req_data(l2_l3_wdata),
-                    .cpu_req_strb({L2_CACHE_DATA_WIDTH/8{1'b1}}),
-                    .cpu_rsp_valid(l2_l3_ready),
-                    .cpu_rsp_data(l2_l3_rdata),
-                    .cpu_rsp_error(),
+                    .cpu_req_valid_i(l2_l3_req),
+                    .cpu_req_addr_i(l2_l3_addr),
+                    .cpu_req_rw_i(l2_l3_we),
+                    .cpu_req_data_i(l2_l3_wdata),
+                    .cpu_req_strb_i({L2_CACHE_DATA_WIDTH/8{1'b1}}),
+                    .cpu_rsp_valid_o(l2_l3_ready),
+                    .cpu_rsp_data_o(l2_l3_rdata),
+                    .cpu_rsp_error_o(),
 
                     // Memory interface
-                    .mem_req_valid(mem_req),
-                    .mem_req_addr(mem_addr),
-                    .mem_req_rw(mem_we),
-                    .mem_req_data(mem_wdata),
-                    .mem_rsp_valid(mem_ready),
-                    .mem_rsp_data(mem_rdata),
-                    .mem_rsp_error(),
+                    .mem_req_valid_o(mem_req_o),
+                    .mem_req_addr_o(mem_addr_o),
+                    .mem_req_rw_o(mem_we_o),
+                    .mem_req_data_o(mem_wdata_o),
+                    .mem_rsp_valid_i(mem_ready_i),
+                    .mem_rsp_data_i(mem_rdata_i),
+                    .mem_rsp_error_i(),
 
                     // Coherency interface
-                    .coh_req_addr({ADDR_WIDTH{1'b0}}),
-                    .coh_req_valid(1'b0),
-                    .coh_req_type(3'd0),
-                    .coh_rsp_valid(),
-                    .coh_rsp_state()
+                    .coh_req_addr_i({ADDR_WIDTH{1'b0}}),
+                    .coh_req_valid_i(1'b0),
+                    .coh_req_type_i(3'd0),
+                    .coh_rsp_valid_o(),
+                    .coh_rsp_state_o()
                 );
             end else begin : direct_l2_to_mem
                 // Directly connect L2 to memory
-                assign mem_req = l2_l3_req;
-                assign mem_addr = l2_l3_addr;
-                assign mem_wdata = l2_l3_wdata;
-                assign mem_we = l2_l3_we;
-                assign l2_l3_rdata = mem_rdata;
-                assign l2_l3_ready = mem_ready;
+                assign mem_req_o = l2_l3_req;
+                assign mem_addr_o = l2_l3_addr;
+                assign mem_wdata_o = l2_l3_wdata;
+                assign mem_we_o = l2_l3_we;
+                assign l2_l3_rdata = mem_rdata_i;
+                assign l2_l3_ready = mem_ready_i;
             end
         end else begin : direct_l1_to_mem
             // Without L2 cache, L1 directly connects to memory
@@ -228,12 +228,12 @@ module cpu_top #(
 
             // Simplified arbitration logic, only connect first core to memory
             // More complex arbiter should be implemented in practical applications
-            assign mem_req = core_mem_req[0];
-            assign mem_addr = core_mem_addr[0*ADDR_WIDTH +: ADDR_WIDTH];
-            assign mem_wdata = core_mem_wdata[0*512 +: 512];
-            assign mem_we = core_mem_we[0];
-            assign core_mem_rdata[0*512 +: 512] = mem_rdata;
-            assign core_mem_ready[0] = mem_ready;
+            assign mem_req_o = core_mem_req[0];
+            assign mem_addr_o = core_mem_addr[0*ADDR_WIDTH +: ADDR_WIDTH];
+            assign mem_wdata_o = core_mem_wdata[0*512 +: 512];
+            assign mem_we_o = core_mem_we[0];
+            assign core_mem_rdata[0*512 +: 512] = mem_rdata_i;
+            assign core_mem_ready[0] = mem_ready_i;
 
             // Directly connect L1 cache to memory interface
             genvar i;
@@ -257,8 +257,8 @@ module cpu_top #(
 
             if (NUM_CORES > 1) begin
                 for (i = 1; i < NUM_CORES; i = i + 1) begin : multi_core_conn
-                    assign core_mem_rdata[i*512 +: 512] = mem_rdata;
-                    assign core_mem_ready[i] = mem_ready;
+                    assign core_mem_rdata[i*512 +: 512] = mem_rdata_i;
+                    assign core_mem_ready[i] = mem_ready_i;
                 end
             end
         end
@@ -337,7 +337,7 @@ module cpu_top #(
 
                     // Interrupt and debugging
                     .timer_interrupt_i(1'b0),
-                    .external_interrupt_i(ext_int),
+                    .external_interrupt_i(ext_int_i),
                     .software_interrupt_i(1'b0),
 
                     // Debug interface - Can be connected to debug module
@@ -351,7 +351,7 @@ module cpu_top #(
             `ifdef DEBUG
                 // Add debug information to track instruction request signal flow
                 always @(posedge clk) begin
-                    if (icache_req) begin
+                    if (icache_req_o) begin
                         $display("[%0t ps] CPU CORE %d: icache_req=%b, icache_addr=0x%h",
                                  $time, i, icache_req, icache_addr);
                     end
@@ -378,32 +378,32 @@ module cpu_top #(
                     .rst_n(rst_n),
 
                     // CPU interface
-                    .cpu_req_valid(icache_req),
-                    .cpu_req_addr(icache_addr),
-                    .cpu_req_rw(1'b0),
-                    .cpu_req_data({L1_ICACHE_DATA_WIDTH{1'd0}}),
-                    .cpu_req_strb({L1_ICACHE_DATA_WIDTH/8{1'b1}}),
-                    .cpu_rsp_valid(icache_ready),
-                    .cpu_rsp_data(icache_data),
-                    .cpu_rsp_error(),
+                    .cpu_req_valid_i(icache_req),
+                    .cpu_req_addr_i(icache_addr),
+                    .cpu_req_rw_i(1'b0),
+                    .cpu_req_data_i({L1_ICACHE_DATA_WIDTH{1'd0}}),
+                    .cpu_req_strb_i({L1_ICACHE_DATA_WIDTH/8{1'b1}}),
+                    .cpu_rsp_valid_o(icache_ready),
+                    .cpu_rsp_data_o(icache_data),
+                    .cpu_rsp_error_o(),
 
                     // Memory interface (connected to width adapter)
-                    .mem_req_valid(l1_icache_req[i]),
-                    .mem_req_addr(l1_icache_addr_64),
-                    .mem_req_rw(icache_mem_req_rw),
+                    .mem_req_valid_o(l1_icache_req[i]),
+                    .mem_req_addr_o(l1_icache_addr_64),
+                    .mem_req_rw_o(icache_mem_req_rw),
                     // Simplified indexed access method
-                    .mem_req_data(l1_icache_wdata[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
-                    .mem_rsp_valid(l1_icache_ready[i]),
+                    .mem_req_data_o(l1_icache_wdata[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
+                    .mem_rsp_valid_i(l1_icache_ready[i]),
                     // Simplified indexed access method
-                    .mem_rsp_data(l1_icache_data[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
-                    .mem_rsp_error(),
+                    .mem_rsp_data_i(l1_icache_data[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
+                    .mem_rsp_error_i(),
 
                     // Coherency interface (connected to snoop signals)
-                    .coh_req_addr(l1_icache_addr_64),
-                    .coh_req_valid(snoop_valid[i]),
-                    .coh_req_type({1'b0, snoop_req_type[i*2 +: 2]}),
-                    .coh_rsp_valid(snoop_ready[i]),
-                    .coh_rsp_state(icache_coh_rsp_state)
+                    .coh_req_addr_i(l1_icache_addr_64),
+                    .coh_req_valid_i(snoop_valid[i]),
+                    .coh_req_type_i({1'b0, snoop_req_type[i*2 +: 2]}),
+                    .coh_rsp_valid_o(snoop_ready[i]),
+                    .coh_rsp_state_o(icache_coh_rsp_state)
                 );
 
                 // L1 data cache instance (using generic cache module)
@@ -422,42 +422,42 @@ module cpu_top #(
                     .rst_n(rst_n),
 
                     // CPU interface
-                    .cpu_req_valid(dcache_req),
-                    .cpu_req_addr(dcache_addr),
-                    .cpu_req_rw(dcache_we),
-                    .cpu_req_data(dcache_wdata),
-                    .cpu_req_strb(dcache_byte_en),
-                    .cpu_rsp_valid(dcache_ready),
-                    .cpu_rsp_data(dcache_rdata),
-                    .cpu_rsp_error(),
+                    .cpu_req_valid_i(dcache_req),
+                    .cpu_req_addr_i(dcache_addr),
+                    .cpu_req_rw_i(dcache_we),
+                    .cpu_req_data_i(dcache_wdata),
+                    .cpu_req_strb_i(dcache_byte_en),
+                    .cpu_rsp_valid_o(dcache_ready),
+                    .cpu_rsp_data_o(dcache_rdata),
+                    .cpu_rsp_error_o(),
 
                     // Memory interface (connected to width adapter)
-                    .mem_req_valid(l1_dcache_req[i]),
-                    .mem_req_addr(l1_dcache_addr_64),
-                    .mem_req_rw(l1_dcache_we[i]),
+                    .mem_req_valid_o(l1_dcache_req[i]),
+                    .mem_req_addr_o(l1_dcache_addr_64),
+                    .mem_req_rw_o(l1_dcache_we[i]),
                     // Simplified indexed access method
-                    .mem_req_data(l1_dcache_wdata[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
-                    .mem_rsp_valid(l1_dcache_ready[i]),
+                    .mem_req_data_o(l1_dcache_wdata[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
+                    .mem_rsp_valid_i(l1_dcache_ready[i]),
                     // Simplified indexed access method
-                    .mem_rsp_data(l1_dcache_data[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
-                    .mem_rsp_error(),
+                    .mem_rsp_data_i(l1_dcache_data[L1_OUT_WIDTH*i +: L1_OUT_WIDTH]),
+                    .mem_rsp_error_i(),
 
                     // Coherency interface (connected to snoop signals)
-                    .coh_req_addr(l1_dcache_addr_64),
-                    .coh_req_valid(snoop_valid[i]),
-                    .coh_req_type({1'b0, snoop_req_type[i*2 +: 2]}),
-                    .coh_rsp_valid(snoop_ready[i]),
-                    .coh_rsp_state(dcache_coh_rsp_state)
+                    .coh_req_addr_i(l1_dcache_addr_64),
+                    .coh_req_valid_i(snoop_valid[i]),
+                    .coh_req_type_i({1'b0, snoop_req_type[i*2 +: 2]}),
+                    .coh_rsp_valid_o(snoop_ready[i]),
+                    .coh_rsp_state_o(dcache_coh_rsp_state)
                 );
             end
             // Reserved for other CPU type implementations
             else if (CPU_TYPE == 1) begin : other_cpu_implementation
                 // Other CPU type implementations can be added here
                 // This is just a placeholder, actual implementation needs to be written according to specific CPU architecture
-                assign mem_req = 1'b0;
-                assign mem_addr = {ADDR_WIDTH{1'b0}};
-                assign mem_wdata = {512{1'b0}};
-                assign mem_we = 1'b0;
+                assign mem_req_o = 1'b0;
+                assign mem_addr_o = {ADDR_WIDTH{1'b0}};
+                assign mem_wdata_o = {512{1'b0}};
+                assign mem_we_o = 1'b0;
             end
         end
     endgenerate

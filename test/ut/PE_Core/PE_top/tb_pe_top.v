@@ -37,16 +37,16 @@ module tb_pe_top;
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .pe_enable(pe_enable),
-        .pe_reset(pe_reset),
-        .pe_instructions(pe_instructions),
-        .pe_inst_valid(pe_inst_valid),
-        .route_config(route_config),
-        .route_cfg_valid(route_cfg_valid),
-        .pe_status(pe_status),
-        .pe_outputs(pe_outputs),
-        .pe_busy(pe_busy),
-        .fabric_status(fabric_status)
+        .pe_enable_i(pe_enable),
+        .pe_reset_i(pe_reset),
+        .pe_instructions_i(pe_instructions),
+        .pe_inst_valid_i(pe_inst_valid),
+        .route_config_i(route_config),
+        .route_cfg_valid_i(route_cfg_valid),
+        .pe_status_o(pe_status),
+        .pe_outputs_o(pe_outputs),
+        .pe_busy_o(pe_busy),
+        .fabric_status_o(fabric_status)
     );
 
     // Clock Generation

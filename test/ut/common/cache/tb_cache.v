@@ -87,9 +87,10 @@ module tb_cache;
 
     // Define These Signal Connections Outside always_comb Block
     assign l1_mem_req_data_32bit       = l1_mem_req_data[31:0];
-    assign l2_cache_cpu_rsp_data_64bit = {32'b0, l2_cache.cpu_rsp_data};
-    assign l3_cache_cpu_rsp_data_64bit = {32'b0, l3_cache.cpu_rsp_data};
-    assign l2_cache_mem_req_data_32bit = l2_cache.mem_req_data[31:0];
+    assign l2_cache_cpu_rsp_data_64bit = {32'b0, l2_cpu_rsp_data};
+
+    assign l3_cache_cpu_rsp_data_64bit = {32'b0, l3_cpu_rsp_data};
+    assign l2_cache_mem_req_data_32bit = l2_mem_req_data[31:0];
     assign full_strb                   = 4'b1111; // Define constant value externally
     assign zero_bit                    = 1'b0;
     assign zero_64bit                  = 64'b0;
@@ -129,9 +130,9 @@ module tb_cache;
                 l2_mem_rsp_error = mem_rsp_error;
 
                 // L1 memory response connected to L2 CPU response
-                l1_mem_rsp_valid = l2_cache.cpu_rsp_valid;
+                l1_mem_rsp_valid = l2_cpu_rsp_valid;
                 l1_mem_rsp_data = l2_cache_cpu_rsp_data_64bit;
-                l1_mem_rsp_error = l2_cache.cpu_rsp_error;
+                l1_mem_rsp_error = l2_cpu_rsp_error;
 
                 // Single-level cache disabled
                 dut_mem_rsp_valid = zero_bit;
@@ -159,9 +160,9 @@ module tb_cache;
                 l2_cpu_req_strb = full_strb;
 
                 // L2 memory response connected to L3 CPU response
-                l2_mem_rsp_valid = l3_cache.cpu_rsp_valid;
+                l2_mem_rsp_valid = l3_cpu_rsp_valid;
                 l2_mem_rsp_data = l3_cache_cpu_rsp_data_64bit;
-                l2_mem_rsp_error = l3_cache.cpu_rsp_error;
+                l2_mem_rsp_error = l3_cpu_rsp_error;
 
                 // L3 connected to main memory
                 mem_req_valid = l3_mem_req_valid;
@@ -175,9 +176,9 @@ module tb_cache;
                 l3_mem_rsp_error = mem_rsp_error;
 
                 // L1 memory response connected to L2 CPU response
-                l1_mem_rsp_valid = l2_cache.cpu_rsp_valid;
+                l1_mem_rsp_valid = l2_cpu_rsp_valid;
                 l1_mem_rsp_data = l2_cache_cpu_rsp_data_64bit;
-                l1_mem_rsp_error = l2_cache.cpu_rsp_error;
+                l1_mem_rsp_error = l2_cpu_rsp_error;
 
                 // Single-level cache disabled
                 dut_mem_rsp_valid = zero_bit;
@@ -226,26 +227,26 @@ module tb_cache;
     ) l1_cache (
         .clk(clk),
         .rst_n(rst_n),
-        .cpu_req_valid(cpu_req_valid),
-        .cpu_req_addr(cpu_req_addr),
-        .cpu_req_rw(cpu_req_rw),
-        .cpu_req_data(cpu_req_data),
-        .cpu_req_strb(cpu_req_strb),
-        .cpu_rsp_valid(cpu_rsp_valid),
-        .cpu_rsp_data(cpu_rsp_data),
-        .cpu_rsp_error(cpu_rsp_error),
-        .mem_req_valid(l2_cpu_req_valid),
-        .mem_req_addr(l2_cpu_req_addr),
-        .mem_req_rw(l2_cpu_req_rw),
-        .mem_req_data(l1_mem_req_data), // Connected to intermediate signal
-        .mem_rsp_valid(l1_mem_rsp_valid), // Connected to intermediate signal
-        .mem_rsp_data(l1_mem_rsp_data),  // Connected to intermediate signal
-        .mem_rsp_error(l1_mem_rsp_error), // Connected to intermediate signal
-        .coh_req_addr(coh_req_addr),
-        .coh_req_valid(coh_req_valid),
-        .coh_req_type(coh_req_type),
-        .coh_rsp_valid(coh_rsp_valid),
-        .coh_rsp_state(coh_rsp_state)
+        .cpu_req_valid_i(cpu_req_valid),
+        .cpu_req_addr_i(cpu_req_addr),
+        .cpu_req_rw_i(cpu_req_rw),
+        .cpu_req_data_i(cpu_req_data),
+        .cpu_req_strb_i(cpu_req_strb),
+        .cpu_rsp_valid_o(cpu_rsp_valid),
+        .cpu_rsp_data_o(cpu_rsp_data),
+        .cpu_rsp_error_o(cpu_rsp_error),
+        .mem_req_valid_o(l2_cpu_req_valid),
+        .mem_req_addr_o(l2_cpu_req_addr),
+        .mem_req_rw_o(l2_cpu_req_rw),
+        .mem_req_data_o(l1_mem_req_data), // Connected to intermediate signal
+        .mem_rsp_valid_i(l1_mem_rsp_valid), // Connected to intermediate signal
+        .mem_rsp_data_i(l1_mem_rsp_data),  // Connected to intermediate signal
+        .mem_rsp_error_i(l1_mem_rsp_error), // Connected to intermediate signal
+        .coh_req_addr_i(coh_req_addr),
+        .coh_req_valid_i(coh_req_valid),
+        .coh_req_type_i(coh_req_type),
+        .coh_rsp_valid_o(coh_rsp_valid),
+        .coh_rsp_state_o(coh_rsp_state)
     );
 
     // Instantiate L2 cache
@@ -262,26 +263,26 @@ module tb_cache;
     ) l2_cache (
         .clk(clk),
         .rst_n(rst_n),
-        .cpu_req_valid(l2_cpu_req_valid),
-        .cpu_req_addr(l2_cpu_req_addr),
-        .cpu_req_rw(l2_cpu_req_rw),
-        .cpu_req_data(l2_cpu_req_data),
-        .cpu_req_strb(l2_cpu_req_strb),
-        .cpu_rsp_valid(cpu_rsp_valid),
-        .cpu_rsp_data(l2_cpu_rsp_data),
-        .cpu_rsp_error(l2_cpu_rsp_error),
-        .mem_req_valid(l2_mem_req_valid),
-        .mem_req_addr(l2_mem_req_addr),
-        .mem_req_rw(l2_mem_req_rw),
-        .mem_req_data(l2_mem_req_data), // Keep 64-bit data width
-        .mem_rsp_valid(l2_mem_rsp_valid), // Connected to intermediate signal
-        .mem_rsp_data(l2_mem_rsp_data),  // Connected to intermediate signal
-        .mem_rsp_error(l2_mem_rsp_error), // Connected to intermediate signal
-        .coh_req_addr(32'h0),
-        .coh_req_valid(1'b0),
-        .coh_req_type(3'b0),
-        .coh_rsp_valid(),
-        .coh_rsp_state()
+        .cpu_req_valid_i(l2_cpu_req_valid),
+        .cpu_req_addr_i(l2_cpu_req_addr),
+        .cpu_req_rw_i(l2_cpu_req_rw),
+        .cpu_req_data_i(l2_cpu_req_data),
+        .cpu_req_strb_i(l2_cpu_req_strb),
+        .cpu_rsp_valid_o(l2_cpu_rsp_valid),
+        .cpu_rsp_data_o(l2_cpu_rsp_data),
+        .cpu_rsp_error_o(l2_cpu_rsp_error),
+        .mem_req_valid_o(l2_mem_req_valid),
+        .mem_req_addr_o(l2_mem_req_addr),
+        .mem_req_rw_o(l2_mem_req_rw),
+        .mem_req_data_o(l2_mem_req_data), // Keep 64-bit data width
+        .mem_rsp_valid_i(l2_mem_rsp_valid), // Connected to intermediate signal
+        .mem_rsp_data_i(l2_mem_rsp_data),  // Connected to intermediate signal
+        .mem_rsp_error_i(l2_mem_rsp_error), // Connected to intermediate signal
+        .coh_req_addr_i(32'h0),
+        .coh_req_valid_i(1'b0),
+        .coh_req_type_i(3'b0),
+        .coh_rsp_valid_o(),
+        .coh_rsp_state_o()
     );
 
     // Instantiate L3 cache
@@ -298,26 +299,26 @@ module tb_cache;
     ) l3_cache (
         .clk(clk),
         .rst_n(rst_n),
-        .cpu_req_valid(l3_cpu_req_valid),
-        .cpu_req_addr(l3_cpu_req_addr),
-        .cpu_req_rw(l3_cpu_req_rw),
-        .cpu_req_data(l3_cpu_req_data),
-        .cpu_req_strb(l3_cpu_req_strb),
-        .cpu_rsp_valid(l3_cpu_rsp_valid),
-        .cpu_rsp_data(l3_cpu_rsp_data),
-        .cpu_rsp_error(l3_cpu_rsp_error),
-        .mem_req_valid(l3_mem_req_valid),
-        .mem_req_addr(l3_mem_req_addr),
-        .mem_req_rw(l3_mem_req_rw),
-        .mem_req_data(l3_mem_req_data), // Keep 64-bit data width
-        .mem_rsp_valid(l3_mem_rsp_valid), // Connected to intermediate signal
-        .mem_rsp_data(l3_mem_rsp_data),  // Connected to intermediate signal
-        .mem_rsp_error(l3_mem_rsp_error), // Connected to intermediate signal
-        .coh_req_addr(32'h0),
-        .coh_req_valid(1'b0),
-        .coh_req_type(3'b0),
-        .coh_rsp_valid(),
-        .coh_rsp_state()
+        .cpu_req_valid_i(l3_cpu_req_valid),
+        .cpu_req_addr_i(l3_cpu_req_addr),
+        .cpu_req_rw_i(l3_cpu_req_rw),
+        .cpu_req_data_i(l3_cpu_req_data),
+        .cpu_req_strb_i(l3_cpu_req_strb),
+        .cpu_rsp_valid_o(l3_cpu_rsp_valid),
+        .cpu_rsp_data_o(l3_cpu_rsp_data),
+        .cpu_rsp_error_o(l3_cpu_rsp_error),
+        .mem_req_valid_o(l3_mem_req_valid),
+        .mem_req_addr_o(l3_mem_req_addr),
+        .mem_req_rw_o(l3_mem_req_rw),
+        .mem_req_data_o(l3_mem_req_data), // Keep 64-bit data width
+        .mem_rsp_valid_i(l3_mem_rsp_valid), // Connected to intermediate signal
+        .mem_rsp_data_i(l3_mem_rsp_data),  // Connected to intermediate signal
+        .mem_rsp_error_i(l3_mem_rsp_error), // Connected to intermediate signal
+        .coh_req_addr_i(32'h0),
+        .coh_req_valid_i(1'b0),
+        .coh_req_type_i(3'b0),
+        .coh_rsp_valid_o(),
+        .coh_rsp_state_o()
     );
 
     // Original single-level cache instance - preserved for existing tests
@@ -334,26 +335,26 @@ module tb_cache;
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .cpu_req_valid(test_mode == SINGLE_LEVEL ? cpu_req_valid : 1'b0),
-        .cpu_req_addr(cpu_req_addr),
-        .cpu_req_rw(cpu_req_rw),
-        .cpu_req_data(cpu_req_data),
-        .cpu_req_strb(cpu_req_strb),
-        .cpu_rsp_valid(cpu_rsp_valid),
-        .cpu_rsp_data(cpu_rsp_data),
-        .cpu_rsp_error(cpu_rsp_error),
-        .mem_req_valid(dut_mem_req_valid),
-        .mem_req_addr(dut_mem_req_addr),
-        .mem_req_rw(dut_mem_req_rw),
-        .mem_req_data(dut_mem_req_data),
-        .mem_rsp_valid(dut_mem_rsp_valid), // Connected to intermediate signal
-        .mem_rsp_data(dut_mem_rsp_data),  // Connected to intermediate signal
-        .mem_rsp_error(dut_mem_rsp_error), // Connected to intermediate signal
-        .coh_req_addr(coh_req_addr),
-        .coh_req_valid(coh_req_valid),
-        .coh_req_type(coh_req_type),
-        .coh_rsp_valid(coh_rsp_valid),
-        .coh_rsp_state(coh_rsp_state)
+        .cpu_req_valid_i(test_mode == SINGLE_LEVEL ? cpu_req_valid : 1'b0),
+        .cpu_req_addr_i(cpu_req_addr),
+        .cpu_req_rw_i(cpu_req_rw),
+        .cpu_req_data_i(cpu_req_data),
+        .cpu_req_strb_i(cpu_req_strb),
+        .cpu_rsp_valid_o(cpu_rsp_valid),
+        .cpu_rsp_data_o(cpu_rsp_data),
+        .cpu_rsp_error_o(cpu_rsp_error),
+        .mem_req_valid_o(dut_mem_req_valid),
+        .mem_req_addr_o(dut_mem_req_addr),
+        .mem_req_rw_o(dut_mem_req_rw),
+        .mem_req_data_o(dut_mem_req_data),
+        .mem_rsp_valid_i(dut_mem_rsp_valid), // Connected to intermediate signal
+        .mem_rsp_data_i(dut_mem_rsp_data),  // Connected to intermediate signal
+        .mem_rsp_error_i(dut_mem_rsp_error), // Connected to intermediate signal
+        .coh_req_addr_i(coh_req_addr),
+        .coh_req_valid_i(coh_req_valid),
+        .coh_req_type_i(coh_req_type),
+        .coh_rsp_valid_o(coh_rsp_valid),
+        .coh_rsp_state_o(coh_rsp_state)
     );
 
     // Create reference memory model

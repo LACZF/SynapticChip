@@ -15,38 +15,38 @@ module pe_ctrl_ring_node #(
     input                                        rst_n,
 
     // Ring bus interface
-    input                                        ring_in_valid,
-    input       [NODE_ID_WIDTH-1:0]              ring_in_src,
-    input       [NODE_ID_WIDTH-1:0]              ring_in_dest,
-    input       [ADDR_WIDTH-1:0]                 ring_in_addr,
-    input       [DATA_WIDTH-1:0]                 ring_in_data,
-    input                                        ring_in_we,
-    input       [3:0]                            ring_in_be,
-    input                                        ring_in_ack,
+    input                                        ring_in_valid_i,
+    input       [NODE_ID_WIDTH-1:0]              ring_in_src_i,
+    input       [NODE_ID_WIDTH-1:0]              ring_in_dest_i,
+    input       [ADDR_WIDTH-1:0]                 ring_in_addr_i,
+    input       [DATA_WIDTH-1:0]                 ring_in_data_i,
+    input                                        ring_in_we_i,
+    input       [3:0]                            ring_in_be_i,
+    input                                        ring_in_ack_i,
 
-    output reg                                   ring_out_valid,
-    output reg  [NODE_ID_WIDTH-1:0]              ring_out_src,
-    output reg  [NODE_ID_WIDTH-1:0]              ring_out_dest,
-    output reg  [ADDR_WIDTH-1:0]                 ring_out_addr,
-    output reg  [DATA_WIDTH-1:0]                 ring_out_data,
-    output reg                                   ring_out_we,
-    output reg  [3:0]                            ring_out_be,
-    output reg                                   ring_out_ack,
+    output reg                                   ring_out_valid_o,
+    output reg  [NODE_ID_WIDTH-1:0]              ring_out_src_o,
+    output reg  [NODE_ID_WIDTH-1:0]              ring_out_dest_o,
+    output reg  [ADDR_WIDTH-1:0]                 ring_out_addr_o,
+    output reg  [DATA_WIDTH-1:0]                 ring_out_data_o,
+    output reg                                   ring_out_we_o,
+    output reg  [3:0]                            ring_out_be_o,
+    output reg                                   ring_out_ack_o,
 
     // PE array control interface
-    output reg  [NUM_PES-1:0]                     pe_enable,
-    output reg  [NUM_PES-1:0]                     pe_reset,
-    output reg  [(NUM_PES*INST_WIDTH)-1:0]        pe_instructions,
-    output reg                                    pe_inst_valid,
+    output reg  [NUM_PES-1:0]                     pe_enable_o,
+    output reg  [NUM_PES-1:0]                     pe_reset_o,
+    output reg  [(NUM_PES*INST_WIDTH)-1:0]        pe_instructions_o,
+    output reg                                    pe_inst_valid_o,
 
     // PE status inputs
-    input       [(NUM_PES*DATA_WIDTH)-1:0]        pe_status,
-    input       [(NUM_PES*DATA_WIDTH)-1:0]        pe_outputs,
-    input       [NUM_PES-1:0]                     pe_busy,
+    input       [(NUM_PES*DATA_WIDTH)-1:0]        pe_status_i,
+    input       [(NUM_PES*DATA_WIDTH)-1:0]        pe_outputs_i,
+    input       [NUM_PES-1:0]                     pe_busy_i,
 
     // Route configuration interface
-    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]     route_config, // Each PE has 4-direction routing configuration
-    output reg                                    route_cfg_valid
+    output reg  [(NUM_PES*4*PE_ID_WIDTH)-1:0]     route_config_o, // Each PE has 4-direction routing configuration
+    output reg                                    route_cfg_valid_o
 );
 
     // Internal registers
@@ -63,60 +63,60 @@ module pe_ctrl_ring_node #(
     reg                                           we_buffer;
 
     // Determine if data is for this node
-    wire is_for_me = (ring_in_dest == {NODE_ID_WIDTH{1'b0}}) && ring_in_valid; // Assuming controller node ID is 0
+    wire is_for_me = (ring_in_dest_i == {NODE_ID_WIDTH{1'b0}}) && ring_in_valid_i; // Assuming controller node ID is 0
 
     // State machine
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= `STATE_IDLE;
-            ring_out_valid <= 1'b0;
-            ring_out_ack <= 1'b0;
-            pe_enable <= {NUM_PES{1'b0}};
-            pe_reset <= {NUM_PES{1'b0}};
-            pe_inst_valid <= 1'b0;
-            route_cfg_valid <= 1'b0;
+            ring_out_valid_o <= 1'b0;
+            ring_out_ack_o <= 1'b0;
+            pe_enable_o <= {NUM_PES{1'b0}};
+            pe_reset_o <= {NUM_PES{1'b0}};
+            pe_inst_valid_o <= 1'b0;
+            route_cfg_valid_o <= 1'b0;
             control_reg <= {DATA_WIDTH{1'b0}};
             status_reg <= {DATA_WIDTH{1'b0}};
         end else begin
             case (state)
                 `STATE_IDLE: begin
-                    ring_out_ack <= 1'b0;
-                    pe_inst_valid <= 1'b0;
-                    route_cfg_valid <= 1'b0;
+                    ring_out_ack_o <= 1'b0;
+                    pe_inst_valid_o <= 1'b0;
+                    route_cfg_valid_o <= 1'b0;
 
-                    if (ring_in_valid) begin
+                    if (ring_in_valid_i) begin
                         // Process data on the ring
-                        ring_out_valid <= ring_in_valid;
-                        ring_out_src <= ring_in_src;
-                        ring_out_dest <= ring_in_dest;
-                        ring_out_addr <= ring_in_addr;
-                        ring_out_data <= ring_in_data;
-                        ring_out_we <= ring_in_we;
-                        ring_out_be <= ring_in_be;
+                        ring_out_valid_o <= ring_in_valid_i;
+                        ring_out_src_o <= ring_in_src_i;
+                        ring_out_dest_o <= ring_in_dest_i;
+                        ring_out_addr_o <= ring_in_addr_i;
+                        ring_out_data_o <= ring_in_data_i;
+                        ring_out_we_o <= ring_in_we_i;
+                        ring_out_be_o <= ring_in_be_i;
 
                         if (is_for_me) begin
                             // Data is for this controller
                             state <= `STATE_DATA;
 
                             // Save source information for reply
-                            src_buffer <= ring_in_src;
-                            we_buffer <= ring_in_we;
-                            addr_buffer <= ring_in_addr;
-                            data_buffer <= ring_in_data;
+                            src_buffer <= ring_in_src_i;
+                            we_buffer <= ring_in_we_i;
+                            addr_buffer <= ring_in_addr_i;
+                            data_buffer <= ring_in_data_i;
 
                             // Handle write operation
-                            if (ring_in_we) begin
-                                case (ring_in_addr)
+                            if (ring_in_we_i) begin
+                                case (ring_in_addr_i)
                                     `REG_PE_CTRL: begin
-                                        control_reg <= ring_in_data;
+                                        control_reg <= ring_in_data_i;
                                         // Parse control register
-                                        pe_enable <= ring_in_data[NUM_PES-1:0];
-                                        pe_reset <= ring_in_data[31:NUM_PES];
+                                        pe_enable_o <= ring_in_data_i[NUM_PES-1:0];
+                                        pe_reset_o <= ring_in_data_i[31:NUM_PES];
                                     end
 
                                     `REG_PE_INST: begin
                                         // Store instruction to buffer
-                                        inst_buffer <= ring_in_data;
+                                        inst_buffer <= ring_in_data_i;
                                     end
 
                                     `REG_PE_DATA: begin
@@ -126,14 +126,14 @@ module pe_ctrl_ring_node #(
 
                                     `REG_ROUTE_CFG: begin
                                         // Route configuration
-                                        route_buffer <= ring_in_data;
-                                        route_cfg_valid <= 1'b1;
+                                        route_buffer <= ring_in_data_i;
+                                        route_cfg_valid_o <= 1'b1;
                                     end
                                 endcase
                             end
                         end
                     end else begin
-                        ring_out_valid <= 1'b0;
+                        ring_out_valid_o <= 1'b0;
                     end
                 end
 
@@ -142,50 +142,50 @@ module pe_ctrl_ring_node #(
                     if (!we_buffer) begin
                         // Read operation, prepare data
                         case (addr_buffer)
-                            `REG_PE_CTRL: ring_out_data <= control_reg;
+                            `REG_PE_CTRL: ring_out_data_o <= control_reg;
                             `REG_PE_STAT: begin
                                 // Summarize PE status
                                 status_reg <= {
-                                    pe_busy,
-                                    pe_status[(DATA_WIDTH-NUM_PES-1):0]
+                                    pe_busy_i,
+                                    pe_status_i[(DATA_WIDTH-NUM_PES-1):0]
                                 };
-                                ring_out_data <= status_reg;
+                                ring_out_data_o <= status_reg;
                             end
                             `REG_PE_DATA: begin
                                 // Read PE output data
-                                ring_out_data <= pe_outputs[DATA_WIDTH-1:0]; // Only return output of the first PE
+                                ring_out_data_o <= pe_outputs_i[DATA_WIDTH-1:0]; // Only return output of the first PE
                             end
-                            default: ring_out_data <= {DATA_WIDTH{1'b0}};
+                            default: ring_out_data_o <= {DATA_WIDTH{1'b0}};
                         endcase
 
                         state <= `STATE_ARB;
                     end else begin
                         // Write operation completed, send acknowledgment
-                        ring_out_ack <= 1'b1;
+                        ring_out_ack_o <= 1'b1;
                         state <= `STATE_IDLE;
                     end
                 end
 
                 `STATE_ARB: begin
                     // Arbitration state, wait for opportunity to send reply
-                    if (!ring_in_valid) begin
+                    if (!ring_in_valid_i) begin
                         // Ring is idle, can send reply
-                        ring_out_valid <= 1'b1;
-                        ring_out_src <= {NODE_ID_WIDTH{1'd0}}; // Controller node ID
-                        ring_out_dest <= src_buffer;       // Reply to requester
-                        ring_out_addr <= addr_buffer;
-                        ring_out_data <= data_buffer;
-                        ring_out_we <= 1'b0;               // Indicates this is a read response
-                        ring_out_be <= 4'b1111;
+                        ring_out_valid_o <= 1'b1;
+                        ring_out_src_o <= {NODE_ID_WIDTH{1'd0}}; // Controller node ID
+                        ring_out_dest_o <= src_buffer;       // Reply to requester
+                        ring_out_addr_o <= addr_buffer;
+                        ring_out_data_o <= data_buffer;
+                        ring_out_we_o <= 1'b0;               // Indicates this is a read response
+                        ring_out_be_o <= 4'b1111;
                         state <= `STATE_ACK;
                     end
                 end
 
                 `STATE_ACK: begin
                     // Wait for acknowledgment
-                    if (ring_in_ack && (ring_in_dest == src_buffer)) begin
-                        ring_out_valid <= 1'b0;
-                        ring_out_ack <= 1'b0;
+                    if (ring_in_ack_i && (ring_in_dest_i == src_buffer)) begin
+                        ring_out_valid_o <= 1'b0;
+                        ring_out_ack_o <= 1'b0;
                         state <= `STATE_IDLE;
                     end
                 end
@@ -196,27 +196,27 @@ module pe_ctrl_ring_node #(
     // Distribute instruction buffer to each PE
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            pe_instructions <= {(NUM_PES*INST_WIDTH){1'b0}};
+            pe_instructions_o <= {(NUM_PES*INST_WIDTH){1'b0}};
         end else if (control_reg[0]) begin // If instruction broadcasting is enabled
             for (integer i = 0; i < NUM_PES; i = i + 1) begin
-                pe_instructions[i*INST_WIDTH +: INST_WIDTH] <= inst_buffer;
+                pe_instructions_o[i*INST_WIDTH +: INST_WIDTH] <= inst_buffer;
             end
-            pe_inst_valid <= 1'b1;
+            pe_inst_valid_o <= 1'b1;
         end else begin
                     // Can send instructions to specific PEs based on address
                     // Simplified handling here, actual implementation is more complex
-            pe_inst_valid <= 1'b0;
+            pe_inst_valid_o <= 1'b0;
         end
     end
 
     // Distribute route configuration to each PE
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            route_config <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-        end else if (route_cfg_valid) begin
+            route_config_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+        end else if (route_cfg_valid_o) begin
             for (integer i = 0; i < NUM_PES; i = i + 1) begin
                 // 4-direction routing configuration for each PE
-                route_config[i*4*PE_ID_WIDTH +: 4*PE_ID_WIDTH] <= route_buffer;
+                route_config_o[i*4*PE_ID_WIDTH +: 4*PE_ID_WIDTH] <= route_buffer;
             end
         end
     end

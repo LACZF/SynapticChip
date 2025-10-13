@@ -1,25 +1,27 @@
+// Direct bus top module
+
 `include "top_system_params.v"
 
 module direct_bus_top #(
-    parameter NUM_RINGS                           = 2,
-    parameter NUM_NODES                           = 4,
-    parameter ADDR_WIDTH                          = 32,
-    parameter DATA_WIDTH                          = 64,
-    parameter OPCODE_WIDTH                        = 8,
-    parameter RING_ID_WIDTH                       = 4,
-    parameter NODE_ID_WIDTH                       = 8,
-    parameter TX_FIFO_DEPTH                       = 4,
-    parameter RX_FIFO_DEPTH                       = 4,
-    parameter RSP_FIFO_DEPTH                      = 4,
+    parameter NUM_RINGS                           = 2,        // Number of Ring buses
+    parameter NUM_NODES                           = 4,        // Number of nodes per Ring
+    parameter ADDR_WIDTH                          = 32,       // Address width
+    parameter DATA_WIDTH                          = 64,       // Data width
+    parameter OPCODE_WIDTH                        = 8,        // Width of operation type: read/write/response, etc.
+    parameter RING_ID_WIDTH                       = 4,        // Ring ID width
+    parameter NODE_ID_WIDTH                       = 8,        // Node ID width
+    parameter TX_FIFO_DEPTH                       = 4,        // Transmit FIFO depth
+    parameter RX_FIFO_DEPTH                       = 4,        // Receive FIFO depth
+    parameter RSP_FIFO_DEPTH                      = 4,        // Response FIFO depth
     parameter NUM_CORES                           = 4,
     parameter GPIO_WIDTH                          = 32,
     parameter SPI_CS_NUM                          = 1,
-    parameter MATCH_TYPE_WIDTH                    = 2,
     parameter NUM_PES                             = 4,
     parameter PE_ARRAY_ROWS                       = 2,
     parameter PE_ARRAY_COLS                       = 2,
     parameter INST_WIDTH                          = 32,
-    parameter PE_ID_WIDTH                         = 4
+    parameter PE_ID_WIDTH                         = 4,
+    parameter MATCH_TYPE_WIDTH                    = 2         // Match type width
 ) (
     input  wire                                   clk,
     input  wire                                   rst_n,
@@ -48,10 +50,10 @@ module direct_bus_top #(
     output reg                                    pe_route_cfg_valid_o,
 
     // GPIO
-    output reg                                    gpio_req_o,
-    output reg                                    gpio_we_o,
-    output reg  [ADDR_WIDTH-1:0]                  gpio_addr_o,
-    output reg  [DATA_WIDTH-1:0]                  gpio_data_in_o,
+    output                                        gpio_req_o,
+    output                                        gpio_we_o,
+    output      [ADDR_WIDTH-1:0]                  gpio_addr_o,
+    output      [DATA_WIDTH-1:0]                  gpio_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  gpio_data_out_i,
     input  reg                                    gpio_ack_i,
     inout       [GPIO_WIDTH-1:0]                  gpio_pins,
@@ -63,20 +65,20 @@ module direct_bus_top #(
     output                                        jtag_tdi_o,
     input  reg                                    jtag_tdo_i,
     input  reg                                    jtag_tdo_en_i,
-    output reg                                    jtag_req_o,
-    output reg                                    jtag_we_o,
-    output reg  [ADDR_WIDTH-1:0]                  jtag_addr_o,
-    output reg  [DATA_WIDTH-1:0]                  jtag_data_in_o,
+    output                                        jtag_req_o,
+    output                                        jtag_we_o,
+    output      [ADDR_WIDTH-1:0]                  jtag_addr_o,
+    output      [DATA_WIDTH-1:0]                  jtag_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  jtag_data_out_i,
     input  reg                                    jtag_ack_i,
     input  reg  [DATA_WIDTH-1:0]                  jtag_debug_data_i,
     input  reg                                    jtag_debug_valid_i,
 
     // SPI
-    output reg                                    spi_req_o,
-    output reg                                    spi_we_o,
-    output reg  [ADDR_WIDTH-1:0]                  spi_addr_o,
-    output reg  [DATA_WIDTH-1:0]                  spi_data_in_o,
+    output wire                                   spi_req_o,
+    output wire                                   spi_we_o,
+    output wire [ADDR_WIDTH-1:0]                  spi_addr_o,
+    output wire [DATA_WIDTH-1:0]                  spi_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  spi_data_out_i,
     input  reg                                    spi_ack_i,
     input  reg  [SPI_CS_NUM-1:0]                  spi_cs_n_i,
@@ -85,10 +87,10 @@ module direct_bus_top #(
     output wire                                   spi_miso_o,
 
     // UART
-    output reg                                    uart_req_o,
-    output reg                                    uart_we_o,
-    output reg  [ADDR_WIDTH-1:0]                  uart_addr_o,
-    output reg  [DATA_WIDTH-1:0]                  uart_data_in_o,
+    output                                        uart_req_o,
+    output                                        uart_we_o,
+    output      [ADDR_WIDTH-1:0]                  uart_addr_o,
+    output      [DATA_WIDTH-1:0]                  uart_data_in_o,
     input  reg  [DATA_WIDTH-1:0]                  uart_data_out_i,
     input  reg                                    uart_ack_i,
     input  reg                                    uart_txd_i,
@@ -98,191 +100,237 @@ module direct_bus_top #(
     input  reg                                    uart_int_i
 );
 
-    // Internal signal definition
-    // wire [ADDR_WIDTH-1:0]                          sys_addr; // Address passed from bus_top
-    wire [DATA_WIDTH-1:0]                         sys_wdata; // Write data passed from bus_top
-    wire [DATA_WIDTH-1:0]                         sys_rdata; // Read data returned to bus_top
-    wire                                          sys_we; // Write enable signal
-    wire [7:0]                                    sys_byte_en; // Byte enable signals
-    wire                                          sys_req; // Request valid signal
-    wire                                          sys_ready; // Response ready signal
-    reg  [2:0]                                    state;
-    reg  [ADDR_WIDTH-1:0]                         saved_addr;
-    reg  [DATA_WIDTH-1:0]                         saved_wdata;
-    reg                                           saved_we;
-    reg  [7:0]                                    saved_byte_en;
-    reg  [NODE_ID_WIDTH-1:0]                      target_device;
+    // Internal signal definitions
+    wire [ADDR_WIDTH-1:0]                         sys_addr;
+    wire [DATA_WIDTH-1:0]                         sys_wdata;
+    wire [DATA_WIDTH-1:0]                         sys_rdata;
+    wire                                          sys_we;
+    wire [7:0]                                    sys_byte_en;
+    wire                                          sys_req;
+    wire                                          sys_ready;
+    wire [1:0]                                    sys_master_id;
 
-    // Internal signal definition
-    wire [ADDR_WIDTH-1:0]                         effective_addr; // Effective address used
-    wire [DATA_WIDTH-1:0]                         cpu_rdata; // Data read by CPU
-    reg                                           cpu_ready; // CPU request ready signal
+    // State machine definitions
+    localparam                                    STATE_IDLE   = 2'b00;
+    localparam                                    STATE_DECODE = 2'b01;
+    localparam                                    STATE_ACCESS = 2'b10;
+    localparam                                    STATE_RESP   = 2'b11;
 
-    // State machine definition
-    localparam STATE_IDLE         = 3'b000;
-    localparam STATE_DECODE       = 3'b001;
-    localparam STATE_ACCESS       = 3'b010;
-    localparam STATE_RESPONSE     = 3'b011;
+    // State register
+    reg [1:0]                                     state;
+    reg [1:0]                                     next_state;
 
-    // Address range decoding
-    always @(*) begin
-        if (cpu_mem_addr_i >= `GPIO_BASE && cpu_mem_addr_i <= `GPIO_END) begin
-            target_device = `NODE_GPIO;
-        end else if (cpu_mem_addr_i >= `UART_BASE && cpu_mem_addr_i <= `UART_END) begin
-            target_device = `NODE_UART;
-        end else if (cpu_mem_addr_i >= `FABRIC_BASE && cpu_mem_addr_i <= `FABRIC_END) begin
-            target_device = `NODE_PE;
-        end else if (cpu_mem_addr_i >= `RAM_BASE && cpu_mem_addr_i <= `RAM_END) begin
-            target_device = `NODE_RAM;
-        end else if (cpu_mem_addr_i >= `ROM_BASE && cpu_mem_addr_i <= `ROM_END) begin
-            target_device = `NODE_ROM;
-        end else if (cpu_mem_addr_i >= `JTAG_BASE && cpu_mem_addr_i <= `JTAG_END) begin
-            target_device = `NODE_JTAG;
-        end else if (cpu_mem_addr_i >= `SPI_BASE && cpu_mem_addr_i <= `SPI_END) begin
-            target_device = `NODE_SPI;
+    // Decode signals
+    reg                                           cpu_request_valid;
+    reg [ADDR_WIDTH-1:0]                          cpu_request_addr;
+    reg [DATA_WIDTH-1:0]                          cpu_request_wdata;
+    reg                                           cpu_request_we;
+    reg [7:0]                                     cpu_request_byte_en;
+
+    // GPIO signals
+    reg                                           gpio_request_valid;
+    reg [ADDR_WIDTH-1:0]                          gpio_request_addr;
+    reg [DATA_WIDTH-1:0]                          gpio_request_wdata;
+    reg                                           gpio_request_we;
+
+    // UART signals
+    reg                                           uart_request_valid;
+    reg [ADDR_WIDTH-1:0]                          uart_request_addr;
+    reg [DATA_WIDTH-1:0]                          uart_request_wdata;
+    reg                                           uart_request_we;
+
+    // PE signals
+    reg                                           pe_request_valid;
+    reg [ADDR_WIDTH-1:0]                          pe_request_addr;
+    reg [DATA_WIDTH-1:0]                          pe_request_wdata;
+    reg                                           pe_request_we;
+
+    // JTAG signals
+    reg                                           jtag_request_valid;
+    reg [ADDR_WIDTH-1:0]                          jtag_request_addr;
+    reg [DATA_WIDTH-1:0]                          jtag_request_wdata;
+    reg                                           jtag_request_we;
+
+    // SPI signals
+    reg                                           spi_request_valid;
+    reg [ADDR_WIDTH-1:0]                          spi_request_addr;
+    reg [DATA_WIDTH-1:0]                          spi_request_wdata;
+    reg                                           spi_request_we;
+
+    // Address range definitions
+    localparam                                    GPIO_ADDR_START   = 32'h0000_1000;
+    localparam                                    GPIO_ADDR_END     = 32'h0000_1FFF;
+    localparam                                    UART_ADDR_START   = 32'h0000_2000;
+    localparam                                    UART_ADDR_END     = 32'h0000_2FFF;
+    localparam                                    PE_ADDR_START     = 32'h0000_3000;
+    localparam                                    PE_ADDR_END       = 32'h0000_3FFF;
+    localparam                                    JTAG_ADDR_START   = 32'h0000_4000;
+    localparam                                    JTAG_ADDR_END     = 32'h0000_4FFF;
+    localparam                                    SPI_ADDR_START    = 32'h0000_5000;
+    localparam                                    SPI_ADDR_END      = 32'h0000_5FFF;
+
+    // Address decode logic
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            gpio_request_valid <= 1'b0;
+            uart_request_valid <= 1'b0;
+            pe_request_valid <= 1'b0;
+            jtag_request_valid <= 1'b0;
+            spi_request_valid <= 1'b0;
+        end else if (state == STATE_DECODE && cpu_request_valid) begin
+            // Decode address range
+            if (cpu_request_addr >= GPIO_ADDR_START && cpu_request_addr <= GPIO_ADDR_END) begin
+                gpio_request_valid <= 1'b1;
+                gpio_request_addr <= cpu_request_addr;
+                gpio_request_wdata <= cpu_request_wdata;
+                gpio_request_we <= cpu_request_we;
+            end else if (cpu_request_addr >= UART_ADDR_START && cpu_request_addr <= UART_ADDR_END) begin
+                uart_request_valid <= 1'b1;
+                uart_request_addr <= cpu_request_addr;
+                uart_request_wdata <= cpu_request_wdata;
+                uart_request_we <= cpu_request_we;
+            end else if (cpu_request_addr >= PE_ADDR_START && cpu_request_addr <= PE_ADDR_END) begin
+                pe_request_valid <= 1'b1;
+                pe_request_addr <= cpu_request_addr;
+                pe_request_wdata <= cpu_request_wdata;
+                pe_request_we <= cpu_request_we;
+            end else if (cpu_request_addr >= JTAG_ADDR_START && cpu_request_addr <= JTAG_ADDR_END) begin
+                jtag_request_valid <= 1'b1;
+                jtag_request_addr <= cpu_request_addr;
+                jtag_request_wdata <= cpu_request_wdata;
+                jtag_request_we <= cpu_request_we;
+            end else if (cpu_request_addr >= SPI_ADDR_START && cpu_request_addr <= SPI_ADDR_END) begin
+                spi_request_valid <= 1'b1;
+                spi_request_addr <= cpu_request_addr;
+                spi_request_wdata <= cpu_request_wdata;
+                spi_request_we <= cpu_request_we;
+            end
         end else begin
-            target_device = {NODE_ID_WIDTH{1'b1}}; // Undefined address
+            gpio_request_valid <= 1'b0;
+            uart_request_valid <= 1'b0;
+            pe_request_valid <= 1'b0;
+            jtag_request_valid <= 1'b0;
+            spi_request_valid <= 1'b0;
         end
     end
-
-    // Calculate effective address (remove base address)
-    assign effective_addr = cpu_mem_addr_i - (
-        target_device == `NODE_GPIO ? `GPIO_BASE :
-        target_device == `NODE_UART ? `UART_BASE :
-        target_device == `NODE_PE ? `FABRIC_BASE :
-        target_device == `NODE_RAM ? `RAM_BASE :
-        target_device == `NODE_ROM ? `ROM_BASE :
-        target_device == `NODE_JTAG ? `JTAG_BASE :
-        target_device == `NODE_SPI ? `SPI_BASE : 0
-    );
 
     // State machine implementation
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= STATE_IDLE;
-            cpu_ready <= 1'b0;
-            uart_req_o <= 1'b0;
-            gpio_req_o <= 1'b0;
         end else begin
-            case (state)
-                STATE_IDLE: begin
-                    cpu_ready <= 1'b0;
-                    uart_req_o <= 1'b0;
-                    gpio_req_o <= 1'b0;
-
-                    if (cpu_mem_req_i) begin
-                        state <= STATE_DECODE;
-                        saved_addr <= effective_addr;
-                        saved_wdata <= cpu_mem_wdata_i;
-                        saved_we <= cpu_mem_we_i;
-                    end
-                end
-
-                STATE_DECODE: begin
-                    case (target_device)
-                        `NODE_UART: begin // UART module
-                            uart_req_o <= 1'b1;
-                            uart_we_o <= saved_we;
-                            uart_addr_o <= saved_addr;
-                            uart_data_in_o <= saved_wdata;
-                            state <= STATE_ACCESS;
-                        end
-                        `NODE_GPIO: begin // GPIO module
-                            gpio_req_o <= 1'b1;
-                            gpio_we_o <= saved_we;
-                            gpio_addr_o <= saved_addr;
-                            gpio_data_in_o <= saved_wdata;
-                            state <= STATE_ACCESS;
-                        end
-                        `NODE_PE: begin // PE array
-                            // Handle PE control requests
-                            // Assuming relevant logic for PE control already exists
-                            cpu_ready <= 1'b1;
-                            state <= STATE_IDLE;
-                        end
-                        `NODE_JTAG: begin // JTAG module
-                            jtag_req_o <= 1'b1;
-                            jtag_we_o <= saved_we;
-                            jtag_addr_o <= saved_addr;
-                            jtag_data_in_o <= saved_wdata;
-                            state <= STATE_ACCESS;
-                        end
-                        `NODE_SPI: begin // SPI module
-                            spi_req_o <= 1'b1;
-                            spi_we_o <= saved_we;
-                            spi_addr_o <= saved_addr;
-                            spi_data_in_o <= saved_wdata;
-                            state <= STATE_ACCESS;
-                        end
-                        default: begin // Undefined address or other modules
-                            cpu_ready <= 1'b1; // Return immediately, read returns 0, write is ignored
-                            state <= STATE_IDLE;
-                        end
-                    endcase
-                end
-
-                STATE_ACCESS: begin
-                    case (target_device)
-                        `NODE_UART: begin
-                            if (uart_ack_i) begin
-                                cpu_ready <= 1'b1;
-                                uart_req_o <= 1'b0;
-                                state <= STATE_IDLE;
-                            end
-                        end
-                        `NODE_GPIO: begin
-                            if (gpio_ack_i) begin
-                                cpu_ready <= 1'b1;
-                                gpio_req_o <= 1'b0;
-                                state <= STATE_IDLE;
-                            end
-                        end
-                        `NODE_JTAG: begin
-                            if (jtag_ack_i) begin
-                                cpu_ready <= 1'b1;
-                                jtag_req_o <= 1'b0;
-                                state <= STATE_IDLE;
-                            end
-                        end
-                        `NODE_SPI: begin
-                            if (spi_ack_i) begin
-                                cpu_ready <= 1'b1;
-                                spi_req_o <= 1'b0;
-                                state <= STATE_IDLE;
-                            end
-                        end
-                        default: begin
-                            state <= STATE_IDLE;
-                        end
-                    endcase
-                end
-
-                default: begin
-                    state <= STATE_IDLE;
-                end
-            endcase
+            state <= next_state;
         end
     end
 
-    // Connect CPU interface
-    assign cpu_mem_ready_o = cpu_ready;
-    assign cpu_mem_rdata_o = (
-        target_device == `NODE_UART ? uart_data_out_i :
-        target_device == `NODE_GPIO ? gpio_data_out_i :
-        target_device == `NODE_JTAG ? jtag_data_out_i :
-        target_device == `NODE_SPI ? spi_data_out_i :
-        0
-    );
-
-    // Other interface connections
-    assign cpu_ext_int_o = uart_int_i || gpio_int_i;
-
-    // Initialize output signals
-    initial begin
-        pe_enable_o = 0;
-        pe_reset_o = 0;
-        pe_inst_valid_o = 0;
-        pe_route_cfg_valid_o = 0;
+    always @(*) begin
+        next_state = state;
+        case (state)
+            STATE_IDLE:
+                if (cpu_mem_req_i) begin
+                    next_state = STATE_DECODE;
+                end
+            STATE_DECODE:
+                next_state = STATE_ACCESS;
+            STATE_ACCESS:
+                if (gpio_ack_i || uart_ack_i || jtag_ack_i || spi_ack_i) begin
+                    next_state = STATE_RESP;
+                end
+            STATE_RESP:
+                next_state = STATE_IDLE;
+            default:
+                next_state = STATE_IDLE;
+        endcase
     end
+
+    // Register CPU requests
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            cpu_request_valid <= 1'b0;
+        end else if (state == STATE_IDLE && cpu_mem_req_i) begin
+            cpu_request_valid <= 1'b1;
+            cpu_request_addr <= cpu_mem_addr_i;
+            cpu_request_wdata <= cpu_mem_wdata_i[63:0];
+            cpu_request_we <= cpu_mem_we_i;
+        end else if (state == STATE_RESP) begin
+            cpu_request_valid <= 1'b0;
+        end
+    end
+
+    // CPU interface connections
+    assign cpu_mem_ready_o = (state == STATE_RESP);
+    assign cpu_mem_rdata_o = {
+        448'h0,
+        gpio_ack_i ? gpio_data_out_i :
+        uart_ack_i ? uart_data_out_i :
+        jtag_ack_i ? jtag_data_out_i :
+        spi_ack_i ? spi_data_out_i :
+        64'h0
+    };
+
+    // Interrupt connections
+    assign cpu_ext_int_o = gpio_int_i | uart_int_i;
+
+    // GPIO connections
+    assign gpio_req_o = gpio_request_valid;
+    assign gpio_we_o = gpio_request_we;
+    assign gpio_addr_o = gpio_request_addr;
+    assign gpio_data_in_o = gpio_request_wdata;
+
+    // UART connections
+    assign uart_req_o = uart_request_valid;
+    assign uart_we_o = uart_request_we;
+    assign uart_addr_o = uart_request_addr;
+    assign uart_data_in_o = uart_request_wdata;
+
+    // PE connections
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pe_enable_o <= {NUM_PES{1'b0}};
+            pe_reset_o <= {NUM_PES{1'b0}};
+            pe_instructions_o <= {NUM_PES*INST_WIDTH{1'b0}};
+            pe_inst_valid_o <= 1'b0;
+            pe_route_config_o <= {NUM_PES*4*PE_ID_WIDTH{1'b0}};
+            pe_route_cfg_valid_o <= 1'b0;
+        end else if (state == STATE_ACCESS && pe_request_valid) begin
+            // Handle PE specific commands
+            // For simplicity, just implement basic enable/disable functionality
+            if (pe_request_addr == PE_ADDR_START) begin
+                pe_enable_o <= pe_request_wdata[NUM_PES-1:0];
+            end else if (pe_request_addr == PE_ADDR_START + 4) begin
+                pe_reset_o <= pe_request_wdata[NUM_PES-1:0];
+            end else if (pe_request_addr == PE_ADDR_START + 8) begin
+                pe_instructions_o <= cpu_mem_wdata_i[NUM_PES*INST_WIDTH-1:0];
+                pe_inst_valid_o <= 1'b1;
+            end else if (pe_request_addr == PE_ADDR_START + 12) begin
+                pe_route_config_o <= cpu_mem_wdata_i[NUM_PES*4*PE_ID_WIDTH-1:0];
+                pe_route_cfg_valid_o <= 1'b1;
+            end
+        end else begin
+            pe_inst_valid_o <= 1'b0;
+            pe_route_cfg_valid_o <= 1'b0;
+        end
+    end
+
+    // JTAG connections
+    assign jtag_req_o = jtag_request_valid;
+    assign jtag_we_o = jtag_request_we;
+    assign jtag_addr_o = jtag_request_addr;
+    assign jtag_data_in_o = jtag_request_wdata;
+
+    // SPI connections
+    assign spi_req_o = spi_request_valid;
+    assign spi_we_o = spi_request_we;
+    assign spi_addr_o = spi_request_addr;
+    assign spi_data_in_o = spi_request_wdata;
+
+    // Default assignments for unused signals
+    // These signals are part of the interface but not used in this simplified model
+    assign jtag_tck_o = 1'b0;
+    assign jtag_tms_o = 1'b0;
+    assign jtag_tdi_o = 1'b0;
+    assign spi_miso_o = 1'b0;
+    assign uart_rxd_o = 1'b0;
+    assign uart_cts_o = 1'b0;
 
 endmodule

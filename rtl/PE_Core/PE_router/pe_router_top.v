@@ -12,23 +12,23 @@ module pe_router_top #(
     input                                   rst_n,
 
     // Configuration interface
-    input                                   cfg_valid,
-    input  [ADDR_WIDTH-1:0]                 cfg_addr,
-    input  [DATA_WIDTH-1:0]                 cfg_data,
-    output                                  cfg_ack,
+    input                                   cfg_valid_i,
+    input  [ADDR_WIDTH-1:0]                 cfg_addr_i,
+    input  [DATA_WIDTH-1:0]                 cfg_data_i,
+    output                                  cfg_ack_o,
 
     // Data input interface
-    input  [NUM_PORTS-1:0]                  data_in_valid,
-    input  [(NUM_PORTS*DATA_WIDTH)-1:0]     data_in,
-    output [NUM_PORTS-1:0]                  data_in_ready,
+    input  [NUM_PORTS-1:0]                  data_in_valid_i,
+    input  [(NUM_PORTS*DATA_WIDTH)-1:0]     data_in_i,
+    output [NUM_PORTS-1:0]                  data_in_ready_o,
 
     // Data output interface
-    output [NUM_PORTS-1:0]                  data_out_valid,
-    output [(NUM_PORTS*DATA_WIDTH)-1:0]     data_out,
-    input  [NUM_PORTS-1:0]                  data_out_ready,
+    output [NUM_PORTS-1:0]                  data_out_valid_o,
+    output [(NUM_PORTS*DATA_WIDTH)-1:0]     data_out_o,
+    input  [NUM_PORTS-1:0]                  data_out_ready_i,
 
     // Status output
-    output [DATA_WIDTH-1:0]                 status
+    output [DATA_WIDTH-1:0]                 status_o
 );
 
     // Internal signals
@@ -46,16 +46,16 @@ module pe_router_top #(
     ) config_inst (
         .clk(clk),
         .rst_n(rst_n),
-        .cfg_valid(cfg_valid),
-        .cfg_addr(cfg_addr),
-        .cfg_data(cfg_data),
-        .cfg_ack(cfg_ack),
-        .route_cfg_valid(route_cfg_valid),
-        .route_cfg_addr(route_cfg_addr),
-        .route_cfg_data(route_cfg_data),
-        .route_cfg_ack(route_cfg_ack),
-        .route_status(route_status),
-        .status_out(status)
+        .cfg_valid_i(cfg_valid_i),
+        .cfg_addr_i(cfg_addr_i),
+        .cfg_data_i(cfg_data_i),
+        .cfg_ack_o(cfg_ack_o),
+        .route_cfg_valid_o(route_cfg_valid),
+        .route_cfg_addr_o(route_cfg_addr),
+        .route_cfg_data_o(route_cfg_data),
+        .route_cfg_ack_i(route_cfg_ack),
+        .route_status_i(route_status),
+        .status_out_o(status_o)
     );
 
     // Instantiate router core
@@ -66,17 +66,17 @@ module pe_router_top #(
     ) core_inst (
         .clk(clk),
         .rst_n(rst_n),
-        .cfg_valid(route_cfg_valid),
-        .cfg_addr(route_cfg_addr),
-        .cfg_data(route_cfg_data),
-        .cfg_ack(route_cfg_ack),
-        .data_in_valid(data_in_valid),
-        .data_in(data_in),
-        .data_in_ready(data_in_ready),
-        .data_out_valid(data_out_valid),
-        .data_out(data_out),
-        .data_out_ready(data_out_ready),
-        .status(route_status)
+        .cfg_valid_i(route_cfg_valid),
+        .cfg_addr_i(route_cfg_addr),
+        .cfg_data_i(route_cfg_data),
+        .cfg_ack_o(route_cfg_ack),
+        .data_in_valid_i(data_in_valid_i),
+        .data_in_i(data_in_i),
+        .data_in_ready_o(data_in_ready_o),
+        .data_out_valid_o(data_out_valid_o),
+        .data_out_o(data_out_o),
+        .data_out_ready_i(data_out_ready_i),
+        .status_o(route_status)
     );
 
 endmodule

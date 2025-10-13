@@ -166,14 +166,14 @@ module ring_bus_node #(
     ) tx_fifo (
         .clk(clk),
         .rst_n(rst_n),
-        .wr_en(tx_req_valid_i),
+        .wr_en_i(tx_req_valid_i),
         /* This node is the source during TX */
-        .data_in({tx_req_valid_i, tx_req_is_order_i, tx_req_opcode_i, tx_req_match_type_i, node_id, tx_req_target_id_i, tx_req_addr_i, tx_req_data_i}),
-        .rd_en(tx_req_rd_en),
-        .rd_done(tx_req_rd_done),
-        .data_out({tx_req_valid, tx_req_is_order, tx_req_opcode, tx_req_match_type, tx_req_source_id, tx_req_target_id, tx_req_addr, tx_req_data}),
-        .full(tx_fifo_full),
-        .empty(tx_fifo_empty)
+        .data_in_i({tx_req_valid_i, tx_req_is_order_i, tx_req_opcode_i, tx_req_match_type_i, node_id, tx_req_target_id_i, tx_req_addr_i, tx_req_data_i}),
+        .rd_en_i(tx_req_rd_en),
+        .rd_done_o(tx_req_rd_done),
+        .data_out_o({tx_req_valid, tx_req_is_order, tx_req_opcode, tx_req_match_type, tx_req_source_id, tx_req_target_id, tx_req_addr, tx_req_data}),
+        .full_o(tx_fifo_full),
+        .empty_o(tx_fifo_empty)
     );
 
     // Receive FIFO instantiation - for rx direction receive buffer
@@ -183,13 +183,13 @@ module ring_bus_node #(
     ) rx_fifo (
         .clk(clk),
         .rst_n(rst_n),
-        .wr_en(is_for_me && pre_req_valid_i),
-        .data_in({pre_req_valid_i, pre_req_is_order_i, pre_req_opcode_i, pre_req_match_type_i, pre_req_source_id_i, pre_req_target_id_i, pre_req_addr_i, pre_req_data_i}),
-        .rd_en(rx_req_rd_en),
-        .rd_done(rx_req_rd_done),
-        .data_out({rx_req_valid, rx_req_is_order, rx_req_opcode, rx_req_match_type, rx_req_source_id, rx_req_target_id, rx_req_addr, rx_req_data}),
-        .full(rx_fifo_full),
-        .empty(rx_fifo_empty)
+        .wr_en_i(is_for_me && pre_req_valid_i),
+        .data_in_i({pre_req_valid_i, pre_req_is_order_i, pre_req_opcode_i, pre_req_match_type_i, pre_req_source_id_i, pre_req_target_id_i, pre_req_addr_i, pre_req_data_i}),
+        .rd_en_i(rx_req_rd_en),
+        .rd_done_o(rx_req_rd_done),
+        .data_out_o({rx_req_valid, rx_req_is_order, rx_req_opcode, rx_req_match_type, rx_req_source_id, rx_req_target_id, rx_req_addr, rx_req_data}),
+        .full_o(rx_fifo_full),
+        .empty_o(rx_fifo_empty)
     );
 
     // Response FIFO instantiation - for rsp receive buffer
@@ -199,13 +199,13 @@ module ring_bus_node #(
     ) rsp_fifo (
         .clk(clk),
         .rst_n(rst_n),
-        .wr_en((rx_req_opcode == `RING_OP_READ || rx_req_opcode == `RING_OP_WRITE) && rx_req_valid),
-        .data_in({node_id, rx_req_source_id, rx_req_addr, rx_req_data}),
-        .rd_en(rsp_rd_en),
-        .rd_done(rsp_rd_done),
-        .data_out({rsp_source_id_fifo, rsp_target_id_fifo, rsp_addr_fifo, rsp_data_fifo}),
-        .full(rsp_fifo_full),
-        .empty(rsp_fifo_empty)
+        .wr_en_i((rx_req_opcode == `RING_OP_READ || rx_req_opcode == `RING_OP_WRITE) && rx_req_valid),
+        .data_in_i({node_id, rx_req_source_id, rx_req_addr, rx_req_data}),
+        .rd_en_i(rsp_rd_en),
+        .rd_done_o(rsp_rd_done),
+        .data_out_o({rsp_source_id_fifo, rsp_target_id_fifo, rsp_addr_fifo, rsp_data_fifo}),
+        .full_o(rsp_fifo_full),
+        .empty_o(rsp_fifo_empty)
     );
 
     // Transmit state machine

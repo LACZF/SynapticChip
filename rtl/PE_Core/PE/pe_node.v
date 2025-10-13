@@ -14,43 +14,43 @@ module pe_node #(
 ) (
     input                        clk,
     input                        rst_n,
-    input                        enable,
+    input                        enable_i,
 
     // Instruction interface
-    input [INST_WIDTH-1:0]       instruction,
-    input                        inst_valid,
+    input [INST_WIDTH-1:0]       instruction_i,
+    input                        inst_valid_i,
 
     // Data memory interface (connected to shared memory or upper-level memory)
-    output                       ext_mem_req,
-    output                       ext_mem_we,
-    output [ADDR_WIDTH-1:0]      ext_mem_addr,
-    output [DATA_WIDTH-1:0]      ext_mem_data_out,
-    input  [DATA_WIDTH-1:0]      ext_mem_data_in,
-    input                        ext_mem_ack,
+    output                       ext_mem_req_o,
+    output                       ext_mem_we_o,
+    output [ADDR_WIDTH-1:0]      ext_mem_addr_o,
+    output [DATA_WIDTH-1:0]      ext_mem_data_out_o,
+    input  [DATA_WIDTH-1:0]      ext_mem_data_in_i,
+    input                        ext_mem_ack_i,
 
     // Neighbor PE communication interface
-    input                        north_valid,
-    input  [DATA_WIDTH-1:0]      north_data,
-    output                       north_ready,
+    input                        north_valid_i,
+    input  [DATA_WIDTH-1:0]      north_data_i,
+    output                       north_ready_o,
 
-    input                        south_valid,
-    input  [DATA_WIDTH-1:0]      south_data,
-    output                       south_ready,
+    input                        south_valid_i,
+    input  [DATA_WIDTH-1:0]      south_data_i,
+    output                       south_ready_o,
 
-    input                        east_valid,
-    input  [DATA_WIDTH-1:0]      east_data,
-    output                       east_ready,
+    input                        east_valid_i,
+    input  [DATA_WIDTH-1:0]      east_data_i,
+    output                       east_ready_o,
 
-    input                        west_valid,
-    input  [DATA_WIDTH-1:0]      west_data,
-    output                       west_ready,
+    input                        west_valid_i,
+    input  [DATA_WIDTH-1:0]      west_data_i,
+    output                       west_ready_o,
 
-    output                       out_valid,
-    output [DATA_WIDTH-1:0]      out_data,
+    output                       out_valid_o,
+    output [DATA_WIDTH-1:0]      out_data_o,
 
     // Status output
-    output [DATA_WIDTH-1:0]      status,
-    output                       busy
+    output [DATA_WIDTH-1:0]      status_o,
+    output                       busy_o
 );
 
     // Local memory
@@ -90,14 +90,14 @@ module pe_node #(
     end
 
     // Memory data selection
-    assign mem_data_in = local_access ? local_mem[mem_addr] : ext_mem_data_in;
-    assign mem_ack = local_access ? local_mem_ack : ext_mem_ack;
+    assign mem_data_in = local_access ? local_mem[mem_addr] : ext_mem_data_in_i;
+    assign mem_ack = local_access ? local_mem_ack : ext_mem_ack_i;
 
     // External memory interface
-    assign ext_mem_req = mem_req && ext_access;
-    assign ext_mem_we = mem_we;
-    assign ext_mem_addr = mem_addr;
-    assign ext_mem_data_out = mem_data_out;
+    assign ext_mem_req_o = mem_req && ext_access;
+    assign ext_mem_we_o = mem_we;
+    assign ext_mem_addr_o = mem_addr;
+    assign ext_mem_data_out_o = mem_data_out;
 
     // PE core instantiation
     pe_core #(
@@ -111,31 +111,31 @@ module pe_node #(
     ) core_inst (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(enable),
-        .instruction(instruction),
-        .inst_valid(inst_valid),
-        .mem_req(mem_req),
-        .mem_we(mem_we),
-        .mem_addr(mem_addr),
-        .mem_data_out(mem_data_out),
-        .mem_data_in(mem_data_in),
-        .mem_ack(mem_ack),
-        .north_valid(north_valid),
-        .north_data(north_data),
-        .north_ready(north_ready),
-        .south_valid(south_valid),
-        .south_data(south_data),
-        .south_ready(south_ready),
-        .east_valid(east_valid),
-        .east_data(east_data),
-        .east_ready(east_ready),
-        .west_valid(west_valid),
-        .west_data(west_data),
-        .west_ready(west_ready),
-        .out_valid(out_valid),
-        .out_data(out_data),
-        .status(status),
-        .busy(busy)
+        .enable_i(enable_i),
+        .instruction_i(instruction_i),
+        .inst_valid_i(inst_valid_i),
+        .mem_req_o(mem_req),
+        .mem_we_o(mem_we),
+        .mem_addr_o(mem_addr),
+        .mem_data_out_o(mem_data_out),
+        .mem_data_in_i(mem_data_in),
+        .mem_ack_i(mem_ack),
+        .north_valid_i(north_valid_i),
+        .north_data_i(north_data_i),
+        .north_ready_o(north_ready_o),
+        .south_valid_i(south_valid_i),
+        .south_data_i(south_data_i),
+        .south_ready_o(south_ready_o),
+        .east_valid_i(east_valid_i),
+        .east_data_i(east_data_i),
+        .east_ready_o(east_ready_o),
+        .west_valid_i(west_valid_i),
+        .west_data_i(west_data_i),
+        .west_ready_o(west_ready_o),
+        .out_valid_o(out_valid_o),
+        .out_data_o(out_data_o),
+        .status_o(status_o),
+        .busy_o(busy_o)
     );
 
 endmodule

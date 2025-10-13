@@ -19,7 +19,15 @@ module instruction_rom #(
 
     // Initialize memory, read instructions from file
     initial begin
+        // Try to read instructions from file, will handle any missing entries below
         $readmemh(INSTR_FILE, mem);
+
+        // Fill remaining memory with NOP instructions if file has fewer words
+        for (i = 0; i < MEM_SIZE; i = i + 1) begin
+            if (mem[i] === {INSTR_WIDTH{1'bx}}) begin
+                mem[i] = {INSTR_WIDTH{1'b0}}; // NOP-like instruction (all zeros)
+            end
+        end
 
     `ifdef DEBUG
         $display("First few instructions loaded:");
