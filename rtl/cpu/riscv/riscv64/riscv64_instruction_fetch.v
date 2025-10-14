@@ -19,6 +19,7 @@ module riscv64_instruction_fetch #(
 );
 
     reg [63:0] pc_next;
+    reg [63:0] next_pc_value;
 `ifdef DEBUG
     reg cache_req_prev; // Register for detecting cache_req changes
 
@@ -54,7 +55,7 @@ module riscv64_instruction_fetch #(
             $display("[%0t ps] IF: Reset, initializing PC=0x%h", $time, 64'h8000_0000);
         `endif
             pc_o <= 64'h8000_0000;
-            pc_next <= 64'h8000_0000;
+            pc_next <= 64'h8000_0004;
             instr_o <= 32'h0000_0013; // NOP
             cache_req_o <= 1'b1; // Request instruction immediately after reset
             cache_addr_o <= 64'h8000_0000;
@@ -93,12 +94,24 @@ module riscv64_instruction_fetch #(
                     $display("[%0t ps] IF: Cache data invalid, using NOP instead", $time);
                 `endif
                 end
+                // Calculate next PC value first
+                next_pc_value = pc_next + 4;
+
                 // Update PC and next fetch address
                 pc_o <= pc_next;
-                pc_next <= pc_next + 4;
+                pc_next <= next_pc_value;
+
                 // Continue requesting next instruction
                 cache_req_o <= 1'b1;
-                cache_addr_o <= pc_next + 4;
+
+                // Use updated next_pc_value for next cache address
+                cache_addr_o <= next_pc_value;
+
+            `ifdef DEBUG
+                // Debug information to verify PC update
+                $display("[%0t ps] IF: PC updated from 0x%h to 0x%h, next PC will be 0x%h, cache addr set to 0x%h",
+                         $time, pc_o, pc_next, next_pc_value, cache_addr_o);
+            `endif
             end
         end else begin
         `ifdef DEBUG
