@@ -1,4 +1,3 @@
-// riscv64_instruction_decode.v
 module riscv64_instruction_decode #(
     parameter ADDR_WIDTH        = 64,
     parameter DATA_WIDTH        = 64
@@ -29,6 +28,8 @@ module riscv64_instruction_decode #(
     localparam [2:0] ALU_SLTU   = 3'b110;
 
     wire [6:0] opcode = instr_in_i[6:0];
+    wire [2:0] funct3 = instr_in_i[14:12];
+    wire       funct7_30 = instr_in_i[30]; // 用于区分 ADD/SUB, SRL/SRA 等指令
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -65,18 +66,119 @@ module riscv64_instruction_decode #(
                     imm_o <= 64'b0;
             endcase
 
-            // Control signal generation
+            // Control signal generation with correct bit assignments
             case (opcode)
-                7'b0110111: ctrl_signals_o <= {1'b1, 3'b000, 1'b0, 1'b0, 1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0}; // LUI
-                7'b0010111: ctrl_signals_o <= {1'b1, 3'b000, 1'b1, 1'b0, 1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0}; // AUIPC
-                7'b1101111: ctrl_signals_o <= {1'b1, 3'b000, 1'b1, 1'b1, 1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0}; // JAL
-                7'b1100111: ctrl_signals_o <= {1'b1, 3'b000, 1'b0, 1'b1, 1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0}; // JALR
-                7'b1100011: ctrl_signals_o <= {1'b0, 3'b001, 1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0}; // Branch
-                7'b0000011: ctrl_signals_o <= {1'b1, 3'b010, 1'b0, 1'b0, 1'b1, 1'b1, 1'b0, 1'b0, funct3_i, 1'b0}; // Load
-                7'b0100011: ctrl_signals_o <= {1'b0, 3'b011, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b0, funct3_i, 1'b0}; // Store
-                7'b0010011: ctrl_signals_o <= {1'b1, 3'b100, 1'b0, 1'b0, 1'b1, 1'b0, 1'b0, 1'b0, funct3_i, 1'b0}; // Immediate arithmetic
-                7'b0110011: ctrl_signals_o <= {1'b1, 3'b101, 1'b0, 1'b0, 1'b1, 1'b0, 1'b0, 1'b0, funct3_i, instr_in_i[30]}; // Register arithmetic
-                default:    ctrl_signals_o <= 16'b0;
+                7'b0110111: begin // LUI
+                    ctrl_signals_o[15] = 1'b1;     // reg_op
+                    ctrl_signals_o[14:12] = 3'b000; // alu_op
+                    ctrl_signals_o[11] = 1'b0;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b1;       // reg_write
+                    ctrl_signals_o[6] = 1'b0;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b0;       // pc_to_reg
+                    ctrl_signals_o[4:0] = 5'b0;     // unused
+                end
+                7'b0010111: begin // AUIPC
+                    ctrl_signals_o[15] = 1'b1;     // reg_op
+                    ctrl_signals_o[14:12] = 3'b000; // alu_op
+                    ctrl_signals_o[11] = 1'b1;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b1;       // reg_write
+                    ctrl_signals_o[6] = 1'b1;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b0;       // pc_to_reg
+                    ctrl_signals_o[4:0] = 5'b0;     // unused
+                end
+                7'b1101111: begin // JAL
+                    ctrl_signals_o[15] = 1'b1;     // reg_op
+                    ctrl_signals_o[14:12] = 3'b000; // alu_op
+                    ctrl_signals_o[11] = 1'b1;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b1;       // reg_write
+                    ctrl_signals_o[6] = 1'b1;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b1;       // pc_to_reg
+                    ctrl_signals_o[4:0] = 5'b0;     // unused
+                end
+                7'b1100111: begin // JALR
+                    ctrl_signals_o[15] = 1'b1;     // reg_op
+                    ctrl_signals_o[14:12] = 3'b000; // alu_op
+                    ctrl_signals_o[11] = 1'b0;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b1;       // reg_write
+                    ctrl_signals_o[6] = 1'b0;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b1;       // pc_to_reg
+                    ctrl_signals_o[4:0] = 5'b0;     // unused
+                end
+                7'b1100011: begin // Branch
+                    ctrl_signals_o[15] = 1'b0;     // reg_op
+                    ctrl_signals_o[14:12] = 3'b001; // alu_op
+                    ctrl_signals_o[11] = 1'b1;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b0;       // reg_write
+                    ctrl_signals_o[6] = 1'b1;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b0;       // pc_to_reg
+                    ctrl_signals_o[4:0] = 5'b0;     // unused
+                end
+                7'b0000011: begin // Load
+                    ctrl_signals_o[15] = 1'b1;     // reg_op
+                    ctrl_signals_o[14:12] = 3'b010; // alu_op
+                    ctrl_signals_o[11] = 1'b0;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b1;       // mem_read
+                    ctrl_signals_o[8] = 1'b1;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b1;       // reg_write
+                    ctrl_signals_o[6] = 1'b0;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b0;       // pc_to_reg
+                    ctrl_signals_o[4:0] = {funct3_i, 2'b0}; // funct3
+                end
+                7'b0100011: begin // Store
+                    ctrl_signals_o[15] = 1'b0;     // reg_op
+                    ctrl_signals_o[14:12] = 3'b011; // alu_op
+                    ctrl_signals_o[11] = 1'b0;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b0;       // reg_write
+                    ctrl_signals_o[6] = 1'b0;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b0;       // pc_to_reg
+                    ctrl_signals_o[4:0] = {funct3_i, 2'b0}; // funct3
+                end
+                7'b0010011: begin // Immediate arithmetic - 修复：将reg_op设置为0，alu_src设置为1
+                    ctrl_signals_o[15] = 1'b0;     // reg_op: 设置为0，使执行阶段使用alu_op选择操作
+                    ctrl_signals_o[14:12] = funct3; // alu_op: 使用funct3作为操作码
+                    ctrl_signals_o[11] = 1'b1;      // alu_src: 设置为1，使用立即数作为第二个操作数
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b1;       // reg_write
+                    ctrl_signals_o[6] = 1'b0;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b0;       // pc_to_reg
+                    ctrl_signals_o[4:0] = {funct3_i, 2'b0}; // funct3
+                end
+                7'b0110011: begin // Register arithmetic with reg_op
+                    ctrl_signals_o[15] = 1'b1;     // reg_op: 标识为寄存器算术指令
+                    ctrl_signals_o[14:12] = funct3; // alu_op: 使用 funct3 作为操作码
+                    ctrl_signals_o[11] = 1'b0;      // alu_src
+                    ctrl_signals_o[10] = 1'b0;      // unused
+                    ctrl_signals_o[9] = 1'b0;       // unused
+                    ctrl_signals_o[8] = 1'b0;       // mem_to_reg
+                    ctrl_signals_o[7] = 1'b1;       // reg_write
+                    ctrl_signals_o[6] = 1'b0;       // alu_src_pc
+                    ctrl_signals_o[5] = 1'b0;       // pc_to_reg
+                    ctrl_signals_o[4:0] = {funct3_i, funct7_30, 1'b0}; // 其他控制信号
+                end
+                default: begin
+                    ctrl_signals_o <= 16'b0;
+                end
             endcase
         end
     end

@@ -1,4 +1,6 @@
 // riscv64_write_back.v
+`timescale 1ns / 1ps
+
 module riscv64_write_back #(
     parameter ADDR_WIDTH        = 64,
     parameter DATA_WIDTH        = 64
@@ -25,11 +27,11 @@ module riscv64_write_back #(
     output reg                  wb_valid_o
 );
 
-    // Control signals
-    wire       reg_write  = ctrl_in_i[10];
-    wire       mem_to_reg = ctrl_in_i[4];
-    wire       pc_to_reg  = ctrl_in_i[3];
-    wire       alu_src_pc = ctrl_in_i[2];
+    // Control signals - 修复位定义，确保与 instruction_decode 模块一致
+    wire       reg_write  = ctrl_in_i[7];  // 寄存器写使能信号位于第7位
+    wire       mem_to_reg = ctrl_in_i[8];  // 内存到寄存器信号位于第8位
+    wire       pc_to_reg  = ctrl_in_i[5];  // PC到寄存器信号位于第5位
+    wire       alu_src_pc = ctrl_in_i[6];  // ALU源PC信号位于第6位
     wire [2:0] alu_op     = ctrl_in_i[14:12];
 
     // Instruction fields
@@ -41,21 +43,18 @@ module riscv64_write_back #(
     // Internal signals
     reg [63:0] computed_result;
 
-    // Result selection function
+    // Result selection function - 修复选择逻辑，确保正确选择结果源
     function [63:0] select_result;
         input [63:0] alu_val;
         input [63:0] mem_val;
         input [63:0] pc_val;
         input mem_to_reg;
         input pc_to_reg;
-        input alu_src_pc;
         begin
             if (pc_to_reg) begin
                 select_result = pc_val;
             end else if (mem_to_reg) begin
                 select_result = mem_val;
-            end else if (alu_src_pc) begin
-                select_result = alu_val;
             end else begin
                 select_result = alu_val;
             end
@@ -104,13 +103,31 @@ module riscv64_write_back #(
             pc_out_o <= pc_in_i;
             instr_out_o <= instr_in_i;
             wb_valid_o <= 1'b1;
+        `ifdef DEBUG
+            // Debug: 追踪输入值
+            $display("WB Debug: PC=%h, Instr=%h, Opcode=%h, alu_result_i=%h, mem_result_i=%h",
+                     pc_in_i, instr_in_i, opcode, alu_result_i, mem_result_i);
+            $display("WB Debug: reg_write=%b, mem_to_reg=%b, pc_to_reg=%b, alu_src_pc=%b",
+                     reg_write, mem_to_reg, pc_to_reg, alu_src_pc);
+        `endif
 
-            // Calculate write-back data
-            computed_result = select_result(alu_result_i, mem_result_i, pc_in_i + 4,
-                                          mem_to_reg, pc_to_reg, alu_src_pc);
+            // Calculate write-back data - 修复计算逻辑
+            if (opcode == 7'b0110111 || opcode == 7'b0010111 || opcode == 7'b1101111 || opcode == 7'b1100111) begin
+                // For special instructions, directly use compute_special_result
+                reg_wdata_o <= compute_special_result(alu_result_i, pc_in_i, instr_in_i, opcode);
+            end else begin
+                // For other instructions, use select_result directly to avoid timing issues
+                reg_wdata_o <= select_result(alu_result_i, mem_result_i, pc_in_i + 4,
+                                           mem_to_reg, pc_to_reg);
+                // Store computed_result for debug purposes only
+                computed_result = select_result(alu_result_i, mem_result_i, pc_in_i + 4,
+                                              mem_to_reg, pc_to_reg);
+            end
 
-            // Process special instructions
-            reg_wdata_o <= compute_special_result(computed_result, pc_in_i, instr_in_i, opcode);
+        `ifdef DEBUG
+            // Debug: 追踪计算结果
+            $display("WB Debug: computed_result=%h, reg_wdata_o=%h", computed_result, reg_wdata_o);
+        `endif
 
             // Set write-back address and enable
             rd_o <= instr_rd;

@@ -96,6 +96,7 @@ module riscv64_core #(
     wire [4:0] wb_rd;
     wire wb_reg_we;
     wire [63:0] wb_reg_wdata;
+    wire wb_valid;
 
     // L1-L2 interface signals
     wire l1_l2_ready;
@@ -225,7 +226,7 @@ module riscv64_core #(
         .reg_wdata_o(wb_reg_wdata),
         .pc_out_o(pc_wb),
         .instr_out_o(instr_wb),
-        .wb_valid_o(debug_wb_valid_o)
+        .wb_valid_o(wb_valid)
     );
 
     // Register file
@@ -256,10 +257,11 @@ module riscv64_core #(
         .rd_ex_i(instr_ex[11:7]),
         .rd_mem_i(instr_mem[11:7]),
         .rd_wb_i(wb_rd),
-        .reg_we_ex_i(ctrl_ex[10]),
-        .reg_we_mem_i(ctrl_mem[10]),
+        // 修复控制信号连接，使用正确的位定义
+        .reg_we_ex_i(ctrl_ex[7]),   // 寄存器写使能信号位于第7位
+        .reg_we_mem_i(ctrl_mem[7]), // 寄存器写使能信号位于第7位
         .reg_we_wb_i(wb_reg_we),
-        .mem_read_ex_i(ctrl_ex[9]),
+        .mem_read_ex_i(ctrl_ex[8]), // 内存读信号位于第8位
         .branch_taken_i(branch_taken),
         .data_hazard_o(),
         .control_hazard_o(),
@@ -274,10 +276,29 @@ module riscv64_core #(
         .flush_mem_o(flush_mem)
     );
 
-    // Debug output
+    // Debug output - 修复连接，确保debug接口正确获取写回阶段的寄存器信息
     assign debug_pc_o = pc_wb;
     assign debug_instr_o = instr_wb;
+    assign debug_wb_valid_o = wb_valid;
     assign debug_wb_rd_o = wb_rd;
     assign debug_wb_value_o = wb_reg_wdata;
+
+`ifdef DEBUG
+    // Debug: 监测控制信号和寄存器写入
+    always @(posedge clk) begin
+        if (rst_n) begin
+            // 监测寄存器写入
+            if (wb_reg_we && (wb_rd != 5'b0)) begin
+                $display("Core: Register Write - rd=%d, data=%h, wb_valid=%b", wb_rd, wb_reg_wdata, wb_valid);
+            end
+
+            // 监测控制信号
+            if (instr_id != 32'h00000013) begin // 不是NOP指令
+                $display("Core: Instruction at PC=%h: instr=%h, opcode=%h, reg_write=%b, mem_to_reg=%b",
+                         pc_id, instr_id, opcode, ctrl_id[7], ctrl_id[8]);
+            end
+        end
+    end
+`endif
 
 endmodule

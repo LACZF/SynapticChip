@@ -35,9 +35,11 @@ module riscv64_memory_access #(
 );
 
     // Control signals
-    wire       mem_read        = ctrl_in_i[9];
-    wire       mem_write       = ctrl_in_i[8];
-    wire [2:0] mem_width       = ctrl_in_i[7:5];
+    // 修复：修正控制信号的位定义，与指令解码模块保持一致
+    wire       mem_read        = ctrl_in_i[9];    // 内存读使能
+    wire       mem_to_reg      = ctrl_in_i[8];    // 内存到寄存器
+    wire       reg_write       = ctrl_in_i[7];    // 寄存器写使能
+    wire [2:0] mem_width       = ctrl_in_i[4:2];  // 内存访问宽度 (从funct3获取)
     wire [6:0] opcode          = instr_in_i[6:0];
     wire [2:0] funct3          = instr_in_i[14:12];
 
@@ -206,14 +208,13 @@ module riscv64_memory_access #(
                     instr_out_o <= instr_in_i;
                     ctrl_out_o <= ctrl_in_i;
 
-                    if (mem_read || mem_write) begin
+                    if (mem_read || (ctrl_in_i[15] == 0 && opcode == 7'b0100011)) begin // 使用opcode判断store指令
                         // Memory access instruction
                         saved_alu_result <= alu_result_i;
                         saved_rs2_data <= rs2_data_i;
                         saved_mem_width <= mem_width;
                         saved_is_load <= mem_read;
-                        saved_is_store <= mem_write;
-
+                        saved_is_store <= (ctrl_in_i[15] == 0 && opcode == 7'b0100011); // 使用opcode设置store标志
                         cache_addr_o <= alu_result_i;
                         cache_byte_en_o <= gen_byte_enable(mem_width, alu_result_i[2:0]);
 

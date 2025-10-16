@@ -1,4 +1,6 @@
 // riscv64_instruction_fetch.v
+`timescale 1ns / 1ps
+
 module riscv64_instruction_fetch #(
     parameter ADDR_WIDTH                              = 64,
     parameter DATA_WIDTH                              = 64,
@@ -20,6 +22,8 @@ module riscv64_instruction_fetch #(
 
     reg [63:0] pc_next;
     reg [63:0] next_pc_value;
+    reg [31:0] fetched_instr;
+
 `ifdef DEBUG
     reg cache_req_prev; // Register for detecting cache_req changes
 
@@ -45,79 +49,59 @@ module riscv64_instruction_fetch #(
                 $display("[%0t ps] IF: cache_ready asserted, received instr=0x%h",
                          $time, cache_data_i);
             end
+            // Print information about fetched instruction
+            if (fetched_instr != 32'h0000_0013) begin
+                $display("[%0t ps] IF: Fetched non-NOP instruction: 0x%h at PC=0x%h",
+                         $time, fetched_instr, pc_o);
+            end
         end
     end
 `endif
 
+    // 修复：简化PC和指令获取逻辑，确保时序一致性
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-        `ifdef DEBUG
-            $display("[%0t ps] IF: Reset, initializing PC=0x%h", $time, 64'h8000_0000);
-        `endif
             pc_o <= 64'h8000_0000;
             pc_next <= 64'h8000_0004;
             instr_o <= 32'h0000_0013; // NOP
             cache_req_o <= 1'b1; // Request instruction immediately after reset
             cache_addr_o <= 64'h8000_0000;
+            fetched_instr <= 32'h0000_0013;
         end else if (flush_i) begin
-        `ifdef DEBUG
-            $display("[%0t ps] IF: Flush, new PC=0x%h", $time, branch_target_i);
-        `endif
             pc_o <= branch_target_i;
             pc_next <= branch_target_i + 4;
-            instr_o <= 32'h0000_0013;
-            cache_req_o <= 1'b1; // Re-fetch instruction
+            instr_o <= 32'h0000_0013; // NOP
+            cache_req_o <= 1'b1;
             cache_addr_o <= branch_target_i;
         end else if (!stall_i) begin
             if (branch_taken_i) begin
-            `ifdef DEBUG
-                $display("[%0t ps] IF: Branch taken, new PC=0x%h", $time, branch_target_i);
-            `endif
+                // Branch taken, update PC to branch target
                 pc_o <= branch_target_i;
                 pc_next <= branch_target_i + 4;
                 cache_req_o <= 1'b1;
                 cache_addr_o <= branch_target_i;
-            end else if (cache_ready_i) begin
-            `ifdef DEBUG
-                $display("[%0t ps] IF: Cache ready, PC updated to 0x%h, fetching next instr at 0x%h",
-                         $time, pc_next, pc_next + 4);
-            `endif
-                // Ensure correct instruction loading
-                if (cache_data_i !== {L1_ICACHE_DATA_WIDTH{1'bz}} && cache_data_i !== {L1_ICACHE_DATA_WIDTH{1'bx}}) begin
-                    instr_o <= cache_data_i[0 +: 32];; // Fetch instruction data from cache
-                `ifdef DEBUG
-                    $display("[%0t ps] IF: Loading instruction from cache: 0x%h", $time, cache_data_i);
-                `endif
-                end else begin
-                    instr_o <= 32'h0000_0013; // Use NOP instruction as alternative
-                `ifdef DEBUG
-                    $display("[%0t ps] IF: Cache data invalid, using NOP instead", $time);
-                `endif
-                end
-                // Calculate next PC value first
-                next_pc_value = pc_next + 4;
-
-                // Update PC and next fetch address
+                // 不立即设置为NOP，让缓存数据有机会更新instr_o
+            end else begin
+                // Normal execution, update PC sequentially
                 pc_o <= pc_next;
-                pc_next <= next_pc_value;
-
-                // Continue requesting next instruction
+                pc_next <= pc_next + 4;
                 cache_req_o <= 1'b1;
-
-                // Use updated next_pc_value for next cache address
-                cache_addr_o <= next_pc_value;
-
-            `ifdef DEBUG
-                // Debug information to verify PC update
-                $display("[%0t ps] IF: PC updated from 0x%h to 0x%h, next PC will be 0x%h, cache addr set to 0x%h",
-                         $time, pc_o, pc_next, next_pc_value, cache_addr_o);
-            `endif
+                cache_addr_o <= pc_next + 4;
             end
-        end else begin
-        `ifdef DEBUG
-            $display("[%0t ps] IF: Pipeline stalled", $time);
-        `endif
+
+            // Update instruction only when cache is ready
+            if (cache_ready_i) begin
+                // Load instruction from cache
+                if (L1_ICACHE_DATA_WIDTH >= 32) begin
+                    fetched_instr <= cache_data_i[31:0];
+                    instr_o <= cache_data_i[31:0];
+                end else begin
+                    fetched_instr <= {24'b0, cache_data_i};
+                    instr_o <= {24'b0, cache_data_i};
+                end
+            end
         end
     end
+
 
 endmodule

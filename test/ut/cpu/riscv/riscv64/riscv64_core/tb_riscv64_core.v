@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns / 1ps
 
 module tb_riscv64_core;
 
@@ -31,9 +31,9 @@ module tb_riscv64_core;
     wire [511:0] snoop_data;
 
     // Interrupt Interface
-    wire timer_interrupt;
-    wire external_interrupt;
-    wire software_interrupt;
+    wire timer_interrupt = 1'b0;
+    wire external_interrupt = 1'b0;
+    wire software_interrupt = 1'b0;
 
     // Debug Interface
     wire [63:0] debug_pc;
@@ -41,6 +41,42 @@ module tb_riscv64_core;
     wire [4:0]  debug_wb_rd;
     wire [63:0] debug_wb_value;
     wire        debug_wb_valid;
+
+    // Variables for test tracking
+    integer test_pass = 0;
+    integer test_fail = 0;
+
+    // Instantiate the DUT (Device Under Test)
+    riscv64_core u_dut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .icache_req_o(icache_req),
+        .icache_addr_o(icache_addr),
+        .icache_data_i(icache_data),
+        .icache_ready_i(icache_ready),
+        .dcache_req_o(dcache_req),
+        .dcache_addr_o(dcache_addr),
+        .dcache_wdata_o(dcache_wdata),
+        .dcache_rdata_i(dcache_rdata),
+        .dcache_we_o(dcache_we),
+        .dcache_byte_en_o(dcache_byte_en),
+        .dcache_ready_i(dcache_ready),
+        .snoop_valid_i(snoop_valid),
+        .snoop_addr_i(snoop_addr),
+        .snoop_req_type_i(snoop_req_type),
+        .snoop_ready_o(snoop_ready),
+        .snoop_hit_o(snoop_hit),
+        .snoop_state_o(snoop_state),
+        .snoop_data_o(snoop_data),
+        .timer_interrupt_i(timer_interrupt),
+        .external_interrupt_i(external_interrupt),
+        .software_interrupt_i(software_interrupt),
+        .debug_pc_o(debug_pc),
+        .debug_instr_o(debug_instr),
+        .debug_wb_valid_o(debug_wb_valid),
+        .debug_wb_rd_o(debug_wb_rd),
+        .debug_wb_value_o(debug_wb_value)
+    );
 
     // Clock Generation
     initial begin
@@ -105,100 +141,45 @@ module tb_riscv64_core;
             if (dcache_byte_en[5]) data_memory[dcache_addr[31:3]][47:40] <= dcache_wdata[47:40];
             if (dcache_byte_en[6]) data_memory[dcache_addr[31:3]][55:48] <= dcache_wdata[55:48];
             if (dcache_byte_en[7]) data_memory[dcache_addr[31:3]][63:56] <= dcache_wdata[63:56];
-        end
-    end
-
-    always @(*) begin
-        if (dcache_req) begin
-            if (!dcache_we && dcache_addr[31:3] < 4096) begin
-                dcache_rdata = data_memory[dcache_addr[31:3]];
+        `ifdef DEBUG
+            $display("Time: %0t, DCache write: addr=%0h, data=%0h, be=%0h",
+                     $time, dcache_addr, dcache_wdata, dcache_byte_en);
+        `endif
+            dcache_ready = 1'b1;
+        end else if (dcache_req && !dcache_we) begin
+            // Process read operation
+            if (dcache_addr >= 64'h80000000 && dcache_addr < 64'h80004000) begin
+                dcache_rdata = data_memory[(dcache_addr - 64'h80000000) >> 3];
+            end else if (dcache_addr >= 0 && dcache_addr < 64'h4000) begin
+                dcache_rdata = data_memory[dcache_addr >> 3];
             end else begin
                 dcache_rdata = 64'h0;
             end
+        `ifdef DEBUG
+            $display("Time: %0t, DCache read: addr=%0h, data=%0h",
+                     $time, dcache_addr, dcache_rdata);
+        `endif
             dcache_ready = 1'b1;
         end else begin
-            dcache_rdata = 64'h0;
             dcache_ready = 1'b0;
         end
     end
 
-    // Connect snoop interface (simplified test)
-    assign snoop_valid = 1'b0; // Simplified test, no snoop requests
-    assign snoop_addr = 64'h0;
-    assign snoop_req_type = 2'b00;
-
-    // Connect interrupt interface (simplified test)
-    assign timer_interrupt = 1'b0;
-    assign external_interrupt = 1'b0;
-    assign software_interrupt = 1'b0;
-
-    // Instantiate DUT
-    riscv64_core #(
-        .ADDR_WIDTH(64),
-        .DATA_WIDTH(64),
-        .L1_ICACHE_DATA_WIDTH(32),
-        .L1_DCACHE_DATA_WIDTH(64),
-        .CORE_ID(0)
-    ) u_dut (
-        // Clock and reset
-        .clk(clk),
-        .rst_n(rst_n),
-
-        // Instruction cache interface
-        .icache_req_o(icache_req),
-        .icache_addr_o(icache_addr),
-        .icache_data_i(icache_data),
-        .icache_ready_i(icache_ready),
-
-        // Data cache interface
-        .dcache_req_o(dcache_req),
-        .dcache_addr_o(dcache_addr),
-        .dcache_we_o(dcache_we),
-        .dcache_wdata_o(dcache_wdata),
-        .dcache_byte_en_o(dcache_byte_en),
-        .dcache_rdata_i(dcache_rdata),
-        .dcache_ready_i(dcache_ready),
-
-        // Snoop interface
-        .snoop_valid_i(snoop_valid),
-        .snoop_addr_i(snoop_addr),
-        .snoop_req_type_i(snoop_req_type),
-        .snoop_ready_o(snoop_ready),
-        .snoop_hit_o(snoop_hit),
-        .snoop_state_o(snoop_state),
-        .snoop_data_o(snoop_data),
-
-        // Interrupt interface
-        .timer_interrupt_i(timer_interrupt),
-        .external_interrupt_i(external_interrupt),
-        .software_interrupt_i(software_interrupt),
-
-        // Debug outputs
-        .debug_pc_o(debug_pc),
-        .debug_instr_o(debug_instr),
-        .debug_wb_valid_o(debug_wb_valid),
-        .debug_wb_rd_o(debug_wb_rd),
-        .debug_wb_value_o(debug_wb_value)
-    );
-
     // Test Cases
-    integer test_pass = 0;
-    integer test_fail = 0;
-
     // Test Case 1: Basic Arithmetic Instructions Test
     task test_arithmetic;
         begin
             $display("Starting arithmetic instructions test...");
 
-            // Set PC to the start of arithmetic test instructions (index 100)
-            $display("Jumping to arithmetic test instructions at address 0x%0h", 64'h80000000 + (100 << 2));
-            // Use JAL instruction to jump to the test address
-            instr_memory[0] = 32'h0190006f; // JAL x0, 0x19 (jump to address 0x74 = 100*4)
+            // Set PC to the start of arithmetic test instructions
+            $display("Jumping to arithmetic test instructions at address 0x%0h", 64'h80000000 + (1 << 2));
+            instr_memory[0] = 32'h0010006f; // JAL x0, 0x1 (jump to address 0x4 = 1*4)
 
             rst_n = 0;
             #20 rst_n = 1;
-            // Wait for processor execution
-            #2000;
+
+            // Run for several cycles
+            #200;
 
             // Check results
             if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 15) begin
@@ -405,18 +386,79 @@ module tb_riscv64_core;
         $display("Initial block started at time %0t", $time);
 
         // Initialize memory
-        $display("Initializing memory from %s...", INSTR_FILE);
+        $display("Initializing memory...");
         // First fill with NOP instructions
         for (int i = 0; i < 4096; i = i + 1) begin
             instr_memory[i] = 32'h00000013; // NOP instruction
             data_memory[i] = 64'h0;
         end
-        // Then load instructions from hex file
-        $readmemh(INSTR_FILE, instr_memory);
-        $display("Memory initialization from %s completed.", INSTR_FILE);
+
+        // 直接在代码中设置测试指令，不依赖于文件加载
+        $display("Setting test instructions directly in code...");
+
+        // Test Case 1: Basic Arithmetic Instructions
+        instr_memory[1] = 32'h000000b3; // ADD x1, x0, x0 (x1 = 0)
+        instr_memory[2] = 32'h00a00113; // ADDI x2, x0, 10 (x2 = 10)
+        instr_memory[3] = 32'h002081b3; // ADD x3, x1, x2 (x3 = 10)
+        instr_memory[4] = 32'h00000013; // NOP
+        instr_memory[5] = 32'h00508293; // ADDI x5, x3, 5 (x5 = 15)
+
+        // Test Case 2: Memory Access Instructions
+        instr_memory[6] = 32'h064000b3; // ADDI x1, x0, 100 (x1 = 100)
+        instr_memory[7] = 32'h10000113; // ADDI x2, x0, 0x1000 (x2 = 4096)
+        instr_memory[8] = 32'h00112023; // SD x1, 0(x2) (store x1 to memory[4096])
+        instr_memory[9] = 32'h00012183; // LD x3, 0(x2) (load x3 from memory[4096])
+
+        // Test Case 3: Branch Instructions
+        instr_memory[10] = 32'h005000b3; // ADDI x1, x0, 5 (x1 = 5)
+        instr_memory[11] = 32'h00500113; // ADDI x2, x0, 5 (x2 = 5)
+        instr_memory[12] = 32'h00208463; // BEQ x1, x2, 4 (branch to 15 if x1 == x2)
+        instr_memory[13] = 32'h00100193; // ADDI x3, x0, 1 (should not reach here)
+        instr_memory[14] = 32'h00200213; // ADDI x4, x0, 2 (should not reach here)
+        instr_memory[15] = 32'h00300293; // ADDI x5, x0, 3 (should not reach here)
+        instr_memory[16] = 32'h00400313; // ADDI x6, x0, 4 (branch target)
+
+        // Test Case 4: Logic Instructions
+        instr_memory[17] = 32'hAAA000b3; // ADDI x1, x0, 0xAAAA (x1 = 0xAAAA)
+        instr_memory[18] = 32'h55500113; // ADDI x2, x0, 0x5555 (x2 = 0x5555)
+        instr_memory[19] = 32'h0020a1b3; // AND x3, x1, x2 (x3 = 0)
+        instr_memory[20] = 32'h0020c233; // OR x4, x1, x2 (x4 = 0xFFFF)
+        instr_memory[21] = 32'h0020e293; // XOR x5, x1, x2 (x5 = 0xFFFF)
+
+        // Test Case 5: Shift Instructions
+        instr_memory[22] = 32'h001000b3; // ADDI x1, x0, 1 (x1 = 1)
+        instr_memory[23] = 32'h00409113; // SLLI x2, x1, 4 (x2 = 16)
+        instr_memory[24] = 32'h0020d193; // SRLI x3, x2, 2 (x3 = 4)
+        instr_memory[25] = 32'hFF800213; // ADDI x4, x0, -8 (x4 = -8)
+        instr_memory[26] = 32'h4020f293; // SRAI x5, x4, 2 (x5 = -2)
+
+        // Test Case 6: Compare Instructions
+        instr_memory[27] = 32'h005000b3; // ADDI x1, x0, 5 (x1 = 5)
+        instr_memory[28] = 32'h00a00113; // ADDI x2, x0, 10 (x2 = 10)
+        instr_memory[29] = 32'h0020e1b3; // SLT x3, x1, x2 (x3 = 1)
+        instr_memory[30] = 32'h00114233; // SLTU x4, x2, x1 (x4 = 0)
+        instr_memory[31] = 32'h00f11293; // SLTI x5, x2, 15 (x5 = 1)
+
+        // Test Case 7: Jump Instructions
+        instr_memory[32] = 32'h004000ef; // JAL x1, 8 (jump to 38, x1 = 33)
+        instr_memory[33] = 32'h00100113; // ADDI x2, x0, 1
+        instr_memory[34] = 32'h00200193; // ADDI x3, x0, 2 (should not reach here)
+        instr_memory[35] = 32'h00300213; // ADDI x4, x0, 3 (should not reach here)
+        instr_memory[36] = 32'h00400293; // ADDI x5, x0, 4 (should not reach here)
+        instr_memory[37] = 32'h00500313; // ADDI x6, x0, 5 (should not reach here)
+        instr_memory[38] = 32'h00600393; // ADDI x7, x0, 6 (should not reach here)
+        instr_memory[39] = 32'h00700413; // ADDI x8, x0, 7 (jump target)
+
+        // Test Case 8: Hazard Detection and Handling Test
+        instr_memory[40] = 32'h00000083; // LD x1, 0(x0) (load data to x1)
+        instr_memory[41] = 32'h00108113; // ADD x2, x1, x1 (use x1, should trigger load-use hazard)
+        instr_memory[42] = 32'h00210193; // ADD x3, x2, x2 (use x2)
+
+        // 确保所有测试指令都设置完成
+        $display("Test instructions set completed.");
     `ifdef DEBUG
         $display("Initial instructions: ");
-        for (int i = 0; i < 128; i = i + 1) begin
+        for (int i = 0; i < 48; i = i + 1) begin
             $display("Instr[0x%0h] = 0x%0h", i, instr_memory[i]);
         end
     `endif
