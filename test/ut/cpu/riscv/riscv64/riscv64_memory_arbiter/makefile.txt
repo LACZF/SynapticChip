@@ -1,0 +1,16 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := riscv64_memory_arbiter
+TEST_ARGS ?=
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/cpu/riscv/riscv64
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/common
+
+# Parameter files
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_soc_params.v
+
+# Module under test
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_arbiter.v
+
+# Testbench files
+TEST_SRC += $(CUR_DIR)/tb_riscv64_memory_arbiter.v
