@@ -122,7 +122,7 @@ module tb_riscv64_core;
 
     // Simulate Instruction Cache
     reg [31:0] instr_memory [0:4095]; // Simple instruction memory simulation
-    parameter INSTR_FILE = "comprehensive_test.hex"; // Path to instruction hex file
+    parameter INSTR_FILE = "instructions.hex"; // Path to instruction hex file
 
     always @(*) begin
         if (icache_req) begin

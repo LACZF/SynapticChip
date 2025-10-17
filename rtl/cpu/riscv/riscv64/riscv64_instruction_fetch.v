@@ -86,7 +86,7 @@ module riscv64_instruction_fetch #(
                 pc_o <= pc_next;
                 pc_next <= pc_next + 4;
                 cache_req_o <= 1'b1;
-                cache_addr_o <= pc_next + 4;
+                cache_addr_o <= pc_next;
             end
 
             // Update instruction only when cache is ready
