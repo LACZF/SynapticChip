@@ -237,7 +237,7 @@ module riscv64_core #(
         .rst_n(rst_n),
         .rs1_i(instr_if[19:15]),
         .rs2_i(instr_if[24:20]),
-        .rd_i(instr_if[11:7]),
+        .rd_i(wb_rd),
         .we_i(wb_reg_we),
         .wdata_i(wb_reg_wdata),
         .rs1_data_o(rs1_data),
