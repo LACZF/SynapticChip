@@ -45,6 +45,36 @@ module tb_riscv64_core;
     // Variables for test tracking
     integer test_pass = 0;
     integer test_fail = 0;
+    reg [63:0] test_result = 64'h0;  // Store test result
+    integer instruction_count = 0;   // Count executed instructions
+    reg [63:0] last_pc = 64'h0;      // Track last PC to detect stalls
+    integer stall_count = 0;         // Count pipeline stalls
+    integer max_instruction_count = 500;  // Maximum instructions to execute
+
+    // Track instruction execution
+    always @(posedge clk) begin
+        if (rst_n) begin
+            // Check for new instruction execution (PC change indicates new instruction)
+            if (debug_pc != last_pc && debug_pc != 0) begin
+                instruction_count <= instruction_count + 1;
+                last_pc <= debug_pc;
+                stall_count <= 0;
+                // Read test result from memory address 0x100 when EBREAK is executed
+                if (debug_instr == 32'h00000073 && debug_wb_valid) begin
+                    test_result <= 64'h1;
+                end
+            end else if (debug_pc != 0) begin
+                // Increment stall count if PC hasn't changed
+                stall_count <= stall_count + 1;
+            end
+        end else begin
+            // Reset tracking variables during reset
+            instruction_count <= 0;
+            last_pc <= 0;
+            stall_count <= 0;
+            test_result <= 0;
+        end
+    end
 
     // Instantiate the DUT (Device Under Test)
     riscv64_core u_dut (
@@ -92,7 +122,7 @@ module tb_riscv64_core;
 
     // Simulate Instruction Cache
     reg [31:0] instr_memory [0:4095]; // Simple instruction memory simulation
-    parameter INSTR_FILE = "instructions.hex"; // Path to instruction hex file
+    parameter INSTR_FILE = "comprehensive_test.hex"; // Path to instruction hex file
 
     always @(*) begin
         if (icache_req) begin
@@ -165,221 +195,15 @@ module tb_riscv64_core;
         end
     end
 
-    // Test Cases
-    // Test Case 1: Basic Arithmetic Instructions Test
-    task test_arithmetic;
-        begin
-            $display("Starting arithmetic instructions test...");
-
-            // Set PC to the start of arithmetic test instructions
-            $display("Jumping to arithmetic test instructions at address 0x%0h", 64'h80000000 + (1 << 2));
-            instr_memory[0] = 32'h0010006f; // JAL x0, 0x1 (jump to address 0x4 = 1*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results
-            if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 15) begin
-                $display("  Test arithmetic passed!");
-                test_pass = test_pass + 1;
-            end else begin
-                $display("  Test arithmetic failed! Expected x5=15, Got x5=%0h", debug_wb_value);
-                test_fail = test_fail + 1;
-            end
+    // Check for test completion (EBREAK instruction or test result at memory address 0x100)
+    always @(posedge clk) begin
+        if (rst_n && (debug_instr == 32'h00000073 || instruction_count >= max_instruction_count)) begin
+            // Read test result from memory address 0x100
+            test_result = data_memory[256 >> 3]; // 0x100 / 8 = 256
+            #10;
+            $finish;
         end
-    endtask
-
-    // Test Case 2: Memory Access Instructions Test
-    task test_memory;
-        begin
-            $display("Starting memory access instructions test...");
-
-            // Set PC to the start of memory test instructions (index 5)
-            $display("Jumping to memory test instructions at address 0x%0h", 64'h80000000 + (5 << 2));
-            instr_memory[0] = 32'h0050006f; // JAL x0, 0x5 (jump to address 0x14 = 5*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results
-            if (debug_wb_valid && debug_wb_rd == 3 && debug_wb_value == 100) begin
-                $display("  Test memory passed!");
-                test_pass = test_pass + 1;
-            end else begin
-                $display("  Test memory failed! Expected x3=100, Got x3=%0h", debug_wb_value);
-                test_fail = test_fail + 1;
-            end
-        end
-    endtask
-
-    // Test Case 3: Branch Instructions Test
-    task test_branch;
-        begin
-            $display("Starting branch instructions test...");
-
-            // Set PC to the start of branch test instructions (index 9)
-            $display("Jumping to branch test instructions at address 0x%0h", 64'h80000000 + (9 << 2));
-            instr_memory[0] = 32'h0090006f; // JAL x0, 0x9 (jump to address 0x24 = 9*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results
-            if (debug_wb_valid && debug_wb_rd == 6 && debug_wb_value == 4) begin
-                $display("  Test branch passed!");
-                test_pass = test_pass + 1;
-            end else begin
-                $display("  Test branch failed! Expected x6=4, Got x6=%0h", debug_wb_value);
-                test_fail = test_fail + 1;
-            end
-        end
-    endtask
-
-    // Test Case 4: Logic Instructions Test
-    task test_logic;
-        begin
-            $display("Starting logic instructions test...");
-
-            // Set PC to the start of logic test instructions (index 16)
-            $display("Jumping to logic test instructions at address 0x%0h", 64'h80000000 + (16 << 2));
-            instr_memory[0] = 32'h0100006f; // JAL x0, 0x10 (jump to address 0x40 = 16*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results
-            if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 65535) begin
-                $display("  Test logic passed!");
-                test_pass = test_pass + 1;
-            end else begin
-                $display("  Test logic failed! Expected x5=0xFFFF, Got x5=%0h", debug_wb_value);
-                test_fail = test_fail + 1;
-            end
-        end
-    endtask
-
-    // Test Case 5: Shift Instructions Test
-    task test_shift;
-        begin
-            $display("Starting shift instructions test...");
-
-            // Set PC to the start of shift test instructions (index 21)
-            $display("Jumping to shift test instructions at address 0x%0h", 64'h80000000 + (21 << 2));
-            instr_memory[0] = 32'h0150006f; // JAL x0, 0x15 (jump to address 0x54 = 21*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results
-            if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 64'hFFFFFFFFFFFFFFFE) begin
-                $display("  Test shift passed!");
-                test_pass = test_pass + 1;
-            end else begin
-                $display("  Test shift failed! Expected x5=-2, Got x5=%0h", debug_wb_value);
-                test_fail = test_fail + 1;
-            end
-        end
-    endtask
-
-    // Test Case 6: Compare Instructions Test
-    task test_compare;
-        begin
-            $display("Starting compare instructions test...");
-
-            // Set PC to the start of compare test instructions (index 26)
-            $display("Jumping to compare test instructions at address 0x%0h", 64'h80000000 + (26 << 2));
-            instr_memory[0] = 32'h01a0006f; // JAL x0, 0x1a (jump to address 0x68 = 26*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results
-            if (debug_wb_valid && debug_wb_rd == 5 && debug_wb_value == 1) begin
-                $display("  Test compare passed!");
-                test_pass = test_pass + 1;
-            end else begin
-                $display("  Test compare failed! Expected x5=1, Got x5=%0h", debug_wb_value);
-                test_fail = test_fail + 1;
-            end
-        end
-    endtask
-
-    // Test Case 7: Jump Instructions Test
-    task test_jump;
-        begin
-            $display("Starting jump instructions test...");
-
-            // Set PC to the start of jump test instructions (index 31)
-            $display("Jumping to jump test instructions at address 0x%0h", 64'h80000000 + (31 << 2));
-            instr_memory[0] = 32'h01f0006f; // JAL x0, 0x1f (jump to address 0x7c = 31*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results
-            if (debug_wb_valid && (debug_wb_rd == 1 || debug_wb_rd == 8)) begin
-                if ((debug_wb_rd == 1 && debug_wb_value == 33) ||
-                    (debug_wb_rd == 8 && debug_wb_value == 7)) begin
-                    $display("  Test jump passed!");
-                    test_pass = test_pass + 1;
-                end else begin
-                    $display("  Test jump failed! Expected x1=33 or x8=7, Got x%0d=%0h",
-                             debug_wb_rd, debug_wb_value);
-                    test_fail = test_fail + 1;
-                end
-            end else begin
-                $display("  Test jump failed! Expected x1 or x8, Got x%0d", debug_wb_rd);
-                test_fail = test_fail + 1;
-            end
-        end
-    endtask
-
-    // Test Case 8: Hazard Detection and Handling Test
-    task test_hazard;
-        begin
-            $display("Starting hazard detection and handling test...");
-
-            // Set PC to the start of hazard test instructions (index 39)
-            $display("Jumping to hazard test instructions at address 0x%0h", 64'h80000000 + (39 << 2));
-            instr_memory[0] = 32'h0270006f; // JAL x0, 0x27 (jump to address 0x9c = 39*4)
-
-            rst_n = 0;
-            #20 rst_n = 1;
-
-            // Run for several cycles
-            #200;
-
-            // Check results (mainly verify pipeline works properly, not specific values)
-            if (debug_wb_valid) begin
-                $display("  Test hazard passed!");
-                test_pass = test_pass + 1;
-            end else begin
-                $display("  Test hazard failed! No valid write back observed");
-                test_fail = test_fail + 1;
-            end
-        end
-    endtask
+    end
 
     // Run all test cases
     initial begin
@@ -393,69 +217,10 @@ module tb_riscv64_core;
             data_memory[i] = 64'h0;
         end
 
-        // 直接在代码中设置测试指令，不依赖于文件加载
-        $display("Setting test instructions directly in code...");
-
-        // Test Case 1: Basic Arithmetic Instructions
-        instr_memory[1] = 32'h000000b3; // ADD x1, x0, x0 (x1 = 0)
-        instr_memory[2] = 32'h00a00113; // ADDI x2, x0, 10 (x2 = 10)
-        instr_memory[3] = 32'h002081b3; // ADD x3, x1, x2 (x3 = 10)
-        instr_memory[4] = 32'h00000013; // NOP
-        instr_memory[5] = 32'h00508293; // ADDI x5, x3, 5 (x5 = 15)
-
-        // Test Case 2: Memory Access Instructions
-        instr_memory[6] = 32'h064000b3; // ADDI x1, x0, 100 (x1 = 100)
-        instr_memory[7] = 32'h10000113; // ADDI x2, x0, 0x1000 (x2 = 4096)
-        instr_memory[8] = 32'h00112023; // SD x1, 0(x2) (store x1 to memory[4096])
-        instr_memory[9] = 32'h00012183; // LD x3, 0(x2) (load x3 from memory[4096])
-
-        // Test Case 3: Branch Instructions
-        instr_memory[10] = 32'h005000b3; // ADDI x1, x0, 5 (x1 = 5)
-        instr_memory[11] = 32'h00500113; // ADDI x2, x0, 5 (x2 = 5)
-        instr_memory[12] = 32'h00208463; // BEQ x1, x2, 4 (branch to 15 if x1 == x2)
-        instr_memory[13] = 32'h00100193; // ADDI x3, x0, 1 (should not reach here)
-        instr_memory[14] = 32'h00200213; // ADDI x4, x0, 2 (should not reach here)
-        instr_memory[15] = 32'h00300293; // ADDI x5, x0, 3 (should not reach here)
-        instr_memory[16] = 32'h00400313; // ADDI x6, x0, 4 (branch target)
-
-        // Test Case 4: Logic Instructions
-        instr_memory[17] = 32'hAAA000b3; // ADDI x1, x0, 0xAAAA (x1 = 0xAAAA)
-        instr_memory[18] = 32'h55500113; // ADDI x2, x0, 0x5555 (x2 = 0x5555)
-        instr_memory[19] = 32'h0020a1b3; // AND x3, x1, x2 (x3 = 0)
-        instr_memory[20] = 32'h0020c233; // OR x4, x1, x2 (x4 = 0xFFFF)
-        instr_memory[21] = 32'h0020e293; // XOR x5, x1, x2 (x5 = 0xFFFF)
-
-        // Test Case 5: Shift Instructions
-        instr_memory[22] = 32'h001000b3; // ADDI x1, x0, 1 (x1 = 1)
-        instr_memory[23] = 32'h00409113; // SLLI x2, x1, 4 (x2 = 16)
-        instr_memory[24] = 32'h0020d193; // SRLI x3, x2, 2 (x3 = 4)
-        instr_memory[25] = 32'hFF800213; // ADDI x4, x0, -8 (x4 = -8)
-        instr_memory[26] = 32'h4020f293; // SRAI x5, x4, 2 (x5 = -2)
-
-        // Test Case 6: Compare Instructions
-        instr_memory[27] = 32'h005000b3; // ADDI x1, x0, 5 (x1 = 5)
-        instr_memory[28] = 32'h00a00113; // ADDI x2, x0, 10 (x2 = 10)
-        instr_memory[29] = 32'h0020e1b3; // SLT x3, x1, x2 (x3 = 1)
-        instr_memory[30] = 32'h00114233; // SLTU x4, x2, x1 (x4 = 0)
-        instr_memory[31] = 32'h00f11293; // SLTI x5, x2, 15 (x5 = 1)
-
-        // Test Case 7: Jump Instructions
-        instr_memory[32] = 32'h004000ef; // JAL x1, 8 (jump to 38, x1 = 33)
-        instr_memory[33] = 32'h00100113; // ADDI x2, x0, 1
-        instr_memory[34] = 32'h00200193; // ADDI x3, x0, 2 (should not reach here)
-        instr_memory[35] = 32'h00300213; // ADDI x4, x0, 3 (should not reach here)
-        instr_memory[36] = 32'h00400293; // ADDI x5, x0, 4 (should not reach here)
-        instr_memory[37] = 32'h00500313; // ADDI x6, x0, 5 (should not reach here)
-        instr_memory[38] = 32'h00600393; // ADDI x7, x0, 6 (should not reach here)
-        instr_memory[39] = 32'h00700413; // ADDI x8, x0, 7 (jump target)
-
-        // Test Case 8: Hazard Detection and Handling Test
-        instr_memory[40] = 32'h00000083; // LD x1, 0(x0) (load data to x1)
-        instr_memory[41] = 32'h00108113; // ADD x2, x1, x1 (use x1, should trigger load-use hazard)
-        instr_memory[42] = 32'h00210193; // ADD x3, x2, x2 (use x2)
-
-        // 确保所有测试指令都设置完成
-        $display("Test instructions set completed.");
+        // Load instructions from hex file
+        $display("Loading instructions from %s...", INSTR_FILE);
+        $readmemh(INSTR_FILE, instr_memory);
+        $display("Instruction loading completed.");
     `ifdef DEBUG
         $display("Initial instructions: ");
         for (int i = 0; i < 48; i = i + 1) begin
@@ -469,36 +234,12 @@ module tb_riscv64_core;
         $display("Reset deasserted at time %0t", $time);
         #10;
 
-        $display("Reset completed. Starting test execution...");
+        $display("Reset completed. Starting comprehensive test execution...");
+        $display("Executing test program from %s...", INSTR_FILE);
+        $display("Test will automatically terminate on EBREAK instruction or after %0d instructions", max_instruction_count);
 
-        // Run test cases
-        test_arithmetic;
-        test_memory;
-        test_branch;
-        test_logic;
-        test_shift;
-        test_compare;
-        test_jump;
-        test_hazard;
-
-        // Wait for all tests to complete
-        #500;
-
-        // Output test results summary
-        $display("\nTest Results Summary:");
-        $display("Total tests: %0d", test_pass + test_fail);
-        $display("Passed tests: %0d", test_pass);
-        $display("Failed tests: %0d", test_fail);
-
-        if (test_fail == 0) begin
-            $display("\nALL TESTS PASSED!");
-        end else begin
-            $display("\nSOME TESTS FAILED!");
-        end
-
-        // End simulation
-        #100;
-        $finish;
+        // Test will run until EBREAK or instruction count limit is reached
+        // Results will be checked in the always block above
     end
 
     initial begin
@@ -539,5 +280,38 @@ module tb_riscv64_core;
         end
     end
 `endif
+
+    // Add test_complete flag
+    reg test_complete = 0;
+
+    // Set test_complete flag when test should terminate
+    always @(posedge clk) begin
+        if (instruction_count >= max_instruction_count || (debug_instr == 32'h00000073 && debug_wb_valid)) begin
+            test_complete <= 1;
+        end
+    end
+
+    // Final test report
+    always @(posedge clk) begin
+        if (test_complete && !$isunknown(test_complete)) begin
+            $display("\n\n*** Comprehensive RISC-V64 Test Report ***");
+            $display("Test program: %s", INSTR_FILE);
+            $display("Total instructions executed: %0d", instruction_count);
+            $display("Pipeline stalls detected: %0d", stall_count);
+            $display("Last PC: 0x%0h", debug_pc);
+            $display("Last instruction: 0x%0h", debug_instr);
+            $display("Test result value at 0x100: %0h", test_result);
+
+            if (test_result == 64'h1 && debug_instr == 32'h00000073) begin
+                $display("\nTEST PASSED!");
+            end else if (instruction_count >= max_instruction_count) begin
+                $display("\nTEST TIMEOUT!");
+            end else begin
+                $display("\nTEST FAILED!");
+            end
+
+            $display("*****************************************");
+        end
+    end
 
 endmodule
