@@ -229,16 +229,15 @@ module riscv64_core #(
         .wb_valid_o(wb_valid)
     );
 
-    // Register file
     riscv64_register_file #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH)
     ) u_regfile (
         .clk(clk),
         .rst_n(rst_n),
-        .rs1_i(instr_id[19:15]),
-        .rs2_i(instr_id[24:20]),
-        .rd_i(wb_rd),
+        .rs1_i(instr_if[19:15]),
+        .rs2_i(instr_if[24:20]),
+        .rd_i(instr_if[11:7]),
         .we_i(wb_reg_we),
         .wdata_i(wb_reg_wdata),
         .rs1_data_o(rs1_data),
