@@ -1,14 +1,8 @@
 // riscv64_execution.v
+// 顶层执行模块，集成非特权和特权指令执行
 `include "riscv64_instruction_defs.v"
-`include "riscv64_i_extension.v"
-`include "riscv64_m_extension.v"
-`include "riscv64_a_extension.v"
-`include "riscv64_f_extension.v"
-`include "riscv64_d_extension.v"
-`include "riscv64_q_extension.v"
-`include "riscv64_zifencei_extension.v"
-`include "riscv64_zicsr_extension.v"
-`include "riscv64_zfh_extension.v"
+`include "riscv64_unprivileged_execution.v"
+`include "riscv64_privileged_execution.v"
 
 module riscv64_execution #(
     parameter ADDR_WIDTH        = 64,
@@ -33,179 +27,82 @@ module riscv64_execution #(
 );
 
     // 信号定义
+    // 从指令和解码控制信号中提取的字段（用于DEBUG）
     wire [2:0]  alu_op      = ctrl_in_i[14:12];
     wire        reg_op      = ctrl_in_i[15]; // 标识是否为寄存器算术指令
     wire [2:0]  funct3      = instr_in_i[14:12];
     wire        funct7_30   = instr_in_i[30]; // 用于区分 ADD/SUB, SRL/SRA 等指令
     wire [6:0]  opcode      = instr_in_i[6:0]; // 提取指令的opcode字段，便于统一使用
 
-    // 扩展模块输出信号
-    wire [63:0] i_result;
-    wire        i_branch_taken;
-    wire [63:0] i_branch_target;
-    wire [63:0] m_result;
-    wire [63:0] a_result;
-    wire [63:0] a_mem_data;
-    wire        a_load_reserved;
-    wire        a_store_conditional;
-    wire [63:0] f_result;
-    wire [63:0] d_result;
-    wire [127:0] q_result;
-    wire [63:0] zicsr_result;
-    wire [63:0] zfh_result;
-    wire        is_i_extension;
-    wire        is_m_extension;
-    wire        is_a_extension;
-    wire        is_f_extension;
-    wire        is_d_extension;
-    wire        is_q_extension;
-    wire        is_zifencei_extension;
-    wire        is_zicsr_extension;
-    wire        is_zfh_extension;
-    wire [63:0] alu_result_temp; // 中间结果
+    // 指令执行模块信号
+    wire [63:0] unpriv_alu_result;
+    wire unpriv_branch_taken;
+    wire [63:0] unpriv_branch_target;
+    wire is_unprivileged_instr;
 
-    // 实例化I扩展模块
-    riscv64_i_extension #(
+    wire [63:0] priv_alu_result;
+    wire priv_branch_taken;
+    wire [63:0] priv_branch_target;
+    wire is_privileged_instr;
+
+    // 中间结果信号
+    wire [63:0] alu_result_temp;
+    wire branch_taken;
+    wire [63:0] branch_target;
+
+    // 实例化非特权指令执行模块
+    riscv64_unprivileged_execution #(
         .DATA_WIDTH(DATA_WIDTH)
-    ) u_i_extension (
-        .funct7_30(funct7_30),
-        .funct3(funct3),
-        .opcode(opcode),
+    ) u_unprivileged_execution (
+        .clk(clk),
+        .pc_in_i(pc_in_i),
+        .instr_in_i(instr_in_i),
         .rs1_data_i(rs1_data_i),
         .rs2_data_i(rs2_data_i),
         .imm_i(imm_i),
+        .ctrl_in_i(ctrl_in_i),
+        .alu_result_o(unpriv_alu_result),
+        .branch_taken_o(unpriv_branch_taken),
+        .branch_target_o(unpriv_branch_target),
+        .is_unprivileged_instr(is_unprivileged_instr)
+    );
+
+    // 实例化特权指令执行模块
+    riscv64_privileged_execution #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_privileged_execution (
+        .clk(clk),
         .pc_in_i(pc_in_i),
-        .alu_op(alu_op),
-        .alu_result_o(i_result),
-        .branch_taken_o(i_branch_taken),
-        .branch_target_o(i_branch_target),
-        .is_i_extension(is_i_extension)
-    );
-
-    // 实例化M扩展模块
-    riscv64_m_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_m_extension (
-        .funct7_30(funct7_30),
-        .funct3(funct3),
-        .opcode(opcode),
+        .instr_in_i(instr_in_i),
         .rs1_data_i(rs1_data_i),
         .rs2_data_i(rs2_data_i),
-        .alu_result_o(m_result),
-        .is_m_extension(is_m_extension)
+        .imm_i(imm_i),
+        .ctrl_in_i(ctrl_in_i),
+        .alu_result_o(priv_alu_result),
+        .branch_taken_o(priv_branch_taken),
+        .branch_target_o(priv_branch_target),
+        .is_privileged_instr(is_privileged_instr)
     );
 
-    // 实例化A扩展模块（原子操作）
-    riscv64_a_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_a_extension (
-        .funct7_30(funct7_30),
-        .funct3(funct3),
-        .opcode(opcode),
-        .rs1_data_i(rs1_data_i),
-        .rs2_data_i(rs2_data_i),
-        .mem_data_i(64'b0), // 在实际系统中需要连接到内存读取数据
-        .alu_result_o(a_result),
-        .mem_data_o(a_mem_data),
-        .is_a_extension(is_a_extension),
-        .load_reserved(a_load_reserved),
-        .store_conditional(a_store_conditional)
-    );
-
-    // 实例化F扩展模块（单精度浮点）
-    riscv64_f_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_f_extension (
-        .funct7_30(funct7_30),
-        .funct3(funct3),
-        .opcode(opcode),
-        .rs1_data_i(rs1_data_i),
-        .rs2_data_i(rs2_data_i),
-        .alu_result_o(f_result),
-        .is_f_extension(is_f_extension)
-    );
-
-    // 实例化D扩展模块（双精度浮点）
-    riscv64_d_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_d_extension (
-        .funct7_30(funct7_30),
-        .funct3(funct3),
-        .opcode(opcode),
-        .rs1_data_i(rs1_data_i),
-        .rs2_data_i(rs2_data_i),
-        .alu_result_o(d_result),
-        .is_d_extension(is_d_extension)
-    );
-
-    // 实例化Q扩展模块（四精度浮点）
-    riscv64_q_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_q_extension (
-        .funct7_30(funct7_30),
-        .funct3(funct3),
-        .opcode(opcode),
-        .rs1_data_i({64'b0, rs1_data_i}), // 扩展为128位
-        .rs2_data_i({64'b0, rs2_data_i}), // 扩展为128位
-        .alu_result_o(q_result),
-        .is_q_extension(is_q_extension)
-    );
-
-    // 实例化Zifencei扩展模块
-    riscv64_zifencei_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_zifencei_extension (
-        .funct3(funct3),
-        .opcode(opcode),
-        .is_zifencei_extension(is_zifencei_extension)
-    );
-
-    // 实例化Zicsr扩展模块
-    riscv64_zicsr_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_zicsr_extension (
-        .funct3(funct3),
-        .opcode(opcode),
-        .csr_addr_i(instr_in_i[31:20]), // CSR地址在指令的31:20位
-        .rs1_data_i(rs1_data_i),
-        .rs1_addr_i(instr_in_i[19:15]), // rs1地址
-        .rs2_addr_i(instr_in_i[24:20]), // rs2地址
-        .rd_addr_i(instr_in_i[11:7]),   // rd地址
-        .alu_result_o(zicsr_result),
-        .is_zicsr_extension(is_zicsr_extension)
-    );
-
-    // 实例化Zfh扩展模块（半精度浮点）
-    riscv64_zfh_extension #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_zfh_extension (
-        .funct7_30(funct7_30),
-        .funct3(funct3),
-        .opcode(opcode),
-        .rs1_data_i(rs1_data_i),
-        .rs2_data_i(rs2_data_i),
-        .alu_result_o(zfh_result),
-        .is_zfh_extension(is_zfh_extension)
-    );
-
-    // 扩展模块结果选择逻辑
+    // 结果选择逻辑：优先处理特权指令
     assign alu_result_temp = (
-        is_m_extension ? m_result :
-        is_a_extension ? a_result :
-        is_f_extension ? f_result :
-        is_d_extension ? d_result :
-        is_q_extension ? q_result[63:0] : // 取Q扩展结果的低64位
-        is_zicsr_extension ? zicsr_result :
-        is_zfh_extension ? zfh_result :
-        is_i_extension ? i_result :
+        is_privileged_instr ? priv_alu_result :
+        is_unprivileged_instr ? unpriv_alu_result :
         64'b0
     );
 
-    // Zifencei指令不需要结果，所以不需要在结果选择逻辑中添加
-
     // 分支结果选择
-    wire branch_taken = i_branch_taken;
-    wire [63:0] branch_target = i_branch_target;
+    assign branch_taken = (
+        is_privileged_instr ? priv_branch_taken :
+        is_unprivileged_instr ? unpriv_branch_taken :
+        1'b0
+    );
+
+    assign branch_target = (
+        is_privileged_instr ? priv_branch_target :
+        is_unprivileged_instr ? unpriv_branch_target :
+        64'b0
+    );
 
     // 流水线寄存器更新
     always @(posedge clk or negedge rst_n) begin
