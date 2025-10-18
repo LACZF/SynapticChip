@@ -3,6 +3,7 @@
 `include "riscv64_rtype_executor.v"
 `include "riscv64_itype_executor.v"
 `include "riscv64_utype_executor.v"
+`include "riscv64_stype_executor.v"
 `include "riscv64_branch_executor.v"
 
 module riscv64_execution #(
@@ -38,6 +39,7 @@ module riscv64_execution #(
     wire [63:0] rtype_result;
     wire [63:0] itype_result;
     wire [63:0] utype_result;
+    wire [63:0] stype_result;
     wire        branch_taken;
     wire [63:0] branch_target;
     wire [63:0] alu_result_temp; // 中间结果
@@ -73,6 +75,15 @@ module riscv64_execution #(
         .alu_result_o(utype_result)
     );
 
+    // 实例化 S-type 指令执行器
+    riscv64_stype_executor #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) u_stype_executor (
+        .rs1_data_i(rs1_data_i),
+        .imm_i(imm_i),
+        .alu_result_o(stype_result)
+    );
+
     // 实例化分支指令执行器
     riscv64_branch_executor #(
         .DATA_WIDTH(DATA_WIDTH)
@@ -91,7 +102,8 @@ module riscv64_execution #(
     // 选择ALU结果
     assign alu_result_temp = (
         (opcode == `OPCODE_REG_ARITH) ? rtype_result :
-        (opcode == `OPCODE_IMM_ARITH || opcode == `OPCODE_LOAD || opcode == `OPCODE_STORE) ? itype_result :
+        (opcode == `OPCODE_IMM_ARITH || opcode == `OPCODE_LOAD) ? itype_result :
+        (opcode == `OPCODE_STORE) ? stype_result :
         (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC) ? utype_result :
         (opcode == `OPCODE_JALR) ? rtype_result :
         64'b0
