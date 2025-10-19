@@ -35,7 +35,7 @@ module riscv64_execution #(
 
     // 信号定义
     // 从指令和解码控制信号中提取的字段（用于DEBUG）
-    wire [2:0]  alu_op      = ctrl_in_i[14:12];
+    wire [2:0]  alu_op      = ctrl_in_i[11:9]; // 与底层模块保持一致的位域提取
     wire        reg_op      = ctrl_in_i[15]; // 标识是否为寄存器算术指令
     wire [2:0]  funct3      = instr_in_i[14:12];
     wire        funct7_30   = instr_in_i[30]; // 用于区分 ADD/SUB, SRL/SRA 等指令

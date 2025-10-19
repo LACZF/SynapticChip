@@ -9,6 +9,12 @@ module riscv64_itype_executor #(
     output reg [DATA_WIDTH-1:0] alu_result_o   // ALU计算结果
 );
 
+`ifdef DEBUG
+    always @(*) begin
+        $display("[ITYPE_EXECUTOR] alu_op=%b, rs1=%h, imm=%h", alu_op, rs1_data_i, imm_i);
+    end
+`endif
+
     always @(*)
     begin
         case (alu_op)
@@ -62,10 +68,10 @@ module riscv64_itype_executor #(
             `endif
             end
             `ALU_OP_SLL: begin
-                alu_result_o = imm_i << rs1_data_i[5:0]; // SLL
+                alu_result_o = rs1_data_i << imm_i[5:0]; // SLL (修正操作数顺序)
             `ifdef DEBUG
-                $display("[I-type] SLL: imm=%h << %h = %h",
-                         imm_i, rs1_data_i[5:0], alu_result_o);
+                $display("[I-type] SLL: rs1=%h << %h = %h",
+                         rs1_data_i, imm_i[5:0], alu_result_o);
             `endif
             end
             default: begin

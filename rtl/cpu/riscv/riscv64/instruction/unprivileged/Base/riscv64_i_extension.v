@@ -46,17 +46,31 @@ module riscv64_i_extension #(
         input [DATA_WIDTH-1:0] rs1;
         input [DATA_WIDTH-1:0] rs2;
         begin
+        `ifdef DEBUG
+            $display("[I-Extension] handle_rtype: funct3=%b, funct7_30=%b, rs1=%h, rs2=%h", funct3, funct7_30, rs1, rs2);
+        `endif
+
             case (funct3)
                 `FUNCT3_ADD_SUB: handle_rtype = (funct7_30) ? (rs1 - rs2) : (rs1 + rs2);
-                `FUNCT3_SLL: handle_rtype = rs1 << rs2[5:0];
-                `FUNCT3_SLT: handle_rtype = ($signed(rs1) < $signed(rs2)) ? 64'd1 : 64'd0;
-                `FUNCT3_SLTU: handle_rtype = (rs1 < rs2) ? 64'd1 : 64'd0;
-                `FUNCT3_XOR: handle_rtype = rs1 ^ rs2;
-                `FUNCT3_SRL_SRA: handle_rtype = (funct7_30) ? $signed(rs1) >>> rs2[5:0] : rs1 >> rs2[5:0];
-                `FUNCT3_OR: handle_rtype = rs1 | rs2;
-                `FUNCT3_AND: handle_rtype = rs1 & rs2;
-                default: handle_rtype = 64'b0;
+                `FUNCT3_SLL:     handle_rtype = rs1 << rs2[5:0];
+                `FUNCT3_SLT:     handle_rtype = ($signed(rs1) < $signed(rs2)) ? 64'd1 : 64'd0;
+                `FUNCT3_SLTU:    handle_rtype = (rs1 < rs2) ? 64'd1 : 64'd0;
+                `FUNCT3_XOR:     handle_rtype = rs1 ^ rs2;
+                `FUNCT3_SRL_SRA: begin
+                    if (funct7_30) begin
+                        handle_rtype = $signed(rs1) >>> rs2[5:0];
+                    end else begin
+                        handle_rtype = rs1 >> rs2[5:0];
+                    end
+                end
+                `FUNCT3_OR:      handle_rtype = rs1 | rs2;
+                `FUNCT3_AND:     handle_rtype = rs1 & rs2;
+                default:         handle_rtype = 64'b0;
             endcase
+
+        `ifdef DEBUG
+            $display("[I-Extension] handle_rtype result: %h", handle_rtype);
+        `endif
         end
     endfunction
 
@@ -70,15 +84,15 @@ module riscv64_i_extension #(
             $display("[I-Extension] handle_itype: alu_op=%b, rs1=%h, imm=%h", alu_op, rs1, imm);
         `endif
             case (alu_op)
-                `ALU_OP_ADD: handle_itype = rs1 + imm;
-                `ALU_OP_SUB: handle_itype = rs1 - imm;
-                `ALU_OP_AND: handle_itype = rs1 & imm;
-                `ALU_OP_OR: handle_itype = rs1 | imm;
-                `ALU_OP_XOR: handle_itype = rs1 ^ imm;
-                `ALU_OP_SLT: handle_itype = ($signed(rs1) < $signed(imm)) ? 64'd1 : 64'd0;
+                `ALU_OP_ADD:  handle_itype = rs1 + imm;
+                `ALU_OP_SUB:  handle_itype = rs1 - imm;
+                `ALU_OP_AND:  handle_itype = rs1 & imm;
+                `ALU_OP_OR:   handle_itype = rs1 | imm;
+                `ALU_OP_XOR:  handle_itype = rs1 ^ imm;
+                `ALU_OP_SLT:  handle_itype = ($signed(rs1) < $signed(imm)) ? 64'd1 : 64'd0;
                 `ALU_OP_SLTU: handle_itype = (rs1 < imm) ? 64'd1 : 64'd0;
-                `ALU_OP_SLL: handle_itype = imm << rs1[5:0];
-                default: handle_itype = 64'b0;
+                `ALU_OP_SLL:  handle_itype = rs1 << imm[5:0];
+                default:      handle_itype = 64'b0;
             endcase
         `ifdef DEBUG
             $display("[I-Extension] handle_itype result: %h", handle_itype);
@@ -127,13 +141,13 @@ module riscv64_i_extension #(
 
         if (opcode == `OPCODE_BRANCH) begin
             case (funct3)
-                `FUNCT3_BEQ: branch_taken = (rs1_data_i == rs2_data_i);
-                `FUNCT3_BNE: branch_taken = (rs1_data_i != rs2_data_i);
-                `FUNCT3_BLT: branch_taken = ($signed(rs1_data_i) < $signed(rs2_data_i));
-                `FUNCT3_BGE: branch_taken = ($signed(rs1_data_i) >= $signed(rs2_data_i));
+                `FUNCT3_BEQ:  branch_taken = (rs1_data_i == rs2_data_i);
+                `FUNCT3_BNE:  branch_taken = (rs1_data_i != rs2_data_i);
+                `FUNCT3_BLT:  branch_taken = ($signed(rs1_data_i) < $signed(rs2_data_i));
+                `FUNCT3_BGE:  branch_taken = ($signed(rs1_data_i) >= $signed(rs2_data_i));
                 `FUNCT3_BLTU: branch_taken = (rs1_data_i < rs2_data_i);
                 `FUNCT3_BGEU: branch_taken = (rs1_data_i >= rs2_data_i);
-                default: branch_taken = 1'b0;
+                default:      branch_taken = 1'b0;
             endcase
         end else if (opcode == `OPCODE_JAL) begin
             branch_taken = 1'b1;
