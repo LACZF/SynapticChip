@@ -1,5 +1,6 @@
 // riscv64_write_back.v
 `timescale 1ns / 1ps
+`include "riscv64_instruction_defs.v"
 
 module riscv64_write_back #(
     parameter ADDR_WIDTH        = 64,
@@ -70,16 +71,16 @@ module riscv64_write_back #(
         reg [63:0] result;
         begin
             case (opcode)
-                7'b0110111: begin // LUI
+                `OPCODE_LUI: begin // LUI
                     result = {instr[31:12], 12'b0};
                 end
-                7'b0010111: begin // AUIPC
+                `OPCODE_AUIPC: begin // AUIPC
                     result = pc_val + {instr[31:12], 12'b0};
                 end
-                7'b1101111: begin // JAL
+                `OPCODE_JAL: begin // JAL
                     result = pc_val + 4;
                 end
-                7'b1100111: begin // JALR
+                `OPCODE_JALR: begin // JALR
                     result = pc_val + 4;
                 end
                 default: begin
@@ -112,7 +113,7 @@ module riscv64_write_back #(
         `endif
 
             // Calculate write-back data - 修复计算逻辑
-            if (opcode == 7'b0110111 || opcode == 7'b0010111 || opcode == 7'b1101111 || opcode == 7'b1100111) begin
+            if (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC || opcode == `OPCODE_JAL || opcode == `OPCODE_JALR) begin
                 // For special instructions, directly use compute_special_result
                 reg_wdata_o <= compute_special_result(alu_result_i, pc_in_i, instr_in_i, opcode);
             end else begin
@@ -134,19 +135,19 @@ module riscv64_write_back #(
 
             // Determine whether to write register
             case (opcode)
-                7'b0110111, 7'b0010111, 7'b1101111, 7'b1100111: begin
+                `OPCODE_LUI, `OPCODE_AUIPC, `OPCODE_JAL, `OPCODE_JALR: begin
                     // LUI, AUIPC, JAL, JALR always write registers (except x0)
                     reg_we_o <= (instr_rd != 5'b0);
                 end
-                7'b0110011, 7'b0010011, 7'b0000011: begin
+                `OPCODE_REG_ARITH, `OPCODE_IMM_ARITH, `OPCODE_LOAD: begin
                     // Arithmetic, immediate, load instructions: according to control signals
                     reg_we_o <= reg_write && (instr_rd != 5'b0);
                 end
-                7'b0100011: begin
+                `OPCODE_STORE: begin
                     // Store instructions: do not write registers
                     reg_we_o <= 1'b0;
                 end
-                7'b1100011: begin
+                `OPCODE_BRANCH: begin
                     // Branch instructions: do not write registers
                     reg_we_o <= 1'b0;
                 end

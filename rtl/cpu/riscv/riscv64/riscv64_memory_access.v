@@ -1,5 +1,6 @@
 // riscv64_memory_access.v
 `include "cache_params.v"
+`include "riscv64_instruction_defs.v"
 
 module riscv64_memory_access #(
     parameter ADDR_WIDTH                                 = 64,
@@ -256,13 +257,13 @@ module riscv64_memory_access #(
                     saved_page_fault <= 1'b0;
                     mmu_access_started <= 1'b0;
 
-                    if (mem_read || (ctrl_in_i[15] == 0 && opcode == 7'b0100011)) begin // 使用opcode判断store指令
+                    if (mem_read || (ctrl_in_i[15] == 0 && opcode == `OPCODE_STORE)) begin // 使用opcode判断store指令
                         // Memory access instruction
                         saved_alu_result <= alu_result_i;
                         saved_rs2_data <= rs2_data_i;
                         saved_mem_width <= mem_width;
                         saved_is_load <= mem_read;
-                        saved_is_store <= (ctrl_in_i[15] == 0 && opcode == 7'b0100011); // 使用opcode设置store标志
+                        saved_is_store <= (ctrl_in_i[15] == 0 && opcode == `OPCODE_STORE); // 使用opcode设置store标志
 
                         if (ENABLE_MMU) begin
                             // MMU使能时，进入MMU转换状态

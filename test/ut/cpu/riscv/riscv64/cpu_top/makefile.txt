@@ -18,25 +18,18 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
 
 # RISC-V core modules
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_clock_reset_gen.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_execution.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_hazard_detection.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_decode.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_fetch.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_access.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_register_file.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_soc_params.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/privileged/riscv64_privileged_execution.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/privileged/Extensions/riscv64_hv_extension.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_branch_executor.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_i_extension.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_itype_executor.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_rtype_executor.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_stype_executor.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_utype_executor.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_a_extension.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_d_extension.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_f_extension.v
