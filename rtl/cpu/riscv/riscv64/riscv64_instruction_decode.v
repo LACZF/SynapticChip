@@ -155,22 +155,22 @@ module riscv64_instruction_decode #(
                         ctrl_signals_o[15]    <= 1'b0;                        // reg_op: 设置为0，使执行阶段使用alu_op选择操作
                         ctrl_signals_o[14:12] <= funct3;                      // alu_op: 使用funct3作为操作码
                         ctrl_signals_o[11]    <= 1'b1;                        // alu_src: 设置为1，使用立即数作为第二个操作数
-                        ctrl_signals_o[10]    <= 1'b0;                        // unused
+                        ctrl_signals_o[10]    <= 1'b1;                        // reg_write: 用于WB阶段判断是否需要回写
                         ctrl_signals_o[9]     <= 1'b0;                        // unused
                         ctrl_signals_o[8]     <= 1'b0;                        // mem_to_reg
-                        ctrl_signals_o[7]     <= 1'b1;                        // reg_write
+                        ctrl_signals_o[7]     <= 1'b1;                        // 冗余的reg_write位
                         ctrl_signals_o[6]     <= 1'b0;                        // alu_src_pc
                         ctrl_signals_o[5]     <= 1'b0;                        // pc_to_reg
                         ctrl_signals_o[4:0]   <= {funct3_i, 2'b0};            // funct3
                     end
-                    `OPCODE_REG_ARITH: begin                                  // Register arithmetic with reg_op
+                        `OPCODE_REG_ARITH: begin                                  // Register arithmetic with reg_op
                         ctrl_signals_o[15]    <= 1'b1;                        // reg_op: 标识为寄存器算术指令
                         ctrl_signals_o[14:12] <= funct3;                      // alu_op: 使用 funct3 作为操作码
                         ctrl_signals_o[11]    <= 1'b0;                        // alu_src
-                        ctrl_signals_o[10]    <= 1'b0;                        // unused
+                        ctrl_signals_o[10]    <= 1'b1;                        // reg_write: 用于WB阶段判断是否需要回写
                         ctrl_signals_o[9]     <= 1'b0;                        // unused
                         ctrl_signals_o[8]     <= 1'b0;                        // mem_to_reg
-                        ctrl_signals_o[7]     <= 1'b1;                        // reg_write
+                        ctrl_signals_o[7]     <= 1'b1;                        // 冗余的reg_write位
                         ctrl_signals_o[6]     <= 1'b0;                        // alu_src_pc
                         ctrl_signals_o[5]     <= 1'b0;                        // pc_to_reg
                         ctrl_signals_o[4:0]   <= {funct3_i, funct7_30, 1'b0}; // 其他控制信号
