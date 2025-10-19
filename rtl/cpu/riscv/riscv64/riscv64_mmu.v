@@ -188,8 +188,8 @@ module riscv64_mmu #(
             found = 0;
 
             // 查找TLB
-            for (i = 0; i < TLB_ENTRIES && !found; i = i + 1) begin
-                if (tlb_valid[i] && (tlb_vpn[i] == virt_addr_i[38:12])) begin
+            for (i = 0; i < TLB_ENTRIES; i = i + 1) begin
+                if (!found && tlb_valid[i] && (tlb_vpn[i] == virt_addr_i[38:12])) begin
                     tlb_hit = 1;
                     translated_phys_addr = {tlb_ppn[i], page_offset};
                     // 更新LRU计数

@@ -33,7 +33,7 @@ module top_system #(
     parameter PE_ARRAY_COLS                   = 2,
     parameter PE_ID_WIDTH                     = 4,
     parameter CPU_TYPE                        = 0,
-    parameter ENABLE_MMU                      = 1
+    parameter ENABLE_MMU                      = 0
 )(
     input                                     clk,
     input                                     rst_n,
