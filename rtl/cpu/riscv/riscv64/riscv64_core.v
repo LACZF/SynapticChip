@@ -18,7 +18,8 @@ module riscv64_core #(
     parameter ENABLE_ZICSR_EXT                       = 1,
     parameter ENABLE_ZFH_EXT                         = 1,
     parameter ENABLE_C_EXT                           = 1,
-    parameter ENABLE_V_EXT                           = 1
+    parameter ENABLE_V_EXT                           = 1,
+    parameter ENABLE_HV_EXT                          = 1
 )(
     input wire                                       clk,
     input wire                                       rst_n,
@@ -181,7 +182,9 @@ module riscv64_core #(
         .ENABLE_ZIFENCEI_EXT(ENABLE_ZIFENCEI_EXT),
         .ENABLE_ZICSR_EXT(ENABLE_ZICSR_EXT),
         .ENABLE_ZFH_EXT(ENABLE_ZFH_EXT),
-        .ENABLE_C_EXT(ENABLE_C_EXT)
+        .ENABLE_C_EXT(ENABLE_C_EXT),
+        .ENABLE_V_EXT(ENABLE_V_EXT),
+        .ENABLE_HV_EXT(ENABLE_HV_EXT)
     ) u_ex (
         .clk(clk),
         .rst_n(rst_n),

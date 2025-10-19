@@ -30,6 +30,7 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/privileged/riscv64_privileged_execution.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/privileged/Extensions/riscv64_hv_extension.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_branch_executor.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_i_extension.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_itype_executor.v

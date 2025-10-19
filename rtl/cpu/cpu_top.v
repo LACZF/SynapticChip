@@ -316,7 +316,9 @@ module cpu_top #(
                     .ENABLE_ZIFENCEI_EXT(0),
                     .ENABLE_ZICSR_EXT(0),
                     .ENABLE_ZFH_EXT(0),
-                    .ENABLE_C_EXT(0)
+                    .ENABLE_C_EXT(0),
+                    .ENABLE_V_EXT(0),
+                    .ENABLE_HV_EXT(0)
                 ) u_riscv64_core (
                     .clk(clk),
                     .rst_n(rst_n),
