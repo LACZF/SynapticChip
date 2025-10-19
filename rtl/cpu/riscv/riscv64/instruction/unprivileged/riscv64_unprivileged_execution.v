@@ -11,7 +11,8 @@ module riscv64_unprivileged_execution #(
     parameter ENABLE_Q_EXT              = 1,
     parameter ENABLE_ZIFENCEI_EXT       = 1,
     parameter ENABLE_ZICSR_EXT          = 1,
-    parameter ENABLE_ZFH_EXT            = 1
+    parameter ENABLE_ZFH_EXT            = 1,
+    parameter ENABLE_C_EXT              = 1
 )(
     input wire                  clk,
     input wire [63:0]           pc_in_i,
@@ -53,6 +54,7 @@ module riscv64_unprivileged_execution #(
     wire [127:0] q_result;
     wire [63:0] zicsr_result;
     wire [63:0] zfh_result;
+    wire [63:0] c_result;
     wire        is_i_extension;
     wire        is_m_extension;
     wire        is_a_extension;
@@ -62,6 +64,7 @@ module riscv64_unprivileged_execution #(
     wire        is_zifencei_extension;
     wire        is_zicsr_extension;
     wire        is_zfh_extension;
+    wire        is_c_extension;
     wire [63:0] alu_result_temp; // 中间结果
 
     // 扩展模块使能信号（根据参数配置）
@@ -73,6 +76,7 @@ module riscv64_unprivileged_execution #(
     wire enable_zifencei_ext = ENABLE_ZIFENCEI_EXT;
     wire enable_zicsr_ext = ENABLE_ZICSR_EXT;
     wire enable_zfh_ext = ENABLE_ZFH_EXT;
+    wire enable_c_ext = ENABLE_C_EXT;
 
     // 实例化I扩展模块
     riscv64_i_extension #(
@@ -258,6 +262,31 @@ module riscv64_unprivileged_execution #(
         end
     endgenerate
 
+    // 条件实例化C扩展模块（压缩指令集）
+    generate
+        if (ENABLE_C_EXT) begin
+            riscv64_c_extension #(
+                .DATA_WIDTH(DATA_WIDTH)
+            ) u_c_extension (
+                .funct7_30(funct7_30),
+                .funct3(funct3),
+                .opcode(opcode),
+                .rs1_data_i(rs1_data_i),
+                .rs2_data_i(rs2_data_i),
+                .imm_i(imm_i),
+                .pc_in_i(pc_in_i),
+                .alu_op(alu_op),
+                .instr_in_i(instr_in_i),
+                .alu_result_o(c_result),
+                .is_c_extension(is_c_extension)
+            );
+        end
+        else begin
+            assign c_result = 64'b0;
+            assign is_c_extension = 1'b0;
+        end
+    endgenerate
+
     // 扩展模块结果选择逻辑（考虑使能参数）
     // 修复：将I扩展的优先级提高，确保I-type和R-type指令正确处理
     assign alu_result_temp = (
@@ -269,6 +298,7 @@ module riscv64_unprivileged_execution #(
         (ENABLE_Q_EXT && is_q_extension) ? q_result[63:0] : // 取Q扩展结果的低64位
         (ENABLE_ZICSR_EXT && is_zicsr_extension) ? zicsr_result :
         (ENABLE_ZFH_EXT && is_zfh_extension) ? zfh_result :
+        (ENABLE_C_EXT && is_c_extension) ? c_result :
         64'b0
     );
 
@@ -287,7 +317,8 @@ module riscv64_unprivileged_execution #(
         (ENABLE_Q_EXT && is_q_extension) ||
         (ENABLE_ZIFENCEI_EXT && is_zifencei_extension) ||
         (ENABLE_ZICSR_EXT && is_zicsr_extension) ||
-        (ENABLE_ZFH_EXT && is_zfh_extension)
+        (ENABLE_ZFH_EXT && is_zfh_extension) ||
+        (ENABLE_C_EXT && is_c_extension)
     );
 
 endmodule

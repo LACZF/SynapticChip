@@ -153,6 +153,42 @@
 `define FUNCT7_SRL       1'b0  // SRL 指令的 funct7 位
 `define FUNCT7_SRA       1'b1  // SRA 指令的 funct7 位
 
+// ---------- RV64C 压缩指令集定义 ----------
+// 压缩指令的opcode（16位指令格式）
+`define OPCODE_C_RTYPE    2'b01  // C.R-type 指令
+`define OPCODE_C_ITYPE    2'b00  // C.I-type 指令
+`define OPCODE_C_STYPE    2'b10  // C.S-type 指令
+`define OPCODE_C_BTYPE    2'b11  // C.B-type 指令
+`define OPCODE_C_JAL      2'b01  // C.JAL 指令
+`define OPCODE_C_LUI      2'b01  // C.LUI 指令
+`define OPCODE_C_ADDI4SPN 2'b00  // C.ADDI4SPN 指令
+
+// C.R-type 指令的funct4字段
+`define FUNCT4_C_ADD      4'b0000  // C.ADD
+`define FUNCT4_C_SUB      4'b1000  // C.SUB
+`define FUNCT4_C_XOR      4'b0001  // C.XOR
+`define FUNCT4_C_OR       4'b0010  // C.OR
+`define FUNCT4_C_AND      4'b0011  // C.AND
+`define FUNCT4_C_SLL      4'b0100  // C.SLL
+`define FUNCT4_C_SRL      4'b0101  // C.SRL
+`define FUNCT4_C_SRA      4'b1101  // C.SRA
+`define FUNCT4_C_SLT      4'b0110  // C.SLT
+`define FUNCT4_C_SLTU     4'b0111  // C.SLTU
+
+// C.I-type 加载指令的funct3字段
+`define FUNCT3_C_LW       3'b010  // C.LW
+`define FUNCT3_C_LD       3'b011  // C.LD
+
+// C.S-type 存储指令的funct3字段
+`define FUNCT3_C_SW       3'b010  // C.SW
+`define FUNCT3_C_SD       3'b011  // C.SD
+
+// C.B-type 分支指令的funct3字段
+`define FUNCT3_C_BEQZ     3'b000  // C.BEQZ
+`define FUNCT3_C_BNEZ     3'b001  // C.BNEZ
+`define FUNCT3_C_BLTZ     3'b100  // C.BLTZ
+`define FUNCT3_C_BGEZ     3'b101  // C.BGEZ
+
 // ---------- 控制信号位定义 ----------
 // 用于标识指令类型和操作
 `define REG_OP_BIT       15  // 标识是否为寄存器算术指令
