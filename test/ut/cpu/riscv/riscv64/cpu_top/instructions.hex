@@ -1,43 +1,43 @@
-001000b3    // ADDI x1, x0, 1       // x1 = 1
-00200113    // ADDI x2, x0, 2       // x2 = 2
-00300193    // ADDI x3, x0, 3       // x3 = 3
-00400213    // ADDI x4, x0, 4       // x4 = 4
-00500293    // ADDI x5, x0, 5       // x5 = 5
-00208133    // ADD x2, x1, x2       // x2 = x1 + x2 = 3
-403101b3    // SUB x3, x2, x3       // x3 = x2 - x3 = 0
-00418233    // MUL x4, x3, x4       // x4 = x3 * x4 = 0
-005202b3    // AND x5, x4, x5       // x5 = x4 & x5 = 0
-00528333    // OR x6, x5, x5        // x6 = x5 | x5 = 0
-005303b3    // XOR x7, x6, x5       // x7 = x6 ^ x5 = 0
-00138433    // SLT x8, x7, x1       // x8 = (x7 < x1) ? 1 : 0 = 1
-002404b3    // SLTU x9, x8, x2      // x9 = (x8 < x2) ? 1 : 0 = 1
-00348533    // SLTI x10, x9, 3      // x10 = (x9 < 3) ? 1 : 0 = 1
-001505b3    // SLLI x11, x10, 1     // x11 = x10 << 1 = 2
-00158633    // SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (logical right shift)
-401606b3    // SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (arithmetic right shift)
-00168733    // ADDI x14, x13, 1     // x14 = x13 + 1 = 1
-002707b3    // ADDI x15, x14, 2     // x15 = x14 + 2 = 3
-00378833    // ADDI x16, x15, 3     // x16 = x15 + 3 = 6
-004808b3    // ADDI x17, x16, 4     // x17 = x16 + 4 = 10
-00588933    // ADDI x18, x17, 5     // x18 = x17 + 5 = 15
-006909b3    // ADDI x19, x18, 6     // x19 = x18 + 6 = 21
-00798a33    // ADDI x20, x19, 7     // x20 = x19 + 7 = 28
-008a0ab3    // ADDI x21, x20, 8     // x21 = x20 + 8 = 36
-009a8b33    // ADDI x22, x21, 9     // x22 = x21 + 9 = 45
-00ab0bb3    // ADDI x23, x22, 10    // x23 = x22 + 10 = 55
-00bb8c33    // ADDI x24, x23, 11    // x24 = x23 + 11 = 66
-00cc0cb3    // ADDI x25, x24, 12    // x25 = x24 + 12 = 78
-00cc8d33    // ADDI x26, x25, 13    // x26 = x25 + 13 = 91
-00dd0db3    // ADDI x27, x26, 14    // x27 = x26 + 14 = 105
-00dd8e33    // ADDI x28, x27, 15    // x28 = x27 + 15 = 120
-00ee0eb3    // ADDI x29, x28, 16    // x29 = x28 + 16 = 136
-00ee8f33    // ADDI x30, x29, 17    // x30 = x29 + 17 = 153
-00ff0fb3    // ADDI x31, x30, 18    // x31 = x30 + 18 = 171
-00000073    // ECALL                // system call instruction
+001000b3    // [0x80000000] ADDI x1, x0, 1       // x1 = 1
+00200113    // [0x80000004] ADDI x2, x0, 2       // x2 = 2
+00300193    // [0x80000008] ADDI x3, x0, 3       // x3 = 3
+00400213    // [0x8000000C] ADDI x4, x0, 4       // x4 = 4
+00500293    // [0x80000010] ADDI x5, x0, 5       // x5 = 5
+00208133    // [0x80000014] ADD x2, x1, x2       // x2 = x1 + x2 = 3
+403101b3    // [0x80000018] SUB x3, x2, x3       // x3 = x2 - x3 = 0
+00418233    // [0x8000001C] MUL x4, x3, x4       // x4 = x3 * x4 = 0
+005202b3    // [0x80000020] AND x5, x4, x5       // x5 = x4 & x5 = 0
+00528333    // [0x80000024] OR x6, x5, x5        // x6 = x5 | x5 = 0
+005303b3    // [0x80000028] XOR x7, x6, x5       // x7 = x6 ^ x5 = 0
+00138433    // [0x8000002C] SLT x8, x7, x1       // x8 = (x7 < x1) ? 1 : 0 = 1
+002404b3    // [0x80000030] SLTU x9, x8, x2      // x9 = (x8 < x2) ? 1 : 0 = 1
+00348533    // [0x80000034] SLTI x10, x9, 3      // x10 = (x9 < 3) ? 1 : 0 = 1
+001505b3    // [0x80000038] SLLI x11, x10, 1     // x11 = x10 << 1 = 2
+00158633    // [0x8000003C] SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (logical right shift)
+401606b3    // [0x80000040] SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (arithmetic right shift)
+00168733    // [0x80000044] ADDI x14, x13, 1     // x14 = x13 + 1 = 1
+002707b3    // [0x80000048] ADDI x15, x14, 2     // x15 = x14 + 2 = 3
+00378833    // [0x8000004C] ADDI x16, x15, 3     // x16 = x15 + 3 = 6
+004808b3    // [0x80000050] ADDI x17, x16, 4     // x17 = x16 + 4 = 10
+00588933    // [0x80000054] ADDI x18, x17, 5     // x18 = x17 + 5 = 15
+006909b3    // [0x80000058] ADDI x19, x18, 6     // x19 = x18 + 6 = 21
+00798a33    // [0x8000005C] ADDI x20, x19, 7     // x20 = x19 + 7 = 28
+008a0ab3    // [0x80000060] ADDI x21, x20, 8     // x21 = x20 + 8 = 36
+009a8b33    // [0x80000064] ADDI x22, x21, 9     // x22 = x21 + 9 = 45
+00ab0bb3    // [0x80000068] ADDI x23, x22, 10    // x23 = x22 + 10 = 55
+00bb8c33    // [0x8000006C] ADDI x24, x23, 11    // x24 = x23 + 11 = 66
+00cc0cb3    // [0x80000070] ADDI x25, x24, 12    // x25 = x24 + 12 = 78
+00cc8d33    // [0x80000074] ADDI x26, x25, 13    // x26 = x25 + 13 = 91
+00dd0db3    // [0x80000078] ADDI x27, x26, 14    // x27 = x26 + 14 = 105
+00dd8e33    // [0x8000007C] ADDI x28, x27, 15    // x28 = x27 + 15 = 120
+00ee0eb3    // [0x80000080] ADDI x29, x28, 16    // x29 = x28 + 16 = 136
+00ee8f33    // [0x80000084] ADDI x30, x29, 17    // x30 = x29 + 17 = 153
+00ff0fb3    // [0x80000088] ADDI x31, x30, 18    // x31 = x30 + 18 = 171
+00000073    // [0x8000008C] ECALL                // system call instruction
 
 // ===== Keep some NOP instructions for test stability =====
-00000013    // NOP                  // no-operation instruction
-00000013    // NOP                  // no-operation instruction
-00000013    // NOP                  // no-operation instruction
-00000013    // NOP                  // no-operation instruction
-00000013    // NOP                  // no-operation instruction
+00000013    // [0x80000090] NOP                  // no-operation instruction
+00000013    // [0x80000094] NOP                  // no-operation instruction
+00000013    // [0x80000098] NOP                  // no-operation instruction
+00000013    // [0x8000009C] NOP                  // no-operation instruction
+00000013    // [0x800000A0] NOP                  // no-operation instruction

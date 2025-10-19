@@ -2,155 +2,155 @@
 // Contains basic arithmetic, logical, memory access and control flow instructions
 
 // Set initial register values
-001000b3    // ADDI x1, x0, 1       // x1 = 1
-00200113    // ADDI x2, x0, 2       // x2 = 2
-00300193    // ADDI x3, x0, 3       // x3 = 3
-00400213    // ADDI x4, x0, 4       // x4 = 4
-00500293    // ADDI x5, x0, 5       // x5 = 5
-00208133    // ADD x2, x1, x2       // x2 = x1 + x2 = 3
-403101b3    // SUB x3, x2, x3       // x3 = x2 - x3 = 0
-00418233    // MUL x4, x3, x4       // x4 = x3 * x4 = 0
-005202b3    // AND x5, x4, x5       // x5 = x4 & x5 = 0
-00528333    // OR x6, x5, x5        // x6 = x5 | x5 = 0
-005303b3    // XOR x7, x6, x5       // x7 = x6 ^ x5 = 0
-00138433    // SLT x8, x7, x1       // x8 = (x7 < x1) ? 1 : 0 = 1
-002404b3    // SLTU x9, x8, x2      // x9 = (x8 < x2) ? 1 : 0 = 1
-00348533    // SLTI x10, x9, 3      // x10 = (x9 < 3) ? 1 : 0 = 1
-001505b3    // SLLI x11, x10, 1     // x11 = x10 << 1 = 2
-00158633    // SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (logical right shift)
-401606b3    // SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (arithmetic right shift)
-00168733    // ADDI x14, x13, 1     // x14 = x13 + 1 = 1
-002707b3    // ADDI x15, x14, 2     // x15 = x14 + 2 = 3
-00378833    // ADDI x16, x15, 3     // x16 = x15 + 3 = 6
-004808b3    // ADDI x17, x16, 4     // x17 = x16 + 4 = 10
-00588933    // ADDI x18, x17, 5     // x18 = x17 + 5 = 15
-006909b3    // ADDI x19, x18, 6     // x19 = x18 + 6 = 21
-00798a33    // ADDI x20, x19, 7     // x20 = x19 + 7 = 28
-008a0ab3    // ADDI x21, x20, 8     // x21 = x20 + 8 = 36
-009a8b33    // ADDI x22, x21, 9     // x22 = x21 + 9 = 45
-00ab0bb3    // ADDI x23, x22, 10    // x23 = x22 + 10 = 55
-00bb8c33    // ADDI x24, x23, 11    // x24 = x23 + 11 = 66
-00cc0cb3    // ADDI x25, x24, 12    // x25 = x24 + 12 = 78
-00cc8d33    // ADDI x26, x25, 13    // x26 = x25 + 13 = 91
-00dd0db3    // ADDI x27, x26, 14    // x27 = x26 + 14 = 105
-00dd8e33    // ADDI x28, x27, 15    // x28 = x27 + 15 = 120
-00ee0eb3    // ADDI x29, x28, 16    // x29 = x28 + 16 = 136
-00ee8f33    // ADDI x30, x29, 17    // x30 = x29 + 17 = 153
-00ff0fb3    // ADDI x31, x30, 18    // x31 = x30 + 18 = 171
-00000073    // ECALL                // system call instruction
+001000b3    // [0x00000000] ADDI x1, x0, 1       // x1 = 1
+00200113    // [0x00000004] ADDI x2, x0, 2       // x2 = 2
+00300193    // [0x00000008] ADDI x3, x0, 3       // x3 = 3
+00400213    // [0x0000000C] ADDI x4, x0, 4       // x4 = 4
+00500293    // [0x00000010] ADDI x5, x0, 5       // x5 = 5
+00208133    // [0x00000014] ADD x2, x1, x2       // x2 = x1 + x2 = 3
+403101b3    // [0x00000018] SUB x3, x2, x3       // x3 = x2 - x3 = 0
+00418233    // [0x0000001C] MUL x4, x3, x4       // x4 = x3 * x4 = 0
+005202b3    // [0x00000020] AND x5, x4, x5       // x5 = x4 & x5 = 0
+00528333    // [0x00000024] OR x6, x5, x5        // x6 = x5 | x5 = 0
+005303b3    // [0x00000028] XOR x7, x6, x5       // x7 = x6 ^ x5 = 0
+00138433    // [0x0000002C] SLT x8, x7, x1       // x8 = (x7 < x1) ? 1 : 0 = 1
+002404b3    // [0x00000030] SLTU x9, x8, x2      // x9 = (x8 < x2) ? 1 : 0 = 1
+00348533    // [0x00000034] SLTI x10, x9, 3      // x10 = (x9 < 3) ? 1 : 0 = 1
+001505b3    // [0x00000038] SLLI x11, x10, 1     // x11 = x10 << 1 = 2
+00158633    // [0x0000003C] SRLI x12, x11, 1     // x12 = x11 >> 1 = 1 (logical right shift)
+401606b3    // [0x00000040] SRAI x13, x12, 1     // x13 = x12 >> 1 = 0 (arithmetic right shift)
+00168733    // [0x00000044] ADDI x14, x13, 1     // x14 = x13 + 1 = 1
+002707b3    // [0x00000048] ADDI x15, x14, 2     // x15 = x14 + 2 = 3
+00378833    // [0x0000004C] ADDI x16, x15, 3     // x16 = x15 + 3 = 6
+004808b3    // [0x00000050] ADDI x17, x16, 4     // x17 = x16 + 4 = 10
+00588933    // [0x00000054] ADDI x18, x17, 5     // x18 = x17 + 5 = 15
+006909b3    // [0x00000058] ADDI x19, x18, 6     // x19 = x18 + 6 = 21
+00798a33    // [0x0000005C] ADDI x20, x19, 7     // x20 = x19 + 7 = 28
+008a0ab3    // [0x00000060] ADDI x21, x20, 8     // x21 = x20 + 8 = 36
+009a8b33    // [0x00000064] ADDI x22, x21, 9     // x22 = x21 + 9 = 45
+00ab0bb3    // [0x00000068] ADDI x23, x22, 10    // x23 = x22 + 10 = 55
+00bb8c33    // [0x0000006C] ADDI x24, x23, 11    // x24 = x23 + 11 = 66
+00cc0cb3    // [0x00000070] ADDI x25, x24, 12    // x25 = x24 + 12 = 78
+00cc8d33    // [0x00000074] ADDI x26, x25, 13    // x26 = x25 + 13 = 91
+00dd0db3    // [0x00000078] ADDI x27, x26, 14    // x27 = x26 + 14 = 105
+00dd8e33    // [0x0000007C] ADDI x28, x27, 15    // x28 = x27 + 15 = 120
+00ee0eb3    // [0x00000080] ADDI x29, x28, 16    // x29 = x28 + 16 = 136
+00ee8f33    // [0x00000084] ADDI x30, x29, 17    // x30 = x29 + 17 = 153
+00ff0fb3    // [0x00000088] ADDI x31, x30, 18    // x31 = x30 + 18 = 171
+00000073    // [0x0000008C] ECALL                // system call instruction
 
 // ===== GPIO Test Instructions =====
-00400313    // ADDI x6, x0, 0x04    // x6 = 4 (REG_DIR address offset)
-00300393    // ADDI x7, x0, 0x03    // x7 = 3 (pins to set as output)
-F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (upper 32 bits of MMIO_BASE_ADDR)
-000038B7    // LUI x25, 0x3         // x25 = 0x3000 (lower 32 bits of GPIO0_BASE)
-00088893    // ADDI x25, x25, 0     // x25 = 0x3000
-00180937    // LUI x26, 0x1         // x26 = 0x10000000
-000009B7    // LUI x27, 0x0         // x27 = 0x0
-00090993    // ADDI x26, x26, 0     // x26 = 0x10000000
-00098A13    // ADDI x27, x27, 0     // x27 = 0x0
-00000A97    // LUI x28, 0x0         // x28 = 0x0
-000A0A93    // ADDI x28, x28, 0     // x28 = 0x0
-000A8B13    // ADDI x29, x29, 0     // x29 = 0x0
-000B0B93    // ADDI x30, x30, 0     // x30 = 0x0
-000B8C13    // ADDI x31, x31, 0     // x31 = 0x0
-00088933    // ADD x18, x24, x25    // x18 = GPIO0_BASE (F0000000 + 0x3000)
-000909B3    // ADD x19, x26, x27    // x19 = 0x10000000
-00098A33    // ADD x20, x28, x29    // x20 = 0x0
-000A0AB3    // ADD x21, x30, x31    // x21 = 0x0
-00068913    // ADDI x18, x18, x6    // x18 = GPIO0_BASE + REG_DIR
-000788B3    // SW x7, 0(x18)        // Write to GPIO direction register, set pins 0 and 1 as output
-00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_DATA address offset)
-00088913    // ADDI x18, x18, -x6   // x18 = GPIO0_BASE + REG_DATA
-000188B3    // SW x1, 0(x18)        // Write to GPIO data register, set pin 0 to high
-00000013    // NOP                  // Short delay
-000008B3    // SW x0, 0(x18)        // Write to GPIO data register, set pin 0 to low
-00000013    // NOP                  // short delay
+00400313    // [0x00000090] ADDI x6, x0, 0x04    // x6 = 4 (REG_DIR address offset)
+00300393    // [0x00000094] ADDI x7, x0, 0x03    // x7 = 3 (pins to set as output)
+F0000037    // [0x00000098] LUI x24, 0xF0000     // x24 = 0xF0000000 (upper 32 bits of MMIO_BASE_ADDR)
+000038B7    // [0x0000009C] LUI x25, 0x3         // x25 = 0x3000 (lower 32 bits of GPIO0_BASE)
+00088893    // [0x000000A0] ADDI x25, x25, 0     // x25 = 0x3000
+00180937    // [0x000000A4] LUI x26, 0x1         // x26 = 0x10000000
+000009B7    // [0x000000A8] LUI x27, 0x0         // x27 = 0x0
+00090993    // [0x000000AC] ADDI x26, x26, 0     // x26 = 0x10000000
+00098A13    // [0x000000B0] ADDI x27, x27, 0     // x27 = 0x0
+00000A97    // [0x000000B4] LUI x28, 0x0         // x28 = 0x0
+000A0A93    // [0x000000B8] ADDI x28, x28, 0     // x28 = 0x0
+000A8B13    // [0x000000BC] ADDI x29, x29, 0     // x29 = 0x0
+000B0B93    // [0x000000C0] ADDI x30, x30, 0     // x30 = 0x0
+000B8C13    // [0x000000C4] ADDI x31, x31, 0     // x31 = 0x0
+00088933    // [0x000000C8] ADD x18, x24, x25    // x18 = GPIO0_BASE (F0000000 + 0x3000)
+000909B3    // [0x000000CC] ADD x19, x26, x27    // x19 = 0x10000000
+00098A33    // [0x000000D0] ADD x20, x28, x29    // x20 = 0x0
+000A0AB3    // [0x000000D4] ADD x21, x30, x31    // x21 = 0x0
+00068913    // [0x000000D8] ADDI x18, x18, x6    // x18 = GPIO0_BASE + REG_DIR
+000788B3    // [0x000000DC] SW x7, 0(x18)        // Write to GPIO direction register, set pins 0 and 1 as output
+00000313    // [0x000000E0] ADDI x6, x0, 0x00    // x6 = 0 (REG_DATA address offset)
+00088913    // [0x000000E4] ADDI x18, x18, -x6   // x18 = GPIO0_BASE + REG_DATA
+000188B3    // [0x000000E8] SW x1, 0(x18)        // Write to GPIO data register, set pin 0 to high
+00000013    // [0x000000EC] NOP                  // Short delay
+000008B3    // [0x000000F0] SW x0, 0(x18)        // Write to GPIO data register, set pin 0 to low
+00000013    // [0x000000F4] NOP                  // short delay
 
 // ===== UART Test Instructions =====
-00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_THR/REG_RBR address offset)
-00000393    // ADDI x7, x0, 0x04    // x7 = 4 (REG_IER address offset)
-00000413    // ADDI x8, x0, 0x0C    // x8 = 12 (REG_LCR address offset)
-00000493    // ADDI x9, x0, 0x55    // x9 = 0x55 (test data 'U')
-00000513    // ADDI x10, x0, 0x80   // x10 = 0x80 (LCR[7] = 1, access divisor register)
-00000593    // ADDI x11, x0, 0x01   // x11 = 1 (baud rate divisor low byte)
-00000613    // ADDI x12, x0, 0x00   // x12 = 0 (baud rate divisor high byte)
-00000693    // ADDI x13, x0, 0x03   // x13 = 3 (8 data bits, 1 stop bit, no parity)
-F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (upper 32 bits of MMIO_BASE_ADDR)
-000018B7    // LUI x25, 0x1         // x25 = 0x1000 (lower 32 bits of UART0_BASE)
-00088893    // ADDI x25, x25, 0     // x25 = 0x1000
-00180937    // LUI x26, 0x1         // x26 = 0x10000000
-000009B7    // LUI x27, 0x0         // x27 = 0x0
-00090993    // ADDI x26, x26, 0     // x26 = 0x10000000
-00098A13    // ADDI x27, x27, 0     // x27 = 0x0
-00000A97    // LUI x28, 0x0         // x28 = 0x0
-000A0A93    // ADDI x28, x28, 0     // x28 = 0x0
-000A8B13    // ADDI x29, x29, 0     // x29 = 0x0
-000B0B93    // ADDI x30, x30, 0     // x30 = 0x0
-000B8C13    // ADDI x31, x31, 0     // x31 = 0x0
-00088933    // ADD x18, x24, x25    // x18 = UART0_BASE (F0000000 + 0x1000)
-000909B3    // ADD x19, x26, x27    // x19 = 0x10000000
-00098A33    // ADD x20, x28, x29    // x20 = 0x0
-000A0AB3    // ADD x21, x30, x31    // x21 = 0x0
-00088913    // ADDI x18, x18, x8    // x18 = UART0_BASE + REG_LCR
-000A88B3    // SW x10, 0(x18)       // Set LCR[7] = 1, access divisor register
-00088913    // ADDI x18, x18, -x8   // x18 = UART0_BASE + REG_DLL
-000B88B3    // SW x11, 0(x18)       // Set divisor register low byte
-00078913    // ADDI x18, x18, x7    // x18 = UART0_BASE + REG_DLM
-000C88B3    // SW x12, 0(x18)       // Set divisor register high byte
-00088913    // ADDI x18, x18, -x7   // x18 = UART0_BASE + REG_LCR
-000D88B3    // SW x13, 0(x18)       // Set line control register: 8 data bits, 1 stop bit, no parity
-00068913    // ADDI x18, x18, -x8   // x18 = UART0_BASE + REG_THR
-000988B3    // SW x9, 0(x18)        // Send data 'U'
-00000013    // NOP                  // short delay
-00000013    // NOP                  // short delay
+00000313    // [0x000000F8] ADDI x6, x0, 0x00    // x6 = 0 (REG_THR/REG_RBR address offset)
+00000393    // [0x000000FC] ADDI x7, x0, 0x04    // x7 = 4 (REG_IER address offset)
+00000413    // [0x00000100] ADDI x8, x0, 0x0C    // x8 = 12 (REG_LCR address offset)
+00000493    // [0x00000104] ADDI x9, x0, 0x55    // x9 = 0x55 (test data 'U')
+00000513    // [0x00000108] ADDI x10, x0, 0x80   // x10 = 0x80 (LCR[7] = 1, access divisor register)
+00000593    // [0x0000010C] ADDI x11, x0, 0x01   // x11 = 1 (baud rate divisor low byte)
+00000613    // [0x00000110] ADDI x12, x0, 0x00   // x12 = 0 (baud rate divisor high byte)
+00000693    // [0x00000114] ADDI x13, x0, 0x03   // x13 = 3 (8 data bits, 1 stop bit, no parity)
+F0000037    // [0x00000118] LUI x24, 0xF0000     // x24 = 0xF0000000 (upper 32 bits of MMIO_BASE_ADDR)
+000018B7    // [0x0000011C] LUI x25, 0x1         // x25 = 0x1000 (lower 32 bits of UART0_BASE)
+00088893    // [0x00000120] ADDI x25, x25, 0     // x25 = 0x1000
+00180937    // [0x00000124] LUI x26, 0x1         // x26 = 0x10000000
+000009B7    // [0x00000128] LUI x27, 0x0         // x27 = 0x0
+00090993    // [0x0000012C] ADDI x26, x26, 0     // x26 = 0x10000000
+00098A13    // [0x00000130] ADDI x27, x27, 0     // x27 = 0x0
+00000A97    // [0x00000134] LUI x28, 0x0         // x28 = 0x0
+000A0A93    // [0x00000138] ADDI x28, x28, 0     // x28 = 0x0
+000A8B13    // [0x0000013C] ADDI x29, x29, 0     // x29 = 0x0
+000B0B93    // [0x00000140] ADDI x30, x30, 0     // x30 = 0x0
+000B8C13    // [0x00000144] ADDI x31, x31, 0     // x31 = 0x0
+00088933    // [0x00000148] ADD x18, x24, x25    // x18 = UART0_BASE (F0000000 + 0x1000)
+000909B3    // [0x0000014C] ADD x19, x26, x27    // x19 = 0x10000000
+00098A33    // [0x00000150] ADD x20, x28, x29    // x20 = 0x0
+000A0AB3    // [0x00000154] ADD x21, x30, x31    // x21 = 0x0
+00088913    // [0x00000158] ADDI x18, x18, x8    // x18 = UART0_BASE + REG_LCR
+000A88B3    // [0x0000015C] SW x10, 0(x18)       // Set LCR[7] = 1, access divisor register
+00088913    // [0x00000160] ADDI x18, x18, -x8   // x18 = UART0_BASE + REG_DLL
+000B88B3    // [0x00000164] SW x11, 0(x18)       // Set divisor register low byte
+00078913    // [0x00000168] ADDI x18, x18, x7    // x18 = UART0_BASE + REG_DLM
+000C88B3    // [0x0000016C] SW x12, 0(x18)       // Set divisor register high byte
+00088913    // [0x00000170] ADDI x18, x18, -x7   // x18 = UART0_BASE + REG_LCR
+000D88B3    // [0x00000174] SW x13, 0(x18)       // Set line control register: 8 data bits, 1 stop bit, no parity
+00068913    // [0x00000178] ADDI x18, x18, -x8   // x18 = UART0_BASE + REG_THR
+000988B3    // [0x0000017C] SW x9, 0(x18)        // Send data 'U'
+00000013    // [0x00000180] NOP                  // short delay
+00000013    // [0x00000184] NOP                  // short delay
 
 // ===== SPI Test Instructions =====
-00000313    // ADDI x6, x0, 0x00    // x6 = 0 (REG_CONTROL address offset)
-00000393    // ADDI x7, x0, 0x04    // x7 = 4 (REG_STATUS address offset)
-00000413    // ADDI x8, x0, 0x08    // x8 = 8 (REG_DATA address offset)
-00000493    // ADDI x9, x0, 0x10    // x9 = 16 (REG_CMD address offset)
-00000513    // ADDI x10, x0, 0x14   // x10 = 20 (REG_CLK_DIV address offset)
-00000593    // ADDI x11, x0, 0x18   // x11 = 24 (REG_CONFIG address offset)
-00000613    // ADDI x12, x0, 0x01    // x12 = 1 (SPI enable)
-00000693    // ADDI x13, x0, 0x04    // x13 = 4 (master mode)
-00000713    // ADDI x14, x0, 0x55    // x14 = 0x55 (test data)
-00000793    // ADDI x15, x0, 0x02    // x15 = 2 (SPI write command)
-00000813    // ADDI x16, x0, 0x08    // x16 = 8 (clock divider value)
-00000893    // ADDI x17, x0, 0x00    // x17 = 0 (SPI MODE 0)
-F0000037    // LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
-000028B7    // LUI x25, 0x2         // x25 = 0x2000 (SPI0_BASE低32位)
-00088893    // ADDI x25, x25, 0     // x25 = 0x2000
-00180937    // LUI x26, 0x1         // x26 = 0x10000000
-000009B7    // LUI x27, 0x0         // x27 = 0x0
-00090993    // ADDI x26, x26, 0     // x26 = 0x10000000
-00098A13    // ADDI x27, x27, 0     // x27 = 0x0
-00000A97    // LUI x28, 0x0         // x28 = 0x0
-000A0A93    // ADDI x28, x28, 0     // x28 = 0x0
-000A8B13    // ADDI x29, x29, 0     // x29 = 0x0
-000B0B93    // ADDI x30, x30, 0     // x30 = 0x0
-000B8C13    // ADDI x31, x31, 0     // x31 = 0x0
-00088933    // ADD x18, x24, x25    // x18 = SPI0_BASE (F0000000 + 0x2000)
-000909B3    // ADD x19, x26, x27    // x19 = 0x10000000
-00098A33    // ADD x20, x28, x29    // x20 = 0x0
-000A0AB3    // ADD x21, x30, x31    // x21 = 0x0
-000A8893    // ADDI x17, x17, x13   // x17 = SPI MODE 0 | master mode
-00088913    // ADDI x18, x18, x11   // x18 = SPI0_BASE + REG_CONFIG
-001188B3    // SW x17, 0(x18)       // Set SPI configuration: master mode, MODE 0
-00088913    // ADDI x18, x18, -x11   // x18 = SPI0_BASE + REG_CLK_DIV
-001088B3    // SW x16, 0(x18)       // Set SPI clock divider
-00088913    // ADDI x18, x18, -x10   // x18 = SPI0_BASE + REG_CMD
-000F88B3    // SW x15, 0(x18)       // Set SPI command: write data
-00088913    // ADDI x18, x18, -x9   // x18 = SPI0_BASE + REG_DATA
-000E88B3    // SW x14, 0(x18)       // Write data to be sent
-00088913    // ADDI x18, x18, -x8   // x18 = SPI0_BASE + REG_CONTROL
-000C88B3    // SW x12, 0(x18)       // Enable SPI
-00000013    // NOP                  // short delay
-00000013    // NOP                  // short delay
+00000313    // [0x00000188] ADDI x6, x0, 0x00    // x6 = 0 (REG_CONTROL address offset)
+00000393    // [0x0000018C] ADDI x7, x0, 0x04    // x7 = 4 (REG_STATUS address offset)
+00000413    // [0x00000190] ADDI x8, x0, 0x08    // x8 = 8 (REG_DATA address offset)
+00000493    // [0x00000194] ADDI x9, x0, 0x10    // x9 = 16 (REG_CMD address offset)
+00000513    // [0x00000198] ADDI x10, x0, 0x14   // x10 = 20 (REG_CLK_DIV address offset)
+00000593    // [0x0000019C] ADDI x11, x0, 0x18   // x11 = 24 (REG_CONFIG address offset)
+00000613    // [0x000001A0] ADDI x12, x0, 0x01    // x12 = 1 (SPI enable)
+00000693    // [0x000001A4] ADDI x13, x0, 0x04    // x13 = 4 (master mode)
+00000713    // [0x000001A8] ADDI x14, x0, 0x55    // x14 = 0x55 (test data)
+00000793    // [0x000001AC] ADDI x15, x0, 0x02    // x15 = 2 (SPI write command)
+00000813    // [0x000001B0] ADDI x16, x0, 0x08    // x16 = 8 (clock divider value)
+00000893    // [0x000001B4] ADDI x17, x0, 0x00    // x17 = 0 (SPI MODE 0)
+F0000037    // [0x000001B8] LUI x24, 0xF0000     // x24 = 0xF0000000 (MMIO_BASE_ADDR高32位)
+000028B7    // [0x000001BC] LUI x25, 0x2         // x25 = 0x2000 (SPI0_BASE低32位)
+00088893    // [0x000001C0] ADDI x25, x25, 0     // x25 = 0x2000
+00180937    // [0x000001C4] LUI x26, 0x1         // x26 = 0x10000000
+000009B7    // [0x000001C8] LUI x27, 0x0         // x27 = 0x0
+00090993    // [0x000001CC] ADDI x26, x26, 0     // x26 = 0x10000000
+00098A13    // [0x000001D0] ADDI x27, x27, 0     // x27 = 0x0
+00000A97    // [0x000001D4] LUI x28, 0x0         // x28 = 0x0
+000A0A93    // [0x000001D8] ADDI x28, x28, 0     // x28 = 0x0
+000A8B13    // [0x000001DC] ADDI x29, x29, 0     // x29 = 0x0
+000B0B93    // [0x000001E0] ADDI x30, x30, 0     // x30 = 0x0
+000B8C13    // [0x000001E4] ADDI x31, x31, 0     // x31 = 0x0
+00088933    // [0x000001E8] ADD x18, x24, x25    // x18 = SPI0_BASE (F0000000 + 0x2000)
+000909B3    // [0x000001EC] ADD x19, x26, x27    // x19 = 0x10000000
+00098A33    // [0x000001F0] ADD x20, x28, x29    // x20 = 0x0
+000A0AB3    // [0x000001F4] ADD x21, x30, x31    // x21 = 0x0
+000A8893    // [0x000001F8] ADDI x17, x17, x13   // x17 = SPI MODE 0 | master mode
+00088913    // [0x000001FC] ADDI x18, x18, x11   // x18 = SPI0_BASE + REG_CONFIG
+001188B3    // [0x00000200] SW x17, 0(x18)       // Set SPI configuration: master mode, MODE 0
+00088913    // [0x00000204] ADDI x18, x18, -x11   // x18 = SPI0_BASE + REG_CLK_DIV
+001088B3    // [0x00000208] SW x16, 0(x18)       // Set SPI clock divider
+00088913    // [0x0000020C] ADDI x18, x18, -x10   // x18 = SPI0_BASE + REG_CMD
+000F88B3    // [0x00000210] SW x15, 0(x18)       // Set SPI command: write data
+00088913    // [0x00000214] ADDI x18, x18, -x9   // x18 = SPI0_BASE + REG_DATA
+000E88B3    // [0x00000218] SW x14, 0(x18)       // Write data to be sent
+00088913    // [0x0000021C] ADDI x18, x18, -x8   // x18 = SPI0_BASE + REG_CONTROL
+000C88B3    // [0x00000220] SW x12, 0(x18)       // Enable SPI
+00000013    // [0x00000224] NOP                  // short delay
+00000013    // [0x00000228] NOP                  // short delay
 
 // ===== Keep some NOP instructions for test stability =====
-00000013    // NOP                  // No-operation instruction
-00000013    // NOP                  // no-operation instruction
-00000013    // NOP                  // no-operation instruction
-00000013    // NOP                  // no-operation instruction
-00000013    // NOP                  // no-operation instruction
+00000013    // [0x0000022C] NOP                  // No-operation instruction
+00000013    // [0x00000230] NOP                  // no-operation instruction
+00000013    // [0x00000234] NOP                  // no-operation instruction
+00000013    // [0x00000238] NOP                  // no-operation instruction
+00000013    // [0x0000023C] NOP                  // no-operation instruction

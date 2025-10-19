@@ -1,41 +1,41 @@
 // Contains basic arithmetic, logical, memory access and control flow instructions
 
 // Set initial register values
-001000b3  // ADDI x1, x0, 1      // x1 = 1
-00200113  // ADDI x2, x0, 2      // x2 = 2
-00300193  // ADDI x3, x0, 3      // x3 = 3
-00400213  // ADDI x4, x0, 4      // x4 = 4
-00500293  // ADDI x5, x0, 5      // x5 = 5
+001000b3  // [0x80000000] ADDI x1, x0, 1      // x1 = 1
+00200113  // [0x80000004] ADDI x2, x0, 2      // x2 = 2
+00300193  // [0x80000008] ADDI x3, x0, 3      // x3 = 3
+00400213  // [0x8000000C] ADDI x4, x0, 4      // x4 = 4
+00500293  // [0x80000010] ADDI x5, x0, 5      // x5 = 5
 
 // Arithmetic instructions
-00208133  // ADD x2, x1, x2      // x2 = x1 + x2 = 3
-403101b3  // SUB x3, x2, x3      // x3 = x2 - x3 = 0
-00418233  // MUL x4, x3, x4      // x4 = x3 * x4 = 0
-005202b3  // ADD x5, x4, x5      // x5 = x4 + x5 = 5
+00208133  // [0x80000014] ADD x2, x1, x2      // x2 = x1 + x2 = 3
+403101b3  // [0x80000018] SUB x3, x2, x3      // x3 = x2 - x3 = 0
+00418233  // [0x8000001C] MUL x4, x3, x4      // x4 = x3 * x4 = 0
+005202b3  // [0x80000020] ADD x5, x4, x5      // x5 = x4 + x5 = 5
 
 // Logical instructions
-0020a1b3  // AND x3, x1, x2      // x3 = x1 & x2 = 1 & 3 = 1
-0030c233  // OR  x4, x2, x3      // x4 = x2 | x3 = 3 | 1 = 3
-0040e293  // XOR x5, x3, x4      // x5 = x3 ^ x4 = 1 ^ 3 = 2
+0020a1b3  // [0x80000024] AND x3, x1, x2      // x3 = x1 & x2 = 1 & 3 = 1
+0030c233  // [0x80000028] OR  x4, x2, x3      // x4 = x2 | x3 = 3 | 1 = 3
+0040e293  // [0x8000002C] XOR x5, x3, x4      // x5 = x3 ^ x4 = 1 ^ 3 = 2
 
 // Shift instructions
-00311313  // SLLI x6, x2, 3      // x6 = x2 << 3 = 3 << 3 = 24
-00219393  // SRLI x7, x6, 1      // x7 = x6 >> 1 = 24 >> 1 = 12
-40321413  // SRAI x8, x7, 2      // x8 = x7 >>> 2 = 12 >>> 2 = 3
+00311313  // [0x80000030] SLLI x6, x2, 3      // x6 = x2 << 3 = 3 << 3 = 24
+00219393  // [0x80000034] SRLI x7, x6, 1      // x7 = x6 >> 1 = 24 >> 1 = 12
+40321413  // [0x80000038] SRAI x8, x7, 2      // x8 = x7 >>> 2 = 12 >>> 2 = 3
 
 // Comparison instructions
-0020e1b3  // SLT x3, x1, x2      // x3 = (x1 < x2) ? 1 : 0 = 1
-00114233  // SLTU x4, x2, x1     // x4 = (x2 < x1) ? 1 : 0 = 0
-00511293  // SLTI x5, x2, 5      // x5 = (x2 < 5) ? 1 : 0 = 1
+0020e1b3  // [0x8000003C] SLT x3, x1, x2      // x3 = (x1 < x2) ? 1 : 0 = 1
+00114233  // [0x80000040] SLTU x4, x2, x1     // x4 = (x2 < x1) ? 1 : 0 = 0
+00511293  // [0x80000044] SLTI x5, x2, 5      // x5 = (x2 < 5) ? 1 : 0 = 1
 
 // Memory access instructions (Note: In actual system, ensure memory is accessible)
-001003b3  // ADDI x7, x0, 1      // x7 = 1
-00800433  // ADDI x8, x0, 8      // x8 = 8
-00702423  // SW x7, 0(x8)        // [x8+0] = x7 = 1
-00402083  // LW x1, 0(x8)        // x1 = [x8+0] = 1
+001003b3  // [0x80000048] ADDI x7, x0, 1      // x7 = 1
+00800433  // [0x8000004C] ADDI x8, x0, 8      // x8 = 8
+00702423  // [0x80000050] SW x7, 0(x8)        // [x8+0] = x7 = 1
+00402083  // [0x80000054] LW x1, 0(x8)        // x1 = [x8+0] = 1
 
 // Branch and jump instructions
-001000e3  // BEQ x1, x1, 4       // If x1 == x1, jump to PC+16 (next next instruction)
-00000013  // NOP                 // This instruction will not execute
-00a00533  // ADDI x10, x0, 10     // x10 = 10
-0000006f  // JAL x0, 0           // Jump to current PC (infinite loop)
+001000e3  // [0x80000058] BEQ x1, x1, 4       // If x1 == x1, jump to PC+16 (next next instruction)
+00000013  // [0x8000005C] NOP                 // This instruction will not execute
+00a00533  // [0x80000060] ADDI x10, x0, 10     // x10 = 10
+0000006f  // [0x80000064] JAL x0, 0           // Jump to current PC (infinite loop)
