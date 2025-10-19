@@ -4,8 +4,8 @@
 `include "spi_params.v"
 
 module spi_core #(
-    parameter DATA_WIDTH             = `SPI_DATA_WIDTH,
-    parameter ADDR_WIDTH             = `SPI_ADDR_WIDTH,
+    parameter DATA_WIDTH             = 64,
+    parameter ADDR_WIDTH             = 64,
     parameter CS_NUM                 = 1
 ) (
     input wire                       clk,

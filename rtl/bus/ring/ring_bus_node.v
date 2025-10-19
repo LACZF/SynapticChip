@@ -2,7 +2,7 @@
 
 module ring_bus_node #(
     parameter NUM_RINGS                 = 2,        // Number of Ring buses
-    parameter ADDR_WIDTH                = 32,       // Address width
+    parameter ADDR_WIDTH                = 64,       // Address width
     parameter DATA_WIDTH                = 64,       // Data width
     parameter NODE_ID_WIDTH             = 8,        // Node ID width
     parameter NODE_ID                   = 0,        // Node ID

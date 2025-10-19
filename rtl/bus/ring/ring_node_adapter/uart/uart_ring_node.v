@@ -5,8 +5,8 @@
 
 module uart_ring_node #(
     parameter NODE_ID_WIDTH              = 5,
-    parameter ADDR_WIDTH                 = 32,
-    parameter DATA_WIDTH                 = 32
+    parameter ADDR_WIDTH                 = 64,
+    parameter DATA_WIDTH                 = 64
 ) (
     input                                clk,
     input                                rst_n,

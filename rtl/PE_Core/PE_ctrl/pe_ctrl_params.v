@@ -2,8 +2,8 @@
 // Fabric Parameter Configuration
 
 // System Parameters
-`define DATA_WIDTH 32
-`define ADDR_WIDTH 32
+`define DATA_WIDTH 64
+`define ADDR_WIDTH 64
 `define PE_ID_WIDTH 4
 
 // PE Array Dimensions

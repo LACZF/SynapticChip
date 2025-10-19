@@ -2,8 +2,8 @@
 // System-level parameter configuration
 
 // Data width
-`define DATA_WIDTH 32
-`define ADDR_WIDTH 32
+`define DATA_WIDTH 64
+`define ADDR_WIDTH 64
 
 // Ring bus parameters
 `define NODES 16

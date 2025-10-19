@@ -5,8 +5,8 @@
 
 module tb_spi_controller;
     // Parameter definitions
-    localparam DATA_WIDTH = `SPI_DATA_WIDTH;
-    localparam ADDR_WIDTH = `SPI_ADDR_WIDTH;
+    localparam DATA_WIDTH = 64;
+    localparam ADDR_WIDTH = 64;
     localparam CLK_PERIOD = 10;
     localparam FLASH_SIZE = 1024 * 1024; // 1MB
 

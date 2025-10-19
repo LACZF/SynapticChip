@@ -7,7 +7,7 @@ module bus_top #(
     parameter BUS_TYPE                            = `BUS_TYPE_RING, // Bus type: `BUS_TYPE_RING or `BUS_TYPE_DIRECT
     parameter NUM_RINGS                           = 2,        // Number of Ring buses (valid when BUS_TYPE is `BUS_TYPE_RING)
     parameter NUM_NODES                           = 4,        // Number of nodes per Ring (valid when BUS_TYPE is `BUS_TYPE_RING)
-    parameter ADDR_WIDTH                          = 32,       // Address width
+    parameter ADDR_WIDTH                          = 64,       // Address width
     parameter DATA_WIDTH                          = 64,       // Data width
     parameter OPCODE_WIDTH                        = 8,        // Width of operation type: read/write/response, etc.
     parameter RING_ID_WIDTH                       = 4,        // Ring ID width

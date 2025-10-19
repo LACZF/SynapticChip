@@ -2,9 +2,9 @@
 // GPIO and Bus Parameter Configuration
 
 // GPIO Parameters
+`define ADDR_WIDTH 64      // Address Width
+`define DATA_WIDTH 64      // Data Width
 `define GPIO_WIDTH 32      // Number of GPIO Pins
-`define ADDR_WIDTH 32      // Address Width
-`define DATA_WIDTH 32      // Data Width
 
 // Register Address Offsets
 `define REG_DATA   8'h00   // Data Register

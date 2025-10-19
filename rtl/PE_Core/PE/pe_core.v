@@ -4,7 +4,7 @@
 `include "pe_params.v"
 
 module pe_core #(
-    parameter ADDR_WIDTH            = 32,
+    parameter ADDR_WIDTH            = 64,
     parameter DATA_WIDTH            = 64,
     parameter NUM_PES               = 4,
     parameter INST_WIDTH            = 32,

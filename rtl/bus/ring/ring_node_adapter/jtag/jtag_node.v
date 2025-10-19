@@ -5,9 +5,9 @@
 
 module jtag_node #(
     parameter NUM_RINGS                 = 2,
-    parameter ADDR_WIDTH                = `ADDR_WIDTH,
-    parameter DATA_WIDTH                = `DATA_WIDTH,
-    parameter NODE_ID_WIDTH             = `NODE_ID_WIDTH,
+    parameter ADDR_WIDTH                = 64,
+    parameter DATA_WIDTH                = 64,
+    parameter NODE_ID_WIDTH             = 5,
     parameter NODE_ID                   = 0,
     parameter OPCODE_WIDTH              = 8,
     parameter MATCH_TYPE_WIDTH          = 2

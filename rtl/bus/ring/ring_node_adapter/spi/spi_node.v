@@ -4,10 +4,10 @@
 `include "spi_params.v"
 
 module spi_node #(
-    parameter DATA_WIDTH                = `SPI_DATA_WIDTH,
-    parameter ADDR_WIDTH                = `SPI_ADDR_WIDTH,
+    parameter DATA_WIDTH                = 64,
+    parameter ADDR_WIDTH                = 64,
     parameter SPI_CS_NUM                = 1,
-    parameter NODE_ID_WIDTH             = `SPI_NODE_ID_WIDTH
+    parameter NODE_ID_WIDTH             = 5
 ) (
     input wire                          clk,
     input wire                          rst_n,

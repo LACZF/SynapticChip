@@ -101,7 +101,7 @@ module tb_top_system_direct_4core;
     reg  uart_rxd;
 
     // GPIO Interface
-    wire [`DATA_WIDTH-1:0] gpio_pins;
+    wire [`GPIO_WIDTH-1:0] gpio_pins;
     reg  [`DATA_WIDTH-1:0] gpio_ext_drive;
     assign gpio_pins = gpio_ext_drive;
 

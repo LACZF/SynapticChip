@@ -3,9 +3,9 @@
 module riscv64_mmu #(
     parameter ADDR_WIDTH = 64
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire enable_i,          // MMU使能信号
+    input wire                    clk,
+    input wire                    rst_n,
+    input wire                    enable_i,          // MMU使能信号
     input wire [ADDR_WIDTH-1:0]   virt_addr_i, // 虚拟地址输入
     input wire [1:0]              priv_mode_i, // 特权模式 (M/S/U)
     input wire                    inst_access_i, // 指令访问标志

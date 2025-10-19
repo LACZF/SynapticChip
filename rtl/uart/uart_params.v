@@ -2,8 +2,8 @@
 // UART and bus parameter configuration
 
 // UART parameters
-`define DATA_WIDTH 32      // Data width
-`define ADDR_WIDTH 32      // Address width
+`define DATA_WIDTH 64      // Data width
+`define ADDR_WIDTH 64      // Address width
 
 // Register address offsets
 `define REG_RBR 8'h00      // Receive Buffer Register (read-only)

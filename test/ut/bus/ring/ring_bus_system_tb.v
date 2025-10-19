@@ -5,14 +5,14 @@ module ring_bus_system_tb;
 
     // Memory Interface
     reg          mem_req_enable;
-    reg  [31:0]  mem_req_addr;
+    reg  [63:0]  mem_req_addr;
     reg  [63:0]  mem_req_data;
     reg          mem_req_wr;
     wire [63:0]  mem_req_data_out;
     wire         mem_req_ready;
 
     wire         mem_resp_enable;
-    wire [31:0]  mem_resp_addr;
+    wire [63:0]  mem_resp_addr;
     wire [63:0]  mem_resp_data;
     wire         mem_resp_wr;
     reg  [63:0]  mem_resp_data_in;
@@ -20,14 +20,14 @@ module ring_bus_system_tb;
 
     // UART Interface
     reg          uart_req_enable;
-    reg  [31:0]  uart_req_addr;
+    reg  [63:0]  uart_req_addr;
     reg  [63:0]  uart_req_data;
     reg          uart_req_wr;
     wire [63:0]  uart_req_data_out;
     wire         uart_req_ready;
 
     wire         uart_resp_enable;
-    wire [31:0]  uart_resp_addr;
+    wire [63:0]  uart_resp_addr;
     wire [63:0]  uart_resp_data;
     wire         uart_resp_wr;
     reg  [63:0]  uart_resp_data_in;

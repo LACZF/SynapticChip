@@ -5,8 +5,8 @@
 
 module pe_ctrl_ring_node #(
     parameter NODE_ID_WIDTH                      = 5,
-    parameter ADDR_WIDTH                         = 32,
-    parameter DATA_WIDTH                         = 32,
+    parameter ADDR_WIDTH                         = 64,
+    parameter DATA_WIDTH                         = 64,
     parameter NUM_PES                            = 4,
     parameter INST_WIDTH                         = 32,
     parameter PE_ID_WIDTH                        = 4

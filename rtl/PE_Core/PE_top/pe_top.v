@@ -3,7 +3,7 @@
 
 module pe_top #(
     parameter NUM_RINGS                           = 2,
-    parameter ADDR_WIDTH                          = 32,
+    parameter ADDR_WIDTH                          = 64,
     parameter DATA_WIDTH                          = 64,
     parameter NODE_ID_WIDTH                       = 8,
     parameter OPCODE_WIDTH                        = 8,

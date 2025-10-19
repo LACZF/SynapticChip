@@ -2,7 +2,7 @@
 
 module ring_single_bus #(
     parameter NUM_NODES                           = 4,
-    parameter ADDR_WIDTH                          = 32,
+    parameter ADDR_WIDTH                          = 64,
     parameter DATA_WIDTH                          = 64,
     parameter NODE_ID_WIDTH                       = 8,
     parameter OPCODE_WIDTH                        = 8,        // Width of operation type: read/write/response, etc.

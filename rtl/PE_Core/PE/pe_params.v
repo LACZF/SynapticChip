@@ -2,8 +2,8 @@
 // PE parameter configuration
 
 // Data width
-`define DATA_WIDTH 32
-`define ADDR_WIDTH 32
+`define DATA_WIDTH 64
+`define ADDR_WIDTH 64
 
 // Instruction width and fields
 `define INST_WIDTH 32

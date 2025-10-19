@@ -1,7 +1,7 @@
 module uart_request_node #(
     parameter NODE_ID                   = 1,
     parameter TARGET_NODE_ID            = 4,  // Target node ID (UART response node)
-    parameter ADDR_WIDTH                = 32,
+    parameter ADDR_WIDTH                = 64,
     parameter DATA_WIDTH                = 64
 ) (
     input  wire                         clk,

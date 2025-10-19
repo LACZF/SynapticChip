@@ -1,7 +1,7 @@
 module memory_request_node #(
     parameter NODE_ID                   = 0,
     parameter TARGET_NODE_ID            = 3,  // Target node ID (memory response node)
-    parameter ADDR_WIDTH                = 32,
+    parameter ADDR_WIDTH                = 64,
     parameter DATA_WIDTH                = 64
 ) (
     input  wire                         clk,

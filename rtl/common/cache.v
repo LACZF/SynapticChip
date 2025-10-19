@@ -4,9 +4,9 @@ module cache #(
     parameter CACHE_LINE_SIZE               = 64,       // Cache line size in bytes
     parameter CACHE_SIZE                    = 4096,     // Cache size in bytes
     parameter ASSOCIATIVITY                 = 4,        // Cache associativity (1=direct mapped, 2=2-way, etc.)
-    parameter ADDR_WIDTH                    = 32,       // Address width
-    parameter INPUT_DATA_WIDTH              = 32,       // Data width (CPU interface)
-    parameter OUTPUT_DATA_WIDTH             = 32,       // Memory data width (new parameter)
+    parameter ADDR_WIDTH                    = 64,       // Address width
+    parameter INPUT_DATA_WIDTH              = 64,       // Data width (CPU interface)
+    parameter OUTPUT_DATA_WIDTH             = 64,       // Memory data width (new parameter)
     parameter SUPPORT_COHERENCY             = 1,        // 1=support cache coherency, 0=not support
     parameter CACHE_LEVEL                   = 2,        // Cache level (1=L1, 2=L2, 3=L3, etc.)
     parameter REPLACEMENT_POLICY            = "LRU"     // Replacement policy ("LRU", "FIFO", "RANDOM")

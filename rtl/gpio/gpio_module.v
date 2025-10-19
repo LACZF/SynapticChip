@@ -4,8 +4,8 @@
 `include "gpio_params.v"
 
 module gpio_module #(
-    parameter ADDR_WIDTH            = 32,
-    parameter DATA_WIDTH            = 32,
+    parameter ADDR_WIDTH            = 64,
+    parameter DATA_WIDTH            = 64,
     parameter GPIO_WIDTH            = 32
 ) (
     input                           clk,

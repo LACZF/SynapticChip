@@ -1,6 +1,6 @@
 module uart_response_node #(
     parameter NODE_ID                   = 4,
-    parameter ADDR_WIDTH                = 32,
+    parameter ADDR_WIDTH                = 64,
     parameter DATA_WIDTH                = 64
 ) (
     input  wire                         clk,

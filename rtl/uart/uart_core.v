@@ -4,8 +4,8 @@
 `include "uart_params.v"
 
 module uart_core #(
-    parameter ADDR_WIDTH             = 32,
-    parameter DATA_WIDTH             = 32,
+    parameter ADDR_WIDTH             = 64,
+    parameter DATA_WIDTH             = 64,
     parameter FIFO_DEPTH             = 16,
     parameter FIFO_ADDR_WIDTH        = 4
 ) (

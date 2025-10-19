@@ -5,7 +5,7 @@
 
 module gpio_node #(
     parameter NUM_RINGS                 = 2,
-    parameter ADDR_WIDTH                = 32,
+    parameter ADDR_WIDTH                = 64,
     parameter DATA_WIDTH                = 64,
     parameter NODE_ID_WIDTH             = 8,
     parameter NODE_ID                   = 0,

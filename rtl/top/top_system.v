@@ -7,7 +7,7 @@ module top_system #(
     parameter BUS_TYPE                        = `BUS_TYPE_DIRECT,
     parameter NUM_RINGS                       = 2,
     parameter NUM_NODES                       = 8,
-    parameter ADDR_WIDTH                      = 32,
+    parameter ADDR_WIDTH                      = 64,
     parameter DATA_WIDTH                      = 64,
     parameter L1_ICACHE_DATA_WIDTH            = 32,
     parameter L1_DCACHE_DATA_WIDTH            = 64,
@@ -33,7 +33,7 @@ module top_system #(
     parameter PE_ARRAY_COLS                   = 2,
     parameter PE_ID_WIDTH                     = 4,
     parameter CPU_TYPE                        = 0,
-    parameter ENABLE_MMU                      = 0
+    parameter ENABLE_MMU                      = 1
 )(
     input                                     clk,
     input                                     rst_n,
@@ -43,7 +43,7 @@ module top_system #(
     input                                     uart_rxd_i,
 
     // GPIO interface
-    inout  [DATA_WIDTH-1:0]                   gpio_pins,
+    inout  [GPIO_WIDTH-1:0]                   gpio_pins,
 
     // External interrupt
     input                                     ext_int_i,

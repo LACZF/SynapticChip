@@ -2,8 +2,8 @@
 // JTAG and bus parameter configuration
 
 // JTAG parameters
-`define DATA_WIDTH 32
-`define ADDR_WIDTH 32
+`define DATA_WIDTH 64
+`define ADDR_WIDTH 64
 `define INSTR_WIDTH 4
 
 // JTAG TAP state machine state definitions
