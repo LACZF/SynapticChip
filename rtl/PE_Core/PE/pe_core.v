@@ -56,6 +56,9 @@ module pe_core #(
     // Internal register file
     reg [DATA_WIDTH-1:0] reg_file [0:`NUM_REGS-1];
 
+    // Special register for status output
+    wire [DATA_WIDTH-1:0] status_reg = reg_file[15]; // R15 is used for status output
+
     // Instruction decoding
     wire [`OPCODE_WIDTH-1:0]   opcode    = instruction_i[31:26];
     wire [`REG_ADDR_WIDTH-1:0] rd        = instruction_i[25:22];
@@ -281,6 +284,9 @@ module pe_core #(
                 comm_buffer[3] <= west_data_i;
                 comm_ready[3] <= 1;
             end
+
+            // Update status output with R15 register value
+            status_o <= status_reg;
         end
     end
 
