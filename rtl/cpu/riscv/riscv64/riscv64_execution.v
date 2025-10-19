@@ -5,8 +5,17 @@
 `include "riscv64_privileged_execution.v"
 
 module riscv64_execution #(
-    parameter ADDR_WIDTH        = 64,
-    parameter DATA_WIDTH        = 64
+    parameter ADDR_WIDTH              = 64,
+    parameter DATA_WIDTH              = 64,
+    parameter ENABLE_PRIVILEGED       = 1,
+    parameter ENABLE_M_EXT            = 1,
+    parameter ENABLE_A_EXT            = 1,
+    parameter ENABLE_F_EXT            = 1,
+    parameter ENABLE_D_EXT            = 1,
+    parameter ENABLE_Q_EXT            = 1,
+    parameter ENABLE_ZIFENCEI_EXT     = 1,
+    parameter ENABLE_ZICSR_EXT        = 1,
+    parameter ENABLE_ZFH_EXT          = 1
 )(
     input wire                  clk,
     input wire                  rst_n,
@@ -52,7 +61,16 @@ module riscv64_execution #(
 
     // 实例化非特权指令执行模块
     riscv64_unprivileged_execution #(
-        .DATA_WIDTH(DATA_WIDTH)
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .ENABLE_M_EXT(ENABLE_M_EXT),
+        .ENABLE_A_EXT(ENABLE_A_EXT),
+        .ENABLE_F_EXT(ENABLE_F_EXT),
+        .ENABLE_D_EXT(ENABLE_D_EXT),
+        .ENABLE_Q_EXT(ENABLE_Q_EXT),
+        .ENABLE_ZIFENCEI_EXT(ENABLE_ZIFENCEI_EXT),
+        .ENABLE_ZICSR_EXT(ENABLE_ZICSR_EXT),
+        .ENABLE_ZFH_EXT(ENABLE_ZFH_EXT)
     ) u_unprivileged_execution (
         .clk(clk),
         .pc_in_i(pc_in_i),
@@ -84,22 +102,22 @@ module riscv64_execution #(
         .is_privileged_instr(is_privileged_instr)
     );
 
-    // 结果选择逻辑：优先处理特权指令
+    // 结果选择逻辑：根据特权指令集使能参数决定是否处理特权指令
     assign alu_result_temp = (
-        is_privileged_instr ? priv_alu_result :
+        (ENABLE_PRIVILEGED && is_privileged_instr) ? priv_alu_result :
         is_unprivileged_instr ? unpriv_alu_result :
         64'b0
     );
 
     // 分支结果选择
     assign branch_taken = (
-        is_privileged_instr ? priv_branch_taken :
+        (ENABLE_PRIVILEGED && is_privileged_instr) ? priv_branch_taken :
         is_unprivileged_instr ? unpriv_branch_taken :
         1'b0
     );
 
     assign branch_target = (
-        is_privileged_instr ? priv_branch_target :
+        (ENABLE_PRIVILEGED && is_privileged_instr) ? priv_branch_target :
         is_unprivileged_instr ? unpriv_branch_target :
         64'b0
     );

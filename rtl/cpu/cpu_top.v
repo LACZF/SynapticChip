@@ -306,7 +306,16 @@ module cpu_top #(
                     .DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
                     .L1_ICACHE_DATA_WIDTH(L1_ICACHE_DATA_WIDTH),
                     .L1_DCACHE_DATA_WIDTH(L1_DCACHE_DATA_WIDTH),
-                    .CORE_ID(i)
+                    .CORE_ID(i),
+                    .ENABLE_PRIVILEGED(0),
+                    .ENABLE_M_EXT(0),
+                    .ENABLE_A_EXT(0),
+                    .ENABLE_F_EXT(0),
+                    .ENABLE_D_EXT(0),
+                    .ENABLE_Q_EXT(0),
+                    .ENABLE_ZIFENCEI_EXT(0),
+                    .ENABLE_ZICSR_EXT(0),
+                    .ENABLE_ZFH_EXT(0)
                 ) u_riscv64_core (
                     .clk(clk),
                     .rst_n(rst_n),

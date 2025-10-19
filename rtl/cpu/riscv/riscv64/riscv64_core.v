@@ -7,7 +7,16 @@ module riscv64_core #(
     parameter DATA_WIDTH                             = 64,
     parameter L1_ICACHE_DATA_WIDTH                   = 32,
     parameter L1_DCACHE_DATA_WIDTH                   = 64,
-    parameter CORE_ID                                = 0
+    parameter CORE_ID                                = 0,
+    parameter ENABLE_PRIVILEGED                      = 1,
+    parameter ENABLE_M_EXT                           = 1,
+    parameter ENABLE_A_EXT                           = 1,
+    parameter ENABLE_F_EXT                           = 1,
+    parameter ENABLE_D_EXT                           = 1,
+    parameter ENABLE_Q_EXT                           = 1,
+    parameter ENABLE_ZIFENCEI_EXT                    = 1,
+    parameter ENABLE_ZICSR_EXT                       = 1,
+    parameter ENABLE_ZFH_EXT                         = 1
 )(
     input wire                                       clk,
     input wire                                       rst_n,
@@ -160,7 +169,16 @@ module riscv64_core #(
     // Execution stage
     riscv64_execution #(
         .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .ENABLE_PRIVILEGED(ENABLE_PRIVILEGED),
+        .ENABLE_M_EXT(ENABLE_M_EXT),
+        .ENABLE_A_EXT(ENABLE_A_EXT),
+        .ENABLE_F_EXT(ENABLE_F_EXT),
+        .ENABLE_D_EXT(ENABLE_D_EXT),
+        .ENABLE_Q_EXT(ENABLE_Q_EXT),
+        .ENABLE_ZIFENCEI_EXT(ENABLE_ZIFENCEI_EXT),
+        .ENABLE_ZICSR_EXT(ENABLE_ZICSR_EXT),
+        .ENABLE_ZFH_EXT(ENABLE_ZFH_EXT)
     ) u_ex (
         .clk(clk),
         .rst_n(rst_n),

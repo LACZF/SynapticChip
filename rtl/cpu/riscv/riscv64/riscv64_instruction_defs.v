@@ -17,10 +17,10 @@
 // 分支指令专用宏定义
 `define FUNCT3_BEQ       3'b000  // BEQ
 `define FUNCT3_BNE       3'b001  // BNE
-`define FUNCT3_BLT       3'b010  // BLT
-`define FUNCT3_BGE       3'b100  // BGE
-`define FUNCT3_BLTU      3'b011  // BLTU
-`define FUNCT3_BGEU      3'b101  // BGEU
+`define FUNCT3_BLT       3'b100  // BLT
+`define FUNCT3_BGE       3'b101  // BGE
+`define FUNCT3_BLTU      3'b110  // BLTU
+`define FUNCT3_BGEU      3'b111  // BGEU
 
 // 乘法指令专用宏定义
 `define FUNCT3_MUL       3'b000  // MUL

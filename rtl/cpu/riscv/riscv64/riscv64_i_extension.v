@@ -66,6 +66,9 @@ module riscv64_i_extension #(
         input [DATA_WIDTH-1:0] rs1;
         input [DATA_WIDTH-1:0] imm;
         begin
+        `ifdef DEBUG
+            $display("[I-Extension] handle_itype: alu_op=%b, rs1=%h, imm=%h", alu_op, rs1, imm);
+        `endif
             case (alu_op)
                 `ALU_OP_ADD: handle_itype = rs1 + imm;
                 `ALU_OP_SUB: handle_itype = rs1 - imm;
@@ -77,6 +80,9 @@ module riscv64_i_extension #(
                 `ALU_OP_SLL: handle_itype = imm << rs1[5:0];
                 default: handle_itype = 64'b0;
             endcase
+        `ifdef DEBUG
+            $display("[I-Extension] handle_itype result: %h", handle_itype);
+        `endif
         end
     endfunction
 
@@ -111,8 +117,10 @@ module riscv64_i_extension #(
     assign utype_result = (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC) ? handle_utype(opcode, pc_in_i, imm_i) : 64'b0;
     assign stype_result = (opcode == `OPCODE_STORE) ? handle_stype(rs1_data_i, imm_i) : 64'b0;
 
+    // 用于JALR指令计算的中间变量
+    reg [DATA_WIDTH-1:0] sum;
+
     // 处理分支指令
-    wire [DATA_WIDTH-1:0] branch_alu_result = (opcode == `OPCODE_JALR) ? rtype_result : 64'b0;
     always @(*) begin
         branch_taken = 1'b0;
         branch_target = pc_in_i + imm_i;
@@ -131,7 +139,9 @@ module riscv64_i_extension #(
             branch_taken = 1'b1;
         end else if (opcode == `OPCODE_JALR) begin
             branch_taken = 1'b1;
-            branch_target = {branch_alu_result[63:1], 1'b0};
+            // JALR指令的目标地址计算：rs1 + imm
+            sum = rs1_data_i + imm_i;
+            branch_target = sum;
         end else begin
             branch_taken = 1'b0;
         end
@@ -139,10 +149,12 @@ module riscv64_i_extension #(
 
     // 选择最终的ALU结果
     assign alu_result_o = (
-        (opcode == `OPCODE_REG_ARITH || opcode == `OPCODE_JALR) ? rtype_result :
+        (opcode == `OPCODE_REG_ARITH) ? rtype_result :
         (opcode == `OPCODE_IMM_ARITH || opcode == `OPCODE_LOAD) ? itype_result :
         (opcode == `OPCODE_STORE) ? stype_result :
         (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC) ? utype_result :
+        // 对于JALR指令，ALU结果是PC+4（返回地址）
+        (opcode == `OPCODE_JALR) ? (pc_in_i + 64'd4) :
         64'b0
     );
 

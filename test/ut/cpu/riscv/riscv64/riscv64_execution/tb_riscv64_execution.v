@@ -39,7 +39,19 @@ module tb_riscv64_execution;
     end
 
     // Instantiate Device Under Test (DUT)
-    riscv64_execution u_riscv64_execution (
+    riscv64_execution #(
+        .ADDR_WIDTH(64),
+        .DATA_WIDTH(64),
+        .ENABLE_PRIVILEGED(1),
+        .ENABLE_M_EXT(1),
+        .ENABLE_A_EXT(1),
+        .ENABLE_F_EXT(1),
+        .ENABLE_D_EXT(1),
+        .ENABLE_Q_EXT(1),
+        .ENABLE_ZIFENCEI_EXT(1),
+        .ENABLE_ZICSR_EXT(1),
+        .ENABLE_ZFH_EXT(1)
+    ) u_riscv64_execution (
         .clk              (clk),
         .rst_n            (rst_n),
         .stall_i          (stall_i),
@@ -243,40 +255,39 @@ module tb_riscv64_execution;
             check_alu_result(test_id++, 0, 64'h12345678 + 64'h87654321);
 
             // SUB (0x402080b3 - SUB x1, x0, x2)
-            set_inputs(64'h80000004, 32'h402080b3, 64'h87654321, 64'h12345678, 64'h0, 16'b1000000000000000); // reg_op=1, funct7_30=1
+            set_inputs(64'h80000004, 32'h402080b3, 64'h87654321, 64'h12345678, 64'h0, 16'b1000100000000000); // reg_op=1, alu_op=001 (SUB)
             check_alu_result(test_id++, 1, 64'h87654321 - 64'h12345678);
 
             // SLL (0x002090b3 - SLL x1, x0, x2)
-            set_inputs(64'h80000008, 32'h002090b3, 64'h0000000000000001, 64'h0000000000000004, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=001
+            set_inputs(64'h80000008, 32'h002090b3, 64'h0000000000000001, 64'h0000000000000004, 64'h0, 16'b1111100000000000); // reg_op=1, alu_op=111 (SLL)
             check_alu_result(test_id++, 2, 64'h0000000000000010);
 
             // SLT (0x0020a0b3 - SLT x1, x0, x2)
-            set_inputs(64'h8000000c, 32'h0020a0b3, 64'h0000000000000001, 64'h0000000000000002, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=010
+            set_inputs(64'h8000000c, 32'h0020a0b3, 64'h0000000000000001, 64'h0000000000000002, 64'h0, 16'b1010100000000000); // reg_op=1, alu_op=101 (SLT)
             check_alu_result(test_id++, 3, 64'h0000000000000001);
 
             // SLTU (0x0020b0b3 - SLTU x1, x0, x2)
-            set_inputs(64'h80000010, 32'h0020b0b3, 64'h0000000000000001, 64'h0000000000000002, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=011
+            set_inputs(64'h80000010, 32'h0020b0b3, 64'h0000000000000001, 64'h0000000000000002, 64'h0, 16'b1100100000000000); // reg_op=1, alu_op=110 (SLTU)
             check_alu_result(test_id++, 4, 64'h0000000000000001);
 
             // XOR (0x0020c0b3 - XOR x1, x0, x2)
-            set_inputs(64'h80000014, 32'h0020c0b3, 64'h0000000000000001, 64'h0000000000000003, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=100
+            set_inputs(64'h80000014, 32'h0020c0b3, 64'h0000000000000001, 64'h0000000000000003, 64'h0, 16'b1100000000000000); // reg_op=1, alu_op=100 (XOR)
             check_alu_result(test_id++, 5, 64'h0000000000000002);
 
             // SRL (0x0020d0b3 - SRL x1, x0, x2)
-            set_inputs(64'h80000018, 32'h0020d0b3, 64'h0000000000000010, 64'h0000000000000004, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=101
+            set_inputs(64'h80000018, 32'h0020d0b3, 64'h0000000000000010, 64'h0000000000000004, 64'h0, 16'b1010100000000000); // reg_op=1, alu_op=101 (SRL - 与SLT复用)
             check_alu_result(test_id++, 6, 64'h0000000000000001);
 
             // SRA (0x4020d0b3 - SRA x1, x0, x2)
-            // 修复SRA指令的测试，更新期望结果以匹配DUT的实际行为
-            set_inputs(64'h8000001c, 32'h4020d0b3, 64'h8000000000000000, 64'h0000000000000004, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=101, funct7_30=1
-            check_alu_result(test_id++, 7, 64'hf800000000000000); // 更新期望结果以匹配DUT的实际行为
+            set_inputs(64'h8000001c, 32'h4020d0b3, 64'h8000000000000000, 64'h0000000000000004, 64'h0, 16'b1010100000000000); // reg_op=1, alu_op=101 (SRA - 与SLT复用)
+            check_alu_result(test_id++, 7, 64'hf800000000000000);
 
             // OR (0x0020e0b3 - OR x1, x0, x2)
-            set_inputs(64'h80000020, 32'h0020e0b3, 64'h0000000000000001, 64'h0000000000000002, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=110
+            set_inputs(64'h80000020, 32'h0020e0b3, 64'h0000000000000001, 64'h0000000000000002, 64'h0, 16'b1001100000000000); // reg_op=1, alu_op=011 (OR)
             check_alu_result(test_id++, 8, 64'h0000000000000003);
 
             // AND (0x0020f0b3 - AND x1, x0, x2)
-            set_inputs(64'h80000024, 32'h0020f0b3, 64'h0000000000000003, 64'h0000000000000001, 64'h0, 16'b1000000000000000); // reg_op=1, funct3=111
+            set_inputs(64'h80000024, 32'h0020f0b3, 64'h0000000000000003, 64'h0000000000000001, 64'h0, 16'b1001000000000000); // reg_op=1, alu_op=010 (AND)
             check_alu_result(test_id++, 9, 64'h0000000000000001);
         end
     endtask
@@ -289,36 +300,36 @@ module tb_riscv64_execution;
         `endif
 
             // I-type ADD (0x00200093 - ADDI x1, x0, 2)
-            set_inputs(64'h80000028, 32'h00200093, 64'h12345678, 64'h0, 64'h0000000000000002, 16'b0000100100000000); // alu_src=1, alu_op=001
-            check_alu_result(test_id++, 10, 64'h1234567a); // 使用当前DUT实际产生的值
+            set_inputs(64'h80000028, 32'h00200093, 64'h12345678, 64'h0, 64'h0000000000000002, 16'b0000000100000000); // alu_src=1, alu_op=000 (ADD)
+            check_alu_result(test_id++, 10, 64'h12345678 + 64'h0000000000000002);
 
             // I-type SUB (0x40200093 - SUBI x1, x0, 2)
-            set_inputs(64'h8000002c, 32'h40200093, 64'h12345678, 64'h0, 64'h0000000000000002, 16'b0000100100000000); // alu_src=1, alu_op=001
-            check_alu_result(test_id++, 11, 64'h1234567a); // 使用当前DUT实际产生的值
+            set_inputs(64'h8000002c, 32'h40200093, 64'h12345678, 64'h0, 64'h0000000000000002, 16'b0000100100000000); // alu_src=1, alu_op=001 (SUB)
+            check_alu_result(test_id++, 11, 64'h12345678 - 64'h0000000000000002);
 
             // I-type AND (0x00200093 - ANDI x1, x0, 2)
-            set_inputs(64'h80000030, 32'h00200093, 64'h0000000000000003, 64'h0, 64'h0000000000000002, 16'b0001000100000000); // alu_src=1, alu_op=010
-            check_alu_result(test_id++, 12, 64'h0000000000000003); // 使用当前DUT实际产生的值
+            set_inputs(64'h80000030, 32'h00200093, 64'h0000000000000003, 64'h0, 64'h0000000000000002, 16'b0001000100000000); // alu_src=1, alu_op=010 (AND)
+            check_alu_result(test_id++, 12, 64'h0000000000000002 & 64'h0000000000000003);
 
             // I-type OR (0x00200093 - ORI x1, x0, 2)
-            set_inputs(64'h80000034, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000002, 16'b0001100100000000); // alu_src=1, alu_op=011
-            check_alu_result(test_id++, 13, 64'hffffffffffffffff); // 使用当前DUT实际产生的值
+            set_inputs(64'h80000034, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000002, 16'b0001100100000000); // alu_src=1, alu_op=011 (OR)
+            check_alu_result(test_id++, 13, 64'h0000000000000001 | 64'h0000000000000002);
 
             // I-type XOR (0x00200093 - XORI x1, x0, 2)
-            set_inputs(64'h80000038, 32'h00200093, 64'h0000000000000003, 64'h0, 64'h0000000000000002, 16'b0010000100000000); // alu_src=1, alu_op=100
-            check_alu_result(test_id++, 14, 64'h0000000000000000); // 使用当前DUT实际产生的值
+            set_inputs(64'h80000038, 32'h00200093, 64'h0000000000000003, 64'h0, 64'h0000000000000002, 16'b0010000100000000); // alu_src=1, alu_op=100 (XOR)
+            check_alu_result(test_id++, 14, 64'h0000000000000003 ^ 64'h0000000000000002);
 
             // I-type SLT (0x00200093 - SLTI x1, x0, 2)
-            set_inputs(64'h8000003c, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000002, 16'b0010100100000000); // alu_src=1, alu_op=101
-            check_alu_result(test_id++, 15, 64'h0000000000000000); // 使用当前DUT实际产生的值
+            set_inputs(64'h8000003c, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000002, 16'b0010100100000000); // alu_src=1, alu_op=101 (SLT)
+            check_alu_result(test_id++, 15, ($signed(64'h0000000000000001) < $signed(64'h0000000000000002)) ? 64'd1 : 64'd0);
 
             // I-type SLTU (0x00200093 - SLTIU x1, x0, 2)
-            set_inputs(64'h80000040, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000002, 16'b0011000100000000); // alu_src=1, alu_op=110
-            check_alu_result(test_id++, 16, 64'h0000000000000001); // 使用当前DUT实际产生的值
+            set_inputs(64'h80000040, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000002, 16'b0011000100000000); // alu_src=1, alu_op=110 (SLTU)
+            check_alu_result(test_id++, 16, (64'h0000000000000001 < 64'h0000000000000002) ? 64'd1 : 64'd0);
 
             // I-type SLL (0x00200093 - SLLI x1, x0, 2)
-            set_inputs(64'h80000044, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000004, 16'b0011100100000000); // alu_src=1, alu_op=111
-            check_alu_result(test_id++, 17, 64'h0000000000000005); // 使用当前DUT实际产生的值
+            set_inputs(64'h80000044, 32'h00200093, 64'h0000000000000001, 64'h0, 64'h0000000000000004, 16'b0011100100000000); // alu_src=1, alu_op=111 (SLL)
+            check_alu_result(test_id++, 17, 64'h0000000000000001 << 4);
         end
     endtask
 
@@ -384,12 +395,11 @@ module tb_riscv64_execution;
             set_inputs(64'h80000078, 32'h00c0006f, 64'h0, 64'h0, 64'h000000000000000c, 16'b0000000000000000); // opcode=1101111
             check_branch_result(test_id++, 12, 1'b1, 64'h80000078 + 64'h000000000000000c);
 
-            // JALR (0x00c00067 - JALR x0, 12(x1))
+            // JALR (0x00c00067 - JALR x0, 12(x1)) - 修复参数顺序和指令码
             // 设置reg_op=0, alu_src=0
-            set_inputs(64'h8000007c, 32'h00c00067, 64'h80000000, 64'h000000000000000c, 64'h0, 16'b0000000000000000); // opcode=1100111, reg_op=0, alu_src=0
+            set_inputs(64'h8000007c, 32'h00c00067, 64'h80000000, 64'h0, 64'h000000000000000c, 16'b0000000000000000); // opcode=1100111, reg_op=0, alu_src=0
             @(negedge clk); // 等待一个时钟周期
-            // 观察结果，发现DUT生成的目标地址是完整的加法结果，而不是右移一位的结果
-            check_branch_result(test_id++, 13, 1'b1, 64'h8000000c); // 更新期望目标地址为DUT实际生成的值
+            check_branch_result(test_id++, 13, 1'b1, 64'h8000000c); // 期望目标地址是rs1 + imm
         end
     endtask
 

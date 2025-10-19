@@ -77,7 +77,23 @@ module tb_riscv64_core;
     end
 
     // Instantiate the DUT (Device Under Test)
-    riscv64_core u_dut (
+    riscv64_core #(
+        .ADDR_WIDTH(64),
+        .DATA_WIDTH(64),
+        .L1_ICACHE_DATA_WIDTH(32),
+        .L1_DCACHE_DATA_WIDTH(64),
+        .CORE_ID(0),
+        // 指令集使能参数
+        .ENABLE_PRIVILEGED(1),
+        .ENABLE_M_EXT(1),
+        .ENABLE_A_EXT(1),
+        .ENABLE_F_EXT(1),
+        .ENABLE_D_EXT(1),
+        .ENABLE_Q_EXT(1),
+        .ENABLE_ZIFENCEI_EXT(1),
+        .ENABLE_ZICSR_EXT(1),
+        .ENABLE_ZFH_EXT(1)
+    ) u_dut (
         .clk(clk),
         .rst_n(rst_n),
         .icache_req_o(icache_req),
