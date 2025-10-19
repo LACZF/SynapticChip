@@ -1,8 +1,6 @@
 // riscv64_execution.v
 // 顶层执行模块，集成非特权和特权指令执行
 `include "riscv64_instruction_defs.v"
-`include "riscv64_unprivileged_execution.v"
-`include "riscv64_privileged_execution.v"
 
 module riscv64_execution #(
     parameter ADDR_WIDTH              = 64,

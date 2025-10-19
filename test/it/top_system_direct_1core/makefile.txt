@@ -29,6 +29,23 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_write_back.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
 
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/privileged/riscv64_privileged_execution.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_branch_executor.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_i_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_itype_executor.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_rtype_executor.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_stype_executor.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Base/riscv64_utype_executor.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_a_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_d_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_f_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_m_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_q_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/riscv64_zfh_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/Zicsr/riscv64_zicsr_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/Zifencei/riscv64_zifencei_extension.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/riscv64_unprivileged_execution.v
+
 # PE
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/PE_Core/PE
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v

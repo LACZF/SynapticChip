@@ -1,15 +1,5 @@
 // riscv64_unprivileged_execution.v
 // 非特权指令执行模块，整合所有非特权指令扩展
-`include "riscv64_instruction_defs.v"
-`include "riscv64_i_extension.v"
-`include "riscv64_m_extension.v"
-`include "riscv64_a_extension.v"
-`include "riscv64_f_extension.v"
-`include "riscv64_d_extension.v"
-`include "riscv64_q_extension.v"
-`include "riscv64_zifencei_extension.v"
-`include "riscv64_zicsr_extension.v"
-`include "riscv64_zfh_extension.v"
 
 module riscv64_unprivileged_execution #(
     parameter ADDR_WIDTH                = 64,
