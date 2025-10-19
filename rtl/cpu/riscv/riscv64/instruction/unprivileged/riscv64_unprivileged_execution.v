@@ -12,7 +12,8 @@ module riscv64_unprivileged_execution #(
     parameter ENABLE_ZIFENCEI_EXT       = 1,
     parameter ENABLE_ZICSR_EXT          = 1,
     parameter ENABLE_ZFH_EXT            = 1,
-    parameter ENABLE_C_EXT              = 1
+    parameter ENABLE_C_EXT              = 1,
+    parameter ENABLE_V_EXT              = 1
 )(
     input wire                  clk,
     input wire [63:0]           pc_in_i,
@@ -55,6 +56,7 @@ module riscv64_unprivileged_execution #(
     wire [63:0] zicsr_result;
     wire [63:0] zfh_result;
     wire [63:0] c_result;
+    wire [63:0] v_result;
     wire        is_i_extension;
     wire        is_m_extension;
     wire        is_a_extension;
@@ -65,6 +67,7 @@ module riscv64_unprivileged_execution #(
     wire        is_zicsr_extension;
     wire        is_zfh_extension;
     wire        is_c_extension;
+    wire        is_v_extension;
     wire [63:0] alu_result_temp; // 中间结果
 
     // 扩展模块使能信号（根据参数配置）
@@ -77,6 +80,7 @@ module riscv64_unprivileged_execution #(
     wire enable_zicsr_ext = ENABLE_ZICSR_EXT;
     wire enable_zfh_ext = ENABLE_ZFH_EXT;
     wire enable_c_ext = ENABLE_C_EXT;
+    wire enable_v_ext = ENABLE_V_EXT;
 
     // 实例化I扩展模块
     riscv64_i_extension #(
@@ -287,10 +291,34 @@ module riscv64_unprivileged_execution #(
         end
     endgenerate
 
+    // 条件实例化V扩展模块（向量指令集）
+    generate
+        if (ENABLE_V_EXT) begin
+            riscv64_v_extension #(
+                .DATA_WIDTH(DATA_WIDTH)
+            ) u_v_extension (
+                .clk(clk),
+                .funct7_30(funct7_30),
+                .funct3(funct3),
+                .opcode(opcode),
+                .rs1_data_i(rs1_data_i),
+                .rs2_data_i(rs2_data_i),
+                .instr_in_i(instr_in_i),
+                .alu_result_o(v_result),
+                .is_v_extension(is_v_extension)
+            );
+        end
+        else begin
+            assign v_result = 64'b0;
+            assign is_v_extension = 1'b0;
+        end
+    endgenerate
+
     // 扩展模块结果选择逻辑（考虑使能参数）
     // 修复：将I扩展的优先级提高，确保I-type和R-type指令正确处理
     assign alu_result_temp = (
         is_i_extension ? i_result : // I扩展始终启用，且优先级最高
+        (ENABLE_V_EXT && is_v_extension) ? v_result :
         (ENABLE_M_EXT && is_m_extension) ? m_result :
         (ENABLE_A_EXT && is_a_extension) ? a_result :
         (ENABLE_F_EXT && is_f_extension) ? f_result :
@@ -310,6 +338,7 @@ module riscv64_unprivileged_execution #(
     // 非特权指令标识：如果是任何一个使能的非特权扩展指令，则为1
     assign is_unprivileged_instr = (
         is_i_extension ||
+        (ENABLE_V_EXT && is_v_extension) ||
         (ENABLE_M_EXT && is_m_extension) ||
         (ENABLE_A_EXT && is_a_extension) ||
         (ENABLE_F_EXT && is_f_extension) ||

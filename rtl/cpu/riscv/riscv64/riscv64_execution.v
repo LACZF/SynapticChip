@@ -14,7 +14,8 @@ module riscv64_execution #(
     parameter ENABLE_ZIFENCEI_EXT     = 1,
     parameter ENABLE_ZICSR_EXT        = 1,
     parameter ENABLE_ZFH_EXT          = 1,
-    parameter ENABLE_C_EXT            = 1
+    parameter ENABLE_C_EXT            = 1,
+    parameter ENABLE_V_EXT            = 1
 )(
     input wire                  clk,
     input wire                  rst_n,
@@ -70,7 +71,8 @@ module riscv64_execution #(
         .ENABLE_ZIFENCEI_EXT(ENABLE_ZIFENCEI_EXT),
         .ENABLE_ZICSR_EXT(ENABLE_ZICSR_EXT),
         .ENABLE_ZFH_EXT(ENABLE_ZFH_EXT),
-        .ENABLE_C_EXT(ENABLE_C_EXT)
+        .ENABLE_C_EXT(ENABLE_C_EXT),
+        .ENABLE_V_EXT(ENABLE_V_EXT)
     ) u_unprivileged_execution (
         .clk(clk),
         .pc_in_i(pc_in_i),

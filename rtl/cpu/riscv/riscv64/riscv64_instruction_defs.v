@@ -126,6 +126,7 @@
 `define OPCODE_DOUBLE_ARITH 7'b1010011 // 双精度浮点算术指令（与单精度复用opcode，通过funct7区分）
 `define OPCODE_QUAD_ARITH 7'b1010011  // 四精度浮点算术指令（与单精度复用opcode，通过funct7区分）
 `define OPCODE_HALF_FLOAT_ARITH 7'b1010011 // 半精度浮点算术指令（与单精度复用opcode，通过funct7区分）
+`define OPCODE_VECTOR_ARITH 7'b1010111 // 向量指令opcode
 
 // Zifencei扩展指令定义
 `define FENCE_I_OPCODE    7'b0001111  // FENCE.I指令opcode
@@ -145,6 +146,54 @@
 `define CSRRWI_FUNCT3     3'b101      // CSRRWI指令funct3
 `define CSRRSI_FUNCT3     3'b110      // CSRRSI指令funct3
 `define CSRRCI_FUNCT3     3'b111      // CSRRCI指令funct3
+
+// ---------- RV64V 向量指令专用宏定义 ----------
+`define FUNCT3_VADD_VV    3'b000  // 向量-向量加法
+`define FUNCT3_VSUB_VV    3'b000  // 向量-向量减法
+`define FUNCT3_VMUL_VV    3'b001  // 向量-向量乘法
+`define FUNCT3_VDIV_VV    3'b010  // 向量-向量除法
+`define FUNCT3_VSLL_VV    3'b011  // 向量-向量逻辑左移
+`define FUNCT3_VSRL_VV    3'b011  // 向量-向量逻辑右移
+`define FUNCT3_VSRA_VV    3'b011  // 向量-向量算术右移
+`define FUNCT3_VAND_VV    3'b111  // 向量-向量按位与
+`define FUNCT3_VOR_VV     3'b110  // 向量-向量按位或
+`define FUNCT3_VXOR_VV    3'b100  // 向量-向量按位异或
+`define FUNCT3_VSLT_VV    3'b101  // 向量-向量有符号比较小于
+`define FUNCT3_VSLTU_VV   3'b101  // 向量-向量无符号比较小于
+`define FUNCT3_VCMPEQ_VV  3'b010  // 向量-向量等于比较
+`define FUNCT3_VCMPNE_VV  3'b010  // 向量-向量不等于比较
+`define FUNCT3_VCMPEQ_VX  3'b010  // 向量-标量等于比较
+`define FUNCT3_VCMPNE_VX  3'b010  // 向量-标量不等于比较
+`define FUNCT3_VADD_VX    3'b000  // 向量-标量加法
+`define FUNCT3_VSUB_VX    3'b000  // 向量-标量减法
+`define FUNCT3_VMUL_VX    3'b001  // 向量-标量乘法
+`define FUNCT3_VDIV_VX    3'b010  // 向量-标量除法
+`define FUNCT3_VSLL_VX    3'b011  // 向量-标量逻辑左移
+`define FUNCT3_VSRL_VX    3'b011  // 向量-标量逻辑右移
+`define FUNCT3_VSRA_VX    3'b011  // 向量-标量算术右移
+`define FUNCT3_VAND_VX    3'b111  // 向量-标量按位与
+`define FUNCT3_VOR_VX     3'b110  // 向量-标量按位或
+`define FUNCT3_VXOR_VX    3'b100  // 向量-标量按位异或
+`define FUNCT3_VSLT_VX    3'b101  // 向量-标量有符号比较小于
+`define FUNCT3_VSLTU_VX   3'b101  // 向量-标量无符号比较小于
+`define FUNCT3_VLOAD      3'b010  // 向量加载指令
+`define FUNCT3_VSTORE     3'b010  // 向量存储指令
+
+// 向量指令的funct7定义
+`define FUNCT7_VADD       7'b0000001  // VADD指令的funct7
+`define FUNCT7_VSUB       7'b0000101  // VSUB指令的funct7
+`define FUNCT7_VMUL       7'b0001001  // VMUL指令的funct7
+`define FUNCT7_VDIV       7'b0001101  // VDIV指令的funct7
+`define FUNCT7_VSLL       7'b0010001  // VSLL指令的funct7
+`define FUNCT7_VSRL       7'b0100001  // VSRL指令的funct7
+`define FUNCT7_VSRA       7'b0110001  // VSRA指令的funct7
+`define FUNCT7_VAND       7'b0000001  // VAND指令的funct7
+`define FUNCT7_VOR        7'b0000001  // VOR指令的funct7
+`define FUNCT7_VXOR       7'b0000001  // VXOR指令的funct7
+`define FUNCT7_VSLT       7'b0000001  // VSLT指令的funct7
+`define FUNCT7_VSLTU      7'b0000001  // VSLTU指令的funct7
+`define FUNCT7_VCMPEQ     7'b0000001  // VCMP.EQ指令的funct7
+`define FUNCT7_VCMPNE     7'b0000101  // VCMP.NE指令的funct7
 
 // ---------- 功能码定义 ----------
 // funct7 用于区分 ADD/SUB, SRL/SRA 等指令
