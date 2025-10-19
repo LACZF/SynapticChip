@@ -58,7 +58,7 @@ module riscv64_instruction_fetch #(
     end
 `endif
 
-    // 修复：简化PC和指令获取逻辑，确保时序一致性
+    // 修复：确保PC更新与指令获取同步，防止PC值异常增加
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             pc_o <= 64'h8000_0000;
@@ -80,26 +80,41 @@ module riscv64_instruction_fetch #(
                 pc_next <= branch_target_i + 4;
                 cache_req_o <= 1'b1;
                 cache_addr_o <= branch_target_i;
-                // 不立即设置为NOP，让缓存数据有机会更新instr_o
             end else begin
-                // Normal execution, update PC sequentially
-                pc_o <= pc_next;
-                pc_next <= pc_next + 4;
-                cache_req_o <= 1'b1;
-                cache_addr_o <= pc_next;
+                // Normal execution, update PC sequentially only when cache is ready
+                if (cache_ready_i) begin
+                    pc_o <= pc_next;
+                    pc_next <= pc_next + 4;
+                    cache_req_o <= 1'b1;
+                    cache_addr_o <= pc_next;
+                end else begin
+                    // 当缓存未准备好时，保持当前状态
+                    cache_req_o <= 1'b1;
+                end
             end
 
             // Update instruction only when cache is ready
             if (cache_ready_i) begin
-                // Load instruction from cache
+                // Load instruction from cache, handle invalid data
                 if (L1_ICACHE_DATA_WIDTH >= 32) begin
-                    fetched_instr <= cache_data_i[31:0];
-                    instr_o <= cache_data_i[31:0];
+                    // Use NOP for invalid data (X or Z values)
+                    if (^cache_data_i[31:0] === 1'bx || ^cache_data_i[31:0] === 1'bz) begin
+                        fetched_instr <= 32'h0000_0013;
+                        instr_o <= 32'h0000_0013;
+                    end else begin
+                        fetched_instr <= cache_data_i[31:0];
+                        instr_o <= cache_data_i[31:0];
+                    end
                 end else begin
                     fetched_instr <= {24'b0, cache_data_i};
                     instr_o <= {24'b0, cache_data_i};
                 end
+            end else begin
+                // 当缓存未准备好时，保持当前指令不变
             end
+        end else begin
+            // 当流水线停滞时，保持当前状态
+            cache_req_o <= 1'b1;
         end
     end
 
