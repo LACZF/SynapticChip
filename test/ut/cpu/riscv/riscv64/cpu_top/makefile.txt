@@ -49,6 +49,8 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/Zifencei/riscv64_zifencei_extension.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/riscv64_unprivileged_execution.v
 
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_mmu.v
+
 # ROM module files
 TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
 

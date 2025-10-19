@@ -13,7 +13,7 @@ module riscv64_memory_access #(
     input  wire                                          flush_i,
     input  wire [1:0]                                    priv_mode_i, // 特权模式 (M/S/U) - 从外部输入
     input  wire [63:0]                                   satp_i,      // 页表基址寄存器
-    input  wire [63:0]                                   status_i     // 状态寄存器
+    input  wire [63:0]                                   status_i,    // 状态寄存器
 
     // From execution stage
     input  wire [63:0]                                   pc_in_i,

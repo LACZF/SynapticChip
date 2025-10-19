@@ -5,7 +5,7 @@
 module riscv64_core #(
     parameter ADDR_WIDTH                             = 64,
     parameter DATA_WIDTH                             = 64,
-    parameter ENABLE_MMU                             = 1
+    parameter ENABLE_MMU                             = 1,
     parameter L1_ICACHE_DATA_WIDTH                   = 32,
     parameter L1_DCACHE_DATA_WIDTH                   = 64,
     parameter CORE_ID                                = 0,

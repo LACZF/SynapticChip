@@ -12,5 +12,7 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_soc_params.v
 # Module under test
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_access.v
 
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_mmu.v
+
 # Testbench files
 TEST_SRC += $(CUR_DIR)/tb_riscv64_memory_access.v

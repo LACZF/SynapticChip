@@ -45,5 +45,7 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/Extensions/Zifencei/riscv64_zifencei_extension.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/instruction/unprivileged/riscv64_unprivileged_execution.v
 
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_mmu.v
+
 TEST_SRC += $(TOP_DIR)/test/common/instruction_rom.v
 TEST_SRC += $(CUR_DIR)/tb_cpu_top_single_core_no_l3.v

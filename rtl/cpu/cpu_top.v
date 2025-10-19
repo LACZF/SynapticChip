@@ -16,7 +16,7 @@ module cpu_top #(
     parameter L1_DCACHE_DATA_WIDTH          = 64,
     parameter L2_CACHE_DATA_WIDTH           = 512,
     parameter L3_CACHE_DATA_WIDTH           = 512,
-    parameter ENABLE_MMU                    = 1
+    parameter ENABLE_MMU                    = 1,
     parameter ENABLE_L2_CACHE               = 1,   // Enable L2 cache, default is 1
     parameter ENABLE_L3_CACHE               = 1,   // Enable L3 cache, default is 1
     parameter CPU_TYPE                      = 0    // 0: RISC-V, 1: Reserved for other CPU types
