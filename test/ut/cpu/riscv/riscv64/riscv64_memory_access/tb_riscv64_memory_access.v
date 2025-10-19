@@ -8,6 +8,7 @@ module tb_riscv64_memory_access;
     reg         rst_n;
     reg         stall_i;
     reg         flush_i;
+    reg         ex_valid_i;  // 添加 ex_valid_i 信号
 
     // Input Signals from Execution Stage
     reg  [63:0] pc_in_i;
@@ -45,11 +46,15 @@ module tb_riscv64_memory_access;
         .rst_n        (rst_n),
         .stall_i      (stall_i),
         .flush_i      (flush_i),
+        .priv_mode_i  (2'b00),  // 添加默认特权模式
+        .satp_i       (64'b0),  // 添加默认页表基址寄存器
+        .status_i     (64'b0),  // 添加默认状态寄存器
         .pc_in_i      (pc_in_i),
         .instr_in_i   (instr_in_i),
         .alu_result_i (alu_result_i),
         .rs2_data_i   (rs2_data_i),
         .ctrl_in_i    (ctrl_in_i),
+        .ex_valid_i   (ex_valid_i),  // 连接 ex_valid_i 信号
         .cache_addr_o (cache_addr_o),
         .cache_wdata_o(cache_wdata_o),
         .cache_rdata_i(cache_rdata_i),
@@ -60,7 +65,8 @@ module tb_riscv64_memory_access;
         .pc_out_o     (pc_out_o),
         .instr_out_o  (instr_out_o),
         .mem_result_o (mem_result_o),
-        .ctrl_out_o   (ctrl_out_o)
+        .ctrl_out_o   (ctrl_out_o),
+        .mem_valid_o  ()  // 不需要使用的输出
     );
 
     // Test Variables
@@ -110,6 +116,7 @@ module tb_riscv64_memory_access;
         rst_n = 0;  // Start in reset state
         stall_i = 0;
         flush_i = 0;
+        ex_valid_i = 0;  // 初始化为无效
         pc_in_i = 0;
         instr_in_i = 0;
         alu_result_i = 0;
@@ -141,6 +148,7 @@ module tb_riscv64_memory_access;
         alu_result_i = 64'h1234567890ABCDEF;
         rs2_data_i = 64'h0;
         ctrl_in_i = 16'h0000;
+        ex_valid_i = 1;  // 设置为有效
         @(posedge clk);
         check_pc_and_instr(2, 64'h0000000000001000, 32'h00100093);
 
@@ -208,6 +216,7 @@ module tb_riscv64_memory_access;
         @(posedge clk);
         pc_in_i = 64'h000000000000100C;
         instr_in_i = 32'h00500293;
+        ex_valid_i = 1;  // 设置为有效
         @(posedge clk);
         check_pc_and_instr(6, 64'h000000000000100C, 32'h00500293);
 

@@ -24,12 +24,14 @@ module riscv64_execution #(
     input wire                  flush_i,
     input wire [63:0]           pc_in_i,
     input wire [31:0]           instr_in_i,
+    input wire                  id_valid_i,
     input wire [63:0]           rs1_data_i,
     input wire [63:0]           rs2_data_i,
     input wire [63:0]           imm_i,
     input wire [15:0]           ctrl_in_i,
     output reg [63:0]           pc_out_o,
     output reg [31:0]           instr_out_o,
+    output reg                  ex_valid_o,
     output reg [63:0]           alu_result_o,
     output reg                  branch_taken_o,
     output reg [63:0]           branch_target_o,
@@ -146,31 +148,45 @@ module riscv64_execution #(
             branch_taken_o <= 1'b0;
             branch_target_o <= 64'b0;
             ctrl_out_o <= 16'b0;
+            ex_valid_o <= 1'b0; // 初始化为无效
         end else if (flush_i) begin
             instr_out_o <= 32'h0000_0013;
             branch_taken_o <= 1'b0;
             ctrl_out_o <= 16'b0;
+            ex_valid_o <= 1'b0; // 刷新时设置为无效
         end else if (!stall_i) begin
-            pc_out_o <= pc_in_i;
-            instr_out_o <= instr_in_i;
-            ctrl_out_o <= ctrl_in_i;
-            alu_result_o <= alu_result_temp; // 使用阻塞赋值确保在同一个时钟周期内更新
-            branch_taken_o <= branch_taken;
-            branch_target_o <= branch_target;
+            if (id_valid_i) begin // 只有当上一级输入有效时才执行指令
+                pc_out_o <= pc_in_i;
+                instr_out_o <= instr_in_i;
+                ctrl_out_o <= ctrl_in_i;
+                alu_result_o <= alu_result_temp; // 使用阻塞赋值确保在同一个时钟周期内更新
+                branch_taken_o <= branch_taken;
+                branch_target_o <= branch_target;
+                ex_valid_o <= 1'b1; // 当前级设置为有效
 
-        `ifdef DEBUG
-            // 添加更详细的调试信息
-            $display("[%0t ps] EX: PC=%h, Instr=%h, Opcode=%h", $time, pc_in_i, instr_in_i, opcode);
-            $display("[%0t ps] EX: rs1_data_i=%h, rs2_data_i=%h, imm_i=%h", $time, rs1_data_i, rs2_data_i, imm_i);
-            $display("[%0t ps] EX: reg_op=%b, alu_op=%b, funct3=%b, funct7_30=%b", $time, reg_op, alu_op, funct3, funct7_30);
-            $display("[%0t ps] EX: Final ALU result: %h", $time, alu_result_o);
-            $display("[%0t ps] EX: Branch: taken=%b, target=%h", $time, branch_taken_o, branch_target_o);
-            $display("[%0t ps] EX: Pipeline signals - stall_i=%b, flush_i=%b", $time, stall_i, flush_i);
-        `endif
+            `ifdef DEBUG
+                // 添加更详细的调试信息
+                $display("[%0t ps] EX: PC=%h, Instr=%h, Opcode=%h", $time, pc_in_i, instr_in_i, opcode);
+                $display("[%0t ps] EX: rs1_data_i=%h, rs2_data_i=%h, imm_i=%h", $time, rs1_data_i, rs2_data_i, imm_i);
+                $display("[%0t ps] EX: reg_op=%b, alu_op=%b, funct3=%b, funct7_30=%b", $time, reg_op, alu_op, funct3, funct7_30);
+                $display("[%0t ps] EX: Final ALU result: %h", $time, alu_result_o);
+                $display("[%0t ps] EX: Branch: taken=%b, target=%h", $time, branch_taken_o, branch_target_o);
+                $display("[%0t ps] EX: Pipeline signals - stall_i=%b, flush_i=%b", $time, stall_i, flush_i);
+                $display("[%0t ps] EX: Valid signal: %b", $time, ex_valid_o);
+            `endif
+            end else begin
+                // 当上一级输入无效时，输出NOP指令
+                instr_out_o <= 32'h0000_0013;
+                branch_taken_o <= 1'b0;
+                ctrl_out_o <= 16'b0;
+                ex_valid_o <= 1'b0;
+            end
         end else begin
         `ifdef DEBUG
             $display("[%0t ps] EX: Pipeline stalled", $time);
         `endif
+            // 当流水线停滞时，保持当前状态
+            // valid信号保持不变
         end
     end
 

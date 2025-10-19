@@ -16,6 +16,7 @@ module riscv64_write_back #(
     input  wire [63:0]          alu_result_i,
     input  wire [63:0]          mem_result_i,
     input  wire [15:0]          ctrl_in_i,
+    input  wire                 mem_valid_i,
 
     // Output to register file
     output reg  [4:0]           rd_o,
@@ -100,69 +101,79 @@ module riscv64_write_back #(
             instr_out_o <= 32'h00000013;
             wb_valid_o <= 1'b0;
         end else if (!stall_i) begin
-            // Pass pipeline registers
-            pc_out_o <= pc_in_i;
-            instr_out_o <= instr_in_i;
-            wb_valid_o <= 1'b1;
-        `ifdef DEBUG
-            // Debug: 追踪输入值
-            $display("WB Debug: PC=%h, Instr=%h, Opcode=%h, alu_result_i=%h, mem_result_i=%h",
-                     pc_in_i, instr_in_i, opcode, alu_result_i, mem_result_i);
-            $display("WB Debug: reg_write=%b, mem_to_reg=%b, pc_to_reg=%b, alu_src_pc=%b",
-                     reg_write, mem_to_reg, pc_to_reg, alu_src_pc);
-        `endif
+            if (mem_valid_i) begin
+                // 只有当上一级输入有效时才处理指令
+                // Pass pipeline registers
+                pc_out_o <= pc_in_i;
+                instr_out_o <= instr_in_i;
+                wb_valid_o <= 1'b1;
+            `ifdef DEBUG
+                // Debug: 追踪输入值
+                $display("WB Debug: PC=%h, Instr=%h, Opcode=%h, alu_result_i=%h, mem_result_i=%h",
+                         pc_in_i, instr_in_i, opcode, alu_result_i, mem_result_i);
+                $display("WB Debug: reg_write=%b, mem_to_reg=%b, pc_to_reg=%b, alu_src_pc=%b",
+                         reg_write, mem_to_reg, pc_to_reg, alu_src_pc);
+            `endif
 
-            // Calculate write-back data - 修复计算逻辑
-            if (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC || opcode == `OPCODE_JAL || opcode == `OPCODE_JALR) begin
-                // For special instructions, directly use compute_special_result
-                reg_wdata_o <= compute_special_result(alu_result_i, pc_in_i, instr_in_i, opcode);
+                // Calculate write-back data - 修复计算逻辑
+                if (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC || opcode == `OPCODE_JAL || opcode == `OPCODE_JALR) begin
+                    // For special instructions, directly use compute_special_result
+                    reg_wdata_o <= compute_special_result(alu_result_i, pc_in_i, instr_in_i, opcode);
+                end else begin
+                    // For other instructions, use select_result directly to avoid timing issues
+                    reg_wdata_o <= select_result(alu_result_i, mem_result_i, pc_in_i + 4,
+                                               mem_to_reg, pc_to_reg);
+                    // Store computed_result for debug purposes only
+                    computed_result = select_result(alu_result_i, mem_result_i, pc_in_i + 4,
+                                                  mem_to_reg, pc_to_reg);
+                end
+
+            `ifdef DEBUG
+                // Debug: 追踪计算结果
+                $display("WB Debug: computed_result=%h, reg_wdata_o=%h", computed_result, reg_wdata_o);
+            `endif
+
+                // Set write-back address and enable
+                rd_o <= instr_rd;
+
+                // Determine whether to write register
+                case (opcode)
+                    `OPCODE_LUI, `OPCODE_AUIPC, `OPCODE_JAL, `OPCODE_JALR: begin
+                        // LUI, AUIPC, JAL, JALR always write registers (except x0)
+                        reg_we_o <= (instr_rd != 5'b0);
+                    end
+                    `OPCODE_REG_ARITH, `OPCODE_IMM_ARITH, `OPCODE_LOAD: begin
+                        // Arithmetic, immediate, load instructions: according to control signals
+                        reg_we_o <= reg_write && (instr_rd != 5'b0);
+                    end
+                    `OPCODE_STORE: begin
+                        // Store instructions: do not write registers
+                        reg_we_o <= 1'b0;
+                    end
+                    `OPCODE_BRANCH: begin
+                        // Branch instructions: do not write registers
+                        reg_we_o <= 1'b0;
+                    end
+                    default: begin
+                        reg_we_o <= 1'b0;
+                    end
+                endcase
+
+            `ifdef DEBUG
+                // Debug information output
+                if (reg_we_o && (instr_rd != 5'b0)) begin
+                    $display("WB: PC=%h, Instr=%h, RD=x%0d, Value=%h",
+                             pc_in_i, instr_in_i, instr_rd, reg_wdata_o);
+                end
+            `endif
             end else begin
-                // For other instructions, use select_result directly to avoid timing issues
-                reg_wdata_o <= select_result(alu_result_i, mem_result_i, pc_in_i + 4,
-                                           mem_to_reg, pc_to_reg);
-                // Store computed_result for debug purposes only
-                computed_result = select_result(alu_result_i, mem_result_i, pc_in_i + 4,
-                                              mem_to_reg, pc_to_reg);
+                // 当上一级输入无效时，输出NOP状态
+                instr_out_o <= 32'h00000013;
+                rd_o <= 5'b0;
+                reg_we_o <= 1'b0;
+                reg_wdata_o <= 64'b0;
+                wb_valid_o <= 1'b0;
             end
-
-        `ifdef DEBUG
-            // Debug: 追踪计算结果
-            $display("WB Debug: computed_result=%h, reg_wdata_o=%h", computed_result, reg_wdata_o);
-        `endif
-
-            // Set write-back address and enable
-            rd_o <= instr_rd;
-
-            // Determine whether to write register
-            case (opcode)
-                `OPCODE_LUI, `OPCODE_AUIPC, `OPCODE_JAL, `OPCODE_JALR: begin
-                    // LUI, AUIPC, JAL, JALR always write registers (except x0)
-                    reg_we_o <= (instr_rd != 5'b0);
-                end
-                `OPCODE_REG_ARITH, `OPCODE_IMM_ARITH, `OPCODE_LOAD: begin
-                    // Arithmetic, immediate, load instructions: according to control signals
-                    reg_we_o <= reg_write && (instr_rd != 5'b0);
-                end
-                `OPCODE_STORE: begin
-                    // Store instructions: do not write registers
-                    reg_we_o <= 1'b0;
-                end
-                `OPCODE_BRANCH: begin
-                    // Branch instructions: do not write registers
-                    reg_we_o <= 1'b0;
-                end
-                default: begin
-                    reg_we_o <= 1'b0;
-                end
-            endcase
-
-        `ifdef DEBUG
-            // Debug information output
-            if (reg_we_o && (instr_rd != 5'b0)) begin
-                $display("WB: PC=%h, Instr=%h, RD=x%0d, Value=%h",
-                         pc_in_i, instr_in_i, instr_rd, reg_wdata_o);
-            end
-        `endif
         end else begin
             wb_valid_o <= 1'b0;
         end

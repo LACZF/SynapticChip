@@ -22,6 +22,7 @@ module riscv64_memory_access #(
     input  wire [63:0]                                   alu_result_i,
     input  wire [63:0]                                   rs2_data_i,
     input  wire [15:0]                                   ctrl_in_i,
+    input  wire                                          ex_valid_i,
 
     // Cache interface
     output reg  [ADDR_WIDTH-1:0]                         cache_addr_o,
@@ -36,7 +37,8 @@ module riscv64_memory_access #(
     output reg [63:0]                                    pc_out_o,
     output reg [31:0]                                    instr_out_o,
     output reg [63:0]                                    mem_result_o,
-    output reg [15:0]                                    ctrl_out_o
+    output reg [15:0]                                    ctrl_out_o,
+    output reg                                           mem_valid_o
 );
 
     // Control signals
@@ -99,261 +101,329 @@ module riscv64_memory_access #(
         end
     endgenerate
 
-    // Byte enable generation function
-    function [7:0] gen_byte_enable;
+    // 数据大小处理函数 - 处理不同宽度的内存访问
+    function [63:0] process_data;
+        input [L1_DCACHE_DATA_WIDTH-1:0] data;
         input [2:0] width;
-        input [2:0] addr_low;
-        begin
-            case (width)
-                3'b000: begin // Byte (8-bit)
-                    case (addr_low)
-                        3'b000: gen_byte_enable = 8'b00000001;
-                        3'b001: gen_byte_enable = 8'b00000010;
-                        3'b010: gen_byte_enable = 8'b00000100;
-                        3'b011: gen_byte_enable = 8'b00001000;
-                        3'b100: gen_byte_enable = 8'b00010000;
-                        3'b101: gen_byte_enable = 8'b00100000;
-                        3'b110: gen_byte_enable = 8'b01000000;
-                        3'b111: gen_byte_enable = 8'b10000000;
-                        default: gen_byte_enable = 8'b00000001;
-                    endcase
-                end
-                3'b001: begin // Half-word (16-bit)
-                    case (addr_low[2:1])
-                        2'b00: gen_byte_enable = 8'b00000011;
-                        2'b01: gen_byte_enable = 8'b00001100;
-                        2'b10: gen_byte_enable = 8'b00110000;
-                        2'b11: gen_byte_enable = 8'b11000000;
-                        default: gen_byte_enable = 8'b00000011;
-                    endcase
-                end
-                3'b010: begin // Word (32-bit)
-                    case (addr_low[2])
-                        1'b0: gen_byte_enable = 8'b00001111;
-                        1'b1: gen_byte_enable = 8'b11110000;
-                        default: gen_byte_enable = 8'b00001111;
-                    endcase
-                end
-                3'b011: begin // Double-word (64-bit)
-                    gen_byte_enable = 8'b11111111;
-                end
-                default: gen_byte_enable = 8'b11111111;
-            endcase
-        end
-    endfunction
-
-    // Load data alignment and sign extension
-    function [63:0] load_data_align;
-        input [63:0] data;
-        input [2:0] width;
-        input [2:0] addr_low;
+        input [2:0] addr_offset;
         input is_signed;
-        reg [63:0] aligned;
         begin
-            // Select data based on the lower 3 bits of the address
-            case (addr_low)
-                3'b000:  aligned = data;
-                3'b001:  aligned = data >> 8;
-                3'b010:  aligned = data >> 16;
-                3'b011:  aligned = data >> 24;
-                3'b100:  aligned = data >> 32;
-                3'b101:  aligned = data >> 40;
-                3'b110:  aligned = data >> 48;
-                3'b111:  aligned = data >> 56;
-                default: aligned = data;
-            endcase
-
             case (width)
-                3'b000: begin // LB/LBU
+                3'b000: begin // Byte
                     if (is_signed) begin
-                        load_data_align = {{56{aligned[7]}}, aligned[7:0]};
+                        case (addr_offset[2:0])
+                            3'b000: process_data = {{56{data[7]}}, data[7:0]};
+                            3'b001: process_data = {{56{data[15]}}, data[15:8]};
+                            3'b010: process_data = {{56{data[23]}}, data[23:16]};
+                            3'b011: process_data = {{56{data[31]}}, data[31:24]};
+                            3'b100: process_data = {{56{data[39]}}, data[39:32]};
+                            3'b101: process_data = {{56{data[47]}}, data[47:40]};
+                            3'b110: process_data = {{56{data[55]}}, data[55:48]};
+                            3'b111: process_data = {{56{data[63]}}, data[63:56]};
+                        endcase
                     end else begin
-                        load_data_align = {56'b0, aligned[7:0]};
+                        case (addr_offset[2:0])
+                            3'b000: process_data = {56'b0, data[7:0]};
+                            3'b001: process_data = {56'b0, data[15:8]};
+                            3'b010: process_data = {56'b0, data[23:16]};
+                            3'b011: process_data = {56'b0, data[31:24]};
+                            3'b100: process_data = {56'b0, data[39:32]};
+                            3'b101: process_data = {56'b0, data[47:40]};
+                            3'b110: process_data = {56'b0, data[55:48]};
+                            3'b111: process_data = {56'b0, data[63:56]};
+                        endcase
                     end
                 end
-                3'b001: begin // LH/LHU
+                3'b001: begin // Half-word
                     if (is_signed) begin
-                        load_data_align = {{48{aligned[15]}}, aligned[15:0]};
+                        case (addr_offset[2:1])
+                            2'b00: process_data = {{48{data[15]}}, data[15:0]};
+                            2'b01: process_data = {{48{data[31]}}, data[31:16]};
+                            2'b10: process_data = {{48{data[47]}}, data[47:32]};
+                            2'b11: process_data = {{48{data[63]}}, data[63:48]};
+                        endcase
                     end else begin
-                        load_data_align = {48'b0, aligned[15:0]};
+                        case (addr_offset[2:1])
+                            2'b00: process_data = {48'b0, data[15:0]};
+                            2'b01: process_data = {48'b0, data[31:16]};
+                            2'b10: process_data = {48'b0, data[47:32]};
+                            2'b11: process_data = {48'b0, data[63:48]};
+                        endcase
                     end
                 end
-                3'b010: begin // LW/LWU
+                3'b010: begin // Word
                     if (is_signed) begin
-                        load_data_align = {{32{aligned[31]}}, aligned[31:0]};
+                        case (addr_offset[2])
+                            1'b0: process_data = {{32{data[31]}}, data[31:0]};
+                            1'b1: process_data = {{32{data[63]}}, data[63:32]};
+                        endcase
                     end else begin
-                        load_data_align = {32'b0, aligned[31:0]};
+                        case (addr_offset[2])
+                            1'b0: process_data = {32'b0, data[31:0]};
+                            1'b1: process_data = {32'b0, data[63:32]};
+                        endcase
                     end
                 end
-                3'b011: begin // LD
-                    load_data_align = aligned;
+                3'b011: begin // Double-word
+                    process_data = data;
                 end
-                default: load_data_align = aligned;
+                default: begin
+                    process_data = 64'b0;
+                end
             endcase
         end
     endfunction
 
-    // Store data alignment
-    function [63:0] store_data_align;
-        input [63:0] data;
-        input [2:0]  width;
-        input [2:0]  addr_low;
-        reg   [63:0] aligned;
-        begin
-            case (width)
-                3'b000:  aligned = {56'b0, data[7:0]}; // Byte
-                3'b001:  aligned = {48'b0, data[15:0]}; // Half-word
-                3'b010:  aligned = {32'b0, data[31:0]}; // Word
-                3'b011:  aligned = data; // Double-word
-                default: aligned = data;
-            endcase
-
-            // Shift left based on address offset
-            case (addr_low)
-                3'b000:  store_data_align = aligned;
-                3'b001:  store_data_align = aligned << 8;
-                3'b010:  store_data_align = aligned << 16;
-                3'b011:  store_data_align = aligned << 24;
-                3'b100:  store_data_align = aligned << 32;
-                3'b101:  store_data_align = aligned << 40;
-                3'b110:  store_data_align = aligned << 48;
-                3'b111:  store_data_align = aligned << 56;
-                default: store_data_align = aligned;
-            endcase
-        end
-    endfunction
-
+    // 内存访问状态机 - 处理加载和存储操作
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= STATE_IDLE;
             cache_req_o <= 1'b0;
             cache_we_o <= 1'b0;
-            pc_out_o <= 64'b0;
-            instr_out_o <= 32'h00000013; // NOP
-            mem_result_o <= 64'b0;
-            ctrl_out_o <= 16'b0;
-            cache_addr_o <= 64'b0;
-            cache_wdata_o <= {L1_DCACHE_DATA_WIDTH{1'b0}};
             cache_byte_en_o <= 8'b0;
+            cache_addr_o <= 64'b0;
+            cache_wdata_o <= 64'b0;
+            mem_result_o <= 64'b0;
+            pc_out_o <= 64'b0;
+            instr_out_o <= 32'h0000_0013;
+            ctrl_out_o <= 16'b0;
+            saved_alu_result <= 64'b0;
+            saved_rs2_data <= 64'b0;
+            saved_mem_width <= 3'b0;
+            saved_is_load <= 1'b0;
+            saved_is_store <= 1'b0;
             saved_page_fault <= 1'b0;
             mmu_access_started <= 1'b0;
+            mem_valid_o <= 1'b0; // 初始化为无效
         end else if (flush_i) begin
             state <= STATE_IDLE;
             cache_req_o <= 1'b0;
             cache_we_o <= 1'b0;
-            instr_out_o <= 32'h00000013;
+            cache_byte_en_o <= 8'b0;
+            mem_result_o <= 64'b0;
+            instr_out_o <= 32'h0000_0013;
+            // 保持PC值不变，只修改指令为NOP
+            // 不修改pc_out_o，保持其当前值
             ctrl_out_o <= 16'b0;
-            saved_page_fault <= 1'b0;
-            mmu_access_started <= 1'b0;
-        end else if (stall_i) begin
-            // 保持当前状态
-        end else begin
+            mem_valid_o <= 1'b0; // 刷新时设置为无效
+        end else if (!stall_i) begin
             case (state)
                 STATE_IDLE: begin
-                    // Pass pipeline registers
-                    pc_out_o <= pc_in_i;
-                    instr_out_o <= instr_in_i;
-                    ctrl_out_o <= ctrl_in_i;
-                    saved_page_fault <= 1'b0;
-                    mmu_access_started <= 1'b0;
+                    if (ex_valid_i) begin // 只有当上一级输入有效时才处理指令
+                        pc_out_o <= pc_in_i;
+                        instr_out_o <= instr_in_i;
+                        ctrl_out_o <= ctrl_in_i;
+                        mem_valid_o <= 1'b1; // 当前级设置为有效
 
-                    if (mem_read || (ctrl_in_i[15] == 0 && opcode == `OPCODE_STORE)) begin // 使用opcode判断store指令
-                        // Memory access instruction
-                        saved_alu_result <= alu_result_i;
-                        saved_rs2_data <= rs2_data_i;
-                        saved_mem_width <= mem_width;
-                        saved_is_load <= mem_read;
-                        saved_is_store <= (ctrl_in_i[15] == 0 && opcode == `OPCODE_STORE); // 使用opcode设置store标志
-
-                        if (ENABLE_MMU) begin
-                            // MMU使能时，进入MMU转换状态
-                            state <= STATE_MMU_TRANSLATE;
-                            mmu_access_started <= 1'b1;
-                        end else begin
-                            // 不使用MMU时，直接访问缓存
-                            cache_addr_o <= alu_result_i;
-                            cache_byte_en_o <= gen_byte_enable(mem_width, alu_result_i[2:0]);
-
-                            if (mem_read) begin
-                                // Load instruction
-                                cache_we_o <= 1'b0;
-                                cache_req_o <= 1'b1;
-                                state <= STATE_CACHE_ACCESS;
+                        // 检查是否需要内存访问
+                        if (mem_read || (opcode == `OPCODE_STORE)) begin
+                            // 处理内存访问
+                            if (ENABLE_MMU && status_i[0]) begin
+                                // 使用MMU进行地址转换
+                                if (!mmu_access_started) begin
+                                    mmu_access_started <= 1'b1;
+                                    state <= STATE_MMU_TRANSLATE;
+                                end else if (translation_ready) begin
+                                    if (page_fault) begin
+                                        // 页错误处理
+                                        saved_page_fault <= 1'b1;
+                                        state <= STATE_COMPLETE;
+                                    end else begin
+                                        // 转换完成，使用物理地址
+                                        access_addr <= phys_addr;
+                                        state <= STATE_CACHE_ACCESS;
+                                    end
+                                    mmu_access_started <= 1'b0;
+                                end
                             end else begin
-                                // Store instruction
-                                cache_we_o <= 1'b1;
-                                cache_wdata_o <= store_data_align(rs2_data_i, mem_width, alu_result_i[2:0]);
-                                cache_req_o <= 1'b1;
+                                // 不使用MMU，直接使用ALU结果作为地址
+                                access_addr <= alu_result_i;
                                 state <= STATE_CACHE_ACCESS;
                             end
+
+                            // 保存当前操作需要的信息
+                            saved_alu_result <= alu_result_i;
+                            saved_rs2_data <= rs2_data_i;
+                            saved_mem_width <= mem_width;
+                            saved_is_load <= mem_read;
+                            saved_is_store <= (opcode == `OPCODE_STORE);
+                        end else begin
+                            // 不需要内存访问，直接传递ALU结果
+                            mem_result_o <= alu_result_i;
+                            state <= STATE_COMPLETE;
                         end
                     end else begin
-                        // Non-memory instruction, directly pass ALU result
-                        mem_result_o <= alu_result_i;
-                        state <= STATE_COMPLETE;
+                        // 当上一级输入无效时，输出NOP指令
+                        instr_out_o <= 32'h0000_0013;
+                        ctrl_out_o <= 16'b0;
+                        mem_valid_o <= 1'b0;
+                        state <= STATE_IDLE;
                     end
                 end
 
                 STATE_MMU_TRANSLATE: begin
                     if (translation_ready) begin
-                        if (!page_fault) begin
-                            // 地址转换成功，使用物理地址访问缓存
-                            access_addr <= phys_addr;
-                            cache_addr_o <= phys_addr;
-                            cache_byte_en_o <= gen_byte_enable(saved_mem_width, phys_addr[2:0]);
-
-                            if (saved_is_load) begin
-                                cache_we_o <= 1'b0;
-                                cache_req_o <= 1'b1;
-                                state <= STATE_CACHE_ACCESS;
-                            end else if (saved_is_store) begin
-                                cache_we_o <= 1'b1;
-                                cache_wdata_o <= store_data_align(saved_rs2_data, saved_mem_width, phys_addr[2:0]);
-                                cache_req_o <= 1'b1;
-                                state <= STATE_CACHE_ACCESS;
-                            end
-                        end else begin
-                            // 页错误，记录并进入完成状态
+                        if (page_fault) begin
+                            // 页错误处理
                             saved_page_fault <= 1'b1;
                             state <= STATE_COMPLETE;
+                        end else begin
+                            // 转换完成，使用物理地址
+                            access_addr <= phys_addr;
+                            state <= STATE_CACHE_ACCESS;
                         end
+                        mmu_access_started <= 1'b0;
                     end
-                    // 等待转换完成
                 end
 
                 STATE_CACHE_ACCESS: begin
-                    if (cache_ready_i) begin
-                        if (saved_is_load) begin
-                            // Load completed
-                            mem_result_o <= load_data_align(cache_rdata_i, saved_mem_width,
-                                                        saved_alu_result[2:0],
-                                                        funct3 != 3'b100); // Signed extension
-                        end else begin
-                            // Store completed, return store address
-                            mem_result_o <= saved_alu_result;
-                        end
-                        cache_req_o <= 1'b0;
-                        state <= STATE_COMPLETE;
-                    end else begin
+                    if (saved_is_load) begin
+                        // 加载操作
+                        cache_req_o <= 1'b1;
+                        cache_we_o <= 1'b0;
+                        cache_addr_o <= access_addr;
+                        // 根据访问宽度设置字节使能
+                        case (saved_mem_width)
+                            3'b000: // Byte
+                                case (access_addr[2:0])
+                                    3'b000: cache_byte_en_o <= 8'b00000001;
+                                    3'b001: cache_byte_en_o <= 8'b00000010;
+                                    3'b010: cache_byte_en_o <= 8'b00000100;
+                                    3'b011: cache_byte_en_o <= 8'b00001000;
+                                    3'b100: cache_byte_en_o <= 8'b00010000;
+                                    3'b101: cache_byte_en_o <= 8'b00100000;
+                                    3'b110: cache_byte_en_o <= 8'b01000000;
+                                    3'b111: cache_byte_en_o <= 8'b10000000;
+                                endcase
+                            3'b001: // Half-word
+                                case (access_addr[2:1])
+                                    2'b00: cache_byte_en_o <= 8'b00000011;
+                                    2'b01: cache_byte_en_o <= 8'b00001100;
+                                    2'b10: cache_byte_en_o <= 8'b00110000;
+                                    2'b11: cache_byte_en_o <= 8'b11000000;
+                                endcase
+                            3'b010: // Word
+                                case (access_addr[2])
+                                    1'b0: cache_byte_en_o <= 8'b00001111;
+                                    1'b1: cache_byte_en_o <= 8'b11110000;
+                                endcase
+                            3'b011: // Double-word
+                                cache_byte_en_o <= 8'b11111111;
+                            default:
+                                cache_byte_en_o <= 8'b0;
+                        endcase
                         state <= STATE_WAIT_CACHE;
+                    end else if (saved_is_store) begin
+                        // 存储操作
+                        cache_req_o <= 1'b1;
+                        cache_we_o <= 1'b1;
+                        cache_addr_o <= access_addr;
+
+                        // 根据访问宽度设置字节使能和数据
+                        case (saved_mem_width)
+                            3'b000: begin // Byte
+                                case (access_addr[2:0])
+                                    3'b000: begin
+                                        cache_byte_en_o <= 8'b00000001;
+                                        cache_wdata_o <= {56'b0, saved_rs2_data[7:0]};
+                                    end
+                                    3'b001: begin
+                                        cache_byte_en_o <= 8'b00000010;
+                                        cache_wdata_o <= {48'b0, saved_rs2_data[7:0], 8'b0};
+                                    end
+                                    3'b010: begin
+                                        cache_byte_en_o <= 8'b00000100;
+                                        cache_wdata_o <= {40'b0, saved_rs2_data[7:0], 16'b0};
+                                    end
+                                    3'b011: begin
+                                        cache_byte_en_o <= 8'b00001000;
+                                        cache_wdata_o <= {32'b0, saved_rs2_data[7:0], 24'b0};
+                                    end
+                                    3'b100: begin
+                                        cache_byte_en_o <= 8'b00010000;
+                                        cache_wdata_o <= {24'b0, saved_rs2_data[7:0], 32'b0};
+                                    end
+                                    3'b101: begin
+                                        cache_byte_en_o <= 8'b00100000;
+                                        cache_wdata_o <= {16'b0, saved_rs2_data[7:0], 40'b0};
+                                    end
+                                    3'b110: begin
+                                        cache_byte_en_o <= 8'b01000000;
+                                        cache_wdata_o <= {8'b0, saved_rs2_data[7:0], 48'b0};
+                                    end
+                                    3'b111: begin
+                                        cache_byte_en_o <= 8'b10000000;
+                                        cache_wdata_o <= {saved_rs2_data[7:0], 56'b0};
+                                    end
+                                endcase
+                            end
+                            3'b001: begin // Half-word
+                                case (access_addr[2:1])
+                                    2'b00: begin
+                                        cache_byte_en_o <= 8'b00000011;
+                                        cache_wdata_o <= {48'b0, saved_rs2_data[15:0]};
+                                    end
+                                    2'b01: begin
+                                        cache_byte_en_o <= 8'b00001100;
+                                        cache_wdata_o <= {32'b0, saved_rs2_data[15:0], 16'b0};
+                                    end
+                                    2'b10: begin
+                                        cache_byte_en_o <= 8'b00110000;
+                                        cache_wdata_o <= {16'b0, saved_rs2_data[15:0], 32'b0};
+                                    end
+                                    2'b11: begin
+                                        cache_byte_en_o <= 8'b11000000;
+                                        cache_wdata_o <= {saved_rs2_data[15:0], 48'b0};
+                                    end
+                                endcase
+                            end
+                            3'b010: begin // Word
+                                case (access_addr[2])
+                                    1'b0: begin
+                                        cache_byte_en_o <= 8'b00001111;
+                                        cache_wdata_o <= {32'b0, saved_rs2_data[31:0]};
+                                    end
+                                    1'b1: begin
+                                        cache_byte_en_o <= 8'b11110000;
+                                        cache_wdata_o <= {saved_rs2_data[31:0], 32'b0};
+                                    end
+                                endcase
+                            end
+                            3'b011: begin // Double-word
+                                cache_byte_en_o <= 8'b11111111;
+                                cache_wdata_o <= saved_rs2_data;
+                            end
+                            default:
+                                cache_byte_en_o <= 8'b0;
+                        endcase
+                        state <= STATE_WAIT_CACHE;
+                    end else begin
+                        // 既不是加载也不是存储，直接完成
+                        state <= STATE_COMPLETE;
                     end
                 end
 
                 STATE_WAIT_CACHE: begin
                     if (cache_ready_i) begin
                         if (saved_is_load) begin
-                            mem_result_o <= load_data_align(cache_rdata_i, saved_mem_width,
-                                                        saved_alu_result[2:0],
-                                                        funct3 != 3'b100);
-                        end else begin
-                            mem_result_o <= saved_alu_result;
+                            // 加载操作，处理缓存返回的数据
+                            mem_result_o <= process_data(cache_rdata_i, saved_mem_width, access_addr[2:0], (funct3[2] == 1'b0));
                         end
+                        // 清除缓存请求信号
                         cache_req_o <= 1'b0;
+                        cache_we_o <= 1'b0;
+                        cache_byte_en_o <= 8'b0;
                         state <= STATE_COMPLETE;
                     end
                 end
 
                 STATE_COMPLETE: begin
+                    // 内存访问完成，准备进入下一个状态
+                    if (saved_page_fault) begin
+                        // 处理页错误
+                        // 这里可以添加页错误异常处理逻辑
+                        saved_page_fault <= 1'b0;
+                    end
                     state <= STATE_IDLE;
                 end
 
@@ -361,6 +431,9 @@ module riscv64_memory_access #(
                     state <= STATE_IDLE;
                 end
             endcase
+        end else begin
+            // 当流水线停滞时，保持当前状态
+            // valid信号保持不变
         end
     end
 

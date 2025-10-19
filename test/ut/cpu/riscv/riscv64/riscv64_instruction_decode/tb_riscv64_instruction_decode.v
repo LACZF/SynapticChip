@@ -35,6 +35,7 @@ module tb_riscv64_instruction_decode;
         .flush_i        (flush_i),
         .pc_in_i        (pc_in_i),
         .instr_in_i     (instr_in_i),
+        .if_valid_i     (1'b1),
         .pc_out_o       (pc_out_o),
         .instr_out_o    (instr_out_o),
         .funct3_i       (funct3_i),

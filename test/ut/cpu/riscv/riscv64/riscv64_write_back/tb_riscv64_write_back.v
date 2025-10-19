@@ -38,6 +38,7 @@ module tb_riscv64_write_back;
         .stall_i      (stall_i),
         .pc_in_i      (pc_in_i),
         .instr_in_i   (instr_in_i),
+        .mem_valid_i  (1'b1),
         .alu_result_i (alu_result_i),
         .mem_result_i (mem_result_i),
         .ctrl_in_i    (ctrl_in_i),

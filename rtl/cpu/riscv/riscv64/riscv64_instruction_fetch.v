@@ -16,6 +16,7 @@ module riscv64_instruction_fetch #(
     output reg  [31:0]                                instr_o,
     output reg                                        cache_req_o,
     output reg  [ADDR_WIDTH-1:0]                      cache_addr_o,
+    output reg                                        if_valid_o,
     input  wire [L1_ICACHE_DATA_WIDTH-1:0]            cache_data_i,
     input  wire                                       cache_ready_i
 );
@@ -54,6 +55,11 @@ module riscv64_instruction_fetch #(
                 $display("[%0t ps] IF: Fetched non-NOP instruction: 0x%h at PC=0x%h",
                          $time, fetched_instr, pc_o);
             end
+            // Debug valid signal
+            if (if_valid_o) begin
+                $display("[%0t ps] IF: Valid instruction at PC=0x%h, instr=0x%h",
+                         $time, pc_o, instr_o);
+            end
         end
     end
 `endif
@@ -67,12 +73,14 @@ module riscv64_instruction_fetch #(
             cache_req_o <= 1'b1; // Request instruction immediately after reset
             cache_addr_o <= 64'h8000_0000;
             fetched_instr <= 32'h0000_0013;
+            if_valid_o <= 1'b0; // 初始化为无效
         end else if (flush_i) begin
             pc_o <= branch_target_i;
             pc_next <= branch_target_i + 4;
             instr_o <= 32'h0000_0013; // NOP
             cache_req_o <= 1'b1;
             cache_addr_o <= branch_target_i;
+            if_valid_o <= 1'b0; // 刷新时设置为无效
         end else if (!stall_i) begin
             if (branch_taken_i) begin
                 // Branch taken, update PC to branch target
@@ -80,6 +88,7 @@ module riscv64_instruction_fetch #(
                 pc_next <= branch_target_i + 4;
                 cache_req_o <= 1'b1;
                 cache_addr_o <= branch_target_i;
+                if_valid_o <= 1'b0; // 分支时设置为无效，等待新指令获取
             end else begin
                 // Normal execution, update PC sequentially only when cache is ready
                 if (cache_ready_i) begin
@@ -87,9 +96,11 @@ module riscv64_instruction_fetch #(
                     pc_next <= pc_next + 4;
                     cache_req_o <= 1'b1;
                     cache_addr_o <= pc_next;
+                    if_valid_o <= 1'b1; // 缓存准备好时，指令有效
                 end else begin
                     // 当缓存未准备好时，保持当前状态
                     cache_req_o <= 1'b1;
+                    if_valid_o <= 1'b0; // 缓存未准备好，指令无效
                 end
             end
 
@@ -101,20 +112,25 @@ module riscv64_instruction_fetch #(
                     if (^cache_data_i[31:0] === 1'bx || ^cache_data_i[31:0] === 1'bz) begin
                         fetched_instr <= 32'h0000_0013;
                         instr_o <= 32'h0000_0013;
+                        if_valid_o <= 1'b0; // 无效数据时，指令无效
                     end else begin
                         fetched_instr <= cache_data_i[31:0];
                         instr_o <= cache_data_i[31:0];
+                        if_valid_o <= 1'b1; // 有效数据时，指令有效
                     end
                 end else begin
                     fetched_instr <= {24'b0, cache_data_i};
                     instr_o <= {24'b0, cache_data_i};
+                    if_valid_o <= 1'b1; // 有效数据时，指令有效
                 end
             end else begin
                 // 当缓存未准备好时，保持当前指令不变
+                if_valid_o <= 1'b0; // 缓存未准备好，指令无效
             end
         end else begin
             // 当流水线停滞时，保持当前状态
             cache_req_o <= 1'b1;
+            // 流水线停滞时，valid信号保持不变
         end
     end
 

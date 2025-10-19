@@ -114,7 +114,19 @@ module riscv64_core #(
     // L1-L2 interface signals
     wire l1_l2_ready;
 
-    // When L1 cache is instantiated in cpu_top, these L1-L2 signals are directly connected to L1 cache in cpu_top
+    // Valid signals between pipeline stages
+    wire if_valid_o;
+    wire id_valid_i;
+    wire id_valid_o;
+    wire ex_valid_i;
+    wire ex_valid_o;
+    wire mem_valid_i;
+    wire mem_valid_o;
+
+    wire [1:0]  priv_mode;
+    wire [63:0] satp;
+    wire [63:0] status;
+
     assign l1_icache_req = icache_req_o;
     assign l1_icache_addr = icache_addr_o;
     assign l1_dcache_req = dcache_req_o;
@@ -146,7 +158,8 @@ module riscv64_core #(
         .cache_req_o(icache_req_o),
         .cache_addr_o(icache_addr_o),
         .cache_data_i(icache_data_i),
-        .cache_ready_i(icache_ready_i)
+        .cache_ready_i(icache_ready_i),
+        .if_valid_o(if_valid_o)
     );
 
     // Instruction decode stage
@@ -161,13 +174,15 @@ module riscv64_core #(
         .pc_in_i(pc_if),
         .instr_in_i(instr_if),
         .pc_out_o(pc_id),
+        .if_valid_i(if_valid_o),
         .instr_out_o(instr_id),
         .funct3_i(funct3),
         .rs1_o(rs1),
         .rs2_o(rs2),
         .rd_o(rd),
         .imm_o(imm_id),
-        .ctrl_signals_o(ctrl_id)
+        .ctrl_signals_o(ctrl_id),
+        .id_valid_o(id_valid_o)
     );
 
     // Execution stage
@@ -197,12 +212,14 @@ module riscv64_core #(
         .rs2_data_i(rs2_data),
         .imm_i(imm_id),
         .ctrl_in_i(ctrl_id),
+        .id_valid_i(id_valid_o),
         .pc_out_o(pc_ex),
         .instr_out_o(instr_ex),
         .alu_result_o(alu_result),
         .branch_taken_o(branch_taken),
         .branch_target_o(branch_target),
-        .ctrl_out_o(ctrl_ex)
+        .ctrl_out_o(ctrl_ex),
+        .ex_valid_o(ex_valid_o)
     );
 
     // Memory access stage
@@ -216,11 +233,15 @@ module riscv64_core #(
         .rst_n(rst_n),
         .stall_i(stall_mem),
         .flush_i(flush_mem),
+        .priv_mode_i(priv_mode),
+        .satp_i(satp),
+        .status_i(status),
         .pc_in_i(pc_ex),
         .instr_in_i(instr_ex),
         .alu_result_i(alu_result),
         .rs2_data_i(rs2_data),
         .ctrl_in_i(ctrl_ex),
+        .ex_valid_i(ex_valid_o),
         .cache_addr_o(dcache_addr_o),
         .cache_wdata_o(dcache_wdata_o),
         .cache_rdata_i(dcache_rdata_i),
@@ -231,7 +252,8 @@ module riscv64_core #(
         .pc_out_o(pc_mem),
         .instr_out_o(instr_mem),
         .mem_result_o(mem_result),
-        .ctrl_out_o(ctrl_mem)
+        .ctrl_out_o(ctrl_mem),
+        .mem_valid_o(mem_valid_o)
     );
 
     // Write back stage
@@ -247,6 +269,7 @@ module riscv64_core #(
         .alu_result_i(alu_result),
         .mem_result_i(mem_result),
         .ctrl_in_i(ctrl_mem),
+        .mem_valid_i(mem_valid_o),
         .rd_o(wb_rd),
         .reg_we_o(wb_reg_we),
         .reg_wdata_o(wb_reg_wdata),
@@ -301,7 +324,7 @@ module riscv64_core #(
         .flush_mem_o(flush_mem)
     );
 
-    // Debug output - 修复连接，确保debug接口正确获取写回阶段的寄存器信息
+    // Debug signals
     assign debug_pc_o = pc_wb;
     assign debug_instr_o = instr_wb;
     assign debug_wb_valid_o = wb_valid;

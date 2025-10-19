@@ -58,6 +58,7 @@ module tb_riscv64_execution;
         .flush_i          (flush_i),
         .pc_in_i          (pc_in_i),
         .instr_in_i       (instr_in_i),
+        .id_valid_i       (1'b1),
         .rs1_data_i       (rs1_data_i),
         .rs2_data_i       (rs2_data_i),
         .imm_i            (imm_i),
