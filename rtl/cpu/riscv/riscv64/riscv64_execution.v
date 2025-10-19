@@ -84,21 +84,31 @@ module riscv64_execution #(
     );
 
     // 实例化特权指令执行模块
-    riscv64_privileged_execution #(
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_privileged_execution (
-        .clk(clk),
-        .pc_in_i(pc_in_i),
-        .instr_in_i(instr_in_i),
-        .rs1_data_i(rs1_data_i),
-        .rs2_data_i(rs2_data_i),
-        .imm_i(imm_i),
-        .ctrl_in_i(ctrl_in_i),
-        .alu_result_o(priv_alu_result),
-        .branch_taken_o(priv_branch_taken),
-        .branch_target_o(priv_branch_target),
-        .is_privileged_instr(is_privileged_instr)
-    );
+    generate
+        if (ENABLE_PRIVILEGED)
+            riscv64_privileged_execution #(
+                .DATA_WIDTH(DATA_WIDTH)
+            ) u_privileged_execution (
+                .clk(clk),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .rs1_data_i(rs1_data_i),
+                .rs2_data_i(rs2_data_i),
+                .imm_i(imm_i),
+                .ctrl_in_i(ctrl_in_i),
+                .alu_result_o(priv_alu_result),
+                .branch_taken_o(priv_branch_taken),
+                .branch_target_o(priv_branch_target),
+                .is_privileged_instr(is_privileged_instr)
+            );
+        else begin
+            // 当不启用特权指令时，将特权指令相关信号设置为默认值
+            assign priv_alu_result = 64'b0;
+            assign priv_branch_taken = 1'b0;
+            assign priv_branch_target = 64'b0;
+            assign is_privileged_instr = 1'b0;
+        end
+    endgenerate
 
     // 结果选择逻辑：根据特权指令集使能参数决定是否处理特权指令
     assign alu_result_temp = (
