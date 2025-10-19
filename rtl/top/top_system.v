@@ -4,35 +4,36 @@
 `include "top_system_params.v"
 
 module top_system #(
-    parameter BUS_TYPE                        = `BUS_TYPE_DIRECT, // Bus type: `BUS_TYPE_RING or `BUS_TYPE_DIRECT
-    parameter NUM_RINGS                       = 2,        // Number of Ring buses
-    parameter NUM_NODES                       = 8,        // Number of nodes per Ring
-    parameter ADDR_WIDTH                      = 32,       // Address width
-    parameter DATA_WIDTH                      = 64,       // Data width
+    parameter BUS_TYPE                        = `BUS_TYPE_DIRECT,
+    parameter NUM_RINGS                       = 2,
+    parameter NUM_NODES                       = 8,
+    parameter ADDR_WIDTH                      = 32,
+    parameter DATA_WIDTH                      = 64,
     parameter L1_ICACHE_DATA_WIDTH            = 32,
     parameter L1_DCACHE_DATA_WIDTH            = 64,
     parameter L2_CACHE_DATA_WIDTH             = 512,
     parameter L3_CACHE_DATA_WIDTH             = 512,
     parameter MEM_WIDTH                       = 512,
-    parameter OPCODE_WIDTH                    = 8,        // Width of operation type: read/write/response, etc.
-    parameter RING_ID_WIDTH                   = 4,        // Ring ID width
-    parameter NODE_ID_WIDTH                   = 8,        // Node ID width
-    parameter TX_FIFO_DEPTH                   = 4,        // Transmit FIFO depth
-    parameter RX_FIFO_DEPTH                   = 4,        // Receive FIFO depth
-    parameter RSP_FIFO_DEPTH                  = 4,        // Response FIFO depth
+    parameter OPCODE_WIDTH                    = 8,
+    parameter RING_ID_WIDTH                   = 4,
+    parameter NODE_ID_WIDTH                   = 8,
+    parameter TX_FIFO_DEPTH                   = 4,
+    parameter RX_FIFO_DEPTH                   = 4,
+    parameter RSP_FIFO_DEPTH                  = 4,
     parameter NUM_CORES                       = 1,
-    parameter MATCH_TYPE_WIDTH                = 2,        // Match type width
-    parameter INST_WIDTH                      = 32,      // Instruction width
-    parameter CORE_ID_WIDTH                   = 2,        // Core ID width
-    parameter ENABLE_L2_CACHE                 = 0,        // Enable L2 cache
-    parameter ENABLE_L3_CACHE                 = 0,        // Enable L3 cache
+    parameter MATCH_TYPE_WIDTH                = 2,
+    parameter INST_WIDTH                      = 32,
+    parameter CORE_ID_WIDTH                   = 2,
+    parameter ENABLE_L2_CACHE                 = 0,
+    parameter ENABLE_L3_CACHE                 = 0,
     parameter GPIO_WIDTH                      = 32,
     parameter SPI_CS_NUM                      = 1,
     parameter NUM_PES                         = 4,
     parameter PE_ARRAY_ROWS                   = 2,
     parameter PE_ARRAY_COLS                   = 2,
     parameter PE_ID_WIDTH                     = 4,
-    parameter CPU_TYPE                        = 0         // CPU type
+    parameter CPU_TYPE                        = 0,
+    parameter ENABLE_MMU                      = 0
 )(
     input                                     clk,
     input                                     rst_n,

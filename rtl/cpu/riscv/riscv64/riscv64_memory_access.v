@@ -4,12 +4,16 @@
 module riscv64_memory_access #(
     parameter ADDR_WIDTH                                 = 64,
     parameter DATA_WIDTH                                 = 64,
-    parameter L1_DCACHE_DATA_WIDTH                       = 64
+    parameter L1_DCACHE_DATA_WIDTH                       = 64,
+    parameter ENABLE_MMU                                 = 1
 )(
     input  wire                                          clk,
     input  wire                                          rst_n,
     input  wire                                          stall_i,
     input  wire                                          flush_i,
+    input  wire [1:0]                                    priv_mode_i, // 特权模式 (M/S/U) - 从外部输入
+    input  wire [63:0]                                   satp_i,      // 页表基址寄存器
+    input  wire [63:0]                                   status_i     // 状态寄存器
 
     // From execution stage
     input  wire [63:0]                                   pc_in_i,
@@ -43,6 +47,12 @@ module riscv64_memory_access #(
     wire [6:0] opcode          = instr_in_i[6:0];
     wire [2:0] funct3          = instr_in_i[14:12];
 
+    // MMU related signals
+    wire [ADDR_WIDTH-1:0] phys_addr;
+    wire page_fault;
+    wire translation_ready;
+    reg [ADDR_WIDTH-1:0] access_addr; // 最终使用的访问地址 (物理地址或虚拟地址)
+
     // Internal state
     reg [2:0]                  state;
     reg [63:0]                 saved_alu_result;
@@ -50,11 +60,43 @@ module riscv64_memory_access #(
     reg [2:0]                  saved_mem_width;
     reg                        saved_is_load;
     reg                        saved_is_store;
+    reg                        saved_page_fault;
+    reg                        mmu_access_started;
 
+    // State definitions
     localparam STATE_IDLE         = 3'b000;
     localparam STATE_CACHE_ACCESS = 3'b001;
     localparam STATE_WAIT_CACHE   = 3'b010;
     localparam STATE_COMPLETE     = 3'b011;
+    localparam STATE_MMU_TRANSLATE = 3'b100;
+
+    // 条件实例化MMU模块
+    generate
+        if (ENABLE_MMU) begin
+            riscv64_mmu #(
+                .ADDR_WIDTH(ADDR_WIDTH)
+            ) u_mmu (
+                .clk(clk),
+                .rst_n(rst_n),
+                .enable_i(status_i[0]), // MMU总使能（从status寄存器第0位获取）
+                .virt_addr_i(alu_result_i), // 从ALU结果获取虚拟地址
+                .priv_mode_i(priv_mode_i), // 特权模式
+                .inst_access_i(1'b0), // 数据访问，非指令访问
+                .write_access_i(mem_read ? 1'b0 : 1'b1), // 写访问标志
+                .phys_addr_o(phys_addr), // 转换后的物理地址
+                .page_fault_o(page_fault), // 页错误标志
+                .translation_ready_o(translation_ready), // 转换完成标志
+                // MMU控制寄存器接口
+                .satp_i(satp_i), // 页表基址寄存器
+                .status_i(status_i) // 状态寄存器
+            );
+        end else begin
+            // 不启用MMU时，直接连接地址
+            assign phys_addr = alu_result_i;
+            assign page_fault = 1'b0;
+            assign translation_ready = 1'b1;
+        end
+    endgenerate
 
     // Byte enable generation function
     function [7:0] gen_byte_enable;
@@ -192,14 +234,18 @@ module riscv64_memory_access #(
             cache_addr_o <= 64'b0;
             cache_wdata_o <= {L1_DCACHE_DATA_WIDTH{1'b0}};
             cache_byte_en_o <= 8'b0;
+            saved_page_fault <= 1'b0;
+            mmu_access_started <= 1'b0;
         end else if (flush_i) begin
             state <= STATE_IDLE;
             cache_req_o <= 1'b0;
             cache_we_o <= 1'b0;
             instr_out_o <= 32'h00000013;
             ctrl_out_o <= 16'b0;
+            saved_page_fault <= 1'b0;
+            mmu_access_started <= 1'b0;
         end else if (stall_i) begin
-            // Hold state
+            // 保持当前状态
         end else begin
             case (state)
                 STATE_IDLE: begin
@@ -207,6 +253,8 @@ module riscv64_memory_access #(
                     pc_out_o <= pc_in_i;
                     instr_out_o <= instr_in_i;
                     ctrl_out_o <= ctrl_in_i;
+                    saved_page_fault <= 1'b0;
+                    mmu_access_started <= 1'b0;
 
                     if (mem_read || (ctrl_in_i[15] == 0 && opcode == 7'b0100011)) begin // 使用opcode判断store指令
                         // Memory access instruction
@@ -215,26 +263,61 @@ module riscv64_memory_access #(
                         saved_mem_width <= mem_width;
                         saved_is_load <= mem_read;
                         saved_is_store <= (ctrl_in_i[15] == 0 && opcode == 7'b0100011); // 使用opcode设置store标志
-                        cache_addr_o <= alu_result_i;
-                        cache_byte_en_o <= gen_byte_enable(mem_width, alu_result_i[2:0]);
 
-                        if (mem_read) begin
-                            // Load instruction
-                            cache_we_o <= 1'b0;
-                            cache_req_o <= 1'b1;
-                            state <= STATE_CACHE_ACCESS;
+                        if (ENABLE_MMU) begin
+                            // MMU使能时，进入MMU转换状态
+                            state <= STATE_MMU_TRANSLATE;
+                            mmu_access_started <= 1'b1;
                         end else begin
-                            // Store instruction
-                            cache_we_o <= 1'b1;
-                            cache_wdata_o <= store_data_align(rs2_data_i, mem_width, alu_result_i[2:0]);
-                            cache_req_o <= 1'b1;
-                            state <= STATE_CACHE_ACCESS;
+                            // 不使用MMU时，直接访问缓存
+                            cache_addr_o <= alu_result_i;
+                            cache_byte_en_o <= gen_byte_enable(mem_width, alu_result_i[2:0]);
+
+                            if (mem_read) begin
+                                // Load instruction
+                                cache_we_o <= 1'b0;
+                                cache_req_o <= 1'b1;
+                                state <= STATE_CACHE_ACCESS;
+                            end else begin
+                                // Store instruction
+                                cache_we_o <= 1'b1;
+                                cache_wdata_o <= store_data_align(rs2_data_i, mem_width, alu_result_i[2:0]);
+                                cache_req_o <= 1'b1;
+                                state <= STATE_CACHE_ACCESS;
+                            end
                         end
                     end else begin
                         // Non-memory instruction, directly pass ALU result
                         mem_result_o <= alu_result_i;
                         state <= STATE_COMPLETE;
                     end
+                end
+
+                STATE_MMU_TRANSLATE: begin
+                    if (translation_ready) begin
+                        if (!page_fault) begin
+                            // 地址转换成功，使用物理地址访问缓存
+                            access_addr <= phys_addr;
+                            cache_addr_o <= phys_addr;
+                            cache_byte_en_o <= gen_byte_enable(saved_mem_width, phys_addr[2:0]);
+
+                            if (saved_is_load) begin
+                                cache_we_o <= 1'b0;
+                                cache_req_o <= 1'b1;
+                                state <= STATE_CACHE_ACCESS;
+                            end else if (saved_is_store) begin
+                                cache_we_o <= 1'b1;
+                                cache_wdata_o <= store_data_align(saved_rs2_data, saved_mem_width, phys_addr[2:0]);
+                                cache_req_o <= 1'b1;
+                                state <= STATE_CACHE_ACCESS;
+                            end
+                        end else begin
+                            // 页错误，记录并进入完成状态
+                            saved_page_fault <= 1'b1;
+                            state <= STATE_COMPLETE;
+                        end
+                    end
+                    // 等待转换完成
                 end
 
                 STATE_CACHE_ACCESS: begin
