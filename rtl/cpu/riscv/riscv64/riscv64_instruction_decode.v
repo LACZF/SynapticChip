@@ -163,7 +163,7 @@ module riscv64_instruction_decode #(
                         ctrl_signals_o[5]     <= 1'b0;                        // pc_to_reg
                         ctrl_signals_o[4:0]   <= {funct3_i, 2'b0};            // funct3
                     end
-                        `OPCODE_REG_ARITH: begin                                  // Register arithmetic with reg_op
+                    `OPCODE_REG_ARITH: begin                                  // Register arithmetic with reg_op
                         ctrl_signals_o[15]    <= 1'b1;                        // reg_op: 标识为寄存器算术指令
                         ctrl_signals_o[14:12] <= funct3;                      // alu_op: 使用 funct3 作为操作码
                         ctrl_signals_o[11]    <= 1'b0;                        // alu_src

@@ -215,7 +215,7 @@ module tb_riscv64_write_back;
         instr_in_i = 32'h00042483; // 0x00042483 = LW x9, 0(x8)
         alu_result_i = 64'h0;
         mem_result_i = 64'h0000000012345678; // Simulated memory data
-        ctrl_in_i = 16'h0410; // reg_write=1, mem_to_reg=1 (bit 10 and 4 set)
+        ctrl_in_i = 16'h0500; // reg_write=1, mem_to_reg=1 (bit 10 and 8 set)
         @(posedge clk);
         check_outputs(6, 9, 1'b1, 64'h0000000012345678, 64'h0000000000001010, 32'h00042483, 1'b1);
 

@@ -31,7 +31,7 @@ module riscv64_write_back #(
 
     // Control signals - 与测试文件中的位定义保持一致
     wire       reg_write  = ctrl_in_i[10];  // 寄存器写使能信号位于第10位
-    wire       mem_to_reg = ctrl_in_i[4];   // 内存到寄存器信号位于第4位
+    wire       mem_to_reg = ctrl_in_i[8];   // 内存到寄存器信号位于第8位
     wire       pc_to_reg  = ctrl_in_i[5];   // PC到寄存器信号位于第5位
     wire       alu_src_pc = ctrl_in_i[6];   // ALU源PC信号位于第6位
     wire [2:0] alu_op     = ctrl_in_i[14:12];
@@ -115,12 +115,21 @@ module riscv64_write_back #(
                          reg_write, mem_to_reg, pc_to_reg, alu_src_pc);
             `endif
 
-                // Calculate write-back data - 修复计算逻辑
+                // Calculate write-back data - 为什么需要复杂的选择逻辑？
+                // RISC-V架构中，不同类型指令的回写数据来源不同，不能简单地直接使用前序阶段的结果
                 if (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC || opcode == `OPCODE_JAL || opcode == `OPCODE_JALR) begin
-                    // For special instructions, directly use compute_special_result
+                    // 特殊指令需要特殊处理：
+                    // - LUI: 将20位立即数左移12位作为结果
+                    // - AUIPC: 将20位立即数左移12位后与PC相加
+                    // - JAL/JALR: 返回地址(PC+4)作为结果
+                    // 这些指令的结果不能直接从ALU或内存获取，需要重新计算
                     reg_wdata_o <= compute_special_result(alu_result_i, pc_in_i, instr_in_i, opcode);
                 end else begin
-                    // For other instructions, use select_result directly to avoid timing issues
+                    // 其他指令根据控制信号选择不同的数据源：
+                    // - pc_to_reg=1: 使用PC相关值(如某些跳转指令)
+                    // - mem_to_reg=1: 使用从内存读取的数据(加载指令)
+                    // - 默认: 使用ALU计算结果(算术/逻辑指令)
+                    // 这种设计允许CPU支持多种指令类型，每种类型有不同的数据处理路径
                     reg_wdata_o <= select_result(alu_result_i, mem_result_i, pc_in_i + 4,
                                                mem_to_reg, pc_to_reg);
                     // Store computed_result for debug purposes only
