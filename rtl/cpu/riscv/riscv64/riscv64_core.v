@@ -284,6 +284,8 @@ module riscv64_core #(
     ) u_regfile (
         .clk(clk),
         .rst_n(rst_n),
+        .pc_in_i(pc_wb),
+        .instr_in_i(instr_wb),
         .rs1_i(instr_if[19:15]),
         .rs2_i(instr_if[24:20]),
         .rd_i(wb_rd),
