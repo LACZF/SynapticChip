@@ -29,7 +29,7 @@ module riscv64_write_back #(
     output reg                  wb_valid_o
 );
 
-    // Control signals - 与测试文件中的位定义保持一致
+    // Control signals - 与 riscv64_instruction_decode.v 中的位定义保持一致
     wire       reg_write  = ctrl_in_i[10];  // 寄存器写使能信号位于第10位
     wire       mem_to_reg = ctrl_in_i[8];   // 内存到寄存器信号位于第8位
     wire       pc_to_reg  = ctrl_in_i[5];   // PC到寄存器信号位于第5位

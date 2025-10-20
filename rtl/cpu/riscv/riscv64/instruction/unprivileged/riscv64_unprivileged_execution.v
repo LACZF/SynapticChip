@@ -29,15 +29,15 @@ module riscv64_unprivileged_execution #(
 );
 
     // 信号定义
-    wire [2:0]  alu_op      = ctrl_in_i[13:11]; // 正确提取ALU操作码位域
+    wire [2:0]  alu_op      = ctrl_in_i[14:12];
     wire [2:0]  funct3      = instr_in_i[14:12];
     wire        funct7_30   = instr_in_i[30]; // 用于区分 ADD/SUB, SRL/SRA 等指令
     wire [6:0]  opcode      = instr_in_i[6:0]; // 提取指令的opcode字段，便于统一使用
 
 `ifdef DEBUG
     always @(*) begin
-        $display("[UNPRIVILEGED_EXECUTION] ctrl_in_i=%h, alu_op=%b (bits 13:11: %b)",
-                 ctrl_in_i, alu_op, ctrl_in_i[13:11]);
+        $display("[UNPRIVILEGED_EXECUTION] ctrl_in_i=%h, alu_op=%b (bits 14:12: %b)",
+                 ctrl_in_i, alu_op, ctrl_in_i[14:12]);
     end
 `endif
 

@@ -85,7 +85,6 @@ module riscv64_i_extension #(
         `endif
             case (alu_op)
                 `ALU_OP_ADD:  handle_itype = rs1 + imm;
-                `ALU_OP_SUB:  handle_itype = rs1 - imm;
                 `ALU_OP_AND:  handle_itype = rs1 & imm;
                 `ALU_OP_OR:   handle_itype = rs1 | imm;
                 `ALU_OP_XOR:  handle_itype = rs1 ^ imm;
