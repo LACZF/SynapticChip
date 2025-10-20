@@ -250,7 +250,7 @@ module riscv64_memory_access #(
                         end else begin
                             // 不需要内存访问，直接传递ALU结果
                             mem_result_o <= alu_result_i;
-                            state <= STATE_COMPLETE;
+                            state <= STATE_IDLE;
                         end
                     end else begin
                         // 当上一级输入无效时，输出NOP指令
