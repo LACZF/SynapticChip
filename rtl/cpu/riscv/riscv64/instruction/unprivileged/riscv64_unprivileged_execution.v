@@ -15,18 +15,18 @@ module riscv64_unprivileged_execution #(
     parameter ENABLE_C_EXT              = 1,
     parameter ENABLE_V_EXT              = 1
 )(
-    input wire                  clk,
-    input wire                  rst_n,
-    input wire [63:0]           pc_in_i,
-    input wire [31:0]           instr_in_i,
-    input wire [63:0]           rs1_data_i,
-    input wire [63:0]           rs2_data_i,
-    input wire [63:0]           imm_i,
-    input wire [15:0]           ctrl_in_i,
-    output wire [63:0]          alu_result_o,
-    output wire                 branch_taken_o,
-    output wire [63:0]          branch_target_o,
-    output wire                 is_unprivileged_instr // 标识是否为非特权指令
+    input  wire                         clk,
+    input  wire                         rst_n,
+    input  wire [63:0]                  pc_in_i,
+    input  wire [31:0]                  instr_in_i,
+    input  wire [63:0]                  rs1_data_i,
+    input  wire [63:0]                  rs2_data_i,
+    input  wire [63:0]                  imm_i,
+    input  wire [15:0]                  ctrl_in_i,
+    output wire [63:0]                  alu_result_o,
+    output wire                         branch_taken_o,
+    output wire [63:0]                  branch_target_o,
+    output wire                         is_unprivileged_instr // 标识是否为非特权指令
 );
 
     // 信号定义
