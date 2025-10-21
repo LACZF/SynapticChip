@@ -365,7 +365,7 @@ module cpu_top #(
             `ifdef DEBUG
                 // Add debug information to track instruction request signal flow
                 always @(posedge clk) begin
-                    if (icache_req_o) begin
+                    if (icache_req) begin
                         $display("[%0t ps] CPU CORE %d: icache_req=%b, icache_addr=0x%h",
                                  $time, i, icache_req, icache_addr);
                     end

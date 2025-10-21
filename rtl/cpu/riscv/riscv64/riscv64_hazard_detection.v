@@ -137,11 +137,13 @@ module riscv64_hazard_detection #(
     assign flush_mem_o = branch_taken_i;
 
 `ifdef DEBUG
+    reg [2:0] pre_mem_access_state;
     // Debug: 监测内存操作状态和暂停信号
     always @(posedge clk) begin
         if (rst_n) begin
             // 监测内存操作状态变化
-            if (mem_access_state != $past(mem_access_state)) begin
+            if (mem_access_state != pre_mem_access_state) begin
+                pre_mem_access_state = mem_access_state;
                 $display("Hazard Detection: Memory Access State changed to %d, pending_rd=%d, pending_reg_we=%b",
                          mem_access_state, pending_rd, pending_reg_we);
             end

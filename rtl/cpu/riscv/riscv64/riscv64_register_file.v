@@ -9,38 +9,38 @@ module riscv64_register_file #(
     input  wire [31:0]          instr_in_i,
 
 `ifdef DEBUG
-    output reg  [63:0]          reg0,
-    output reg  [63:0]          reg1,
-    output reg  [63:0]          reg2,
-    output reg  [63:0]          reg3,
-    output reg  [63:0]          reg4,
-    output reg  [63:0]          reg5,
-    output reg  [63:0]          reg6,
-    output reg  [63:0]          reg7,
-    output reg  [63:0]          reg8,
-    output reg  [63:0]          reg9,
-    output reg  [63:0]          reg10,
-    output reg  [63:0]          reg11,
-    output reg  [63:0]          reg12,
-    output reg  [63:0]          reg13,
-    output reg  [63:0]          reg14,
-    output reg  [63:0]          reg15,
-    output reg  [63:0]          reg16,
-    output reg  [63:0]          reg17,
-    output reg  [63:0]          reg18,
-    output reg  [63:0]          reg19,
-    output reg  [63:0]          reg20,
-    output reg  [63:0]          reg21,
-    output reg  [63:0]          reg22,
-    output reg  [63:0]          reg23,
-    output reg  [63:0]          reg24,
-    output reg  [63:0]          reg25,
-    output reg  [63:0]          reg26,
-    output reg  [63:0]          reg27,
-    output reg  [63:0]          reg28,
-    output reg  [63:0]          reg29,
-    output reg  [63:0]          reg30,
-    output reg  [63:0]          reg31,
+    output wire [63:0]          reg0,
+    output wire [63:0]          reg1,
+    output wire [63:0]          reg2,
+    output wire [63:0]          reg3,
+    output wire [63:0]          reg4,
+    output wire [63:0]          reg5,
+    output wire [63:0]          reg6,
+    output wire [63:0]          reg7,
+    output wire [63:0]          reg8,
+    output wire [63:0]          reg9,
+    output wire [63:0]          reg10,
+    output wire [63:0]          reg11,
+    output wire [63:0]          reg12,
+    output wire [63:0]          reg13,
+    output wire [63:0]          reg14,
+    output wire [63:0]          reg15,
+    output wire [63:0]          reg16,
+    output wire [63:0]          reg17,
+    output wire [63:0]          reg18,
+    output wire [63:0]          reg19,
+    output wire [63:0]          reg20,
+    output wire [63:0]          reg21,
+    output wire [63:0]          reg22,
+    output wire [63:0]          reg23,
+    output wire [63:0]          reg24,
+    output wire [63:0]          reg25,
+    output wire [63:0]          reg26,
+    output wire [63:0]          reg27,
+    output wire [63:0]          reg28,
+    output wire [63:0]          reg29,
+    output wire [63:0]          reg30,
+    output wire [63:0]          reg31,
 `endif
 
     input  wire [4:0]           rs1_i,
@@ -92,6 +92,7 @@ module riscv64_register_file #(
         end
     end
 
+`ifdef DEBUG
     assign reg0  = registers[0];
     assign reg1  = registers[1];
     assign reg2  = registers[2];
@@ -124,5 +125,6 @@ module riscv64_register_file #(
     assign reg29 = registers[29];
     assign reg30 = registers[30];
     assign reg31 = registers[31];
+`endif
 
 endmodule
