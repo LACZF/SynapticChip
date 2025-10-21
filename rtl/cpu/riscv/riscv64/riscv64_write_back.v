@@ -19,7 +19,7 @@ module riscv64_write_back #(
     input  wire                 mem_valid_i,
 
     // Output to register file
-    output reg  [4:0]           rd_o,
+    output wire [4:0]           rd_o,
     output reg                  reg_we_o,
     output reg  [63:0]          reg_wdata_o,
 
@@ -92,9 +92,11 @@ module riscv64_write_back #(
         end
     endfunction
 
+    // Set write-back address directly (continuous assignment)
+    assign rd_o = instr_rd;
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            rd_o <= 5'b0;
             reg_we_o <= 1'b0;
             reg_wdata_o <= 64'b0;
             pc_out_o <= 64'b0;
@@ -142,9 +144,6 @@ module riscv64_write_back #(
                 $display("WB Debug: computed_result=%h, reg_wdata_o=%h", computed_result, reg_wdata_o);
             `endif
 
-                // Set write-back address and enable
-                rd_o <= instr_rd;
-
                 // Determine whether to write register
                 case (opcode)
                     `OPCODE_LUI, `OPCODE_AUIPC, `OPCODE_JAL, `OPCODE_JALR: begin
@@ -178,7 +177,6 @@ module riscv64_write_back #(
             end else begin
                 // 当上一级输入无效时，输出NOP状态
                 instr_out_o <= 32'h00000013;
-                rd_o <= 5'b0;
                 reg_we_o <= 1'b0;
                 reg_wdata_o <= 64'b0;
                 wb_valid_o <= 1'b0;
