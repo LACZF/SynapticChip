@@ -78,7 +78,7 @@ module riscv64_register_file #(
         if (rs1_i == 5'b0) begin
             rs1_data_o = 64'b0;
         end else if ((rs1_i == rd_i) && we_i) begin
-            rs1_data_o = wdata_i; // Forwarding
+            rs1_data_o = wdata_i; // Forwarding from write-back stage
         end else begin
             rs1_data_o = registers[rs1_i];
         end
@@ -86,7 +86,7 @@ module riscv64_register_file #(
         if (rs2_i == 5'b0) begin
             rs2_data_o = 64'b0;
         end else if ((rs2_i == rd_i) && we_i) begin
-            rs2_data_o = wdata_i; // Forwarding
+            rs2_data_o = wdata_i; // Forwarding from write-back stage
         end else begin
             rs2_data_o = registers[rs2_i];
         end

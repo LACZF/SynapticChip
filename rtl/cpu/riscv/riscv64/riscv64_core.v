@@ -185,6 +185,29 @@ module riscv64_core #(
         .id_valid_o(id_valid_o)
     );
 
+    // Pipeline data forwarding signals
+    wire [63:0] rs1_data_forwarded; // 前推后的rs1数据
+    wire [63:0] rs2_data_forwarded; // 前推后的rs2数据
+    wire rs1_forward_from_ex;       // 从执行阶段前推rs1数据
+    wire rs1_forward_from_mem;      // 从内存阶段前推rs1数据
+    wire rs2_forward_from_ex;       // 从执行阶段前推rs2数据
+    wire rs2_forward_from_mem;      // 从内存阶段前推rs2数据
+
+    // Forwarding logic: 检测并处理数据冒险
+    // 从执行阶段前推
+    assign rs1_forward_from_ex = (instr_id[19:15] != 5'b0) && (instr_id[19:15] == instr_ex[11:7]) && ctrl_ex[7];
+    assign rs2_forward_from_ex = (instr_id[24:20] != 5'b0) && (instr_id[24:20] == instr_ex[11:7]) && ctrl_ex[7];
+
+    // 从内存阶段前推
+    assign rs1_forward_from_mem = (instr_id[19:15] != 5'b0) && (instr_id[19:15] == instr_mem[11:7]) && ctrl_mem[7];
+    assign rs2_forward_from_mem = (instr_id[24:20] != 5'b0) && (instr_id[24:20] == instr_mem[11:7]) && ctrl_mem[7];
+
+    // 数据选择逻辑：优先选择最新的数据
+    assign rs1_data_forwarded = rs1_forward_from_ex ? alu_result :
+                               (rs1_forward_from_mem ? mem_result : rs1_data);
+    assign rs2_data_forwarded = rs2_forward_from_ex ? alu_result :
+                               (rs2_forward_from_mem ? mem_result : rs2_data);
+
     // Execution stage
     riscv64_execution #(
         .ADDR_WIDTH(ADDR_WIDTH),
@@ -208,8 +231,8 @@ module riscv64_core #(
         .flush_i(flush_ex),
         .pc_in_i(pc_id),
         .instr_in_i(instr_id),
-        .rs1_data_i(rs1_data),
-        .rs2_data_i(rs2_data),
+        .rs1_data_i(rs1_data_forwarded), // 使用前推后的数据
+        .rs2_data_i(rs2_data_forwarded), // 使用前推后的数据
         .imm_i(imm_id),
         .ctrl_in_i(ctrl_id),
         .id_valid_i(id_valid_o),
