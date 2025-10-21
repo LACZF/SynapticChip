@@ -16,6 +16,7 @@ module riscv64_unprivileged_execution #(
     parameter ENABLE_V_EXT              = 1
 )(
     input wire                  clk,
+    input wire                  rst_n,
     input wire [63:0]           pc_in_i,
     input wire [31:0]           instr_in_i,
     input wire [63:0]           rs1_data_i,
@@ -86,13 +87,17 @@ module riscv64_unprivileged_execution #(
     riscv64_i_extension #(
         .DATA_WIDTH(DATA_WIDTH)
     ) u_i_extension (
+        .clk(clk),
+        .rst_n(rst_n),
+        .pc_in_i(pc_in_i),
+        .instr_in_i(instr_in_i),
+        .ctrl_in_i(ctrl_in_i),
         .funct7_30(funct7_30),
         .funct3(funct3),
         .opcode(opcode),
         .rs1_data_i(rs1_data_i),
         .rs2_data_i(rs2_data_i),
         .imm_i(imm_i),
-        .pc_in_i(pc_in_i),
         .alu_op(alu_op),
         .alu_result_o(i_result),
         .branch_taken_o(i_branch_taken),
@@ -106,6 +111,11 @@ module riscv64_unprivileged_execution #(
             riscv64_m_extension #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_m_extension (
+                .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
@@ -126,6 +136,11 @@ module riscv64_unprivileged_execution #(
             riscv64_a_extension #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_a_extension (
+                .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
@@ -153,6 +168,11 @@ module riscv64_unprivileged_execution #(
             riscv64_f_extension #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_f_extension (
+                .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
@@ -173,6 +193,11 @@ module riscv64_unprivileged_execution #(
             riscv64_d_extension #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_d_extension (
+                .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
@@ -193,6 +218,11 @@ module riscv64_unprivileged_execution #(
             riscv64_q_extension #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_q_extension (
+                .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
@@ -214,6 +244,10 @@ module riscv64_unprivileged_execution #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_zifencei_extension (
                 .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct3(funct3),
                 .opcode(opcode),
                 .is_zifencei_extension(is_zifencei_extension)
@@ -229,6 +263,10 @@ module riscv64_unprivileged_execution #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_zicsr_extension (
                 .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct3(funct3),
                 .opcode(opcode),
                 .csr_addr_i(instr_in_i[31:20]), // CSR地址在指令的31:20位
@@ -252,6 +290,10 @@ module riscv64_unprivileged_execution #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_zfh_extension (
                 .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
@@ -272,15 +314,18 @@ module riscv64_unprivileged_execution #(
             riscv64_c_extension #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_c_extension (
+                .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
                 .rs1_data_i(rs1_data_i),
                 .rs2_data_i(rs2_data_i),
                 .imm_i(imm_i),
-                .pc_in_i(pc_in_i),
                 .alu_op(alu_op),
-                .instr_in_i(instr_in_i),
                 .alu_result_o(c_result),
                 .is_c_extension(is_c_extension)
             );
@@ -298,12 +343,15 @@ module riscv64_unprivileged_execution #(
                 .DATA_WIDTH(DATA_WIDTH)
             ) u_v_extension (
                 .clk(clk),
+                .rst_n(rst_n),
+                .pc_in_i(pc_in_i),
+                .instr_in_i(instr_in_i),
+                .ctrl_in_i(ctrl_in_i),
                 .funct7_30(funct7_30),
                 .funct3(funct3),
                 .opcode(opcode),
                 .rs1_data_i(rs1_data_i),
                 .rs2_data_i(rs2_data_i),
-                .instr_in_i(instr_in_i),
                 .alu_result_o(v_result),
                 .is_v_extension(is_v_extension)
             );

@@ -4,16 +4,20 @@ module riscv64_zicsr_extension #(
     parameter DATA_WIDTH = 64,
     parameter CSR_ADDR_WIDTH = 12
 )(
-    input wire                  clk,
-    input wire [2:0]            funct3,
-    input wire [6:0]            opcode,
-    input wire [CSR_ADDR_WIDTH-1:0] csr_addr_i,
-    input wire [DATA_WIDTH-1:0] rs1_data_i,
-    input wire [4:0]            rs1_addr_i,
-    input wire [4:0]            rs2_addr_i,
-    input wire [4:0]            rd_addr_i,
-    output wire [DATA_WIDTH-1:0] alu_result_o,
-    output wire                 is_zicsr_extension
+    input  wire                                       clk,
+    input  wire                                       rst_n,
+    input  wire [DATA_WIDTH-1:0]                      pc_in_i,
+    input  wire [31:0]                                instr_in_i,
+    input  wire [15:0]                                ctrl_in_i,
+    input  wire [2:0]                                 funct3,
+    input  wire [6:0]                                 opcode,
+    input  wire [CSR_ADDR_WIDTH-1:0]                  csr_addr_i,
+    input  wire [DATA_WIDTH-1:0]                      rs1_data_i,
+    input  wire [4:0]                                 rs1_addr_i,
+    input  wire [4:0]                                 rs2_addr_i,
+    input  wire [4:0]                                 rd_addr_i,
+    output wire [DATA_WIDTH-1:0]                      alu_result_o,
+    output wire                                       is_zicsr_extension
 );
 
     // 判断是否为Zicsr扩展指令

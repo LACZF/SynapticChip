@@ -3,13 +3,18 @@
 module riscv64_d_extension #(
     parameter DATA_WIDTH = 64
 )(
-    input wire                  funct7_30,
-    input wire [2:0]            funct3,
-    input wire [6:0]            opcode,
-    input wire [DATA_WIDTH-1:0] rs1_data_i,
-    input wire [DATA_WIDTH-1:0] rs2_data_i,
-    output wire [DATA_WIDTH-1:0] alu_result_o,
-    output wire                 is_d_extension
+    input  wire                      clk,
+    input  wire                      rst_n,
+    input  wire [DATA_WIDTH-1:0]     pc_in_i,
+    input  wire [31:0]               instr_in_i,
+    input  wire [15:0]               ctrl_in_i,
+    input  wire                      funct7_30,
+    input  wire [2:0]                funct3,
+    input  wire [6:0]                opcode,
+    input  wire [DATA_WIDTH-1:0]     rs1_data_i,
+    input  wire [DATA_WIDTH-1:0]     rs2_data_i,
+    output wire [DATA_WIDTH-1:0]     alu_result_o,
+    output wire                      is_d_extension
 );
 
     // IEEE 754 双精度浮点数格式常量
