@@ -313,6 +313,9 @@ module riscv64_core #(
         .reg_we_wb_i(wb_reg_we),
         .mem_read_ex_i(ctrl_ex[8]), // 内存读信号位于第8位
         .branch_taken_i(branch_taken),
+        .cache_ready_i(dcache_ready_i), // 连接缓存就绪信号
+        .mem_valid_i(mem_valid_o),     // 连接内存阶段有效信号
+        .ex_valid_i(ex_valid_o),       // 连接执行阶段有效信号
         .data_hazard_o(),
         .control_hazard_o(),
         .stall_if_o(stall_if),
