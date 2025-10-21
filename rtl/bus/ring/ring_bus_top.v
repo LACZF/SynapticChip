@@ -19,6 +19,8 @@ module ring_bus_top #(
     parameter PE_ARRAY_ROWS                       = 2,
     parameter PE_ARRAY_COLS                       = 2,
     parameter INST_WIDTH                          = 32,       // Instruction width
+    parameter IN_OUTPUT_START_ADDR                = 32'h9000_0000,
+    parameter IN_OUTPUT_END_ADDR                  = 32'hFFFF_FFFF,
     parameter PE_ID_WIDTH                         = 4         // PE ID width
 ) (
     input  wire                                   clk,

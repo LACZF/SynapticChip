@@ -33,6 +33,8 @@ module top_system #(
     parameter PE_ARRAY_COLS                   = 2,
     parameter PE_ID_WIDTH                     = 4,
     parameter CPU_TYPE                        = 0,
+    parameter IN_OUTPUT_START_ADDR            = 32'h9000_0000,
+    parameter IN_OUTPUT_END_ADDR              = 32'hFFFF_FFFF,
     parameter ENABLE_MMU                      = 0
 )(
     input                                     clk,
@@ -147,6 +149,8 @@ module top_system #(
         .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
         .PE_ARRAY_COLS(PE_ARRAY_COLS),
         .INST_WIDTH(INST_WIDTH),
+        .IN_OUTPUT_START_ADDR(IN_OUTPUT_START_ADDR),
+        .IN_OUTPUT_END_ADDR(IN_OUTPUT_END_ADDR),
         .PE_ID_WIDTH(PE_ID_WIDTH)
     ) bus (
         .clk(clk),
@@ -240,6 +244,8 @@ module top_system #(
         .CORE_ID_WIDTH(CORE_ID_WIDTH),
         .ENABLE_L2_CACHE(ENABLE_L2_CACHE),
         .ENABLE_L3_CACHE(ENABLE_L3_CACHE),
+        .IN_OUTPUT_START_ADDR(IN_OUTPUT_START_ADDR),
+        .IN_OUTPUT_END_ADDR(IN_OUTPUT_END_ADDR),
         .CPU_TYPE(CPU_TYPE)
     ) cpu (
         .clk(clk),

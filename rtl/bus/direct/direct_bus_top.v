@@ -21,6 +21,8 @@ module direct_bus_top #(
     parameter PE_ARRAY_COLS                       = 2,
     parameter INST_WIDTH                          = 32,
     parameter PE_ID_WIDTH                         = 4,
+    parameter IN_OUTPUT_START_ADDR                = 32'h9000_0000,
+    parameter IN_OUTPUT_END_ADDR                  = 32'hFFFF_FFFF,
     parameter MATCH_TYPE_WIDTH                    = 2         // Match type width
 ) (
     input  wire                                   clk,
@@ -157,17 +159,20 @@ module direct_bus_top #(
     reg [DATA_WIDTH-1:0]                          spi_request_wdata;
     reg                                           spi_request_we;
 
-    // Address range definitions
-    localparam                                    GPIO_ADDR_START   = 32'h0000_1000;
-    localparam                                    GPIO_ADDR_END     = 32'h0000_1FFF;
-    localparam                                    UART_ADDR_START   = 32'h0000_2000;
-    localparam                                    UART_ADDR_END     = 32'h0000_2FFF;
-    localparam                                    PE_ADDR_START     = 32'h0000_3000;
-    localparam                                    PE_ADDR_END       = 32'h0000_3FFF;
-    localparam                                    JTAG_ADDR_START   = 32'h0000_4000;
-    localparam                                    JTAG_ADDR_END     = 32'h0000_4FFF;
-    localparam                                    SPI_ADDR_START    = 32'h0000_5000;
-    localparam                                    SPI_ADDR_END      = 32'h0000_5FFF;
+    localparam                                    GPIO_ADDR_START   = IN_OUTPUT_START_ADDR + 32'h0000_1000;
+    localparam                                    GPIO_ADDR_END     = IN_OUTPUT_START_ADDR + 32'h0000_1FFF;
+    localparam                                    UART_ADDR_START   = IN_OUTPUT_START_ADDR + 32'h0000_2000;
+    localparam                                    UART_ADDR_END     = IN_OUTPUT_START_ADDR + 32'h0000_2FFF;
+    localparam                                    TIMER_ADDR_START  = IN_OUTPUT_START_ADDR + 32'h0000_3000;
+    localparam                                    TIMER_ADDR_END    = IN_OUTPUT_START_ADDR + 32'h0000_3FFF;
+    localparam                                    JTAG_ADDR_START   = IN_OUTPUT_START_ADDR + 32'h0000_4000;
+    localparam                                    JTAG_ADDR_END     = IN_OUTPUT_START_ADDR + 32'h0000_4FFF;
+    localparam                                    SPI_ADDR_START    = IN_OUTPUT_START_ADDR + 32'h0000_5000;
+    localparam                                    SPI_ADDR_END      = IN_OUTPUT_START_ADDR + 32'h0000_5FFF;
+    localparam                                    I2C_ADDR_START    = IN_OUTPUT_START_ADDR + 32'h0000_6000;
+    localparam                                    I2C_ADDR_END      = IN_OUTPUT_START_ADDR + 32'h0000_6FFF;
+    localparam                                    PE_ADDR_START     = IN_OUTPUT_START_ADDR + 32'hA000_0000;
+    localparam                                    PE_ADDR_END       = IN_OUTPUT_START_ADDR + 32'hAFFF_FFFF;
 
     // Address decode logic
     always @(posedge clk or negedge rst_n) begin

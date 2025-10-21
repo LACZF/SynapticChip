@@ -23,6 +23,8 @@ module bus_top #(
     parameter PE_ARRAY_COLS                       = 2,
     parameter INST_WIDTH                          = 32,
     parameter PE_ID_WIDTH                         = 4,
+    parameter IN_OUTPUT_START_ADDR                = 32'h9000_0000,
+    parameter IN_OUTPUT_END_ADDR                  = 32'hFFFF_FFFF,
     parameter MATCH_TYPE_WIDTH                    = 2         // Match type width
 ) (
     input  wire                                   clk,
@@ -189,6 +191,8 @@ module bus_top #(
                 .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
                 .PE_ARRAY_COLS(PE_ARRAY_COLS),
                 .INST_WIDTH(INST_WIDTH),
+                .IN_OUTPUT_START_ADDR(IN_OUTPUT_START_ADDR),
+                .IN_OUTPUT_END_ADDR(IN_OUTPUT_END_ADDR),
                 .PE_ID_WIDTH(PE_ID_WIDTH)
             ) u_ring_bus (
                 .clk(clk),
@@ -287,6 +291,8 @@ module bus_top #(
                 .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
                 .PE_ARRAY_COLS(PE_ARRAY_COLS),
                 .INST_WIDTH(INST_WIDTH),
+                .IN_OUTPUT_START_ADDR(IN_OUTPUT_START_ADDR),
+                .IN_OUTPUT_END_ADDR(IN_OUTPUT_END_ADDR),
                 .PE_ID_WIDTH(PE_ID_WIDTH)
             ) u_direct_bus (
                 .clk(clk),

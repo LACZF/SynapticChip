@@ -9,6 +9,8 @@ module cache #(
     parameter OUTPUT_DATA_WIDTH             = 64,       // Memory data width (new parameter)
     parameter SUPPORT_COHERENCY             = 1,        // 1=support cache coherency, 0=not support
     parameter CACHE_LEVEL                   = 2,        // Cache level (1=L1, 2=L2, 3=L3, etc.)
+    parameter BYPASS_START_ADDR             = 32'h9000_0000,
+    parameter BYPASS_START_END              = 32'hFFFF_FFFF,
     parameter REPLACEMENT_POLICY            = "LRU"     // Replacement policy ("LRU", "FIFO", "RANDOM")
 )(
     input wire                              clk,
@@ -96,6 +98,13 @@ module cache #(
     reg [2:0] state;
     reg [2:0] next_state;
 
+    // Internal signal to control bypass mode
+    reg bypass_mode;
+    always @(*) begin
+        bypass_mode = (state == IDLE) && cpu_req_valid_i &&
+                     (BYPASS_START_ADDR <= cpu_req_addr_i && cpu_req_addr_i <= BYPASS_START_END);
+    end
+
     // Internal signals
     reg hit;
     reg [WAY_WIDTH-1:0] hit_way;
@@ -125,7 +134,12 @@ module cache #(
         case (state)
             IDLE:
                 if (cpu_req_valid_i) begin
-                    next_state = CHECK_HIT;
+                    if (BYPASS_START_ADDR <= cpu_req_addr_i && cpu_req_addr_i <= BYPASS_START_END) begin
+                        /* BYPASS Cache - handled by assign statements outside the always block */
+                        next_state = (cpu_req_rw_i == 0) ? MEM_READ : MEM_WRITE;
+                    end else begin
+                        next_state = CHECK_HIT;
+                    end
                 end
             CHECK_HIT:
                 if (hit) begin

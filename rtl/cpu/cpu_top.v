@@ -19,6 +19,8 @@ module cpu_top #(
     parameter ENABLE_MMU                    = 1,
     parameter ENABLE_L2_CACHE               = 1,   // Enable L2 cache, default is 1
     parameter ENABLE_L3_CACHE               = 1,   // Enable L3 cache, default is 1
+    parameter IN_OUTPUT_START_ADDR          = 32'h9000_0000,
+    parameter IN_OUTPUT_END_ADDR            = 32'hFFFF_FFFF,
     parameter CPU_TYPE                      = 0    // 0: RISC-V, 1: Reserved for other CPU types
 ) (
     input                                   clk,
@@ -110,6 +112,8 @@ module cpu_top #(
                 .OUTPUT_DATA_WIDTH(L2_OUT_WIDTH),
                 .SUPPORT_COHERENCY(0),  // L2 cache is shared, doesn't need coherency
                 .CACHE_LEVEL(`CACHE_LEVEL_L2),
+                .BYPASS_START_ADDR(IN_OUTPUT_START_ADDR),
+                .BYPASS_START_END(IN_OUTPUT_END_ADDR),
                 .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
             ) u_l2_cache (
                 .clk(clk),
@@ -177,6 +181,8 @@ module cpu_top #(
                     .OUTPUT_DATA_WIDTH(MEM_WIDTH),
                     .SUPPORT_COHERENCY(0),  // L3 cache is shared, doesn't need coherency
                     .CACHE_LEVEL(`CACHE_LEVEL_L3),
+                    .BYPASS_START_ADDR(IN_OUTPUT_START_ADDR),
+                    .BYPASS_START_END(IN_OUTPUT_END_ADDR),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l3_cache (
                     .clk(clk),
@@ -386,6 +392,8 @@ module cpu_top #(
                     .OUTPUT_DATA_WIDTH(L1_OUT_WIDTH),
                     .SUPPORT_COHERENCY(1),  // L1 cache is core-private, requires coherency between multiple cores
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),
+                    .BYPASS_START_ADDR(IN_OUTPUT_START_ADDR),
+                    .BYPASS_START_END(IN_OUTPUT_END_ADDR),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l1_icache (
                     .clk(clk),
@@ -430,6 +438,8 @@ module cpu_top #(
                     .OUTPUT_DATA_WIDTH(L1_OUT_WIDTH),
                     .SUPPORT_COHERENCY(1),  // L1 cache is core-private, requires coherency between multiple cores
                     .CACHE_LEVEL(`CACHE_LEVEL_L1),
+                    .BYPASS_START_ADDR(IN_OUTPUT_START_ADDR),
+                    .BYPASS_START_END(IN_OUTPUT_END_ADDR),
                     .REPLACEMENT_POLICY(`REPLACEMENT_LRU)
                 ) u_l1_dcache (
                     .clk(clk),
