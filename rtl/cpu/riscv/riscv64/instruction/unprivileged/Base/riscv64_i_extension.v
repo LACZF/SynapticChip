@@ -51,7 +51,8 @@ module riscv64_i_extension #(
         input [DATA_WIDTH-1:0] rs2;
         begin
         `ifdef DEBUG
-            $display("[I-Extension] handle_rtype: funct3=%b, funct7_30=%b, rs1=%h, rs2=%h", funct3, funct7_30, rs1, rs2);
+            $display("[I-Extension] handle_rtype: pc=%h, instr=%h, funct3=%b, funct7_30=%b, rs1=%h, rs2=%h",
+                pc_in_i, instr_in_i, funct3, funct7_30, rs1, rs2);
         `endif
 
             case (funct3)
@@ -85,7 +86,8 @@ module riscv64_i_extension #(
         input [DATA_WIDTH-1:0] imm;
         begin
         `ifdef DEBUG
-            $display("[I-Extension] handle_itype: alu_op=%b, rs1=%h, imm=%h", alu_op, rs1, imm);
+            $display("[I-Extension] handle_itype: pc=%h, instr=%h, alu_op=%b, rs1=%h, imm=%h",
+                pc_in_i, instr_in_i, alu_op, rs1, imm);
         `endif
             case (alu_op)
                 `ALU_OP_ADD:  handle_itype = rs1 + imm;
