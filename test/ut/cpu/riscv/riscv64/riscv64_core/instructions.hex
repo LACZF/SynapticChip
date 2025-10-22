@@ -9,7 +9,7 @@
 00a00113  // [0x80000004] ADDI x2, x0, 10     # x2 = 10
 002081b3  // [0x80000008] ADD x3, x1, x2      # x3 = 10
 00508293  // [0x8000000C] ADDI x5, x3, 5      # x5 = 15
-00210433  // [0x80000010] SUB x8, x4, x2      # x8 = x4 - 10 (but x4 is 0, so x8 = -10)
+40220433  // [0x80000010] SUB x8, x4, x2      # x8 = x4 - 10 (but x4 is 0, so x8 = -10)
 00540413  // [0x80000014] ADDI x8, x8, 5      # x8 = -5
 
 // Test Case 2: Immediate Arithmetic Instructions (SLLI, SRLI, SRAI, SLTI, SLTIU)
