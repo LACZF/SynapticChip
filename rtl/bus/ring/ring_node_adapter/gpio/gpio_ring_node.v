@@ -36,9 +36,9 @@ module gpio_ring_node #(
     output reg                        gpio_req_o,
     output reg                        gpio_we_o,
     output reg [ADDR_WIDTH-1:0]       gpio_addr_o,
-    input  reg [DATA_WIDTH-1:0]       gpio_data_out_i,
+    input  wire [DATA_WIDTH-1:0]      gpio_data_out_i,
     output reg [DATA_WIDTH-1:0]       gpio_data_in_o,
-    input                             gpio_ack_i,
+    input  wire                       gpio_ack_i,
 
     // Interrupt interface
     input                             gpio_int_i,

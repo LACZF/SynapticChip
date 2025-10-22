@@ -17,15 +17,15 @@ module pe_top #(
     input                                         clk,
     input                                         rst_n,
 
-    input  reg [NUM_PES-1:0]                      pe_enable_i,
-    input  reg [NUM_PES-1:0]                      pe_reset_i,
-    input  reg [(NUM_PES*INST_WIDTH)-1:0]         pe_instructions_i,
-    input  reg                                    pe_inst_valid_i,
+    input  wire [NUM_PES-1:0]                     pe_enable_i,
+    input  wire [NUM_PES-1:0]                     pe_reset_i,
+    input  wire [(NUM_PES*INST_WIDTH)-1:0]        pe_instructions_i,
+    input  wire                                   pe_inst_valid_i,
     output     [(NUM_PES*DATA_WIDTH)-1:0]         pe_status_o,
     output     [(NUM_PES*DATA_WIDTH)-1:0]         pe_outputs_o,
     output     [NUM_PES-1:0]                      pe_busy_o,
-    input  reg [(NUM_PES*4*PE_ID_WIDTH)-1:0]      route_config_i,
-    input  reg                                    route_cfg_valid_i,
+    input  wire [(NUM_PES*4*PE_ID_WIDTH)-1:0]     route_config_i,
+    input  wire                                   route_cfg_valid_i,
 
     output [DATA_WIDTH-1:0]                       fabric_status_o
 );

@@ -41,10 +41,10 @@ module gpio_node #(
     output                              gpio_we_o,
     output     [ADDR_WIDTH-1:0]         gpio_addr_o,
     output     [DATA_WIDTH-1:0]         gpio_data_in_o,
-    input  reg [DATA_WIDTH-1:0]         gpio_data_out_i,
-    input  reg                          gpio_ack_i,
+    input  wire [DATA_WIDTH-1:0]        gpio_data_out_i,
+    input  wire                         gpio_ack_i,
     inout      [GPIO_WIDTH-1:0]         gpio_pins,
-    input  reg                          gpio_int_i,
+    input  wire                         gpio_int_i,
 
     // Send requests
     output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // Specify Ring to use

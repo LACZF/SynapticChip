@@ -40,13 +40,13 @@ module uart_node #(
     output                              we_o,
     output      [ADDR_WIDTH-1:0]        addr_o,
     output      [DATA_WIDTH-1:0]        data_in_o,
-    input  reg  [DATA_WIDTH-1:0]        data_out_i,
-    input  reg                          ack_i,
-    input  reg                          txd_i,
+    input  wire [DATA_WIDTH-1:0]        data_out_i,
+    input  wire                         ack_i,
+    input  wire                         txd_i,
     output                              rxd_o,
-    input  reg                          rts_i,
+    input  wire                         rts_i,
     output                              cts_o,
-    input  reg                          int_i,
+    input  wire                         int_i,
 
     // Send requests
     output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // Specify Ring to use

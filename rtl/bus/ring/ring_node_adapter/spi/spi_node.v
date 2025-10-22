@@ -19,11 +19,11 @@ module spi_node #(
     output reg                          spi_we_o,
     output reg  [ADDR_WIDTH-1:0]        spi_addr_o,
     output reg  [DATA_WIDTH-1:0]        spi_data_in_o,
-    input  reg  [DATA_WIDTH-1:0]        spi_data_out_i,
-    input  reg                          spi_ack_i,
-    input  reg  [SPI_CS_NUM-1:0]        spi_cs_n_i,
-    input  reg                          spi_clk_i,
-    input  reg                          spi_mosi_i,
+    input  wire [DATA_WIDTH-1:0]        spi_data_out_i,
+    input  wire                         spi_ack_i,
+    input  wire [SPI_CS_NUM-1:0]        spi_cs_n_i,
+    input  wire                         spi_clk_i,
+    input  wire                         spi_mosi_i,
     output wire                         spi_miso_o,
 
     // Request interface

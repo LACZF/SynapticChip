@@ -40,16 +40,16 @@ module jtag_node #(
     output                              jtag_tck_o,
     output                              jtag_tms_o,
     output                              jtag_tdi_o,
-    input  reg                          jtag_tdo_i,
-    input  reg                          jtag_tdo_en_i,
+    input  wire                         jtag_tdo_i,
+    input  wire                         jtag_tdo_en_i,
     output                              jtag_req_o,
     output                              jtag_we_o,
     output [ADDR_WIDTH-1:0]             jtag_addr_o,
     output [DATA_WIDTH-1:0]             jtag_data_in_o,
-    input  reg [DATA_WIDTH-1:0]         jtag_data_out_i,
-    input  reg                          jtag_ack_i,
-    input  reg [DATA_WIDTH-1:0]         jtag_debug_data_i,
-    input  reg                          jtag_debug_valid_i,
+    input  wire [DATA_WIDTH-1:0]        jtag_data_out_i,
+    input  wire                         jtag_ack_i,
+    input  wire [DATA_WIDTH-1:0]        jtag_debug_data_i,
+    input  wire                         jtag_debug_valid_i,
 
     // Send requests
     output wire [NUM_RINGS-1:0]         tx_req_ring_mask_o,      // Specify Ring to use
