@@ -7,6 +7,7 @@ module riscv64_register_file #(
     input  wire                 rst_n,
     input  wire [63:0]          pc_in_i,
     input  wire [31:0]          instr_in_i,
+    input  wire [31:0]          instr_if_i,
 
 `ifdef DEBUG
     output wire [63:0]          reg0,

@@ -78,6 +78,7 @@ module riscv64_execution #(
         .ENABLE_V_EXT(ENABLE_V_EXT)
     ) u_unprivileged_execution (
         .clk(clk),
+        .rst_n(rst_n),
         .pc_in_i(pc_in_i),
         .instr_in_i(instr_in_i),
         .rs1_data_i(rs1_data_i),
