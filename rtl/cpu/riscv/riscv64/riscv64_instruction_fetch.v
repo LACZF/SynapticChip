@@ -68,7 +68,7 @@ module riscv64_instruction_fetch #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             pc_o <= 64'h8000_0000;
-            pc_next <= 64'h8000_0004;
+            pc_next <= 64'h8000_0000;
             instr_o <= 32'h0000_0013; // NOP
             cache_req_o <= 1'b1; // Request instruction immediately after reset
             cache_addr_o <= 64'h8000_0000;
