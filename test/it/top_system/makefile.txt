@@ -2,7 +2,7 @@
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 TEST_TARGET := top_system
-TEST_ARGS ?= -DROM_PRG=\"test.dat\" -DSPM_PRG=\"test.dat\" -DSIM_CYCLE=1000
+TEST_ARGS ?= -DROM_PRG=\"instructions.hex\" -DSPM_PRG=\"instructions.hex\" -DSIM_CYCLE=1000
 
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
 
