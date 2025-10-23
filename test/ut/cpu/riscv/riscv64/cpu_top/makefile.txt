@@ -19,7 +19,8 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
 # RISC-V core modules
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_core.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_execution.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_hazard_detection.v
+# TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_hazard_detection.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_hazard_detection_enhance.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_decode.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_instruction_fetch.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/riscv/riscv64/riscv64_memory_access.v

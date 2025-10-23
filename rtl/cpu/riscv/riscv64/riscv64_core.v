@@ -127,6 +127,23 @@ module riscv64_core #(
     wire [63:0] satp;
     wire [63:0] status;
 
+    // 冒险检测相关信号
+    wire [1:0]  forward_a;
+    wire [1:0]  forward_b;
+    wire [3:0]  raw_conflicts;
+    wire        has_waw;
+    wire        has_war;
+    wire [3:0]  hazard_type;
+
+    // 额外的连接信号 - 提前声明以避免在使用前未声明的错误
+    wire       jump_taken = 1'b0;          // 默认值，在实际设计中应该从执行阶段获取
+
+    // 前向数据选择
+    wire [63:0] rs1_data_forwarded;
+    wire [63:0] rs2_data_forwarded;
+    wire [63:0] alu_operand_a = rs1_data_forwarded;
+    wire [63:0] alu_operand_b = ctrl_id[11] ? imm_id : rs2_data_forwarded;
+
     assign l1_icache_req = icache_req_o;
     assign l1_icache_addr = icache_addr_o;
     assign l1_dcache_req = dcache_req_o;
@@ -208,8 +225,8 @@ module riscv64_core #(
         .flush_i(flush_ex),
         .pc_in_i(pc_id),
         .instr_in_i(instr_id),
-        .rs1_data_i(rs1_data),
-        .rs2_data_i(rs2_data),
+        .rs1_data_i(alu_operand_a),
+        .rs2_data_i(alu_operand_b),
         .imm_i(imm_id),
         .ctrl_in_i(ctrl_id),
         .id_valid_i(id_valid_o),
@@ -296,38 +313,74 @@ module riscv64_core #(
         .rs2_data_o(rs2_data)
     );
 
-    // Hazard detection unit
-    riscv64_hazard_detection #(
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
-    ) u_hazard (
+    // 操作数A前向选择
+    assign rs1_data_forwarded =
+        (forward_a == 2'b00) ? rs1_data :                    // 无前向
+        (forward_a == 2'b01) ? mem_result :                  // 从MEM阶段内存数据前向
+        (forward_a == 2'b10) ? alu_result :                  // 从EX阶段ALU结果前向
+        (forward_a == 2'b11) ? (ctrl_ex[8] == 1'b1 ? mem_result : alu_result) : // 从MEM阶段前向
+        64'h0;
+
+    // 操作数B前向选择
+    assign rs2_data_forwarded =
+        (forward_b == 2'b00) ? rs2_data :                    // 无前向
+        (forward_b == 2'b01) ? mem_result :                  // 从MEM阶段内存数据前向
+        (forward_b == 2'b10) ? alu_result :                  // 从EX阶段ALU结果前向
+        (forward_b == 2'b11) ? (ctrl_ex[8] == 1'b1 ? mem_result : alu_result) : // 从MEM阶段前向
+        64'h0;
+
+// 增强版冒险检测单元 - 支持冲突检测
+    riscv64_enhanced_hazard_detection_unit hazard_detector (
         .clk(clk),
         .rst_n(rst_n),
-        .rs1_id_i(instr_id[19:15]),
-        .rs2_id_i(instr_id[24:20]),
-        .rd_ex_i(instr_ex[11:7]),
-        .rd_mem_i(instr_mem[11:7]),
-        .rd_wb_i(wb_rd),
-        // 修复控制信号连接，使用正确的位定义
-        .reg_we_ex_i(ctrl_ex[7]),   // 寄存器写使能信号位于第7位
-        .reg_we_mem_i(ctrl_mem[7]), // 寄存器写使能信号位于第7位
-        .reg_we_wb_i(wb_reg_we),
-        .mem_read_ex_i(ctrl_ex[8]), // 内存读信号位于第8位
+
+        // 当前指令信息
+        .if_id_inst_i(instr_if),
+        .id_ex_inst_i(instr_id),
+        .ex_mem_inst_i(instr_ex),
+
+        // 寄存器信息
+        .id_rs1_i(instr_id[19:15]),
+        .id_rs2_i(instr_id[24:20]),
+        .id_rd_i(instr_id[11:7]),
+        .id_reg_write_i(ctrl_id[7]), // 寄存器写使能信号位于第7位
+
+        .ex_rd_i(rd),
+        .ex_reg_write_i(ctrl_ex[7]),
+        .ex_mem_to_reg_i({1'b0, ctrl_ex[8]}),
+
+        .mem_rd_i(instr_mem[11:7]),
+        .mem_reg_write_i(ctrl_mem[7]),
+        .mem_mem_to_reg_i({1'b0, ctrl_mem[8]}),
+
+        .wb_rd_i(wb_rd),
+        .wb_reg_write_i(wb_reg_we),
+
+        // 控制信号
         .branch_taken_i(branch_taken),
-        .cache_ready_i(dcache_ready_i), // 连接缓存就绪信号
-        .mem_valid_i(mem_valid_o),     // 连接内存阶段有效信号
-        .ex_valid_i(ex_valid_o),       // 连接执行阶段有效信号
-        .data_hazard_o(),
-        .control_hazard_o(),
+        .jump_taken_i(jump_taken),
+
+        // 精细化的流水线控制信号
         .stall_if_o(stall_if),
         .stall_id_o(stall_id),
         .stall_ex_o(stall_ex),
         .stall_mem_o(stall_mem),
         .stall_wb_o(stall_wb),
+
         .flush_if_o(flush_if),
         .flush_id_o(flush_id),
         .flush_ex_o(flush_ex),
-        .flush_mem_o(flush_mem)
+        .flush_mem_o(flush_mem),
+
+        // 前向控制信号
+        .forward_a_o(forward_a),
+        .forward_b_o(forward_b),
+
+        // 冲突检测输出
+        .hazard_type_o(hazard_type),
+        .raw_conflicts_o(raw_conflicts),
+        .has_waw_o(has_waw),
+        .has_war_o(has_war)
     );
 
     // Debug signals
