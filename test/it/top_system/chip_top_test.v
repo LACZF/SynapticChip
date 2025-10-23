@@ -149,8 +149,8 @@ module chip_top_test;
 
 	/********** 输出波形 **********/
 	initial begin
-		$dumpfile("chip_top.vcd");
-		$dumpvars(0, chip_top);
+		$dumpfile("chip_top_test.vcd");
+		$dumpvars(0, chip_top_test);
 	end
 
 endmodule

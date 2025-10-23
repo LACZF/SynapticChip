@@ -52,5 +52,4 @@ module if_reg (
 			end
 		end
 	end
-
 endmodule
