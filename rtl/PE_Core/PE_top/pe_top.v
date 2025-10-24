@@ -1,3 +1,6 @@
+`include "stddef.v"
+`include "global_config.v"
+
 `include "pe_addr.v"
 `include "pe.v"
 

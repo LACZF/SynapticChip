@@ -1,7 +1,7 @@
 // tb_router.v
 // Router Module Test Bench (Pure Verilog)
 
-`include "pe_router_params.v"
+`include "pe_router.v"
 `timescale 1ns/1ps
 
 module tb_router;
@@ -251,7 +251,7 @@ module tb_router;
 
     // Waveform Output
     initial begin
-        $dumpfile("router.vcd");
+        $dumpfile("tb_router.vcd");
         $dumpvars(0, tb_router);
     end
 

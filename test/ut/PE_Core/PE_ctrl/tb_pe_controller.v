@@ -1,8 +1,8 @@
 // tb_pe_controller.v
 // PE Controller Test Bench
 
-`include "pe_ctrl_params.v"
-`include "pe_params.v"
+`include "pe_ctrl.v"
+`include "pe.v"
 `timescale 1ns/1ps
 
 module tb_pe_controller;

@@ -1,7 +1,6 @@
 // PE_TOP Test Bench
 
-`include "top_system_params.v"
-`include "pe_ctrl_params.v"
+`include "pe_ctrl.v"
 `timescale 1ns/1ps
 
 module tb_pe_top;
@@ -26,28 +25,19 @@ module tb_pe_top;
     wire [`DATA_WIDTH-1:0]               fabric_status;
 
     // DUT Instantiation
-    pe_top #(
-        .NUM_PES(`NUM_PES),
-        .INST_WIDTH(INST_WIDTH),
-        .DATA_WIDTH(`DATA_WIDTH),
-        .ADDR_WIDTH(`ADDR_WIDTH),
-        .PE_ID_WIDTH(`PE_ID_WIDTH),
-        .PE_ARRAY_ROWS(`PE_ARRAY_ROWS),
-        .PE_ARRAY_COLS(`PE_ARRAY_COLS)
-    ) dut (
-        .clk(clk),
-        .rst_n(rst_n),
-        .pe_enable_i(pe_enable),
-        .pe_reset_i(pe_reset),
-        .pe_instructions_i(pe_instructions),
-        .pe_inst_valid_i(pe_inst_valid),
-        .route_config_i(route_config),
-        .route_cfg_valid_i(route_cfg_valid),
-        .pe_status_o(pe_status),
-        .pe_outputs_o(pe_outputs),
-        .pe_busy_o(pe_busy),
-        .fabric_status_o(fabric_status)
-    );
+	pe_top #(
+		.ADDR_WIDTH(`WORD_ADDR_W),
+		.DATA_WIDTH(`WORD_DATA_W),
+		.NUM_PES(4),
+		.INST_WIDTH(32),
+		.PE_ID_WIDTH(4),
+		.NUM_RINGS(2),
+		.PE_ARRAY_ROWS(2),
+		.PE_ARRAY_COLS(2)
+	) pe (
+		.clk(clk),
+		.reset(reset)
+	);
 
     // Clock Generation
     always #5 clk = ~clk;
@@ -218,7 +208,7 @@ module tb_pe_top;
 
     // Waveform Output
     initial begin
-        $dumpfile("pe_top.vcd");
+        $dumpfile("tb_pe_top.vcd");
         $dumpvars(0, tb_pe_top);
     end
 

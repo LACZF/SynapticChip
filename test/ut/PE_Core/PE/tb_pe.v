@@ -1,7 +1,7 @@
 // tb_pe.v
 // PE Test Bench
 
-`include "pe_params.v"
+`include "pe.v"
 `timescale 1ns/1ps
 
 module tb_pe;
@@ -315,7 +315,7 @@ module tb_pe;
 
     // Waveform output
     initial begin
-        $dumpfile("pe.vcd");
+        $dumpfile("tb_pe.vcd");
         $dumpvars(0, tb_pe);
     end
 
