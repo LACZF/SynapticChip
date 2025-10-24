@@ -21,6 +21,7 @@
 	`define IMPLEMENT_UART				// UART
 	`define IMPLEMENT_GPIO				// General Purpose I/O
 	`define IMPLEMENT_JTAG				// JTAG调试接口
+	`define IMPLEMENT_SPI				// SPI接口
 
 //------------------------------------------------------------------------------
 // 根据设置生成参数

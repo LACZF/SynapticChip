@@ -11,6 +11,8 @@
 `include "uart.v"
 `include "gpio.v"
 `include "jtag_addr.v"
+`include "spi_addr.v"
+`include "spi.v"
 
 /********** 模块 **********/
 module chip (
@@ -45,6 +47,14 @@ module chip (
 `ifdef GPIO_IO_CH	 // 输入/输出端口的实现
 	, inout wire [`GPIO_IO_CH-1:0]	 gpio_io	  // 输入输出端口
 `endif
+`endif
+
+`ifdef IMPLEMENT_SPI
+	/********** SPI **********/
+	, output wire			         spi_cs_n
+	, output wire			         spi_clk
+	, output wire			         spi_mosi
+	, input  wire			         spi_miso
 `endif
 );
 
@@ -259,9 +269,36 @@ module chip (
 	assign s4_rdy_	  = `DISABLE_N;
 `endif
 
+`ifdef IMPLEMENT_SPI
+	/********** SPI **********/
+	spi #(
+		.DATA_WIDTH	(32),
+		.ADDR_WIDTH	(32),
+		.CS_NUM		(1)
+	) spi (
+		.clk		(clk),
+		.rst_n		(reset == `RESET_DISABLE ? 1'b1 : 1'b0),
+
+		.req_i		(s5_cs_),
+		.we_i		(s_rw),
+		.addr_i		({{(32-`WORD_ADDR_W){1'b0}}, s_addr}),
+		.data_in_i	(s_wr_data),
+		.data_out_o	(s5_rd_data),
+		.ack_o		(s5_rdy_),
+
+		.spi_cs_n_o	(spi_cs_n),
+		.spi_clk_o	(spi_clk),
+		.spi_mosi_o	(spi_mosi),
+		.spi_miso_i	(spi_miso)
+	);
+`else
 	/* 暂未使用 */
 	assign s5_rd_data = `WORD_DATA_W'h0;
 	assign s5_rdy_	  = `DISABLE_N;
+	assign spi_cs_n	  = 1'b1;
+	assign spi_clk	  = 1'b0;
+	assign spi_mosi	  = 1'b0;
+`endif
 
 	/* 暂未使用 */
 	assign s6_rd_data = `WORD_DATA_W'h0;

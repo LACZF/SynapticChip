@@ -1,6 +1,6 @@
 `include "spi.v"
 
-module spi_core #(
+module spi #(
     parameter DATA_WIDTH             = 64,
     parameter ADDR_WIDTH             = 64,
     parameter CS_NUM                 = 1
