@@ -30,18 +30,19 @@ module id_stage (
 	input  wire [`WordDataBus]	 creg_rd_data,	 // 读取的数据
 	output wire [`RegAddrBus]	 creg_rd_addr,	 // 读取的地址
 	/********** 流水线控制信号 **********/
-	input  wire					 stall,			 //
-	input  wire					 flush,			 //
-	output wire [`WordAddrBus]	 br_addr,		 //
-	output wire					 br_taken,		 //
-	output wire					 ld_hazard,		 //
+	input  wire					 stall,
+	input  wire					 flush,
+	output wire [`WordAddrBus]	 br_addr,
+	output wire					 br_taken,
+	output wire					 ld_hazard,
 	/********** IF/ID流水线寄存器 **********/
-	input  wire [`WordAddrBus]	 if_pc,			 //
-	input  wire [`WordDataBus]	 if_insn,		 //
-	input  wire					 if_en,			 //
+	input  wire [`WordAddrBus]	 if_pc,
+	input  wire [`WordDataBus]	 if_insn,
+	input  wire					 if_en,
 	/********** ID/EX流水线寄存器 **********/
-	output wire [`WordAddrBus]	 id_pc,			 //
-	output wire					 id_en,			 //
+	output wire [`WordAddrBus]	 id_pc,
+	output wire [`WordDataBus]	 id_insn,
+	output wire					 id_en,
 	output wire [`AluOpBus]		 id_alu_op,		 // ALU操作
 	output wire [`WordDataBus]	 id_alu_in_0,	 // ALU输入 0
 	output wire [`WordDataBus]	 id_alu_in_1,	 // ALU输入 1
@@ -65,6 +66,8 @@ module id_stage (
 	wire  [`RegAddrBus]			 dst_addr;		 // GPR写入地址
 	wire						 gpr_we_;		 // GPR写入有效
 	wire  [`IsaExpBus]			 exp_code;		 //
+
+	assign id_insn = if_insn;
 
 	/********** 指令解码器 **********/
 	decoder decoder (

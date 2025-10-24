@@ -21,6 +21,7 @@ module ex_reg (
 	input  wire				   int_detect,	   // 中断检测
 	/********** ID/EX流水线寄存器 **********/
 	input  wire [`WordAddrBus] id_pc,		   // 程序计数器
+	input  wire [`WordDataBus] id_insn,
 	input  wire				   id_en,		   // 流水线的数据是否有效
 	input  wire				   id_br_flag,	   // 分支标志位
 	input  wire [`MemOpBus]	   id_mem_op,	   // 内存操作

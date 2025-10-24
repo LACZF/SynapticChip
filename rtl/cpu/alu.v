@@ -9,6 +9,10 @@
 
 /********** 模块 **********/
 module alu (
+	input  wire				   clk,
+	input  wire				   reset,
+	input  wire [`WordDataBus] id_insn,
+
 	input  wire [`WordDataBus] in_0,  // 输入 0
 	input  wire [`WordDataBus] in_1,  // 输入 1
 	input  wire [`AluOpBus]    op,    // 操作
@@ -22,6 +26,9 @@ module alu (
 
 	// 实例化基本ALU模块（RV64I指令集）
 	RV64I rv64i (
+		.clk(clk),
+		.reset(reset),
+		.id_insn(id_insn),
 		.in_0(in_0),
 		.in_1(in_1),
 		.op(op),
@@ -32,6 +39,9 @@ module alu (
 	// 实例化乘除法ALU模块（RV64M指令集）
 	`ifdef SUPPORT_RV64M
 		RV64M rv64m (
+			.clk(clk),
+			.reset(reset),
+			.id_insn(id_insn),
 			.in_0(in_0),
 			.in_1(in_1),
 			.op(op),

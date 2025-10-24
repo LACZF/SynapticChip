@@ -9,6 +9,10 @@
 
 /********** 模块 **********/
 module RV64M (
+	input  wire				   clk,
+	input  wire				   reset,
+	input  wire [`WordDataBus] id_insn,
+
 	input  wire [`WordDataBus] in_0,  // 输入 0
 	input  wire [`WordDataBus] in_1,  // 输入 1
 	input  wire [`AluOpBus]    op,    // 操作

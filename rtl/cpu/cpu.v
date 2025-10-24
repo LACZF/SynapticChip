@@ -45,6 +45,7 @@ module cpu (
 	wire						 if_en;			 // パイプラインデータの有効
 	// ID/EXパイプラインレジスタ
 	wire [`WordAddrBus]			 id_pc;			 // プログラムカウンタ
+	wire [`WordDataBus]	         id_insn;
 	wire						 id_en;			 // パイプラインデータの有効
 	wire [`AluOpBus]			 id_alu_op;		 // ALUオペレーション
 	wire [`WordDataBus]			 id_alu_in_0;	 // ALU入力 0
@@ -179,7 +180,7 @@ module cpu (
 		.creg_rd_data	(creg_rd_data),		// 読み出しデータ
 		.creg_rd_addr	(creg_rd_addr),		// 読み出しアドレス
 		/********** パイプライン制御信号 **********/
-	   .stall		   (id_stall),		   // ストール
+	    .stall		    (id_stall),		    // ストール
 		.flush			(id_flush),			// フラッシュ
 		.br_addr		(br_addr),			// 分岐アドレス
 		.br_taken		(br_taken),			// 分岐の成立
@@ -190,6 +191,7 @@ module cpu (
 		.if_en			(if_en),			// パイプラインデータの有効
 		/********** ID/EXパイプラインレジスタ **********/
 		.id_pc			(id_pc),			// プログラムカウンタ
+		.id_insn        (id_insn),
 		.id_en			(id_en),			// パイプラインデータの有効
 		.id_alu_op		(id_alu_op),		// ALUオペレーション
 		.id_alu_in_0	(id_alu_in_0),		// ALU入力 0
@@ -216,6 +218,7 @@ module cpu (
 		.fwd_data		(ex_fwd_data),		// フォワーディングデータ
 		/********** ID/EXパイプラインレジスタ **********/
 		.id_pc			(id_pc),			// プログラムカウンタ
+		.id_insn        (id_insn),
 		.id_en			(id_en),			// パイプラインデータの有効
 		.id_alu_op		(id_alu_op),		// ALUオペレーション
 		.id_alu_in_0	(id_alu_in_0),		// ALU入力 0

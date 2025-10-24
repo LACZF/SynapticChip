@@ -20,6 +20,7 @@ module ex_stage (
 	output wire [`WordDataBus] fwd_data,	   //
 	/********** ID/EX流水线寄存器 **********/
 	input  wire [`WordAddrBus] id_pc,		   //
+	input  wire [`WordDataBus] id_insn,
 	input  wire				   id_en,		   //
 	input  wire [`AluOpBus]	   id_alu_op,	   //
 	input  wire [`WordDataBus] id_alu_in_0,	   //
@@ -53,6 +54,10 @@ module ex_stage (
 
 	/********** ALU **********/
 	alu alu (
+		.clk            (clk),
+		.reset          (reset),
+		.id_insn        (id_insn),
+
 		.in_0			(id_alu_in_0),	  //
 		.in_1			(id_alu_in_1),	  //
 		.op				(id_alu_op),	  //
@@ -74,6 +79,7 @@ module ex_stage (
 		.int_detect		(int_detect),	  //
 		/********** ID/EX流水线寄存器 **********/
 		.id_pc			(id_pc),		  //
+		.id_insn        (id_insn),
 		.id_en			(id_en),		  //
 		.id_br_flag		(id_br_flag),	  //
 		.id_mem_op		(id_mem_op),	  //
