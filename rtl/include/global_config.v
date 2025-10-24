@@ -20,6 +20,7 @@
 	`define IMPLEMENT_TIMER				// 计时器
 	`define IMPLEMENT_UART				// UART
 	`define IMPLEMENT_GPIO				// General Purpose I/O
+	`define IMPLEMENT_JTAG				// JTAG调试接口
 
 //------------------------------------------------------------------------------
 // 根据设置生成参数

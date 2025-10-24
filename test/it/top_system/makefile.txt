@@ -32,7 +32,7 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_reg.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_stage.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/spm.v
 
-# TEST_SRC += $(TOP_DIR)/rtl/io/jtag/jtag_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/jtag/jtag.v
 # TEST_SRC += $(TOP_DIR)/rtl/io/spi/spi_core.v
 TEST_SRC += $(TOP_DIR)/rtl/io/gpio/gpio.v
 TEST_SRC += $(TOP_DIR)/rtl/io/rom/rom.v

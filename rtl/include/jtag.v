@@ -1,5 +1,5 @@
 `ifndef __JTAG_V__
-    `defien __JTAG_V__
+    `define __JTAG_V__
     // JTAG parameters
     `define DATA_WIDTH 64
     `define ADDR_WIDTH 64

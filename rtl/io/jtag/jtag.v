@@ -1,7 +1,5 @@
-
 `include "jtag.v"
-
-module jtag_top #(
+module jtag #(
     parameter ADDR_WIDTH            = 64,
     parameter DATA_WIDTH            = 64,
     parameter INST_WIDTH            = 32

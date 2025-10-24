@@ -9,15 +9,25 @@
 /********** 模块 **********/
 module chip_top (
 	/********** 时钟 & 复位 **********/
-	input wire				   clk_ref,		  // 主时钟
-	input wire				   reset_sw		  // 复位按钮
-	/********** UART **********/
-`ifdef IMPLEMENT_UART // UART实现
-	, input wire			   uart_rx		  // UART接收信号
-	, output wire			   uart_tx		  // UART发送信号
+	input  wire		           clk_ref,
+	input  wire		           reset_sw
+
+`ifdef IMPLEMENT_JTAG
+	/********** JTAG **********/
+	, input wire		       tck
+	, input wire		       tms
+	, input wire		       tdi
+	, output wire		       tdo
+	, output wire		       tdo_en
 `endif
-	/********** 通用输入/输出端口 **********/
-`ifdef IMPLEMENT_GPIO // GPIO实现
+`ifdef IMPLEMENT_UART
+	/********** UART **********/
+	, input wire			   uart_rx
+	, output wire			   uart_tx
+`endif
+
+`ifdef IMPLEMENT_GPIO
+	/********** GPIO **********/
 `ifdef GPIO_IN_CH	 // 输入端口的实现
 	, input wire [`GPIO_IN_CH-1:0]	 gpio_in  // 输入端口
 `endif
@@ -47,19 +57,27 @@ module chip_top (
 		.chip_reset	  (chip_reset)			  // 复芯片位
 	);
 
-	/********** 芯片 **********/
 	chip chip (
-		/********** 时钟 & 复位 **********/
-		.clk	  (clk),					  // 时钟
-		.clk_	  (clk_),					  // 反相时钟
-		.reset	  (chip_reset)				  // 复位
-		/********** UART **********/
-`ifdef IMPLEMENT_UART
-		, .uart_rx	(uart_rx)				  // UART接收波形
-		, .uart_tx	(uart_tx)				  // UART发送波形
+		.clk	    (clk),
+		.clk_	    (clk_),
+		.reset	    (chip_reset)
+
+`ifdef IMPLEMENT_JTAG
+		/********** JTAG **********/
+		, .tck		(tck)
+		, .tms		(tms)
+		, .tdi		(tdi)
+		, .tdo		(tdo)
+		, .tdo_en	(tdo_en)
 `endif
-		/********** 通用输入/输出端口 **********/
+
+`ifdef IMPLEMENT_UART
+		/********** UART **********/
+		, .uart_rx	(uart_rx)
+		, .uart_tx	(uart_tx)
+`endif
 `ifdef IMPLEMENT_GPIO
+		/********** GPIO **********/
 `ifdef GPIO_IN_CH  // 输入端口的实现
 		, .gpio_in (gpio_in)				  // 输入端口
 `endif
