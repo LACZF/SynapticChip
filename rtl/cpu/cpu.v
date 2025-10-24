@@ -90,10 +90,10 @@ module cpu (
 	wire						 br_taken;
 	wire						 ld_hazard;
 
-	wire [`WordDataBus]			 gpr_rd_data_0;
-	wire [`WordDataBus]			 gpr_rd_data_1;
-	wire [`RegAddrBus]			 gpr_rd_addr_0;
-	wire [`RegAddrBus]			 gpr_rd_addr_1;
+	wire [`WordDataBus]			 gpr_rd_data0;
+	wire [`WordDataBus]			 gpr_rd_data1;
+	wire [`RegAddrBus]			 gpr_rd_addr0;
+	wire [`RegAddrBus]			 gpr_rd_addr1;
 
 	wire [`CpuExeModeBus]		 exe_mode;
 	wire [`WordDataBus]			 creg_rd_data;
@@ -153,10 +153,10 @@ module cpu (
 		.clk			    (clk),
 		.reset			    (reset),
 
-		.gpr_rd_data_0_i	(gpr_rd_data_0),
-		.gpr_rd_data_1_i	(gpr_rd_data_1),
-		.gpr_rd_addr_0_o	(gpr_rd_addr_0),
-		.gpr_rd_addr_1_o	(gpr_rd_addr_1),
+		.gpr_rd_data0_i	    (gpr_rd_data0),
+		.gpr_rd_data1_i	    (gpr_rd_data1),
+		.gpr_rd_addr0_o	    (gpr_rd_addr0),
+		.gpr_rd_addr1_o	    (gpr_rd_addr1),
 
 		.ex_en_i			(ex_en),
 		.ex_fwd_data_i		(ex_fwd_data),
@@ -318,10 +318,10 @@ module cpu (
 		.clk	     (clk),
 		.reset	     (reset),
 
-		.rd_addr_0_i (gpr_rd_addr_0),
-		.rd_data_0_o (gpr_rd_data_0),
-		.rd_addr_1_i (gpr_rd_addr_1),
-		.rd_data_1_o (gpr_rd_data_1),
+		.rd_addr0_i  (gpr_rd_addr0),
+		.rd_data0_o  (gpr_rd_data0),
+		.rd_addr1_i  (gpr_rd_addr1),
+		.rd_data1_o  (gpr_rd_data1),
 
 		.we_n_i	     (mem_gpr_we_),
 		.wr_addr_i   (mem_dst_addr),

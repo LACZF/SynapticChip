@@ -9,7 +9,7 @@ module mem_reg (
 	input  wire			           clk,
 	input  wire			           reset,
 	/********** 内存访问结果 **********/
-	input  wire [`WordDataBus]	   out_i,			     // 结果
+	input  wire [`WordDataBus]	   result_i,			     // 结果
 	input  wire			           miss_align_i,		 // 未对齐
 	/********** 流水线控制信号 **********/
 	input  wire			           stall_i,			     // 延迟
@@ -74,7 +74,7 @@ module mem_reg (
 					mem_dst_addr_o   <= ex_dst_addr_i;
 					mem_gpr_we_n_o	 <= ex_gpr_we_n_i;
 					mem_exp_code_o   <= ex_exp_code_i;
-					mem_out_o		 <= out_i;
+					mem_out_o		 <= result_i;
 				end
 			end
 		end

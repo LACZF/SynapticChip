@@ -9,10 +9,10 @@ module id_stage (
 	input  wire			         clk,
 	input  wire			         reset,
 	/********** GPR接口 **********/
-	input  wire [`WordDataBus]	 gpr_rd_data_0_i,	 // 读取数据 0
-	input  wire [`WordDataBus]	 gpr_rd_data_1_i,	 // 读取数据 1
-	output wire [`RegAddrBus]	 gpr_rd_addr_0_o,	 // 读取地址 0
-	output wire [`RegAddrBus]	 gpr_rd_addr_1_o,	 // 读取地址 1
+	input  wire [`WordDataBus]	 gpr_rd_data0_i,	 // 读取数据 0
+	input  wire [`WordDataBus]	 gpr_rd_data1_i,	 // 读取数据 1
+	output wire [`RegAddrBus]	 gpr_rd_addr0_o,	 // 读取地址 0
+	output wire [`RegAddrBus]	 gpr_rd_addr1_o,	 // 读取地址 1
 	/********** 数据直通 **********/
 	// 来自EX阶段的数据直通
 	input  wire			         ex_en_i,		    // 流水线数据有效
@@ -72,10 +72,10 @@ module id_stage (
 		.if_insn_i		    (if_insn_i),
 		.if_en_i		    (if_en_i),
 		/********** GPR接口 **********/
-		.gpr_rd_data_0_i	(gpr_rd_data_0_i),  // 读取数据 0
-		.gpr_rd_data_1_i	(gpr_rd_data_1_i),  // 读取数据 1
-		.gpr_rd_addr_0_o	(gpr_rd_addr_0_o),  // 读取地址 0
-		.gpr_rd_addr_1_o	(gpr_rd_addr_1_o),  // 读取地址 1
+		.gpr_rd_data0_i	    (gpr_rd_data0_i),  // 读取数据 0
+		.gpr_rd_data1_i	    (gpr_rd_data1_i),  // 读取数据 1
+		.gpr_rd_addr0_o	    (gpr_rd_addr0_o),  // 读取地址 0
+		.gpr_rd_addr1_o	    (gpr_rd_addr1_o),  // 读取地址 1
 		/********** 数据直通 **********/
 		// 来自ID阶段的数据直通
 		.id_en_i		    (id_en_o),

@@ -25,11 +25,11 @@ module alu (
 		.clk(clk),
 		.reset(reset),
 		.id_insn_i(id_insn_i),
-		.in_0_i(in0_i),
-		.in_1_i(in1_i),
+		.in0_i(in0_i),
+		.in1_i(in1_i),
 		.op_i(op_i),
-		.out_o(base_out),
-		.of_o(base_of)
+		.result_o(base_out),
+		.overflow_o(base_of)
 	);
 
 	// 实例化乘除法ALU模块（RV64M指令集）
@@ -38,10 +38,10 @@ module alu (
 			.clk(clk),
 			.reset(reset),
 			.id_insn_i(id_insn_i),
-			.in_0_i(in0_i),
-			.in_1_i(in1_i),
+			.in0_i(in0_i),
+			.in1_i(in1_i),
 			.op_i(op_i),
-			.out_o(muldiv_out)
+			.result_o(muldiv_out)
 		);
 	`else
 		// 如果不支持RV64M，将乘除输出设为0
@@ -55,18 +55,18 @@ module alu (
 				// 选择乘除法操作的输出
 				`ALU_OP_MUL, `ALU_OP_MULH, `ALU_OP_MULHSU, `ALU_OP_MULHU,
 				`ALU_OP_DIV, `ALU_OP_DIVU: begin
-					result_o = muldiv_out;
+					result_o    = muldiv_out;
 					overflow_o  = `DISABLE;
 				end
 				// 其他操作使用基本ALU的输出
 				default: begin
-					result_o = base_out;
+					result_o    = base_out;
 					overflow_o  = base_of;
 				end
 			endcase
 		`else
 			// 如果不支持RV64M，始终使用基本ALU的输出
-			result_o = base_out;
+			result_o    = base_out;
 			overflow_o  = base_of;
 		`endif
 	end

@@ -11,10 +11,10 @@ module decoder (
 	input  wire [`WordDataBus]    if_insn_i,           // 指令
 	input  wire                   if_en_i,             // 流水线数据的有效标志位
 	/********** GPR接口 **********/
-	input  wire [`WordDataBus]    gpr_rd_data_0_i,     // 读取数据 0
-	input  wire [`WordDataBus]    gpr_rd_data_1_i,     // 读取数据 1
-	output wire [`RegAddrBus]     gpr_rd_addr_0_o,     // 读取地址 0
-	output wire [`RegAddrBus]     gpr_rd_addr_1_o,     // 读取地址 1
+	input  wire [`WordDataBus]    gpr_rd_data0_i,     // 读取数据 0
+	input  wire [`WordDataBus]    gpr_rd_data1_i,     // 读取数据 1
+	output wire [`RegAddrBus]     gpr_rd_addr0_o,     // 读取地址 0
+	output wire [`RegAddrBus]     gpr_rd_addr1_o,     // 读取地址 1
 	/********** 数据直通 **********/
 	// 来自ID阶段的数据直通
 	input  wire                   id_en_i,             // 流水线数据有效
@@ -68,8 +68,8 @@ module decoder (
 	wire [`WordDataBus] j_imm    = {{11{if_insn_i[31]}}, if_insn_i[31], if_insn_i[19:12], if_insn_i[20], if_insn_i[30:21], 1'b0};
 
 	/********** 寄存器读取地址 **********/
-	assign gpr_rd_addr_0_o = rs1; // 寄存器读取地址 0
-	assign gpr_rd_addr_1_o = rs2; // 寄存器读取地址 1
+	assign gpr_rd_addr0_o  = rs1; // 寄存器读取地址 0
+	assign gpr_rd_addr1_o  = rs2; // 寄存器读取地址 1
 	assign creg_rd_addr_o  = rs1; // 控制寄存器读取地址
 	/********** 从通用寄存器读取的数据 **********/
 	reg         [`WordDataBus]  ra_data;                           // Ra寄存器读取的数据（无符号）
@@ -95,7 +95,7 @@ module decoder (
 			 (ex_dst_addr_i == rs1)) begin
 			ra_data = mem_fwd_data_i;	 // 来自MEM阶段的数据直通
 		end else begin
-			ra_data = gpr_rd_data_0_i; // 从寄存器堆读取
+			ra_data = gpr_rd_data0_i; // 从寄存器堆读取
 		end
 		/* Rb寄存器 */
 		if ((id_en_i == `ENABLE) && (id_gpr_we_n_i == `ENABLE_N) &&
@@ -105,7 +105,7 @@ module decoder (
 			 (ex_dst_addr_i == rs2)) begin
 			rb_data = mem_fwd_data_i;	 // 来自MEM阶段的数据直通
 		end else begin
-			rb_data = gpr_rd_data_1_i; // 从寄存器堆读取
+			rb_data = gpr_rd_data1_i; // 从寄存器堆读取
 		end
 	end
 

@@ -57,11 +57,11 @@ module mem_stage (
 	wire					   as_;
 	wire					   rw;
 	wire [`WordDataBus]		   wr_data;
-	wire [`WordDataBus]		   out;
+	wire [`WordDataBus]		   result;
 	wire					   miss_align;
 
 	/********** 结果数据直通 **********/
-	assign fwd_data_o	 = out;
+	assign fwd_data_o	 = result;
 
 	/********** 内存访问控制模块 **********/
 	mem_ctrl mem_ctrl (
@@ -77,7 +77,7 @@ module mem_stage (
 		.rw_o				(rw),
 		.wr_data_o			(wr_data),
 		/********** 内存访问结果 **********/
-		.out_o				(out),
+		.result_o			(result),
 		.miss_align_o		(miss_align)
 	);
 
@@ -118,7 +118,7 @@ module mem_stage (
 		.clk		    (clk),
 		.reset		    (reset),
 		/********** 内存访问结果 **********/
-		.out_i		    (out),
+		.result_i		(result),
 		.miss_align_i   (miss_align),
 		/********** 流水线控制信号 **********/
 		.stall_i		(stall_i),

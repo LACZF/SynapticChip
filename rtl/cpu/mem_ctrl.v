@@ -19,7 +19,7 @@ module mem_ctrl (
 	output reg				   rw_o,		     // 读/写
 	output wire [`WordDataBus] wr_data_o,        // 写入的数据
 	/********** 内存访问结果 **********/
-	output reg [`WordDataBus]  out_o,		     // 内存访问结果
+	output reg [`WordDataBus]  result_o,		     // 内存访问结果
 	output reg				   miss_align_o	     // 未对齐
 );
 
@@ -35,7 +35,7 @@ module mem_ctrl (
 	always @(*) begin
 		/* 默认值 */
 		miss_align_o   = `DISABLE;
-		out_o		   = `WORD_DATA_W'h0;
+		result_o       = `WORD_DATA_W'h0;
 		as_n_o		   = `DISABLE_N;
 		rw_o		   = `READ;
 		/* 内存访问 */
@@ -44,7 +44,7 @@ module mem_ctrl (
 				`MEM_OP_LDW : begin // 字读取
 					/* 字节偏移的检测 */
 					if (offset == `BYTE_OFFSET_WORD) begin // 对齐
-						out_o		   = rd_data_i;
+						result_o	   = rd_data_i;
 						as_n_o		   = `ENABLE_N;
 					end else begin						   // 未对齐
 						miss_align_o   = `ENABLE;
@@ -60,7 +60,7 @@ module mem_ctrl (
 					end
 				end
 				default		: begin // 无内存访问
-					out_o			= ex_out_i;
+					result_o			= ex_out_i;
 				end
 			endcase
 		end
