@@ -13,6 +13,8 @@
 `include "jtag_addr.v"
 `include "spi_addr.v"
 `include "spi.v"
+`include "pe_addr.v"
+`include "pe.v"
 
 /********** 模块 **********/
 module chip (
@@ -55,6 +57,20 @@ module chip (
 	, output wire			         spi_clk
 	, output wire			         spi_mosi
 	, input  wire			         spi_miso
+`endif
+
+`ifdef IMPLEMENT_PE
+	/********** PE **********/
+	, input  wire [3:0] 		         pe_enable_i
+	, input  wire [3:0] 		         pe_reset_i
+	, input  wire [(4*32)-1:0] 	     pe_instructions_i
+	, input  wire 			         pe_inst_valid_i
+	, output wire [(4*64)-1:0] 	     pe_status_o
+	, output wire [(4*64)-1:0] 	     pe_outputs_o
+	, output wire [3:0] 		         pe_busy_o
+	, input  wire [(4*4*4)-1:0] 	     route_config_i
+	, input  wire 			         route_cfg_valid_i
+	, output wire [63:0] 		         fabric_status_o
 `endif
 );
 
@@ -188,8 +204,34 @@ module chip (
 		.rdy_			 (s0_rdy_)
 	);
 
+`ifdef IMPLEMENT_PE
+	/********** Integrated PE Module **********/
+	pe_top #(
+		.ADDR_WIDTH(`WORD_ADDR_W),
+		.DATA_WIDTH(`WORD_DATA_W),
+		.NUM_PES(4),
+		.INST_WIDTH(32),
+		.PE_ID_WIDTH(4),
+		.NUM_RINGS(2),
+		.PE_ARRAY_ROWS(2),
+		.PE_ARRAY_COLS(2)
+	) pe (
+		.clk(clk),
+		.reset(reset),
+
+		.cs_(s1_cs_),
+		.as_(s_as_),
+		.rw(s_rw),
+		.addr(s_addr),
+		.wr_data(s_wr_data),
+		.rd_data(s1_rd_data),
+		.rdy_(s1_rdy_)
+	);
+`else
+	/* 暂未使用 */
 	assign s1_rd_data = `WORD_DATA_W'h0;
 	assign s1_rdy_	  = `DISABLE_N;
+`endif
 
 `ifdef IMPLEMENT_TIMER
 	/********** TIMER **********/

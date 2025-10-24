@@ -46,13 +46,13 @@ TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dcm.v
 TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dpram.v
 TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_sprom.v
 
-# TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
-# TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
-# TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
-# TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
-# TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
-# TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
-# TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/top/chip_top.v
 TEST_SRC += $(TOP_DIR)/rtl/top/chip.v
