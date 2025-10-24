@@ -26,14 +26,14 @@ module alu (
 
 	// 实例化基本ALU模块（RV64I指令集）
 	RV64I rv64i (
-		.clk(clk),
-		.reset(reset),
-		.id_insn(id_insn),
-		.in_0(in_0),
-		.in_1(in_1),
-		.op(op),
-		.out(base_out),
-		.of(base_of)
+		.clk_i(clk),
+		.reset_i(reset),
+		.id_insn_i(id_insn),
+		.in_0_i(in_0),
+		.in_1_i(in_1),
+		.op_i(op),
+		.out_o(base_out),
+		.of_o(base_of)
 	);
 
 	// 实例化乘除法ALU模块（RV64M指令集）
