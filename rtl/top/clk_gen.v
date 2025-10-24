@@ -1,10 +1,8 @@
 
-/********** 通用头文件 **********/
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** モジュール **********/
 module clk_gen (
 	/********** 时钟 & 复位 **********/
 	input wire	clk_ref,   // 主时钟

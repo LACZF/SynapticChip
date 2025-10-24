@@ -1,17 +1,12 @@
 
-/********** 通用头文件 **********/
-
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "timer.v"
 
-/********** 模块 **********/
 module timer (
-	/********** 时钟 & 复位 **********/
-	input  wire					clk,	   // 时钟
-	input  wire					reset,	   // 异步复位
+	input  wire					clk,
+	input  wire					reset,
 	/********** 总线接口 **********/
 	input  wire					cs_,	   // 片选
 	input  wire					as_,	   // 地址选通

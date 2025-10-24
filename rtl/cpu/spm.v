@@ -1,27 +1,23 @@
-/********** 通用头文件 **********/
 
 `include "global_config.v"
 `include "stddef.v"
 
-/********** 单个头文件 **********/
 `include "spm.v"
 
-/********** 模块 **********/
 module spm (
-	/********** 时钟 **********/
-	input  wire				   clk,				// 时钟
+	input  wire				   clk,
 	/********** A端口 : IF阶段 **********/
-	input  wire [`SpmAddrBus]  if_spm_addr,		// 地址
-	input  wire				   if_spm_as_,		// 地址选通
-	input  wire				   if_spm_rw,		// 读/写
-	input  wire [`WordDataBus] if_spm_wr_data,	// 写入的数据
-	output wire [`WordDataBus] if_spm_rd_data,	// 读取的数据
+	input  wire [`SpmAddrBus]  if_spm_addr_i,
+	input  wire				   if_spm_as_n_i,
+	input  wire				   if_spm_rw_i,
+	input  wire [`WordDataBus] if_spm_wr_data_i,
+	output wire [`WordDataBus] if_spm_rd_data_o,
 	/********** B端口 : MEM阶段 **********/
-	input  wire [`SpmAddrBus]  mem_spm_addr,	// 地址
-	input  wire				   mem_spm_as_,		// 地址选通
-	input  wire				   mem_spm_rw,		// 读/写
-	input  wire [`WordDataBus] mem_spm_wr_data, // 写入的数据
-	output wire [`WordDataBus] mem_spm_rd_data	// 读取的数据
+	input  wire [`SpmAddrBus]  mem_spm_addr_i,
+	input  wire				   mem_spm_as_n_i,
+	input  wire				   mem_spm_rw_i,
+	input  wire [`WordDataBus] mem_spm_wr_data_i,
+	output wire [`WordDataBus] mem_spm_rd_data_o
 );
 
 	/********** 写入有效 **********/
@@ -31,13 +27,13 @@ module spm (
 	/********** 写入有效信号的生成 **********/
 	always @(*) begin
 		/* A端口 */
-		if ((if_spm_as_ == `ENABLE_N) && (if_spm_rw == `WRITE)) begin
+		if ((if_spm_as_n_i == `ENABLE_N) && (if_spm_rw_i == `WRITE)) begin
 			wea = `MEM_ENABLE;	// 写入有效
 		end else begin
 			wea = `MEM_DISABLE; // 写入无效
 		end
 		/* B端口 */
-		if ((mem_spm_as_ == `ENABLE_N) && (mem_spm_rw == `WRITE)) begin
+		if ((mem_spm_as_n_i == `ENABLE_N) && (mem_spm_rw_i == `WRITE)) begin
 			web = `MEM_ENABLE;	// 写入有效
 		end else begin
 			web = `MEM_DISABLE; // 写入无效
@@ -48,16 +44,16 @@ module spm (
 	x_s3e_dpram x_s3e_dpram (
 		/********** A端口 : IF阶段 **********/
 		.clka  (clk),			  // 时钟
-		.addra (if_spm_addr),	  // 地址
-		.dina  (if_spm_wr_data),  // 写入的数据（未连接）
-		.wea   (wea),			  // 写入有效（无效）
-		.douta (if_spm_rd_data),  // 读取的数据
+		.addra (if_spm_addr_i),	  // 地址
+		.dina  (if_spm_wr_data_i),  // 写入的数据
+		.wea   (wea),			  // 写入有效
+		.douta (if_spm_rd_data_o),  // 读取的数据
 		/********** B端口 : MEM阶段 **********/
 		.clkb  (clk),			  // 时钟
-		.addrb (mem_spm_addr),	  // 地址
-		.dinb  (mem_spm_wr_data), // 写入的数据
+		.addrb (mem_spm_addr_i),	  // 地址
+		.dinb  (mem_spm_wr_data_i), // 写入的数据
 		.web   (web),			  // 写入有效
-		.doutb (mem_spm_rd_data)  // 读取的数据
+		.doutb (mem_spm_rd_data_o)  // 读取的数据
 	);
 
 endmodule

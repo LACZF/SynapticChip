@@ -1,9 +1,7 @@
-/********** 通用头文件 **********/
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "cpu.v"
 `include "bus.v"
 `include "rom.v"
@@ -16,9 +14,7 @@
 `include "pe_addr.v"
 `include "pe.v"
 
-/********** 模块 **********/
 module chip (
-	/********** 时钟 & 复位 **********/
 	input  wire				         clk,
 	input  wire				         clk_,
 	input  wire				         reset
@@ -57,20 +53,6 @@ module chip (
 	, output wire			         spi_clk
 	, output wire			         spi_mosi
 	, input  wire			         spi_miso
-`endif
-
-`ifdef IMPLEMENT_PE
-	/********** PE **********/
-	, input  wire [3:0] 		         pe_enable_i
-	, input  wire [3:0] 		         pe_reset_i
-	, input  wire [(4*32)-1:0] 	     pe_instructions_i
-	, input  wire 			         pe_inst_valid_i
-	, output wire [(4*64)-1:0] 	     pe_status_o
-	, output wire [(4*64)-1:0] 	     pe_outputs_o
-	, output wire [3:0] 		         pe_busy_o
-	, input  wire [(4*4*4)-1:0] 	     route_config_i
-	, input  wire 			         route_cfg_valid_i
-	, output wire [63:0] 		         fabric_status_o
 `endif
 );
 
@@ -152,30 +134,30 @@ module chip (
 
 	/********** CPU **********/
 	cpu cpu (
-		.clk			 (clk),
-		.clk_			 (clk_),
-		.reset			 (reset),
+		.clk			     (clk),
+		.clk_n			     (clk_),
+		.reset			     (reset),
 
 		// IF Stage
-		.if_bus_rd_data	 (m_rd_data),
-		.if_bus_rdy_	 (m_rdy_),
-		.if_bus_grnt_	 (m0_grnt_),
-		.if_bus_req_	 (m0_req_),
-		.if_bus_addr	 (m0_addr),
-		.if_bus_as_		 (m0_as_),
-		.if_bus_rw		 (m0_rw),
-		.if_bus_wr_data	 (m0_wr_data),
+		.if_bus_rd_data_i    (m_rd_data),
+		.if_bus_rdy_n_i	     (m_rdy_),
+		.if_bus_grnt_n_i	 (m0_grnt_),
+		.if_bus_req_n_o	     (m0_req_),
+		.if_bus_addr_o	     (m0_addr),
+		.if_bus_as_n_o	     (m0_as_),
+		.if_bus_rw_o	     (m0_rw),
+		.if_bus_wr_data_o    (m0_wr_data),
 		// MEM Stage
-		.mem_bus_rd_data (m_rd_data),
-		.mem_bus_rdy_	 (m_rdy_),
-		.mem_bus_grnt_	 (m1_grnt_),
-		.mem_bus_req_	 (m1_req_),
-		.mem_bus_addr	 (m1_addr),
-		.mem_bus_as_	 (m1_as_),
-		.mem_bus_rw		 (m1_rw),
-		.mem_bus_wr_data (m1_wr_data),
+		.mem_bus_rd_data_i   (m_rd_data),
+		.mem_bus_rdy_n_i	 (m_rdy_),
+		.mem_bus_grnt_n_i	 (m1_grnt_),
+		.mem_bus_req_n_o	 (m1_req_),
+		.mem_bus_addr_o	     (m1_addr),
+		.mem_bus_as_n_o	     (m1_as_),
+		.mem_bus_rw_o	     (m1_rw),
+		.mem_bus_wr_data_o   (m1_wr_data),
 
-		.cpu_irq		 (cpu_irq)
+		.cpu_irq_i		     (cpu_irq)
 	);
 
 	/* 暂未使用 */
@@ -384,73 +366,73 @@ module chip (
 		.clk			 (clk),
 		.reset			 (reset),
 
-		.m_rd_data		 (m_rd_data),
-		.m_rdy_			 (m_rdy_),
+		.m_rd_data_o     (m_rd_data),
+		.m_rdy_n_o	     (m_rdy_),
 
-		.m0_req_		 (m0_req_),
-		.m0_addr		 (m0_addr),
-		.m0_as_			 (m0_as_),
-		.m0_rw			 (m0_rw),
-		.m0_wr_data		 (m0_wr_data),
-		.m0_grnt_		 (m0_grnt_),
+		.m0_req_n_i		 (m0_req_),
+		.m0_addr_i		 (m0_addr),
+		.m0_as_n_i		 (m0_as_),
+		.m0_rw_i		 (m0_rw),
+		.m0_wr_data_i	 (m0_wr_data),
+		.m0_grnt_n_o	 (m0_grnt_),
 
-		.m1_req_		 (m1_req_),
-		.m1_addr		 (m1_addr),
-		.m1_as_			 (m1_as_),
-		.m1_rw			 (m1_rw),
-		.m1_wr_data		 (m1_wr_data),
-		.m1_grnt_		 (m1_grnt_),
+		.m1_req_n_i		 (m1_req_),
+		.m1_addr_i		 (m1_addr),
+		.m1_as_n_i		 (m1_as_),
+		.m1_rw_i		 (m1_rw),
+		.m1_wr_data_i	 (m1_wr_data),
+		.m1_grnt_n_o	 (m1_grnt_),
 
-		.m2_req_		 (m2_req_),
-		.m2_addr		 (m2_addr),
-		.m2_as_			 (m2_as_),
-		.m2_rw			 (m2_rw),
-		.m2_wr_data		 (m2_wr_data),
-		.m2_grnt_		 (m2_grnt_),
+		.m2_req_n_i		 (m2_req_),
+		.m2_addr_i		 (m2_addr),
+		.m2_as_n_i		 (m2_as_),
+		.m2_rw_i		 (m2_rw),
+		.m2_wr_data_i	 (m2_wr_data),
+		.m2_grnt_n_o	 (m2_grnt_),
 
-		.m3_req_		 (m3_req_),
-		.m3_addr		 (m3_addr),
-		.m3_as_			 (m3_as_),
-		.m3_rw			 (m3_rw),
-		.m3_wr_data		 (m3_wr_data),
-		.m3_grnt_		 (m3_grnt_),
+		.m3_req_n_i		 (m3_req_),
+		.m3_addr_i		 (m3_addr),
+		.m3_as_n_i		 (m3_as_),
+		.m3_rw_i		 (m3_rw),
+		.m3_wr_data_i	 (m3_wr_data),
+		.m3_grnt_n_o	 (m3_grnt_),
 
-		.s_addr			 (s_addr),
-		.s_as_			 (s_as_),
-		.s_rw			 (s_rw),
-		.s_wr_data		 (s_wr_data),
+		.s_addr_o		 (s_addr),
+		.s_as_n_o		 (s_as_),
+		.s_rw_o			 (s_rw),
+		.s_wr_data_o	 (s_wr_data),
 
-		.s0_rd_data		 (s0_rd_data),
-		.s0_rdy_		 (s0_rdy_),
-		.s0_cs_			 (s0_cs_),
+		.s0_rd_data_i	 (s0_rd_data),
+		.s0_rdy_n_i		 (s0_rdy_),
+		.s0_cs_n_o		 (s0_cs_),
 
-		.s1_rd_data		 (s1_rd_data),
-		.s1_rdy_		 (s1_rdy_),
-		.s1_cs_			 (s1_cs_),
+		.s1_rd_data_i	 (s1_rd_data),
+		.s1_rdy_n_i		 (s1_rdy_),
+		.s1_cs_n_o		 (s1_cs_),
 
-		.s2_rd_data		 (s2_rd_data),
-		.s2_rdy_		 (s2_rdy_),
-		.s2_cs_			 (s2_cs_),
+		.s2_rd_data_i	 (s2_rd_data),
+		.s2_rdy_n_i		 (s2_rdy_),
+		.s2_cs_n_o		 (s2_cs_),
 
-		.s3_rd_data		 (s3_rd_data),
-		.s3_rdy_		 (s3_rdy_),
-		.s3_cs_			 (s3_cs_),
+		.s3_rd_data_i	 (s3_rd_data),
+		.s3_rdy_n_i		 (s3_rdy_),
+		.s3_cs_n_o		 (s3_cs_),
 
-		.s4_rd_data		 (s4_rd_data),
-		.s4_rdy_		 (s4_rdy_),
-		.s4_cs_			 (s4_cs_),
+		.s4_rd_data_i	 (s4_rd_data),
+		.s4_rdy_n_i		 (s4_rdy_),
+		.s4_cs_n_o		 (s4_cs_),
 
-		.s5_rd_data		 (s5_rd_data),
-		.s5_rdy_		 (s5_rdy_),
-		.s5_cs_			 (s5_cs_),
+		.s5_rd_data_i	 (s5_rd_data),
+		.s5_rdy_n_i		 (s5_rdy_),
+		.s5_cs_n_o		 (s5_cs_),
 
-		.s6_rd_data		 (s6_rd_data),
-		.s6_rdy_		 (s6_rdy_),
-		.s6_cs_			 (s6_cs_),
+		.s6_rd_data_i	 (s6_rd_data),
+		.s6_rdy_n_i		 (s6_rdy_),
+		.s6_cs_n_o		 (s6_cs_),
 
-		.s7_rd_data		 (s7_rd_data),
-		.s7_rdy_		 (s7_rdy_),
-		.s7_cs_			 (s7_cs_)
+		.s7_rd_data_i	 (s7_rd_data),
+		.s7_rdy_n_i		 (s7_rdy_),
+		.s7_cs_n_o		 (s7_cs_)
 	);
 
 endmodule

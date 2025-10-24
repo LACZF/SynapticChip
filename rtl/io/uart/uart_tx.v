@@ -1,16 +1,12 @@
-/********** 通用头文件 **********/
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "uart.v"
 
-/********** 模块 **********/
 module uart_tx (
-	/********** 时钟 & 复位 **********/
-	input  wire				   clk,		 // 时钟
-	input  wire				   reset,	 // 异步复位
+	input  wire				   clk,
+	input  wire				   reset,
 	/********** 控制信号 **********/
 	input  wire				   tx_start, // 发送开始信号
 	input  wire [`ByteDataBus] tx_data,	 // 发送的数据

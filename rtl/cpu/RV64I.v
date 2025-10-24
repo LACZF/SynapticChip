@@ -1,16 +1,13 @@
-/********** 通用头文件 **********/
 
 `include "global_config.v"
 `include "stddef.v"
 
-/********** 单个头文件 **********/
 `include "cpu.v"
 `include "riscv_isa.v"
 
-/********** 模块 **********/
 module RV64I (
-	input  wire			   clk_i,
-	input  wire			   reset_i,
+	input  wire			       clk,
+	input  wire			       reset,
 	input  wire [`WordDataBus] id_insn_i,
 
 	input  wire [`WordDataBus] in_0_i,  // 输入 0

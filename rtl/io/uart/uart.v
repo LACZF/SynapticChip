@@ -23,23 +23,20 @@ module uart (
 	output wire				   tx
 );
 
-	/********** 控制信号 **********/
-	// 接收控制
-	wire					   rx_busy;	 // 接收中标志信号
-	wire					   rx_end;	 // 接收完成信号
-	wire [`ByteDataBus]		   rx_data;	 // 接收的数据
-	// 发送控制
-	wire					   tx_busy;	 // 发送中标志信号
-	wire					   tx_end;	 // 发送完成信号
-	wire					   tx_start; // 送信開始信号
-	wire [`ByteDataBus]		   tx_data;	 // 送信データ
+	wire					   rx_busy;
+	wire					   rx_end;
+	wire [`ByteDataBus]		   rx_data;
+
+	wire					   tx_busy;
+	wire					   tx_end;
+	wire					   tx_start;
+	wire [`ByteDataBus]		   tx_data;
 
 	/********** UART控制模块 **********/
 	uart_ctrl uart_ctrl (
-		/********** 时钟 & 复位 **********/
-		.clk	  (clk),	   // 时钟
-		.reset	  (reset),	   // 异步复位
-		/********** Host Interface **********/
+		.clk	  (clk),
+		.reset	  (reset),
+
 		.cs_	  (cs_),
 		.as_	  (as_),
 		.rw		  (rw),
@@ -47,46 +44,43 @@ module uart (
 		.wr_data  (wr_data),
 		.rd_data  (rd_data),
 		.rdy_	  (rdy_),
-		/********** Interrupt  **********/
-		.irq_rx	  (irq_rx),	   // 接收中断请求信号
-		.irq_tx	  (irq_tx),	   // 发送中断请求信号
-		/********** 控制信号 **********/
-		// 接收控制
-		.rx_busy  (rx_busy),   // 接收中标志信号
-		.rx_end	  (rx_end),	   // 接收完成信号
-		.rx_data  (rx_data),   // 接收的数据
-		// 发送控制
-		.tx_busy  (tx_busy),   // 发送中标志信号
-		.tx_end	  (tx_end),	   // 发送完成信号
-		.tx_start (tx_start),  // 送信開始信号
-		.tx_data  (tx_data)	   // 送信データ
+
+		.irq_rx	  (irq_rx),
+		.irq_tx	  (irq_tx),
+
+		.rx_busy  (rx_busy),
+		.rx_end	  (rx_end),
+		.rx_data  (rx_data),
+
+		.tx_busy  (tx_busy),
+		.tx_end	  (tx_end),
+		.tx_start (tx_start),
+		.tx_data  (tx_data)
 	);
 
 	/********** UART发送模块 **********/
 	uart_tx uart_tx (
-		/********** 时钟 & 复位 **********/
-		.clk	  (clk),	   // 时钟
-		.reset	  (reset),	   // 异步复位
-		/********** 控制信号 **********/
-		.tx_start (tx_start),  // 送信開始信号
-		.tx_data  (tx_data),   // 送信データ
-		.tx_busy  (tx_busy),   // 发送中标志信号
-		.tx_end	  (tx_end),	   // 发送完成信号
-		/********** Transmit Signal **********/
-		.tx		  (tx)		   // UART送信信号
+		.clk	  (clk),
+		.reset	  (reset),
+
+		.tx_start (tx_start),
+		.tx_data  (tx_data),
+		.tx_busy  (tx_busy),
+		.tx_end	  (tx_end),
+
+		.tx		  (tx)
 	);
 
 	/********** UART接收模块 **********/
 	uart_rx uart_rx (
-		/********** 时钟 & 复位 **********/
-		.clk	  (clk),	   // 时钟
-		.reset	  (reset),	   // 异步复位
-		/********** 控制信号 **********/
-		.rx_busy  (rx_busy),   // 接收中标志信号
-		.rx_end	  (rx_end),	   // 接收完成信号
-		.rx_data  (rx_data),   // 接收的数据
-		/********** Receive Signal **********/
-		.rx		  (rx)		   // UART受信信号
+		.clk	  (clk),
+		.reset	  (reset),
+
+		.rx_busy  (rx_busy),
+		.rx_end	  (rx_end),
+		.rx_data  (rx_data),
+
+		.rx		  (rx)
 	);
 
 endmodule

@@ -1,16 +1,12 @@
-/********** 通用头文件 **********/
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "uart.v"
 
-/********** モジュール **********/
 module uart_ctrl (
-	/********** 时钟 & 复位 **********/
-	input  wire				   clk,		 // 时钟
-	input  wire				   reset,	 // 异步复位
+	input  wire				   clk,
+	input  wire				   reset,
 	/********** 总线接口 **********/
 	input  wire				   cs_,		 // 片选信号
 	input  wire				   as_,		 // 地址选通信号
@@ -35,7 +31,6 @@ module uart_ctrl (
 );
 
 	/********** 控制寄存器 **********/
-	// 控制寄存器 1 : 送受信データ
 	reg [`ByteDataBus]		   rx_buf;	 // 接收用数据缓冲区
 
 	/********** UART控制逻辑电路 **********/
@@ -60,8 +55,7 @@ module uart_ctrl (
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) && (rw == `READ)) begin
 				case (addr)
 					`UART_ADDR_STATUS	 : begin // 控制寄存器 0
-						rd_data	 <= {{`WORD_DATA_W-4{1'b0}},
-										tx_busy, rx_busy, irq_tx, irq_rx};
+						rd_data	 <= {{`WORD_DATA_W-4{1'b0}}, tx_busy, rx_busy, irq_tx, irq_rx};
 					end
 					`UART_ADDR_DATA		 : begin // 控制寄存器 1
 						rd_data	 <= {{`BYTE_DATA_W*2{1'b0}}, rx_buf};

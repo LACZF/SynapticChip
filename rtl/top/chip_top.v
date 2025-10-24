@@ -1,14 +1,10 @@
-/********** 通用头文件 **********/
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "gpio.v"
 
-/********** 模块 **********/
 module chip_top (
-	/********** 时钟 & 复位 **********/
 	input  wire		           clk_ref,
 	input  wire		           reset_sw
 
@@ -45,7 +41,6 @@ module chip_top (
 	wire					   clk_;		  // 反相时钟
 	wire					   chip_reset;	  // 复芯片位
 
-	/********** 时钟モジュール **********/
 	clk_gen clk_gen (
 		/********** 时钟 & 复位 **********/
 		.clk_ref	  (clk_ref),			  // 主时钟

@@ -1,8 +1,5 @@
 
-/********** 通用头文件 **********/
 
-
-/********** 模块 **********/
 module x_s3e_dcm (
 	input  wire CLKIN_IN,		 // 主时钟
 	input  wire RST_IN,			 // 异步复位

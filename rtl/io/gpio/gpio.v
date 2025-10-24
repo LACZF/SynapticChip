@@ -1,16 +1,12 @@
-/********** 通用头文件 **********/
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "gpio.v"
 
-/********** 模块 **********/
 module gpio (
-	/********** 时钟 & 复位 **********/
-	input  wire						clk,	 // 时钟
-	input  wire						reset,	 // 异步复位
+	input  wire						clk,
+	input  wire						reset,
 	/********** 总线接口 **********/
 	input  wire						cs_,	 // 片选信号
 	input  wire						as_,	 // 地址选通信号

@@ -1,13 +1,10 @@
 
-/********** 通用头文件 **********/
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "rom.v"
 
-/********** 模块 **********/
 module x_s3e_sprom (
 	input wire				  clka,	 // 时钟
 	input wire [`RomAddrBus]  addra, // 读取地址

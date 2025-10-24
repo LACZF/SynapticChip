@@ -1,53 +1,49 @@
-/********** 通用头文件 **********/
 
 `include "global_config.v"
 `include "stddef.v"
 
-/********** 单个头文件 **********/
 `include "isa.v"
 `include "cpu.v"
 
-/********** 模块 **********/
 module if_reg (
-	/********** 时钟 & 复位 **********/
-	input  wire				   clk,		   // 时钟
-	input  wire				   reset,	   // 异步复位
+	input  wire		           clk,
+	input  wire		           reset,
 	/********** 读取数据 **********/
-	input  wire [`WordDataBus] insn,	   // 读取的指令
+	input  wire [`WordDataBus] insn_i,
 	/********** 流水线控制信号 **********/
-	input  wire				   stall,	   // 延迟
-	input  wire				   flush,	   // 刷新
-	input  wire [`WordAddrBus] new_pc,	   // 新程序计数器值
-	input  wire				   br_taken,   // 分支成立
-	input  wire [`WordAddrBus] br_addr,	   // 分支目标地址
+	input  wire		           stall_i,
+	input  wire		           flush_i,
+	input  wire [`WordAddrBus] new_pc_i,
+	input  wire		           br_taken_i,
+	input  wire [`WordAddrBus] br_addr_i,
 	/********** IF/ID流水线寄存器 **********/
-	output reg	[`WordAddrBus] if_pc,	   // 程序计数器
-	output reg	[`WordDataBus] if_insn,	   // 指令
-	output reg				   if_en	   // 流水线数据有效标志位
+	output reg	[`WordAddrBus] if_pc_o,
+	output reg	[`WordDataBus] if_insn_o,
+	output reg		           if_en_o
 );
 
 	/********** 流水线寄存器 **********/
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			if_pc	<= `RESET_VECTOR;
-			if_insn <= `ISA_NOP;
-			if_en	<= `DISABLE;
+			if_pc_o	  <= `RESET_VECTOR;
+			if_insn_o <= `ISA_NOP;
+			if_en_o	  <= `DISABLE;
 		end else begin
 			/* 更新流水线寄存器 */
-			if (stall == `DISABLE) begin
-				if (flush == `ENABLE) begin				// 刷新
-					if_pc	<= new_pc;
-					if_insn <= `ISA_NOP;
-					if_en	<= `DISABLE;
-				end else if (br_taken == `ENABLE) begin // 分支成立
-					if_pc	<= br_addr;
-					if_insn <= insn;
-					if_en	<= `ENABLE;
+			if (stall_i == `DISABLE) begin
+				if (flush_i == `ENABLE) begin				// 刷新
+					if_pc_o	  <= new_pc_i;
+					if_insn_o <= `ISA_NOP;
+					if_en_o	  <= `DISABLE;
+				end else if (br_taken_i == `ENABLE) begin // 分支成立
+					if_pc_o	  <= br_addr_i;
+					if_insn_o <= insn_i;
+					if_en_o	  <= `ENABLE;
 				end else begin							// 下一条地址
-					if_pc	<= if_pc + 1'd1;
-					if_insn <= insn;
-					if_en	<= `ENABLE;
+					if_pc_o	  <= if_pc_o + 1'd1;
+					if_insn_o <= insn_i;
+					if_en_o	  <= `ENABLE;
 				end
 			end
 		end

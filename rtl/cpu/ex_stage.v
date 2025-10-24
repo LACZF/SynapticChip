@@ -1,104 +1,100 @@
-/********** 通用头文件 **********/
 
 `include "global_config.v"
 `include "stddef.v"
 
-/********** 单个头文件 **********/
 `include "isa.v"
 `include "cpu.v"
 
-/********** 模块 **********/
 module ex_stage (
-	/********** 时钟 & 复位 **********/
-	input  wire				   clk,			   //
-	input  wire				   reset,		   //
+	input  wire		           clk,
+	input  wire		           reset,
 	/********** 流水线控制信号 **********/
-	input  wire				   stall,		   //
-	input  wire				   flush,		   //
-	input  wire				   int_detect,	   //
+	input  wire		           stall_i,
+	input  wire		           flush_i,
+	input  wire		           int_detect_i,
 	/********** 数据直通 **********/
-	output wire [`WordDataBus] fwd_data,	   //
+	output wire [`WordDataBus] fwd_data_o,
 	/********** ID/EX流水线寄存器 **********/
-	input  wire [`WordAddrBus] id_pc,		   //
-	input  wire [`WordDataBus] id_insn,
-	input  wire				   id_en,		   //
-	input  wire [`AluOpBus]	   id_alu_op,	   //
-	input  wire [`WordDataBus] id_alu_in_0,	   //
-	input  wire [`WordDataBus] id_alu_in_1,	   //
-	input  wire				   id_br_flag,	   //
-	input  wire [`MemOpBus]	   id_mem_op,	   //
-	input  wire [`WordDataBus] id_mem_wr_data, //
-	input  wire [`CtrlOpBus]   id_ctrl_op,	   //
-	input  wire [`RegAddrBus]  id_dst_addr,	   //
-	input  wire				   id_gpr_we_,	   //
-	input  wire [`IsaExpBus]   id_exp_code,	   //
+	input  wire [`WordAddrBus] id_pc_i,
+	input  wire [`WordDataBus] id_insn_i,
+	input  wire		           id_en_i,
+	input  wire [`AluOpBus]	   id_alu_op_i,
+	input  wire [`WordDataBus] id_alu_in_0_i,
+	input  wire [`WordDataBus] id_alu_in_1_i,
+	input  wire		           id_br_flag_i,
+	input  wire [`MemOpBus]	   id_mem_op_i,
+	input  wire [`WordDataBus] id_mem_wr_data_i,
+	input  wire [`CtrlOpBus]   id_ctrl_op_i,
+	input  wire [`RegAddrBus]  id_dst_addr_i,
+	input  wire		           id_gpr_we_n_i,
+	input  wire [`IsaExpBus]   id_exp_code_i,
 	/********** EX/MEM流水线寄存器 **********/
-	output wire [`WordAddrBus] ex_pc,		   //
-	output wire				   ex_en,		   //
-	output wire				   ex_br_flag,	   //
-	output wire [`MemOpBus]	   ex_mem_op,	   //
-	output wire [`WordDataBus] ex_mem_wr_data, //
-	output wire [`CtrlOpBus]   ex_ctrl_op,	   //
-	output wire [`RegAddrBus]  ex_dst_addr,	   //
-	output wire				   ex_gpr_we_,	   //
-	output wire [`IsaExpBus]   ex_exp_code,	   //
-	output wire [`WordDataBus] ex_out		   //
+	output wire [`WordAddrBus] ex_pc_o,
+	output wire		           ex_en_o,
+	output wire		           ex_br_flag_o,
+	output wire [`MemOpBus]	   ex_mem_op_o,
+	output wire [`WordDataBus] ex_mem_wr_data_o,
+	output wire [`CtrlOpBus]   ex_ctrl_op_o,
+	output wire [`RegAddrBus]  ex_dst_addr_o,
+	output wire		           ex_gpr_we_n_o,
+	output wire [`IsaExpBus]   ex_exp_code_o,
+	output wire [`WordDataBus] ex_out_o
 );
 
 	/********** ALU的输出 **********/
-	wire [`WordDataBus]		   alu_out;		   //
-	wire					   alu_of;		   //
+	wire [`WordDataBus]		   alu_out;
+	wire					   alu_of;
 
 	/********** 数据直通运算结果 **********/
-	assign fwd_data = alu_out;
+	assign fwd_data_o = alu_out;
 
 	/********** ALU **********/
 	alu alu (
-		.clk            (clk),
-		.reset          (reset),
-		.id_insn        (id_insn),
+		.clk        (clk),
+		.reset      (reset),
+		.id_insn_i  (id_insn_i),
 
-		.in_0			(id_alu_in_0),	  //
-		.in_1			(id_alu_in_1),	  //
-		.op				(id_alu_op),	  //
-		.out			(alu_out),		  //
-		.of				(alu_of)		  //
+		.in0_i		(id_alu_in_0_i),
+		.in1_i		(id_alu_in_1_i),
+		.op_i	    (id_alu_op_i),
+		.result_o	(alu_out),
+		.overflow_o (alu_of)
 	);
 
 	/********** 流水线寄存器 **********/
 	ex_reg ex_reg (
 		/********** 时钟 & 复位 **********/
-		.clk			(clk),			  //
-		.reset			(reset),		  //
+		.clk			  (clk),
+		.reset			  (reset),
 		/********** ALU的输出 **********/
-		.alu_out		(alu_out),		  //
-		.alu_of			(alu_of),		  //
+		.alu_out_i		  (alu_out),
+		.alu_of_i		  (alu_of),
 		/********** 流水线控制信号 **********/
-		.stall			(stall),		  //
-		.flush			(flush),		  //
-		.int_detect		(int_detect),	  //
+		.stall_i		  (stall_i),
+		.flush_i		  (flush_i),
+		.int_detect_i	  (int_detect_i),
 		/********** ID/EX流水线寄存器 **********/
-		.id_pc			(id_pc),		  //
-		.id_insn        (id_insn),
-		.id_en			(id_en),		  //
-		.id_br_flag		(id_br_flag),	  //
-		.id_mem_op		(id_mem_op),	  //
-		.id_mem_wr_data (id_mem_wr_data), //
-		.id_ctrl_op		(id_ctrl_op),	  //
-		.id_dst_addr	(id_dst_addr),	  //
-		.id_gpr_we_		(id_gpr_we_),	  //
-		.id_exp_code	(id_exp_code),	  //
+		.id_pc_i		  (id_pc_i),
+		.id_insn_i        (id_insn_i),
+		.id_en_i		  (id_en_i),
+		.id_br_flag_i	  (id_br_flag_i),
+		.id_mem_op_i	  (id_mem_op_i),
+		.id_mem_wr_data_i (id_mem_wr_data_i),
+		.id_ctrl_op_i	  (id_ctrl_op_i),
+		.id_dst_addr_i	  (id_dst_addr_i),
+		.id_gpr_we_n_i	  (id_gpr_we_n_i),
+		.id_exp_code_i	  (id_exp_code_i),
 		/********** EX/MEM流水线寄存器 **********/
-		.ex_pc			(ex_pc),		  //
-		.ex_en			(ex_en),		  //
-		.ex_br_flag		(ex_br_flag),	  //
-		.ex_mem_op		(ex_mem_op),	  //
-		.ex_mem_wr_data (ex_mem_wr_data), //
-		.ex_ctrl_op		(ex_ctrl_op),	  //
-		.ex_dst_addr	(ex_dst_addr),	  //
-		.ex_gpr_we_		(ex_gpr_we_),	  // 通用寄存器写入有效
-		.ex_exp_code	(ex_exp_code),	  // 异常代码
-		.ex_out			(ex_out)		  // 处理结果
+		.ex_pc_o		  (ex_pc_o),
+		.ex_en_o		  (ex_en_o),
+		.ex_br_flag_o	  (ex_br_flag_o),
+		.ex_mem_op_o	  (ex_mem_op_o),
+		.ex_mem_wr_data_o (ex_mem_wr_data_o),
+		.ex_ctrl_op_o	  (ex_ctrl_op_o),
+		.ex_dst_addr_o	  (ex_dst_addr_o),
+		.ex_gpr_we_n_o	  (ex_gpr_we_n_o),  // 通用寄存器写入有效
+		.ex_exp_code_o	  (ex_exp_code_o),  // 异常代码
+		.ex_out_o		  (ex_out_o)	    // 处理结果
 	);
 
 endmodule
