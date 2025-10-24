@@ -15,71 +15,54 @@ module alu (
 	output reg  [`WordDataBus] out,   // 输出
 	output reg                 of     // 溢出
 );
+	// 内部信号
+	wire [`WordDataBus] base_out;
+	wire base_of;
+	wire [`WordDataBus] muldiv_out;
 
-	/********** 内部信号 **********/
-	wire signed [`WordDataBus] s_in_0 = $signed(in_0); // 有符号输入 0
-	wire signed [`WordDataBus] s_in_1 = $signed(in_1); // 有符号输入 1
-	wire signed [`WordDataBus] s_out  = $signed(out);  // 有符号输出
+	// 实例化基本ALU模块（RV64I指令集）
+	RV64I rv64i (
+		.in_0(in_0),
+		.in_1(in_1),
+		.op(op),
+		.out(base_out),
+		.of(base_of)
+	);
 
-	/********** 算术逻辑运算 **********/
+	// 实例化乘除法ALU模块（RV64M指令集）
+	`ifdef SUPPORT_RV64M
+		RV64M rv64m (
+			.in_0(in_0),
+			.in_1(in_1),
+			.op(op),
+			.out(muldiv_out)
+		);
+	`else
+		// 如果不支持RV64M，将乘除输出设为0
+		assign muldiv_out = 0;
+	`endif
+
+	// 根据操作码选择输出
 	always @(*) begin
-		case (op)
-			`ALU_OP_AND  : begin // 逻辑与（AND）
-				out    = in_0 & in_1;
-			end
-			`ALU_OP_OR   : begin // 逻辑或（OR）
-				out    = in_0 | in_1;
-			end
-			`ALU_OP_XOR  : begin // 逻辑异或（XOR）
-				out    = in_0 ^ in_1;
-			end
-			`ALU_OP_ADDS : begin // 有符号加法 (ADD, ADDI)
-				out    = in_0 + in_1;
-			end
-			`ALU_OP_ADDU : begin // 无符号加法 (LUI, AUIPC)
-				out    = in_0 + in_1;
-			end
-			`ALU_OP_SUBS : begin // 有符号减法 (SUB, SLT, SLTI)
-				out    = in_0 - in_1;
-			end
-			`ALU_OP_SUBU : begin // 无符号减法 (SLTU, SLTIU)
-				out    = in_0 - in_1;
-			end
-			`ALU_OP_SHRL : begin // 逻辑右移 (SRL, SRLI)
-				out    = in_0 >> in_1[`ShAmountLoc];
-			end
-			`ALU_OP_SHLL : begin // 逻辑左移 (SLL, SLLI)
-				out    = in_0 << in_1[`ShAmountLoc];
-			end
-			default      : begin // 默认值 (No Operation)
-				out    = in_0;
-			end
-		endcase
-	end
-
-	/********** 溢出检测 **********/
-	always @(*) begin
-		case (op)
-			`ALU_OP_ADDS : begin // 加法溢出检测 (ADD, ADDI)
-				if (((s_in_0 > 0) && (s_in_1 > 0) && (s_out < 0)) ||
-					((s_in_0 < 0) && (s_in_1 < 0) && (s_out > 0))) begin
-					of = `ENABLE;
-				end else begin
+		`ifdef SUPPORT_RV64M
+			case (op)
+				// 选择乘除法操作的输出
+				`ALU_OP_MUL, `ALU_OP_MULH, `ALU_OP_MULHSU, `ALU_OP_MULHU,
+				`ALU_OP_DIV, `ALU_OP_DIVU: begin
+					out = muldiv_out;
 					of = `DISABLE;
 				end
-			end
-			`ALU_OP_SUBS : begin // 减法溢出检测 (SUB)
-				if (((s_in_0 < 0) && (s_in_1 > 0) && (s_out > 0)) ||
-					((s_in_0 > 0) && (s_in_1 < 0) && (s_out < 0))) begin
-					of = `ENABLE;
-				end else begin
-					of = `DISABLE;
+				// 其他操作使用基本ALU的输出
+				default: begin
+					out = base_out;
+					of = base_of;
 				end
-			end
-			default     : begin // 默认值
-				of = `DISABLE;
-			end
-		endcase
+			endcase
+		`else
+			// 如果不支持RV64M，始终使用基本ALU的输出
+			out = base_out;
+			of = base_of;
+		`endif
 	end
 
 endmodule

@@ -25,6 +25,13 @@
 	`define ALU_OP_SUBU			 4'h7 // 无符号减法
 	`define ALU_OP_SHRL			 4'h8 // 逻辑右移
 	`define ALU_OP_SHLL			 4'h9 // 逻辑左移
+	// RV64M 扩展操作码
+	`define ALU_OP_MUL			 4'ha // 乘法
+	`define ALU_OP_MULH			 4'hb // 高位乘法（有符号）
+	`define ALU_OP_MULHSU		 4'hc // 高位乘法（有符号×无符号）
+	`define ALU_OP_MULHU		 4'hd // 高位乘法（无符号×无符号）
+	`define ALU_OP_DIV			 4'he // 有符号除法
+	`define ALU_OP_DIVU			 4'hf // 无符号除法
 	/********** 内存操作码 **********/
 	// 总线
 	`define MEM_OP_W			 2	  // 内存操作码宽

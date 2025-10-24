@@ -1,0 +1,85 @@
+/********** 通用头文件 **********/
+
+`include "global_config.v"
+`include "stddef.v"
+
+/********** 单个头文件 **********/
+`include "cpu.v"
+`include "riscv_isa.v"
+
+/********** 模块 **********/
+module RV64I (
+	input  wire [`WordDataBus] in_0,  // 输入 0
+	input  wire [`WordDataBus] in_1,  // 输入 1
+	input  wire [`AluOpBus]    op,    // 操作
+	output reg  [`WordDataBus] out,   // 输出
+	output reg                 of     // 溢出
+);
+
+	/********** 内部信号 **********/
+	wire signed [`WordDataBus] s_in_0 = $signed(in_0); // 有符号输入 0
+	wire signed [`WordDataBus] s_in_1 = $signed(in_1); // 有符号输入 1
+	wire signed [`WordDataBus] s_out  = $signed(out);  // 有符号输出
+
+	/********** 算术逻辑运算 **********/
+	always @(*) begin
+		case (op)
+			`ALU_OP_AND  : begin // 逻辑与（AND）
+				out    = in_0 & in_1;
+			end
+			`ALU_OP_OR   : begin // 逻辑或（OR）
+				out    = in_0 | in_1;
+			end
+			`ALU_OP_XOR  : begin // 逻辑异或（XOR）
+				out    = in_0 ^ in_1;
+			end
+			`ALU_OP_ADDS : begin // 有符号加法 (ADD, ADDI)
+				out    = in_0 + in_1;
+			end
+			`ALU_OP_ADDU : begin // 无符号加法 (LUI, AUIPC)
+				out    = in_0 + in_1;
+			end
+			`ALU_OP_SUBS : begin // 有符号减法 (SUB, SLT, SLTI)
+				out    = in_0 - in_1;
+			end
+			`ALU_OP_SUBU : begin // 无符号减法 (SLTU, SLTIU)
+				out    = in_0 - in_1;
+			end
+			`ALU_OP_SHRL : begin // 逻辑右移 (SRL, SRLI)
+				out    = in_0 >> in_1[`ShAmountLoc];
+			end
+			`ALU_OP_SHLL : begin // 逻辑左移 (SLL, SLLI)
+				out    = in_0 << in_1[`ShAmountLoc];
+			end
+			default      : begin // 默认值 (No Operation)
+				out    = in_0;
+			end
+		endcase
+	end
+
+	/********** 溢出检测 **********/
+	always @(*) begin
+		case (op)
+			`ALU_OP_ADDS : begin // 加法溢出检测 (ADD, ADDI)
+				if (((s_in_0 > 0) && (s_in_1 > 0) && (s_out < 0)) ||
+					((s_in_0 < 0) && (s_in_1 < 0) && (s_out > 0))) begin
+					of = `ENABLE;
+				end else begin
+					of = `DISABLE;
+				end
+			end
+			`ALU_OP_SUBS : begin // 减法溢出检测 (SUB)
+				if (((s_in_0 < 0) && (s_in_1 > 0) && (s_out > 0)) ||
+					((s_in_0 > 0) && (s_in_1 < 0) && (s_out < 0))) begin
+					of = `ENABLE;
+				end else begin
+					of = `DISABLE;
+				end
+			end
+			default     : begin // 默认值
+				of = `DISABLE;
+			end
+		endcase
+	end
+
+endmodule

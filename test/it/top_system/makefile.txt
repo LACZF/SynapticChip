@@ -16,6 +16,8 @@ TEST_SRC += $(TOP_DIR)/rtl/bus/bus_slave_mux.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/bus.v
 
 TEST_SRC += $(TOP_DIR)/rtl/cpu/alu.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/RV64I.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/RV64M.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/bus_if.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/ctrl.v
