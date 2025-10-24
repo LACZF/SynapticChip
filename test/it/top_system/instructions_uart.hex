@@ -1,0 +1,287 @@
+// Comprehensive RISC-V Test Instructions
+// RV64I and RV64M Instruction Test Suite with UART Result Reporting
+// Features:
+// - Modular UART communication functions
+// - Comprehensive coverage of RV64I and RV64M instructions
+// - Pipeline hazard testing
+// - Result verification with "OK"/"FAIL" reporting
+// - UART echo functionality
+
+// UART MMIO Base Addresses
+// UART0: 0xF0001000
+// UART Registers (offsets from base):
+// - RBR/THR/DLL: 0x00
+// - IER/DLM: 0x04
+// - IIR/FCR: 0x08
+// - LCR: 0x0C
+// - MCR: 0x10
+// - LSR: 0x14
+// - MSR: 0x18
+
+// ==== UART Communication Functions ====
+// uart_send_char (x1: char to send, x18: uart base address)
+00000013    // [0x00000000] NOP                    // uart_send_char start
+01400213    // [0x00000004] ADDI x4, x0, 20        // x4 = 0x14 (LSR register offset)
+00048613    // [0x00000008] ADDI x12, x18, x4     // x12 = UART0_LSR address
+00000093    // [0x0000000C] ADDI x1, x0, 0        // x1 = 0 (wait loop counter)
+000C0013    // [0x00000010] ADDI x0, x0, 0        // NOP for alignment
+00000293    // [0x00000014] ADDI x5, x0, 0        // x5 = 0
+00000313    // [0x00000018] ADDI x6, x0, 0        // x6 = 0
+00000393    // [0x0000001C] ADDI x7, x0, 0        // x7 = 0
+00000413    // [0x00000020] ADDI x8, x0, 0        // x8 = 0
+00000493    // [0x00000024] ADDI x9, x0, 0        // x9 = 0
+00000513    // [0x00000028] ADDI x10, x0, 0       // x10 = 0
+00000593    // [0x0000002C] ADDI x11, x0, 0       // x11 = 0
+00000613    // [0x00000030] ADDI x12, x0, 0       // x12 = 0
+00000693    // [0x00000034] ADDI x13, x0, 0       // x13 = 0
+00000713    // [0x00000038] ADDI x14, x0, 0       // x14 = 0
+00000793    // [0x0000003C] ADDI x15, x0, 0       // x15 = 0
+F0000037    // [0x00000040] LUI x24, 0xF0000      // x24 = 0xF0000000 (MMIO base address)
+000018B7    // [0x00000044] LUI x25, 0x1          // x25 = 0x1000 (UART0 base offset)
+00088893    // [0x00000048] ADDI x25, x25, 0      // x25 = 0x1000
+00088933    // [0x0000004C] ADD x18, x24, x25     // x18 = UART0 base address
+
+// Configure UART line control register
+00A00093    // [0x00000050] ADDI x1, x0, 160      // x1 = 0xA0 (enable divisor latch access)
+00C00113    // [0x00000054] ADDI x2, x0, 12       // x2 = 12 (LCR register offset)
+00010C13    // [0x00000058] ADDI x24, x1, x2      // x24 = UART0_LCR address
+000888B3    // [0x0000005C] SW x1, 0(x24)         // Set LCR to enable divisor register
+
+// Set baud rate divisor (115200)
+00100093    // [0x00000060] ADDI x1, x0, 1        // x1 = 1 (divisor low byte)
+00000113    // [0x00000064] ADDI x2, x0, 0        // x2 = 0 (divisor high byte)
+00000193    // [0x00000068] ADDI x3, x0, 0        // x3 = 0 (THR/RBR/DLL register offset)
+00400213    // [0x0000006C] ADDI x4, x0, 4        // x4 = 4 (IER/DLM register offset)
+00018C13    // [0x00000070] ADDI x24, x18, x3     // x24 = UART0_DLL address
+000888B3    // [0x00000074] SW x1, 0(x24)         // Write divisor low byte
+00020C93    // [0x00000078] ADDI x25, x18, x4     // x25 = UART0_DLM address
+000908B3    // [0x0000007C] SW x2, 0(x25)         // Write divisor high byte
+
+// Set line format (8N1)
+00300093    // [0x00000080] ADDI x1, x0, 3        // x1 = 3 (8 data bits, 1 stop bit, no parity)
+00018C13    // [0x00000084] ADDI x24, x18, x2     // x24 = UART0_LCR address
+000888B3    // [0x00000088] SW x1, 0(x24)         // Set line control register
+
+// Configure interrupt enable register (disable all interrupts)
+00000093    // [0x0000008C] ADDI x1, x0, 0        // x1 = 0 (disable interrupts)
+00020C93    // [0x00000090] ADDI x25, x18, x4     // x25 = UART0_IER address
+000908B3    // [0x00000094] SW x1, 0(x25)         // Write IER register
+
+// Register Initialization for Tests
+00100093    // [0x00000098] ADDI x1, x0, 1        // x1 = 1
+00200113    // [0x0000009C] ADDI x2, x0, 2        // x2 = 2
+00300193    // [0x000000A0] ADDI x3, x0, 3        // x3 = 3
+00400213    // [0x000000A4] ADDI x4, x0, 4        // x4 = 4
+00500293    // [0x000000A8] ADDI x5, x0, 5        // x5 = 5
+FFA00313    // [0x000000AC] ADDI x6, x0, -6       // x6 = -6 (0xFFFFFFFA)
+00800393    // [0x000000B0] ADDI x7, x0, 8        // x7 = 8
+00A00413    // [0x000000B4] ADDI x8, x0, 10       // x8 = 10
+FF500493    // [0x000000B8] ADDI x9, x0, -11      // x9 = -11
+01000513    // [0x000000BC] ADDI x10, x0, 16      // x10 = 16
+00000013    // [0x000000C0] NOP                    // Alignment
+
+// ==== UART Function Implementation ====
+// uart_send_char (x1: char to send, x18: uart base address)
+00000013    // [0x000000C4] NOP                    // uart_send_char start
+00F00213    // [0x000000C8] ADDI x4, x0, 20        // x4 = 0x14 (LSR register offset)
+00048613    // [0x000000CC] ADDI x12, x18, x4     // x12 = UART0_LSR address
+00000093    // [0x000000D0] ADDI x1, x0, 0        // x1 = 0 (wait loop counter)
+000C0013    // [0x000000D4] ADDI x0, x0, 0        // NOP for alignment
+00000293    // [0x000000D8] ADDI x5, x0, 0        // x5 = 0
+00000313    // [0x000000DC] ADDI x6, x0, 0        // x6 = 0
+00000393    // [0x000000E0] ADDI x7, x0, 0        // x7 = 0
+00000413    // [0x000000E4] ADDI x8, x0, 0        // x8 = 0
+00000493    // [0x000000E8] ADDI x9, x0, 0        // x9 = 0
+00000513    // [0x000000EC] ADDI x10, x0, 0       // x10 = 0
+00000593    // [0x000000F0] ADDI x11, x0, 0       // x11 = 0
+00000613    // [0x000000F4] ADDI x12, x0, 0       // x12 = 0
+00000693    // [0x000000F8] ADDI x13, x0, 0       // x13 = 0
+00000713    // [0x000000FC] ADDI x14, x0, 0       // x14 = 0
+00000793    // [0x00000100] ADDI x15, x0, 0       // x15 = 0
+
+// ==== RV64I Integer Arithmetic Instructions ====
+00208133    // [0x00000104] ADD x2, x1, x2        // x2 = 1 + 2 = 3
+403101B3    // [0x00000108] SUB x3, x2, x3        // x3 = 3 - 3 = 0
+00100113    // [0x0000010C] ADDI x2, x0, 1        // x2 = 1 (restore)
+002081B3    // [0x00000110] ADD x3, x1, x2        // x3 = 1 + 1 = 2
+40418233    // [0x00000114] SUB x4, x3, x4        // x4 = 2 - 4 = -2
+00300213    // [0x00000118] ADDI x4, x0, 3        // x4 = 3 (restore)
+00408293    // [0x0000011C] ADDI x5, x1, 4        // x5 = 1 + 4 = 5
+00000333    // [0x00000120] ADD x6, x0, x0        // x6 = 0 (restore)
+FF600313    // [0x00000124] ADDI x6, x0, -10      // x6 = -10
+
+// Check arithmetic results
+00300093    // [0x00000128] ADDI x1, x0, 3        // x1 = expected ADD result
+00200113    // [0x0000012C] ADDI x2, x2, 0        // x2 = actual result
+00100193    // [0x00000130] ADDI x3, x0, 1        // x3 = test number
+00000013    // [0x00000134] NOP                    // Alignment
+
+// ==== RV64I Logical Instructions ====
+0020F133    // [0x00000138] AND x2, x1, x2        // x2 = 1 & 2 = 0
+00317133    // [0x0000013C] OR x3, x2, x3         // x3 = 0 | 2 = 2
+0041E1B3    // [0x00000140] XOR x4, x3, x4        // x4 = 2 ^ 3 = 1
+00F07093    // [0x00000144] ANDI x1, x0, 0xF      // x1 = 0 & 0xF = 0xF (15)
+0F006113    // [0x00000148] ORI x2, x0, 0xF0      // x2 = 0 | 0xF0 = 0xF0 (240)
+0AA04193    // [0x0000014C] XORI x3, x0, 0xAA     // x3 = 0 ^ 0xAA = 0xAA (170)
+0021F133    // [0x00000150] AND x2, x1, x2        // x2 = 15 & 240 = 0 (verify)
+003171B3    // [0x00000154] OR x3, x2, x3         // x3 = 0 | 170 = 170 (verify)
+0041E233    // [0x00000158] XOR x4, x3, x4        // x4 = 170 ^ 1 = 171 (verify)
+
+// Check logical results
+00000093    // [0x0000015C] ADDI x1, x0, 0        // x1 = expected AND result
+00200113    // [0x00000160] ADDI x2, x2, 0        // x2 = actual result
+00200193    // [0x00000164] ADDI x3, x0, 2        // x3 = test number
+00000013    // [0x00000168] NOP                    // Alignment
+
+// ==== RV64I Shift Instructions ====
+00211133    // [0x0000016C] SLL x2, x1, x2        // x2 = 15 << 0 = 15
+003121B3    // [0x00000170] SRL x3, x3, x3        // x3 = 170 >> 170 = 0
+00413233    // [0x00000174] SRA x4, x4, x4        // x4 = 171 >> 171 = 0
+00301093    // [0x00000178] SLLI x1, x1, 3        // x1 = 15 << 3 = 120
+00205113    // [0x0000017C] SRLI x2, x2, 2        // x2 = 15 >> 2 = 3
+40204193    // [0x00000180] SRAI x3, x3, 1        // x3 = 0 >> 1 = 0
+FF600313    // [0x00000184] ADDI x6, x0, -10      // x6 = -10 (for SRA test)
+004133B3    // [0x00000188] SRA x7, x6, x4        // x7 = -10 >> 0 = -10
+
+// Check shift results
+00300093    // [0x0000018C] ADDI x1, x0, 3        // x1 = expected SRLI result
+00200113    // [0x00000190] ADDI x2, x2, 0        // x2 = actual result
+00300193    // [0x00000194] ADDI x3, x0, 3        // x3 = test number
+00000013    // [0x00000198] NOP                    // Alignment
+
+// ==== RV64I Comparison Instructions ====
+00214133    // [0x0000019C] SLT x2, x1, x2        // x2 = (120 < 3) ? 1 : 0 = 0
+003151B3    // [0x000001A0] SLTU x3, x2, x3       // x3 = (0 < 0) ? 1 : 0 = 0
+0041C233    // [0x000001A4] SLT x4, x3, x4        // x4 = (0 < 0) ? 1 : 0 = 0
+00304093    // [0x000001A8] SLTI x1, x0, 3        // x1 = (0 < 3) ? 1 : 0 = 1
+00506113    // [0x000001AC] SLTIU x2, x0, 5       // x2 = (0 < 5) ? 1 : 0 = 1
+FF704193    // [0x000001B0] SLTI x3, x0, -9       // x3 = (0 < -9) ? 1 : 0 = 0
+FF706213    // [0x000001B4] SLTIU x4, x0, -9      // x4 = (0 < -9 unsigned) ? 1 : 0 = 1
+
+// Check comparison results
+00100093    // [0x000001B8] ADDI x1, x0, 1        // x1 = expected SLTI result
+00100113    // [0x000001BC] ADDI x2, x1, 0        // x2 = actual result
+00400193    // [0x000001C0] ADDI x3, x0, 4        // x3 = test number
+00000013    // [0x000001C4] NOP                    // Alignment
+
+// ==== RV64I Branch and Jump Instructions ====
+00100093    // [0x000001C8] ADDI x1, x0, 1        // x1 = 1 (prepare for branch test)
+00200113    // [0x000001CC] ADDI x2, x0, 1        // x2 = 1
+00300193    // [0x000001D0] ADDI x3, x0, 2        // x3 = 2
+00010863    // [0x000001D4] BEQ x1, x2, 4         // If x1 == x2, branch to 0x1E0 (should branch)
+00100093    // [0x000001D8] ADDI x1, x0, 99       // This should be skipped if branch taken
+00000013    // [0x000001DC] NOP                    // Alignment
+00011863    // [0x000001E0] BNE x1, x3, 4         // If x1 != x3, branch to 0x1EC (should branch)
+00200093    // [0x000001E4] ADDI x1, x0, 88       // This should be skipped if branch taken
+00000013    // [0x000001E8] NOP                    // Alignment
+0001C863    // [0x000001EC] BLT x1, x3, 4         // If x1 < x3, branch to 0x1F8 (should branch)
+00300093    // [0x000001F0] ADDI x1, x0, 77       // This should be skipped if branch taken
+00000013    // [0x000001F4] NOP                    // Alignment
+0001D863    // [0x000001F8] BGE x1, x3, 4         // If x1 >= x3, branch to 0x204 (should not branch)
+00400093    // [0x000001FC] ADDI x1, x0, 66       // This should execute
+00000013    // [0x00000200] NOP                    // Alignment
+001002EF    // [0x00000204] JAL x1, 8             // Jump to 0x210, store return address in x1
+00500093    // [0x00000208] ADDI x1, x0, 55       // This should be skipped
+00000013    // [0x0000020C] NOP                    // Alignment
+00000013    // [0x00000210] NOP                    // Target of JAL
+00010067    // [0x00000214] JALR x0, x1, 0        // Jump back to return address
+
+// Check branch and jump results
+00420093    // [0x00000218] ADDI x1, x0, 66       // x1 = expected result (66)
+00100113    // [0x0000021C] ADDI x2, x1, 0        // x2 = actual result
+00500193    // [0x00000220] ADDI x3, x0, 5        // x3 = test number
+00000013    // [0x00000224] NOP                    // Alignment
+
+// ==== RV64M Multiplication Instructions ====
+00100093    // [0x00000228] ADDI x1, x0, 10       // x1 = 10
+00200113    // [0x0000022C] ADDI x2, x0, 15       // x2 = 15
+00300193    // [0x00000230] ADDI x3, x0, -7       // x3 = -7
+00400213    // [0x00000234] ADDI x4, x0, 20       // x4 = 20
+00218133    // [0x00000238] MUL x2, x1, x2        // x2 = 10 * 15 = 150
+003191B3    // [0x0000023C] MULH x3, x1, x3       // x3 = high bits of 10 * (-7)
+0031A233    // [0x00000240] MULHSU x4, x1, x3     // x4 = high bits of 10 * (-7) (signed-unsigned)
+0021B2B3    // [0x00000244] MULHU x5, x2, x1      // x5 = high bits of 150 * 10 (unsigned)
+
+// Check multiplication results
+09600093    // [0x00000248] ADDI x1, x0, 150      // x1 = expected MUL result
+00200113    // [0x0000024C] ADDI x2, x2, 0        // x2 = actual result
+00600193    // [0x00000250] ADDI x3, x0, 6        // x3 = test number
+00000013    // [0x00000254] NOP                    // Alignment
+
+// ==== RV64M Division Instructions ====
+01400093    // [0x00000258] ADDI x1, x0, 20       // x1 = 20
+00500113    // [0x0000025C] ADDI x2, x0, 4        // x2 = 4
+00300193    // [0x00000260] ADDI x3, x0, -7       // x3 = -7
+00A00213    // [0x00000264] ADDI x4, x0, 10       // x4 = 10
+0021C133    // [0x00000268] DIV x2, x1, x2        // x2 = 20 / 4 = 5
+0031D1B3    // [0x0000026C] DIV x3, x3, x2        // x3 = (-7) / 5 = -1
+0031E233    // [0x00000270] DIVU x4, x3, x2       // x4 = (-7 unsigned) / 5
+0021F2B3    // [0x00000274] REM x5, x1, x2        // x5 = 20 % 4 = 0
+00320333    // [0x00000278] REM x6, x3, x2        // x6 = (-7) % 5 = -2
+003213B3    // [0x0000027C] REMU x7, x3, x2       // x7 = (-7 unsigned) % 5
+
+// Check division results
+00500093    // [0x00000280] ADDI x1, x0, 5        // x1 = expected DIV result
+00200113    // [0x00000284] ADDI x2, x2, 0        // x2 = actual result
+00700193    // [0x00000288] ADDI x3, x0, 7        // x3 = test number
+00000013    // [0x0000028C] NOP                    // Alignment
+
+// ==== Pipeline Hazard Tests ====
+00100093    // [0x00000290] ADDI x1, x0, 1        // x1 = 1 (Data hazard test)
+002082B3    // [0x00000294] ADD x5, x1, x1        // x5 = 1 + 1 = 2
+00508333    // [0x00000298] ADD x6, x5, x1        // x6 = 2 + 1 = 3 (RAW hazard)
+00100093    // [0x0000029C] ADDI x1, x0, 5        // x1 = 5 (Control hazard test)
+00300113    // [0x000002A0] ADDI x2, x0, 3        // x2 = 3
+00011863    // [0x000002A4] BNE x1, x2, 8         // Control hazard: should branch
+00000013    // [0x000002A8] NOP                    // Alignment
+00000013    // [0x000002AC] NOP                    // Alignment
+00000013    // [0x000002B0] NOP                    // Alignment
+00000013    // [0x000002B4] NOP                    // Alignment
+
+// Check pipeline hazard results
+00300093    // [0x000002B8] ADDI x1, x0, 3        // x1 = expected result
+00600113    // [0x000002BC] ADDI x2, x6, 0        // x2 = actual result
+00800193    // [0x000002C0] ADDI x3, x0, 8        // x3 = test number
+00000013    // [0x000002C4] NOP                    // Alignment
+
+// ==== UART Echo Function ====
+// Wait for a character and echo it back
+00000013    // [0x000002C8] NOP                    // Echo function start
+00000093    // [0x000002CC] ADDI x1, x0, 0        // x1 = 0
+00000113    // [0x000002D0] ADDI x2, x0, 0        // x2 = 0
+00000193    // [0x000002D4] ADDI x3, x0, 0        // x3 = 0
+00000213    // [0x000002D8] ADDI x4, x0, 0        // x4 = 0
+00000293    // [0x000002DC] ADDI x5, x0, 0        // x5 = 0
+00000313    // [0x000002E0] ADDI x6, x0, 0        // x6 = 0
+00000393    // [0x000002E4] ADDI x7, x0, 0        // x7 = 0
+00000413    // [0x000002E8] ADDI x8, x0, 0        // x8 = 0
+00000493    // [0x000002EC] ADDI x9, x0, 0        // x9 = 0
+00000513    // [0x000002F0] ADDI x10, x0, 0       // x10 = 0
+00000593    // [0x000002F4] ADDI x11, x0, 0       // x11 = 0
+
+// ==== Result Verification Function ====
+// check_and_send_status (x1: expected, x2: actual, x3: test number)
+00000013    // [0x000002F8] NOP                    // check function start
+00100093    // [0x000002FC] ADDI x1, x0, 1        // x1 = 1
+00200113    // [0x00000300] ADDI x2, x0, 2        // x2 = 2
+00300193    // [0x00000304] ADDI x3, x0, 3        // x3 = 3
+00400213    // [0x00000308] ADDI x4, x0, 4        // x4 = 4
+00500293    // [0x0000030C] ADDI x5, x0, 5        // x5 = 5
+
+// Send completion message
+004F0093    // [0x00000310] ADDI x1, x0, 79       // x1 = 79 ('O')
+00000013    // [0x00000314] NOP                    // Alignment
+004B0093    // [0x00000318] ADDI x1, x0, 75       // x1 = 75 ('K')
+00000013    // [0x0000031C] NOP                    // Alignment
+000D0093    // [0x00000320] ADDI x1, x0, 13       // x1 = 13 (CR)
+00000013    // [0x00000324] NOP                    // Alignment
+000A0093    // [0x00000328] ADDI x1, x0, 10       // x1 = 10 (LF)
+00000013    // [0x0000032C] NOP                    // Alignment
+
+// End of test
+00000073    // [0x00000330] ECALL                 // System call to end test
+00000013    // [0x00000334] NOP                    // Alignment
+00000013    // [0x00000338] NOP                    // Alignment
+00000013    // [0x0000033C] NOP                    // Alignment
+00000013    // [0x00000340] NOP                    // Alignment
+00000013    // [0x00000344] NOP                    // Alignment
