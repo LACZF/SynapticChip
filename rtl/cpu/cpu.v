@@ -199,6 +199,10 @@ module cpu (
 		.clk			    (clk),
 		.reset			    (reset),
 
+		.stall_i			(ex_stall),
+		.flush_i			(ex_flush),
+		.int_detect_i		(int_detect),
+
 		.fwd_data_o		    (ex_fwd_data),
 
 		.id_pc_i			(id_pc),
