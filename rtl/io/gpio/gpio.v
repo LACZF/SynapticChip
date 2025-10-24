@@ -56,65 +56,65 @@ module gpio (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			rd_data	 <= #1 `WORD_DATA_W'h0;
-			rdy_	 <= #1 `DISABLE_N;
+			rd_data	 <= `WORD_DATA_W'h0;
+			rdy_	 <= `DISABLE_N;
 `ifdef GPIO_OUT_CH	 // 输出端口复位
-			gpio_out <= #1 {`GPIO_OUT_CH{`LOW}};
+			gpio_out <= {`GPIO_OUT_CH{`LOW}};
 `endif
 `ifdef GPIO_IO_CH	 // 输入端口的复位
-			io_out	 <= #1 {`GPIO_IO_CH{`LOW}};
-			io_dir	 <= #1 {`GPIO_IO_CH{`GPIO_DIR_IN}};
+			io_out	 <= {`GPIO_IO_CH{`LOW}};
+			io_dir	 <= {`GPIO_IO_CH{`GPIO_DIR_IN}};
 `endif
 		end else begin
 			/* 就绪信号的生成 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N)) begin
-				rdy_	 <= #1 `ENABLE_N;
+				rdy_	 <= `ENABLE_N;
 			end else begin
-				rdy_	 <= #1 `DISABLE_N;
+				rdy_	 <= `DISABLE_N;
 			end
 			/* 读取访问 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) && (rw == `READ)) begin
 				case (addr)
 `ifdef GPIO_IN_CH	// 输入端口的读取
 					`GPIO_ADDR_IN_DATA	: begin // 控制寄存器 0
-						rd_data	 <= #1 {{`WORD_DATA_W-`GPIO_IN_CH{1'b0}},
+						rd_data	 <= {{`WORD_DATA_W-`GPIO_IN_CH{1'b0}},
 										gpio_in};
 					end
 `endif
 `ifdef GPIO_OUT_CH	// 输出端口的读取
 					`GPIO_ADDR_OUT_DATA : begin // 控制寄存器 1
-						rd_data	 <= #1 {{`WORD_DATA_W-`GPIO_OUT_CH{1'b0}},
+						rd_data	 <= {{`WORD_DATA_W-`GPIO_OUT_CH{1'b0}},
 										gpio_out};
 					end
 `endif
 `ifdef GPIO_IO_CH	// 输入输出端口的读取
 					`GPIO_ADDR_IO_DATA	: begin // 控制寄存器 2
-						rd_data	 <= #1 {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}},
+						rd_data	 <= {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}},
 										io_in};
 					 end
 					`GPIO_ADDR_IO_DIR	: begin // 控制寄存器 3
-						rd_data	 <= #1 {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}},
+						rd_data	 <= {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}},
 										io_dir};
 					end
 `endif
 				endcase
 			end else begin
-				rd_data	 <= #1 `WORD_DATA_W'h0;
+				rd_data	 <= `WORD_DATA_W'h0;
 			end
 			/* 写入访问 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) && (rw == `WRITE)) begin
 				case (addr)
 `ifdef GPIO_OUT_CH	// 向输出端口写入
 					`GPIO_ADDR_OUT_DATA : begin // 控制寄存器 1
-						gpio_out <= #1 wr_data[`GPIO_OUT_CH-1:0];
+						gpio_out <= wr_data[`GPIO_OUT_CH-1:0];
 					end
 `endif
 `ifdef GPIO_IO_CH	// 向输入端口写入
 					`GPIO_ADDR_IO_DATA	: begin // 控制寄存器 2
-						io_out	 <= #1 wr_data[`GPIO_IO_CH-1:0];
+						io_out	 <= wr_data[`GPIO_IO_CH-1:0];
 					 end
 					`GPIO_ADDR_IO_DIR	: begin // 控制寄存器 3
-						io_dir	 <= #1 wr_data[`GPIO_IO_CH-1:0];
+						io_dir	 <= wr_data[`GPIO_IO_CH-1:0];
 					end
 `endif
 				endcase

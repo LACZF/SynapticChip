@@ -41,69 +41,69 @@ module timer (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			rd_data	 <= #1 `WORD_DATA_W'h0;
-			rdy_	 <= #1 `DISABLE_N;
-			start	 <= #1 `DISABLE;
-			mode	 <= #1 `TIMER_MODE_ONE_SHOT;
-			irq		 <= #1 `DISABLE;
-			expr_val <= #1 `WORD_DATA_W'h0;
-			counter	 <= #1 `WORD_DATA_W'h0;
+			rd_data	 <= `WORD_DATA_W'h0;
+			rdy_	 <= `DISABLE_N;
+			start	 <= `DISABLE;
+			mode	 <= `TIMER_MODE_ONE_SHOT;
+			irq		 <= `DISABLE;
+			expr_val <= `WORD_DATA_W'h0;
+			counter	 <= `WORD_DATA_W'h0;
 		end else begin
 			/* 就绪信号的生成 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N)) begin
-				rdy_	 <= #1 `ENABLE_N;
+				rdy_	 <= `ENABLE_N;
 			end else begin
-				rdy_	 <= #1 `DISABLE_N;
+				rdy_	 <= `DISABLE_N;
 			end
 			/* 读取访问 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) && (rw == `READ)) begin
 				case (addr)
 					`TIMER_ADDR_CTRL	: begin // 控制寄存器 0
-						rd_data	 <= #1 {{`WORD_DATA_W-2{1'b0}}, mode, start};
+						rd_data	 <= {{`WORD_DATA_W-2{1'b0}}, mode, start};
 					end
 					`TIMER_ADDR_INTR	: begin // 控制寄存器 1
-						rd_data	 <= #1 {{`WORD_DATA_W-1{1'b0}}, irq};
+						rd_data	 <= {{`WORD_DATA_W-1{1'b0}}, irq};
 					end
 					`TIMER_ADDR_EXPR	: begin // 控制寄存器 2
-						rd_data	 <= #1 expr_val;
+						rd_data	 <= expr_val;
 					end
 					`TIMER_ADDR_COUNTER : begin // 控制寄存器 3
-						rd_data	 <= #1 counter;
+						rd_data	 <= counter;
 					end
 				endcase
 			end else begin
-				rd_data	 <= #1 `WORD_DATA_W'h0;
+				rd_data	 <= `WORD_DATA_W'h0;
 			end
 			/* 写入访问 */
 			// 控制寄存器 0
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) &&
 				(rw == `WRITE) && (addr == `TIMER_ADDR_CTRL)) begin
-				start	 <= #1 wr_data[`TimerStartLoc];
-				mode	 <= #1 wr_data[`TimerModeLoc];
+				start	 <= wr_data[`TimerStartLoc];
+				mode	 <= wr_data[`TimerModeLoc];
 			end else if ((expr_flag == `ENABLE)	 &&
 						 (mode == `TIMER_MODE_ONE_SHOT)) begin
-				start	 <= #1 `DISABLE;
+				start	 <= `DISABLE;
 			end
 			// 控制寄存器 1
 			if (expr_flag == `ENABLE) begin
-				irq		 <= #1 `ENABLE;
+				irq		 <= `ENABLE;
 			end else if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) &&
 						 (rw == `WRITE) && (addr ==	 `TIMER_ADDR_INTR)) begin
-				irq		 <= #1 wr_data[`TimerIrqLoc];
+				irq		 <= wr_data[`TimerIrqLoc];
 			end
 			// 控制寄存器 2
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) &&
 				(rw == `WRITE) && (addr == `TIMER_ADDR_EXPR)) begin
-				expr_val <= #1 wr_data;
+				expr_val <= wr_data;
 			end
 			// 控制寄存器 3
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) &&
 				(rw == `WRITE) && (addr == `TIMER_ADDR_COUNTER)) begin
-				counter	 <= #1 wr_data;
+				counter	 <= wr_data;
 			end else if (expr_flag == `ENABLE) begin
-				counter	 <= #1 `WORD_DATA_W'h0;
+				counter	 <= `WORD_DATA_W'h0;
 			end else if (start == `ENABLE) begin
-				counter	 <= #1 counter + 1'd1;
+				counter	 <= counter + 1'd1;
 			end
 		end
 	end

@@ -41,44 +41,44 @@ module mem_reg (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			mem_pc		 <= #1 `WORD_ADDR_W'h0;
-			mem_en		 <= #1 `DISABLE;
-			mem_br_flag	 <= #1 `DISABLE;
-			mem_ctrl_op	 <= #1 `CTRL_OP_NOP;
-			mem_dst_addr <= #1 `REG_ADDR_W'h0;
-			mem_gpr_we_	 <= #1 `DISABLE_N;
-			mem_exp_code <= #1 `ISA_EXP_NO_EXP;
-			mem_out		 <= #1 `WORD_DATA_W'h0;
+			mem_pc		 <= `WORD_ADDR_W'h0;
+			mem_en		 <= `DISABLE;
+			mem_br_flag	 <= `DISABLE;
+			mem_ctrl_op	 <= `CTRL_OP_NOP;
+			mem_dst_addr <= `REG_ADDR_W'h0;
+			mem_gpr_we_	 <= `DISABLE_N;
+			mem_exp_code <= `ISA_EXP_NO_EXP;
+			mem_out		 <= `WORD_DATA_W'h0;
 		end else begin
 			if (stall == `DISABLE) begin
 				/* 流水线寄存器的更新 */
 				if (flush == `ENABLE) begin				  // 刷新
-					mem_pc		 <= #1 `WORD_ADDR_W'h0;
-					mem_en		 <= #1 `DISABLE;
-					mem_br_flag	 <= #1 `DISABLE;
-					mem_ctrl_op	 <= #1 `CTRL_OP_NOP;
-					mem_dst_addr <= #1 `REG_ADDR_W'h0;
-					mem_gpr_we_	 <= #1 `DISABLE_N;
-					mem_exp_code <= #1 `ISA_EXP_NO_EXP;
-					mem_out		 <= #1 `WORD_DATA_W'h0;
+					mem_pc		 <= `WORD_ADDR_W'h0;
+					mem_en		 <= `DISABLE;
+					mem_br_flag	 <= `DISABLE;
+					mem_ctrl_op	 <= `CTRL_OP_NOP;
+					mem_dst_addr <= `REG_ADDR_W'h0;
+					mem_gpr_we_	 <= `DISABLE_N;
+					mem_exp_code <= `ISA_EXP_NO_EXP;
+					mem_out		 <= `WORD_DATA_W'h0;
 				end else if (miss_align == `ENABLE) begin // 未对齐异常
-					mem_pc		 <= #1 ex_pc;
-					mem_en		 <= #1 ex_en;
-					mem_br_flag	 <= #1 ex_br_flag;
-					mem_ctrl_op	 <= #1 `CTRL_OP_NOP;
-					mem_dst_addr <= #1 `REG_ADDR_W'h0;
-					mem_gpr_we_	 <= #1 `DISABLE_N;
-					mem_exp_code <= #1 `ISA_EXP_MISS_ALIGN;
-					mem_out		 <= #1 `WORD_DATA_W'h0;
+					mem_pc		 <= ex_pc;
+					mem_en		 <= ex_en;
+					mem_br_flag	 <= ex_br_flag;
+					mem_ctrl_op	 <= `CTRL_OP_NOP;
+					mem_dst_addr <= `REG_ADDR_W'h0;
+					mem_gpr_we_	 <= `DISABLE_N;
+					mem_exp_code <= `ISA_EXP_MISS_ALIGN;
+					mem_out		 <= `WORD_DATA_W'h0;
 				end else begin							  // 下一个数据
-					mem_pc		 <= #1 ex_pc;
-					mem_en		 <= #1 ex_en;
-					mem_br_flag	 <= #1 ex_br_flag;
-					mem_ctrl_op	 <= #1 ex_ctrl_op;
-					mem_dst_addr <= #1 ex_dst_addr;
-					mem_gpr_we_	 <= #1 ex_gpr_we_;
-					mem_exp_code <= #1 ex_exp_code;
-					mem_out		 <= #1 out;
+					mem_pc		 <= ex_pc;
+					mem_en		 <= ex_en;
+					mem_br_flag	 <= ex_br_flag;
+					mem_ctrl_op	 <= ex_ctrl_op;
+					mem_dst_addr <= ex_dst_addr;
+					mem_gpr_we_	 <= ex_gpr_we_;
+					mem_exp_code <= ex_exp_code;
+					mem_out		 <= out;
 				end
 			end
 		end

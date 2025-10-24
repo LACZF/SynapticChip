@@ -48,47 +48,47 @@ module id_reg (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			id_pc		   <= #1 `WORD_ADDR_W'h0;
-			id_en		   <= #1 `DISABLE;
-			id_alu_op	   <= #1 `ALU_OP_NOP;
-			id_alu_in_0	   <= #1 `WORD_DATA_W'h0;
-			id_alu_in_1	   <= #1 `WORD_DATA_W'h0;
-			id_br_flag	   <= #1 `DISABLE;
-			id_mem_op	   <= #1 `MEM_OP_NOP;
-			id_mem_wr_data <= #1 `WORD_DATA_W'h0;
-			id_ctrl_op	   <= #1 `CTRL_OP_NOP;
-			id_dst_addr	   <= #1 `REG_ADDR_W'd0;
-			id_gpr_we_	   <= #1 `DISABLE_N;
-			id_exp_code	   <= #1 `ISA_EXP_NO_EXP;
+			id_pc		   <= `WORD_ADDR_W'h0;
+			id_en		   <= `DISABLE;
+			id_alu_op	   <= `ALU_OP_NOP;
+			id_alu_in_0	   <= `WORD_DATA_W'h0;
+			id_alu_in_1	   <= `WORD_DATA_W'h0;
+			id_br_flag	   <= `DISABLE;
+			id_mem_op	   <= `MEM_OP_NOP;
+			id_mem_wr_data <= `WORD_DATA_W'h0;
+			id_ctrl_op	   <= `CTRL_OP_NOP;
+			id_dst_addr	   <= `REG_ADDR_W'd0;
+			id_gpr_we_	   <= `DISABLE_N;
+			id_exp_code	   <= `ISA_EXP_NO_EXP;
 		end else begin
 			/* 流水线寄存器的更新 */
 			if (stall == `DISABLE) begin
 				if (flush == `ENABLE) begin // 刷新
-				   id_pc		  <= #1 `WORD_ADDR_W'h0;
-				   id_en		  <= #1 `DISABLE;
-				   id_alu_op	  <= #1 `ALU_OP_NOP;
-				   id_alu_in_0	  <= #1 `WORD_DATA_W'h0;
-				   id_alu_in_1	  <= #1 `WORD_DATA_W'h0;
-				   id_br_flag	  <= #1 `DISABLE;
-				   id_mem_op	  <= #1 `MEM_OP_NOP;
-				   id_mem_wr_data <= #1 `WORD_DATA_W'h0;
-				   id_ctrl_op	  <= #1 `CTRL_OP_NOP;
-				   id_dst_addr	  <= #1 `REG_ADDR_W'd0;
-				   id_gpr_we_	  <= #1 `DISABLE_N;
-				   id_exp_code	  <= #1 `ISA_EXP_NO_EXP;
+				   id_pc		  <= `WORD_ADDR_W'h0;
+				   id_en		  <= `DISABLE;
+				   id_alu_op	  <= `ALU_OP_NOP;
+				   id_alu_in_0	  <= `WORD_DATA_W'h0;
+				   id_alu_in_1	  <= `WORD_DATA_W'h0;
+				   id_br_flag	  <= `DISABLE;
+				   id_mem_op	  <= `MEM_OP_NOP;
+				   id_mem_wr_data <= `WORD_DATA_W'h0;
+				   id_ctrl_op	  <= `CTRL_OP_NOP;
+				   id_dst_addr	  <= `REG_ADDR_W'd0;
+				   id_gpr_we_	  <= `DISABLE_N;
+				   id_exp_code	  <= `ISA_EXP_NO_EXP;
 				end else begin				// 下一个数据
-				   id_pc		  <= #1 if_pc;
-				   id_en		  <= #1 if_en;
-				   id_alu_op	  <= #1 alu_op;
-				   id_alu_in_0	  <= #1 alu_in_0;
-				   id_alu_in_1	  <= #1 alu_in_1;
-				   id_br_flag	  <= #1 br_flag;
-				   id_mem_op	  <= #1 mem_op;
-				   id_mem_wr_data <= #1 mem_wr_data;
-				   id_ctrl_op	  <= #1 ctrl_op;
-				   id_dst_addr	  <= #1 dst_addr;
-				   id_gpr_we_	  <= #1 gpr_we_;
-				   id_exp_code	  <= #1 exp_code;
+				   id_pc		  <= if_pc;
+				   id_en		  <= if_en;
+				   id_alu_op	  <= alu_op;
+				   id_alu_in_0	  <= alu_in_0;
+				   id_alu_in_1	  <= alu_in_1;
+				   id_br_flag	  <= br_flag;
+				   id_mem_op	  <= mem_op;
+				   id_mem_wr_data <= mem_wr_data;
+				   id_ctrl_op	  <= ctrl_op;
+				   id_dst_addr	  <= dst_addr;
+				   id_gpr_we_	  <= gpr_we_;
+				   id_exp_code	  <= exp_code;
 				end
 			end
 		end

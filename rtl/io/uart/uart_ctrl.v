@@ -42,61 +42,61 @@ module uart_ctrl (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			rd_data	 <= #1 `WORD_DATA_W'h0;
-			rdy_	 <= #1 `DISABLE_N;
-			irq_rx	 <= #1 `DISABLE;
-			irq_tx	 <= #1 `DISABLE;
-			rx_buf	 <= #1 `BYTE_DATA_W'h0;
-			tx_start <= #1 `DISABLE;
-			tx_data	 <= #1 `BYTE_DATA_W'h0;
+			rd_data	 <= `WORD_DATA_W'h0;
+			rdy_	 <= `DISABLE_N;
+			irq_rx	 <= `DISABLE;
+			irq_tx	 <= `DISABLE;
+			rx_buf	 <= `BYTE_DATA_W'h0;
+			tx_start <= `DISABLE;
+			tx_data	 <= `BYTE_DATA_W'h0;
 	   end else begin
 			/* 就绪信号的生成 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N)) begin
-				rdy_	 <= #1 `ENABLE_N;
+				rdy_	 <= `ENABLE_N;
 			end else begin
-				rdy_	 <= #1 `DISABLE_N;
+				rdy_	 <= `DISABLE_N;
 			end
 			/* 读取访问 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) && (rw == `READ)) begin
 				case (addr)
 					`UART_ADDR_STATUS	 : begin // 控制寄存器 0
-						rd_data	 <= #1 {{`WORD_DATA_W-4{1'b0}},
+						rd_data	 <= {{`WORD_DATA_W-4{1'b0}},
 										tx_busy, rx_busy, irq_tx, irq_rx};
 					end
 					`UART_ADDR_DATA		 : begin // 控制寄存器 1
-						rd_data	 <= #1 {{`BYTE_DATA_W*2{1'b0}}, rx_buf};
+						rd_data	 <= {{`BYTE_DATA_W*2{1'b0}}, rx_buf};
 					end
 				endcase
 			end else begin
-				rd_data	 <= #1 `WORD_DATA_W'h0;
+				rd_data	 <= `WORD_DATA_W'h0;
 			end
 			/* 写入访问 */
 			// 控制寄存器 0 : 发送完成中断
 			if (tx_end == `ENABLE) begin
-				irq_tx<= #1 `ENABLE;
+				irq_tx<= `ENABLE;
 			end else if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) &&
 						 (rw == `WRITE) && (addr == `UART_ADDR_STATUS)) begin
-				irq_tx<= #1 wr_data[`UartCtrlIrqTx];
+				irq_tx<= wr_data[`UartCtrlIrqTx];
 			end
 			// 控制寄存器 0 : 写入发送完成中断位
 			if (rx_end == `ENABLE) begin
-				irq_rx<= #1 `ENABLE;
+				irq_rx<= `ENABLE;
 			end else if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) &&
 						 (rw == `WRITE) && (addr == `UART_ADDR_STATUS)) begin
-				irq_rx<= #1 wr_data[`UartCtrlIrqRx];
+				irq_rx<= wr_data[`UartCtrlIrqRx];
 			end
 			// 控制寄存器 1
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N) &&
 				(rw == `WRITE) && (addr == `UART_ADDR_DATA)) begin // 发送开始
-				tx_start <= #1 `ENABLE;
-				tx_data	 <= #1 wr_data[`BYTE_MSB:`LSB];
+				tx_start <= `ENABLE;
+				tx_data	 <= wr_data[`BYTE_MSB:`LSB];
 			end else begin
-				tx_start <= #1 `DISABLE;
-				tx_data	 <= #1 `BYTE_DATA_W'h0;
+				tx_start <= `DISABLE;
+				tx_data	 <= `BYTE_DATA_W'h0;
 			end
 			/* 接收数据 */
 			if (rx_end == `ENABLE) begin
-				rx_buf	 <= #1 rx_data;
+				rx_buf	 <= rx_data;
 			end
 		end
 	end

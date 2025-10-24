@@ -101,13 +101,13 @@ module bus_if (
    always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			state		<= #1 `BUS_IF_STATE_IDLE;
-			bus_req_	<= #1 `DISABLE_N;
-			bus_addr	<= #1 `WORD_ADDR_W'h0;
-			bus_as_		<= #1 `DISABLE_N;
-			bus_rw		<= #1 `READ;
-			bus_wr_data <= #1 `WORD_DATA_W'h0;
-			rd_buf		<= #1 `WORD_DATA_W'h0;
+			state		<= `BUS_IF_STATE_IDLE;
+			bus_req_	<= `DISABLE_N;
+			bus_addr	<= `WORD_ADDR_W'h0;
+			bus_as_		<= `DISABLE_N;
+			bus_rw		<= `READ;
+			bus_wr_data <= `WORD_DATA_W'h0;
+			rd_buf		<= `WORD_DATA_W'h0;
 		end else begin
 			/* 总线接口的状态 */
 			case (state)
@@ -116,46 +116,46 @@ module bus_if (
 					if ((flush == `DISABLE) && (as_ == `ENABLE_N)) begin
 						/* 选择访问目标 */
 						if (s_index != `BUS_SLAVE_1) begin // 访问总线
-							state		<= #1 `BUS_IF_STATE_REQ;
-							bus_req_	<= #1 `ENABLE_N;
-							bus_addr	<= #1 addr;
-							bus_rw		<= #1 rw;
-							bus_wr_data <= #1 wr_data;
+							state		<= `BUS_IF_STATE_REQ;
+							bus_req_	<= `ENABLE_N;
+							bus_addr	<= addr;
+							bus_rw		<= rw;
+							bus_wr_data <= wr_data;
 						end
 					end
 				end
 				`BUS_IF_STATE_REQ	 : begin // 请求总线
 					/* 等待总线许可 */
 					if (bus_grnt_ == `ENABLE_N) begin // 获得总线使用权
-						state		<= #1 `BUS_IF_STATE_ACCESS;
-						bus_as_		<= #1 `ENABLE_N;
+						state		<= `BUS_IF_STATE_ACCESS;
+						bus_as_		<= `ENABLE_N;
 					end
 				end
 				`BUS_IF_STATE_ACCESS : begin // 访问总线
 					/* 使地址选通无效 */
-					bus_as_		<= #1 `DISABLE_N;
+					bus_as_		<= `DISABLE_N;
 					/* 等待就绪信号 */
 					if (bus_rdy_ == `ENABLE_N) begin // 就绪信号到达
-						bus_req_	<= #1 `DISABLE_N;
-						bus_addr	<= #1 `WORD_ADDR_W'h0;
-						bus_rw		<= #1 `READ;
-						bus_wr_data <= #1 `WORD_DATA_W'h0;
+						bus_req_	<= `DISABLE_N;
+						bus_addr	<= `WORD_ADDR_W'h0;
+						bus_rw		<= `READ;
+						bus_wr_data <= `WORD_DATA_W'h0;
 						/* 保存读取到的数据 */
 						if (bus_rw == `READ) begin // 读取访问
-							rd_buf		<= #1 bus_rd_data;
+							rd_buf		<= bus_rd_data;
 						end
 						/* 检测是否发生延迟 */
 						if (stall == `ENABLE) begin // 发生延迟
-							state		<= #1 `BUS_IF_STATE_STALL;
+							state		<= `BUS_IF_STATE_STALL;
 						end else begin				// 未发生延迟
-							state		<= #1 `BUS_IF_STATE_IDLE;
+							state		<= `BUS_IF_STATE_IDLE;
 						end
 					end
 				end
 				`BUS_IF_STATE_STALL	 : begin // 延迟
 					/* 检测是否发生延迟 */
 					if (stall == `DISABLE) begin // 解除延迟
-						state		<= #1 `BUS_IF_STATE_IDLE;
+						state		<= `BUS_IF_STATE_IDLE;
 					end
 				end
 			endcase

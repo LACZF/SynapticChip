@@ -19,7 +19,7 @@ module x_s3e_sprom (
 
 	/********** 读取访问 **********/
 	always @(posedge clka) begin
-		douta <= #1 mem[addra];
+		douta <= mem[addra];
 	end
 
 endmodule

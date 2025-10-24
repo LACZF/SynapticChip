@@ -155,58 +155,58 @@ module ctrl (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			exe_mode	 <= #1 `CPU_KERNEL_MODE;
-			int_en		 <= #1 `DISABLE;
-			pre_exe_mode <= #1 `CPU_KERNEL_MODE;
-			pre_int_en	 <= #1 `DISABLE;
-			exp_code	 <= #1 `ISA_EXP_NO_EXP;
-			mask		 <= #1 {`CPU_IRQ_CH{`ENABLE}};
-			dly_flag	 <= #1 `DISABLE;
-			epc			 <= #1 `WORD_ADDR_W'h0;
-			exp_vector	 <= #1 `WORD_ADDR_W'h0;
-			pre_pc		 <= #1 `WORD_ADDR_W'h0;
-			br_flag		 <= #1 `DISABLE;
+			exe_mode	 <= `CPU_KERNEL_MODE;
+			int_en		 <= `DISABLE;
+			pre_exe_mode <= `CPU_KERNEL_MODE;
+			pre_int_en	 <= `DISABLE;
+			exp_code	 <= `ISA_EXP_NO_EXP;
+			mask		 <= {`CPU_IRQ_CH{`ENABLE}};
+			dly_flag	 <= `DISABLE;
+			epc			 <= `WORD_ADDR_W'h0;
+			exp_vector	 <= `WORD_ADDR_W'h0;
+			pre_pc		 <= `WORD_ADDR_W'h0;
+			br_flag		 <= `DISABLE;
 		end else begin
 			/* 更新CPU的状态 */
 			if ((mem_en == `ENABLE) && (stall == `DISABLE)) begin
 				/* PC和分支标志位的保存 */
-				pre_pc		 <= #1 mem_pc;
-				br_flag		 <= #1 mem_br_flag;
+				pre_pc		 <= mem_pc;
+				br_flag		 <= mem_br_flag;
 				/* CPU状态控制 */
 				if (mem_exp_code != `ISA_EXP_NO_EXP) begin		 // 发生异常
-					exe_mode	 <= #1 `CPU_KERNEL_MODE;
-					int_en		 <= #1 `DISABLE;
-					pre_exe_mode <= #1 exe_mode;
-					pre_int_en	 <= #1 int_en;
-					exp_code	 <= #1 mem_exp_code;
-					dly_flag	 <= #1 br_flag;
-					epc			 <= #1 pre_pc;
+					exe_mode	 <= `CPU_KERNEL_MODE;
+					int_en		 <= `DISABLE;
+					pre_exe_mode <= exe_mode;
+					pre_int_en	 <= int_en;
+					exp_code	 <= mem_exp_code;
+					dly_flag	 <= br_flag;
+					epc			 <= pre_pc;
 				end else if (mem_ctrl_op == `CTRL_OP_EXRT) begin // EXRT命令
-					exe_mode	 <= #1 pre_exe_mode;
-					int_en		 <= #1 pre_int_en;
+					exe_mode	 <= pre_exe_mode;
+					int_en		 <= pre_int_en;
 				end else if (mem_ctrl_op == `CTRL_OP_WRCR) begin // WRCR命令
 				   /* 写入控制寄存器 */
 					case (mem_dst_addr)
 						`CREG_ADDR_STATUS	  : begin // 状态
-							exe_mode	 <= #1 mem_out[`CregExeModeLoc];
-							int_en		 <= #1 mem_out[`CregIntEnableLoc];
+							exe_mode	 <= mem_out[`CregExeModeLoc];
+							int_en		 <= mem_out[`CregIntEnableLoc];
 						end
 						`CREG_ADDR_PRE_STATUS : begin // 异常发生前的状态
-							pre_exe_mode <= #1 mem_out[`CregExeModeLoc];
-							pre_int_en	 <= #1 mem_out[`CregIntEnableLoc];
+							pre_exe_mode <= mem_out[`CregExeModeLoc];
+							pre_int_en	 <= mem_out[`CregIntEnableLoc];
 						end
 						`CREG_ADDR_EPC		  : begin // 异常程序计数器
-							epc			 <= #1 mem_out[`WordAddrLoc];
+							epc			 <= mem_out[`WordAddrLoc];
 						end
 						`CREG_ADDR_EXP_VECTOR : begin // 异常向量
-							exp_vector	 <= #1 mem_out[`WordAddrLoc];
+							exp_vector	 <= mem_out[`WordAddrLoc];
 						end
 						`CREG_ADDR_CAUSE	  : begin // 异常原因
-							dly_flag	 <= #1 mem_out[`CregDlyFlagLoc];
-							exp_code	 <= #1 mem_out[`CregExpCodeLoc];
+							dly_flag	 <= mem_out[`CregDlyFlagLoc];
+							exp_code	 <= mem_out[`CregExpCodeLoc];
 						end
 						`CREG_ADDR_INT_MASK	  : begin // 中断屏蔽
-							mask		 <= #1 mem_out[`CPU_IRQ_CH-1:0];
+							mask		 <= mem_out[`CPU_IRQ_CH-1:0];
 						end
 					endcase
 				end

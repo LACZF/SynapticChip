@@ -30,24 +30,24 @@ module if_reg (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			if_pc	<= #1 `RESET_VECTOR;
-			if_insn <= #1 `ISA_NOP;
-			if_en	<= #1 `DISABLE;
+			if_pc	<= `RESET_VECTOR;
+			if_insn <= `ISA_NOP;
+			if_en	<= `DISABLE;
 		end else begin
 			/* 更新流水线寄存器 */
 			if (stall == `DISABLE) begin
 				if (flush == `ENABLE) begin				// 刷新
-					if_pc	<= #1 new_pc;
-					if_insn <= #1 `ISA_NOP;
-					if_en	<= #1 `DISABLE;
+					if_pc	<= new_pc;
+					if_insn <= `ISA_NOP;
+					if_en	<= `DISABLE;
 				end else if (br_taken == `ENABLE) begin // 分支成立
-					if_pc	<= #1 br_addr;
-					if_insn <= #1 insn;
-					if_en	<= #1 `ENABLE;
+					if_pc	<= br_addr;
+					if_insn <= insn;
+					if_en	<= `ENABLE;
 				end else begin							// 下一条地址
-					if_pc	<= #1 if_pc + 1'd1;
-					if_insn <= #1 insn;
-					if_en	<= #1 `ENABLE;
+					if_pc	<= if_pc + 1'd1;
+					if_insn <= insn;
+					if_en	<= `ENABLE;
 				end
 			end
 		end

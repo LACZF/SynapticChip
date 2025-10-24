@@ -30,13 +30,13 @@ module x_s3e_dpram (
 	always @(posedge clka) begin
 		// 读取访问
 		if ((web == `ENABLE) && (addra == addrb)) begin
-			douta	  <= #1 dinb;
+			douta	  <= dinb;
 		end else begin
-			douta	  <= #1 mem[addra];
+			douta	  <= mem[addra];
 		end
 		// 写入访问
 		if (wea == `ENABLE) begin
-			mem[addra]<= #1 dina;
+			mem[addra]<= dina;
 		end
 	end
 
@@ -44,13 +44,13 @@ module x_s3e_dpram (
 	always @(posedge clkb) begin
 		// 读取访问
 		if ((wea == `ENABLE) && (addrb == addra)) begin
-			doutb	  <= #1 dina;
+			doutb	  <= dina;
 		end else begin
-			doutb	  <= #1 mem[addrb];
+			doutb	  <= mem[addrb];
 		end
 		// 写入访问
 		if (web == `ENABLE) begin
-			mem[addrb]<= #1 dinb;
+			mem[addrb]<= dinb;
 		end
 	end
 

@@ -40,12 +40,12 @@ module gpr (
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
 			for (i = 0; i < `REG_NUM; i = i + 1) begin
-				gpr[i]		 <= #1 `WORD_DATA_W'h0;
+				gpr[i]		 <= `WORD_DATA_W'h0;
 			end
 		end else begin
 			/* 写入访问 */
 			if (we_ == `ENABLE_N) begin
-				gpr[wr_addr] <= #1 wr_data;
+				gpr[wr_addr] <= wr_data;
 			end
 		end
 	end

@@ -31,19 +31,19 @@ module uart_rx (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			rx_end	<= #1 `DISABLE;
-			rx_data <= #1 `BYTE_DATA_W'h0;
-			state	<= #1 `UART_STATE_IDLE;
-			div_cnt <= #1 `UART_DIV_RATE / 2;
-			bit_cnt <= #1 `UART_BIT_CNT_W'h0;
+			rx_end	<= `DISABLE;
+			rx_data <= `BYTE_DATA_W'h0;
+			state	<= `UART_STATE_IDLE;
+			div_cnt <= `UART_DIV_RATE / 2;
+			bit_cnt <= `UART_BIT_CNT_W'h0;
 		end else begin
 			/* 接收模块状态 */
 			case (state)
 				`UART_STATE_IDLE : begin // 空闲状态
 					if (rx == `UART_START_BIT) begin // 接收开始
-						state	<= #1 `UART_STATE_RX;
+						state	<= `UART_STATE_RX;
 					end
-					rx_end	<= #1 `DISABLE;
+					rx_end	<= `DISABLE;
 				end
 				`UART_STATE_RX	 : begin // 接收中
 					/* 依据时钟分配调整波特率 */
@@ -51,22 +51,22 @@ module uart_rx (
 						/* 接收下一个数据 */
 						case (bit_cnt)
 							`UART_BIT_CNT_STOP	: begin // 接收停止位
-								state	<= #1 `UART_STATE_IDLE;
-								bit_cnt <= #1 `UART_BIT_CNT_START;
-								div_cnt <= #1 `UART_DIV_RATE / 2;
+								state	<= `UART_STATE_IDLE;
+								bit_cnt <= `UART_BIT_CNT_START;
+								div_cnt <= `UART_DIV_RATE / 2;
 								/* 帧错误的检测 */
 								if (rx == `UART_STOP_BIT) begin
-									rx_end	<= #1 `ENABLE;
+									rx_end	<= `ENABLE;
 								end
 							end
 							default				: begin // 接收数据
-								rx_data <= #1 {rx, rx_data[`BYTE_MSB:`LSB+1]};
-								bit_cnt <= #1 bit_cnt + 1'b1;
-								div_cnt <= #1 `UART_DIV_RATE;
+								rx_data <= {rx, rx_data[`BYTE_MSB:`LSB+1]};
+								bit_cnt <= bit_cnt + 1'b1;
+								div_cnt <= `UART_DIV_RATE;
 							end
 						endcase
 					end else begin // 倒数计数
-						div_cnt <= #1 div_cnt - 1'b1;
+						div_cnt <= div_cnt - 1'b1;
 					end
 				end
 			endcase

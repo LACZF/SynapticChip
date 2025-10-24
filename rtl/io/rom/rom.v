@@ -31,13 +31,13 @@ module rom (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			rdy_ <= #1 `DISABLE_N;
+			rdy_ <= `DISABLE_N;
 		end else begin
 			/* 生成就绪信号 */
 			if ((cs_ == `ENABLE_N) && (as_ == `ENABLE_N)) begin
-				rdy_ <= #1 `ENABLE_N;
+				rdy_ <= `ENABLE_N;
 			end else begin
-				rdy_ <= #1 `DISABLE_N;
+				rdy_ <= `DISABLE_N;
 			end
 		end
 	end

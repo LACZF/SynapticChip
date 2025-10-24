@@ -50,13 +50,8 @@ module chip_top_test;
 	wire [`ByteDataBus]		 rx_data;		  // 接收的数据
 `endif
 
-	/********** 仿真周期数 **********/
-	parameter				 STEP = 100.0000; // 10 M
-
 	/********** 时钟生成 **********/
-	always #( STEP / 2 ) begin
-		clk_ref <= ~clk_ref;
-	end
+    always #5 clk_ref = ~clk_ref;
 
 	/********** 实例化chip_top **********/
 	chip_top chip_top (
@@ -130,21 +125,16 @@ module chip_top_test;
 
 	/********** 测试用例 **********/
 	initial begin
-		# 0 begin
-			clk_ref	 <= `HIGH;
-			reset_sw <= `RESET_ENABLE;
-		end
-		# ( STEP / 2 )
-		# ( STEP / 4 ) begin		  // 载入内存映像
-			$readmemh(`ROM_PRG, chip_top.chip.rom.x_s3e_sprom.mem);
-			$readmemh(`SPM_PRG, chip_top.chip.cpu.spm.x_s3e_dpram.mem);
-		end
-		# ( STEP * 20 ) begin		  // 解除复位
-			reset_sw <= `RESET_DISABLE;
-		end
-		# ( STEP * `SIM_CYCLE ) begin // 执行仿真
-			$finish;
-		end
+		$readmemh(`ROM_PRG, chip_top.chip.rom.x_s3e_sprom.mem);
+		$readmemh(`SPM_PRG, chip_top.chip.cpu.spm.x_s3e_dpram.mem);
+
+		clk_ref	 <= `LOW;
+		reset_sw <= `RESET_ENABLE;
+
+        @(posedge clk_ref);
+		reset_sw <= `RESET_DISABLE;
+
+		# `SIM_CYCLE $finish;
 	end
 
 	/********** 输出波形 **********/

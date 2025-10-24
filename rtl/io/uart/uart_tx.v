@@ -33,22 +33,22 @@ module uart_tx (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			state	<= #1 `UART_STATE_IDLE;
-			div_cnt <= #1 `UART_DIV_RATE;
-			bit_cnt <= #1 `UART_BIT_CNT_START;
-			sh_reg	<= #1 `BYTE_DATA_W'h0;
-			tx_end	<= #1 `DISABLE;
-			tx		<= #1 `UART_STOP_BIT;
+			state	<= `UART_STATE_IDLE;
+			div_cnt <= `UART_DIV_RATE;
+			bit_cnt <= `UART_BIT_CNT_START;
+			sh_reg	<= `BYTE_DATA_W'h0;
+			tx_end	<= `DISABLE;
+			tx		<= `UART_STOP_BIT;
 		end else begin
 			/* 发送状态 */
 			case (state)
 				`UART_STATE_IDLE : begin // 空闲状态
 					if (tx_start == `ENABLE) begin // 发送开始
-						state	<= #1 `UART_STATE_TX;
-						sh_reg	<= #1 tx_data;
-						tx		<= #1 `UART_START_BIT;
+						state	<= `UART_STATE_TX;
+						sh_reg	<= tx_data;
+						tx		<= `UART_START_BIT;
 					end
-					tx_end	<= #1 `DISABLE;
+					tx_end	<= `DISABLE;
 				end
 				`UART_STATE_TX	 : begin // 发送中
 					/* 通过时钟分频调整波特率 */
@@ -56,23 +56,23 @@ module uart_tx (
 						/* 发送下一个数据 */
 						case (bit_cnt)
 							`UART_BIT_CNT_MSB  : begin // 发送停止位
-								bit_cnt <= #1 `UART_BIT_CNT_STOP;
-								tx		<= #1 `UART_STOP_BIT;
+								bit_cnt <= `UART_BIT_CNT_STOP;
+								tx		<= `UART_STOP_BIT;
 							end
 							`UART_BIT_CNT_STOP : begin // 发送完成
-								state	<= #1 `UART_STATE_IDLE;
-								bit_cnt <= #1 `UART_BIT_CNT_START;
-								tx_end	<= #1 `ENABLE;
+								state	<= `UART_STATE_IDLE;
+								bit_cnt <= `UART_BIT_CNT_START;
+								tx_end	<= `ENABLE;
 							end
 							default			   : begin // 数据的发送
-								bit_cnt <= #1 bit_cnt + 1'b1;
-								sh_reg	<= #1 sh_reg >> 1'b1;
-								tx		<= #1 sh_reg[`LSB];
+								bit_cnt <= bit_cnt + 1'b1;
+								sh_reg	<= sh_reg >> 1'b1;
+								tx		<= sh_reg[`LSB];
 							end
 						endcase
-						div_cnt <= #1 `UART_DIV_RATE;
+						div_cnt <= `UART_DIV_RATE;
 					end else begin // 倒数计数
-						div_cnt <= #1 div_cnt - 1'b1 ;
+						div_cnt <= div_cnt - 1'b1 ;
 					end
 				end
 			endcase

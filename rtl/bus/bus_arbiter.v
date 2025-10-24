@@ -57,56 +57,56 @@ module bus_arbiter (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		if (reset == `RESET_ENABLE) begin
 			/* 异步复位 */
-			owner <= #1 `BUS_OWNER_MASTER_0;
+			owner <= `BUS_OWNER_MASTER_0;
 		end else begin
 			/* 仲裁 */
 			case (owner)
 				`BUS_OWNER_MASTER_0 : begin // 总线使用权所有者：0号总线主控
 					/* 下一个获得总线使用权的主控 */
 					if (m0_req_ == `ENABLE_N) begin			// 0号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_0;
+						owner <= `BUS_OWNER_MASTER_0;
 					end else if (m1_req_ == `ENABLE_N) begin // 1号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_1;
+						owner <= `BUS_OWNER_MASTER_1;
 					end else if (m2_req_ == `ENABLE_N) begin // 2号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_2;
+						owner <= `BUS_OWNER_MASTER_2;
 					end else if (m3_req_ == `ENABLE_N) begin // 3号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_3;
+						owner <= `BUS_OWNER_MASTER_3;
 					end
 				end
 				`BUS_OWNER_MASTER_1 : begin // 总线使用权所有者：1号总线主控
 					/* 下一个获得总线使用权的主控 */
 					if (m1_req_ == `ENABLE_N) begin			// 1号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_1;
+						owner <= `BUS_OWNER_MASTER_1;
 					end else if (m2_req_ == `ENABLE_N) begin // 2号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_2;
+						owner <= `BUS_OWNER_MASTER_2;
 					end else if (m3_req_ == `ENABLE_N) begin // 3号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_3;
+						owner <= `BUS_OWNER_MASTER_3;
 					end else if (m0_req_ == `ENABLE_N) begin // 0号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_0;
+						owner <= `BUS_OWNER_MASTER_0;
 					end
 				end
 				`BUS_OWNER_MASTER_2 : begin // 总线使用权所有者：2号总线主控
 					/* 下一个获得总线使用权的主控 */
 					if (m2_req_ == `ENABLE_N) begin			// 2号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_2;
+						owner <= `BUS_OWNER_MASTER_2;
 					end else if (m3_req_ == `ENABLE_N) begin // 3号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_3;
+						owner <= `BUS_OWNER_MASTER_3;
 					end else if (m0_req_ == `ENABLE_N) begin // 0号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_0;
+						owner <= `BUS_OWNER_MASTER_0;
 					end else if (m1_req_ == `ENABLE_N) begin // 1号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_1;
+						owner <= `BUS_OWNER_MASTER_1;
 					end
 				end
 				`BUS_OWNER_MASTER_3 : begin // 总线使用权所有者：3号总线主控
 					/* 下一个获得总线使用权的主控 */
 					if (m3_req_ == `ENABLE_N) begin			// 3号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_3;
+						owner <= `BUS_OWNER_MASTER_3;
 					end else if (m0_req_ == `ENABLE_N) begin // 0号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_0;
+						owner <= `BUS_OWNER_MASTER_0;
 					end else if (m1_req_ == `ENABLE_N) begin // 1号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_1;
+						owner <= `BUS_OWNER_MASTER_1;
 					end else if (m2_req_ == `ENABLE_N) begin // 2号总线主控
-						owner <= #1 `BUS_OWNER_MASTER_2;
+						owner <= `BUS_OWNER_MASTER_2;
 					end
 				end
 			endcase

@@ -46,63 +46,63 @@ module ex_reg (
 	always @(posedge clk or `RESET_EDGE reset) begin
 		/* 异步复位 */
 		if (reset == `RESET_ENABLE) begin
-			ex_pc		   <= #1 `WORD_ADDR_W'h0;
-			ex_en		   <= #1 `DISABLE;
-			ex_br_flag	   <= #1 `DISABLE;
-			ex_mem_op	   <= #1 `MEM_OP_NOP;
-			ex_mem_wr_data <= #1 `WORD_DATA_W'h0;
-			ex_ctrl_op	   <= #1 `CTRL_OP_NOP;
-			ex_dst_addr	   <= #1 `REG_ADDR_W'd0;
-			ex_gpr_we_	   <= #1 `DISABLE_N;
-			ex_exp_code	   <= #1 `ISA_EXP_NO_EXP;
-			ex_out		   <= #1 `WORD_DATA_W'h0;
+			ex_pc		   <= `WORD_ADDR_W'h0;
+			ex_en		   <= `DISABLE;
+			ex_br_flag	   <= `DISABLE;
+			ex_mem_op	   <= `MEM_OP_NOP;
+			ex_mem_wr_data <= `WORD_DATA_W'h0;
+			ex_ctrl_op	   <= `CTRL_OP_NOP;
+			ex_dst_addr	   <= `REG_ADDR_W'd0;
+			ex_gpr_we_	   <= `DISABLE_N;
+			ex_exp_code	   <= `ISA_EXP_NO_EXP;
+			ex_out		   <= `WORD_DATA_W'h0;
 		end else begin
 			/* 流水线寄存器的更新 */
 			if (stall == `DISABLE) begin
 				if (flush == `ENABLE) begin				  // 刷新
-					ex_pc		   <= #1 `WORD_ADDR_W'h0;
-					ex_en		   <= #1 `DISABLE;
-					ex_br_flag	   <= #1 `DISABLE;
-					ex_mem_op	   <= #1 `MEM_OP_NOP;
-					ex_mem_wr_data <= #1 `WORD_DATA_W'h0;
-					ex_ctrl_op	   <= #1 `CTRL_OP_NOP;
-					ex_dst_addr	   <= #1 `REG_ADDR_W'd0;
-					ex_gpr_we_	   <= #1 `DISABLE_N;
-					ex_exp_code	   <= #1 `ISA_EXP_NO_EXP;
-					ex_out		   <= #1 `WORD_DATA_W'h0;
+					ex_pc		   <= `WORD_ADDR_W'h0;
+					ex_en		   <= `DISABLE;
+					ex_br_flag	   <= `DISABLE;
+					ex_mem_op	   <= `MEM_OP_NOP;
+					ex_mem_wr_data <= `WORD_DATA_W'h0;
+					ex_ctrl_op	   <= `CTRL_OP_NOP;
+					ex_dst_addr	   <= `REG_ADDR_W'd0;
+					ex_gpr_we_	   <= `DISABLE_N;
+					ex_exp_code	   <= `ISA_EXP_NO_EXP;
+					ex_out		   <= `WORD_DATA_W'h0;
 				end else if (int_detect == `ENABLE) begin // 中断检测
-					ex_pc		   <= #1 id_pc;
-					ex_en		   <= #1 id_en;
-					ex_br_flag	   <= #1 id_br_flag;
-					ex_mem_op	   <= #1 `MEM_OP_NOP;
-					ex_mem_wr_data <= #1 `WORD_DATA_W'h0;
-					ex_ctrl_op	   <= #1 `CTRL_OP_NOP;
-					ex_dst_addr	   <= #1 `REG_ADDR_W'd0;
-					ex_gpr_we_	   <= #1 `DISABLE_N;
-					ex_exp_code	   <= #1 `ISA_EXP_EXT_INT;
-					ex_out		   <= #1 `WORD_DATA_W'h0;
+					ex_pc		   <= id_pc;
+					ex_en		   <= id_en;
+					ex_br_flag	   <= id_br_flag;
+					ex_mem_op	   <= `MEM_OP_NOP;
+					ex_mem_wr_data <= `WORD_DATA_W'h0;
+					ex_ctrl_op	   <= `CTRL_OP_NOP;
+					ex_dst_addr	   <= `REG_ADDR_W'd0;
+					ex_gpr_we_	   <= `DISABLE_N;
+					ex_exp_code	   <= `ISA_EXP_EXT_INT;
+					ex_out		   <= `WORD_DATA_W'h0;
 				end else if (alu_of == `ENABLE) begin	  // 算术溢出
-					ex_pc		   <= #1 id_pc;
-					ex_en		   <= #1 id_en;
-					ex_br_flag	   <= #1 id_br_flag;
-					ex_mem_op	   <= #1 `MEM_OP_NOP;
-					ex_mem_wr_data <= #1 `WORD_DATA_W'h0;
-					ex_ctrl_op	   <= #1 `CTRL_OP_NOP;
-					ex_dst_addr	   <= #1 `REG_ADDR_W'd0;
-					ex_gpr_we_	   <= #1 `DISABLE_N;
-					ex_exp_code	   <= #1 `ISA_EXP_OVERFLOW;
-					ex_out		   <= #1 `WORD_DATA_W'h0;
+					ex_pc		   <= id_pc;
+					ex_en		   <= id_en;
+					ex_br_flag	   <= id_br_flag;
+					ex_mem_op	   <= `MEM_OP_NOP;
+					ex_mem_wr_data <= `WORD_DATA_W'h0;
+					ex_ctrl_op	   <= `CTRL_OP_NOP;
+					ex_dst_addr	   <= `REG_ADDR_W'd0;
+					ex_gpr_we_	   <= `DISABLE_N;
+					ex_exp_code	   <= `ISA_EXP_OVERFLOW;
+					ex_out		   <= `WORD_DATA_W'h0;
 				end else begin							  // 下一个数据
-					ex_pc		   <= #1 id_pc;
-					ex_en		   <= #1 id_en;
-					ex_br_flag	   <= #1 id_br_flag;
-					ex_mem_op	   <= #1 id_mem_op;
-					ex_mem_wr_data <= #1 id_mem_wr_data;
-					ex_ctrl_op	   <= #1 id_ctrl_op;
-					ex_dst_addr	   <= #1 id_dst_addr;
-					ex_gpr_we_	   <= #1 id_gpr_we_;
-					ex_exp_code	   <= #1 id_exp_code;
-					ex_out		   <= #1 alu_out;
+					ex_pc		   <= id_pc;
+					ex_en		   <= id_en;
+					ex_br_flag	   <= id_br_flag;
+					ex_mem_op	   <= id_mem_op;
+					ex_mem_wr_data <= id_mem_wr_data;
+					ex_ctrl_op	   <= id_ctrl_op;
+					ex_dst_addr	   <= id_dst_addr;
+					ex_gpr_we_	   <= id_gpr_we_;
+					ex_exp_code	   <= id_exp_code;
+					ex_out		   <= alu_out;
 				end
 			end
 		end
