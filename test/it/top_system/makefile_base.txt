@@ -1,0 +1,63 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := top_system
+TEST_ARGS ?= -DROM_PRG=\"instructions.hex\" -DSPM_PRG=\"instructions.hex\" -DSIM_CYCLE=100000
+
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
+
+# TEST_SRC += $(TOP_DIR)/rtl/common/fifo.v
+# TEST_SRC += $(TOP_DIR)/rtl/common/cache.v
+
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus_addr_dec.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus_arbiter.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus_master_mux.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus_slave_mux.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus.v
+
+TEST_SRC += $(TOP_DIR)/rtl/cpu/alu.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/RV64I.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/RV64M.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/bus_if.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/ctrl.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/decoder.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/ex_reg.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/ex_stage.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/gpr.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/id_reg.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/id_stage.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/if_reg.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/if_stage.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_ctrl.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_reg.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_stage.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/spm.v
+
+TEST_SRC += $(TOP_DIR)/rtl/io/jtag/jtag.v
+TEST_SRC += $(TOP_DIR)/rtl/io/spi/spi.v
+TEST_SRC += $(TOP_DIR)/rtl/io/gpio/gpio.v
+TEST_SRC += $(TOP_DIR)/rtl/io/rom/rom.v
+TEST_SRC += $(TOP_DIR)/rtl/io/timer/timer.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_ctrl.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart.v
+
+TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dcm.v
+TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dpram.v
+TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_sprom.v
+
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
+
+TEST_SRC += $(TOP_DIR)/rtl/top/chip_top.v
+TEST_SRC += $(TOP_DIR)/rtl/top/chip.v
+TEST_SRC += $(TOP_DIR)/rtl/top/clk_gen.v
+
+TEST_SRC += $(CUR_DIR)/chip_top_test.v
