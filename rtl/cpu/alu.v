@@ -8,7 +8,9 @@
 module alu (
     input  wire                   clk,
     input  wire                   reset,
+    input  wire [`WordAddrBus]    id_pc_i,
     input  wire [`WordDataBus]    id_insn_i,
+    input  wire                   id_en_i,
 
     input  wire [`WordDataBus]    in0_i,
     input  wire [`WordDataBus]    in1_i,
@@ -22,26 +24,30 @@ module alu (
 
     // 实例化基本ALU模块（RV64I指令集）
     RV64I u_rv64i (
-        .clk(clk),
-        .reset(reset),
-        .id_insn_i(id_insn_i),
-        .in0_i(in0_i),
-        .in1_i(in1_i),
-        .op_i(op_i),
-        .result_o(base_out),
-        .overflow_o(base_of)
+        .clk          (clk),
+        .reset        (reset),
+        .id_pc_i      (id_pc_i),
+        .id_insn_i    (id_insn_i),
+        .id_en_i      (id_en_i),
+        .in0_i        (in0_i),
+        .in1_i        (in1_i),
+        .op_i         (op_i),
+        .result_o     (base_out),
+        .overflow_o   (base_of)
     );
 
     // 实例化乘除法ALU模块（RV64M指令集）
     `ifdef SUPPORT_RV64M
         RV64M u_rv64m (
-            .clk(clk),
-            .reset(reset),
-            .id_insn_i(id_insn_i),
-            .in0_i(in0_i),
-            .in1_i(in1_i),
-            .op_i(op_i),
-            .result_o(muldiv_out)
+            .clk          (clk),
+            .reset        (reset),
+            .id_pc_i      (id_pc_i),
+            .id_insn_i    (id_insn_i),
+            .id_en_i      (id_en_i),
+            .in0_i        (in0_i),
+            .in1_i        (in1_i),
+            .op_i         (op_i),
+            .result_o     (muldiv_out)
         );
     `else
         // 如果不支持RV64M，将乘除输出设为0

@@ -8,13 +8,15 @@
 module RV64I (
     input  wire                   clk,
     input  wire                   reset,
-    input  wire [`WordDataBus] id_insn_i,
+    input  wire [`WordAddrBus]    id_pc_i,
+    input  wire [`WordDataBus]    id_insn_i,
+    input  wire                   id_en_i,
 
-    input  wire [`WordDataBus] in0_i,
-    input  wire [`WordDataBus] in1_i,
-    input  wire [`AluOpBus]    op_i,
-    output reg  [`WordDataBus] result_o,
-    output reg                 overflow_o
+    input  wire [`WordDataBus]    in0_i,
+    input  wire [`WordDataBus]    in1_i,
+    input  wire [`AluOpBus]       op_i,
+    output reg  [`WordDataBus]    result_o,
+    output reg                    overflow_o
 );
 
     /********** 内部信号 **********/

@@ -17,8 +17,8 @@ module if_reg (
     input  wire                  br_taken_i,
     input  wire [`WordAddrBus]   br_addr_i,
     /********** IF/ID流水线寄存器 **********/
-    output reg    [`WordAddrBus] if_pc_o,
-    output reg    [`WordDataBus] if_insn_o,
+    output reg  [`WordAddrBus]   if_pc_o,
+    output reg  [`WordDataBus]   if_insn_o,
     output reg                   if_en_o
 );
 
@@ -38,7 +38,7 @@ module if_reg (
                     if_en_o      <= `DISABLE;
                 end else if (br_taken_i == `ENABLE) begin
                     if_pc_o      <= br_addr_i;
-                    if_insn_o    <= insn_i;
+                    if_insn_o    <= `ISA_NOP;
                     /*
                      * 当分支条件成立时，下一条指令不应该被执行，而应该跳转到分支跳转后的指令执行，
                      * 下一个cycle到来时时下一条指令，而不是分支跳转后的指令，所有需要暂停一个cycle，

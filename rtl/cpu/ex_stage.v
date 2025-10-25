@@ -52,7 +52,9 @@ module ex_stage (
     alu u_alu (
         .clk          (clk),
         .reset        (reset),
+        .id_pc_i      (id_pc_i),
         .id_insn_i    (id_insn_i),
+        .id_en_i      (id_en_i),
 
         .in0_i        (id_alu_in_0_i),
         .in1_i        (id_alu_in_1_i),
