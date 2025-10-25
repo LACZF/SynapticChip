@@ -32,15 +32,20 @@ module if_reg (
 		end else begin
 			/* 更新流水线寄存器 */
 			if (stall_i == `DISABLE) begin
-				if (flush_i == `ENABLE) begin				// 刷新
+				if (flush_i == `ENABLE) begin
 					if_pc_o	  <= new_pc_i;
 					if_insn_o <= `ISA_NOP;
 					if_en_o	  <= `DISABLE;
-				end else if (br_taken_i == `ENABLE) begin // 分支成立
+				end else if (br_taken_i == `ENABLE) begin
 					if_pc_o	  <= br_addr_i;
 					if_insn_o <= insn_i;
-					if_en_o	  <= `ENABLE;
-				end else begin							// 下一条地址
+					/*
+					 * 当分支条件成立时，下一条指令不应该被执行，而应该跳转到分支跳转后的指令执行，
+					 * 下一个cycle到来时时下一条指令，而不是分支跳转后的指令，所有需要暂停一个cycle，
+					 * 等待正确的指令到来。
+					 */
+					if_en_o	  <= `DISABLE;
+				end else begin
 					if_pc_o	  <= if_pc_o + 1'd1;
 					if_insn_o <= insn_i;
 					if_en_o	  <= `ENABLE;
