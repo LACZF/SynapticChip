@@ -74,24 +74,24 @@ $(COMPLETE_TEST_TARGET).vvp: $(COMPLETE_TEST_TARGET)
 test: $(COMPLETE_TEST_TARGET).vvp
 
 it_list:
-	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/it -name makefile.txt | xargs dirname); do \
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/it | awk -F: '{print $$1}'); do \
 		echo "make test M=$$M"; \
 	done
 
 all_it:
-	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/it -name makefile.txt | xargs dirname); do \
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/it | awk -F: '{print $$1}'); do \
 		make test M=$$M || exit 1; \
 	done
 
 ut_list:
-	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/ut -name makefile.txt | xargs dirname); do \
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/ut | awk -F: '{print $$1}'); do \
 		echo "make test M=$$M"; \
 	done
 
 test_list: ut_list it_list
 
 all_ut:
-	$(QUITE)cd $(TOP_DIR) && for M in $(shell find test/ut -name makefile.txt | xargs dirname); do \
+	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/ut | awk -F: '{print $$1}'); do \
 		make test M=$$M || exit 1; \
 	done
 

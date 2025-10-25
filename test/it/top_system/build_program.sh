@@ -2,7 +2,7 @@
 
 if [ -z "$RISCV_PREFIX" ]; then
     if [ "$(uname)" == "Linux" ]; then
-        RISCV_PREFIX=riscv64-linux-elf-
+        RISCV_PREFIX=riscv64-linux-gnu-
     elif [ "$(uname)" == "Darwin" ]; then
         RISCV_PREFIX=riscv64-elf-
     else
