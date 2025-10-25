@@ -80,7 +80,7 @@ module bus (
 );
 
     /********** 总线仲裁器 **********/
-    bus_arbiter bus_arbiter (
+    bus_arbiter u_bus_arbiter (
         /********** 时钟 & 复位 **********/
         .clk            (clk),          // 时钟
         .reset          (reset),        // 异步复位
@@ -100,7 +100,7 @@ module bus (
     );
 
     /********** 总线主控用多路复用器 **********/
-    bus_master_mux bus_master_mux (
+    bus_master_mux u_bus_master_mux (
         /********** 总线主控信号 **********/
         // 0号总线主控
         .m0_addr_i    (m0_addr_i),      // 地址
@@ -134,7 +134,7 @@ module bus (
     );
 
     /********** 地址解码器 **********/
-    bus_addr_dec bus_addr_dec (
+    bus_addr_dec u_bus_addr_dec (
         /********** 地址 **********/
         .s_addr_i     (s_addr_o),     // 地址
         /********** 片选 **********/
@@ -149,7 +149,7 @@ module bus (
     );
 
     /********** 总线从属用多路复用器 **********/
-    bus_slave_mux bus_slave_mux (
+    bus_slave_mux u_bus_slave_mux (
         /********** 片选 **********/
         .s0_cs_n_i    (s0_cs_n_o),      // 0号总线从属
         .s1_cs_n_i    (s1_cs_n_o),      // 1号总线从属

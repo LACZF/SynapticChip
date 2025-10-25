@@ -41,7 +41,7 @@ module spm (
     end
 
     /********** Xilinx FPGA Block RAM : 双端口RAM **********/
-    x_s3e_dpram x_s3e_dpram (
+    x_s3e_dpram u_x_s3e_dpram (
         /********** A端口 : IF阶段 **********/
         .clka  (clk),               // 时钟
         .addra (if_spm_addr_i),     // 地址

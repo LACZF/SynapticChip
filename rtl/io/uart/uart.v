@@ -33,7 +33,7 @@ module uart (
     wire [`ByteDataBus]           tx_data;
 
     /********** UART控制模块 **********/
-    uart_ctrl uart_ctrl (
+    uart_ctrl u_uart_ctrl (
         .clk         (clk),
         .reset       (reset),
 
@@ -59,7 +59,7 @@ module uart (
     );
 
     /********** UART发送模块 **********/
-    uart_tx uart_tx (
+    uart_tx u_uart_tx (
         .clk         (clk),
         .reset       (reset),
 
@@ -72,7 +72,7 @@ module uart (
     );
 
     /********** UART接收模块 **********/
-    uart_rx uart_rx (
+    uart_rx u_uart_rx (
         .clk         (clk),
         .reset       (reset),
 

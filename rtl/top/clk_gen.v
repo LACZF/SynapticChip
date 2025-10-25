@@ -26,7 +26,7 @@ module clk_gen (
                             `RESET_ENABLE : `RESET_DISABLE;
 
     /********** Xilinx DCM (Digitl Clock Manager) **********/
-    x_s3e_dcm x_s3e_dcm (
+    x_s3e_dcm u_x_s3e_dcm (
         .CLKIN_IN           (clk_ref),      // 主时钟
         .RST_IN             (dcm_reset),    // DCM复位
         .CLK0_OUT           (clk),          // 时钟

@@ -41,7 +41,7 @@ module chip_top (
     wire                       clk_;             // 反相时钟
     wire                       chip_reset;       // 复芯片位
 
-    clk_gen clk_gen (
+    clk_gen u_clk_gen (
         /********** 时钟 & 复位 **********/
         .clk_ref      (clk_ref),                // 主时钟
         .reset_sw     (reset_sw),               // 复位按钮
@@ -52,7 +52,7 @@ module chip_top (
         .chip_reset   (chip_reset)              // 复芯片位
     );
 
-    chip chip (
+    chip u_chip (
         .clk          (clk),
         .clk_         (clk_),
         .reset        (chip_reset)

@@ -117,7 +117,7 @@ module cpu (
     wire [`WordDataBus]          mem_fwd_data;
 
     /********** IF阶段 **********/
-    if_stage if_stage (
+    if_stage u_if_stage (
         .clk               (clk),
         .reset             (reset),
 
@@ -149,7 +149,7 @@ module cpu (
     );
 
     /********** ID阶段 **********/
-    id_stage id_stage (
+    id_stage u_id_stage (
         .clk                   (clk),
         .reset                 (reset),
 
@@ -195,7 +195,7 @@ module cpu (
     );
 
     /********** EX阶段 **********/
-    ex_stage ex_stage (
+    ex_stage u_ex_stage (
         .clk                   (clk),
         .reset                 (reset),
 
@@ -232,7 +232,7 @@ module cpu (
     );
 
     /********** MEM阶段 **********/
-    mem_stage mem_stage (
+    mem_stage u_mem_stage (
         .clk                 (clk),
         .reset               (reset),
 
@@ -279,7 +279,7 @@ module cpu (
     );
 
     /********** 控制单元 **********/
-    ctrl ctrl (
+    ctrl u_ctrl (
         .clk               (clk),
         .reset             (reset),
 
@@ -318,7 +318,7 @@ module cpu (
     );
 
     /********** 通用寄存器 **********/
-    gpr gpr (
+    gpr u_gpr (
         .clk               (clk),
         .reset             (reset),
 
@@ -333,7 +333,7 @@ module cpu (
     );
 
     /********** SPM **********/
-    spm spm (
+    spm u_spm (
         .clk                   (clk_n),
         .if_spm_addr_i         (if_spm_addr[`SpmAddrLoc]),
         .if_spm_as_n_i         (if_spm_as_),

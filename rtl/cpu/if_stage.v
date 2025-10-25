@@ -39,7 +39,7 @@ module if_stage (
     wire [`WordDataBus]    insn;
 
     /********** 总线接口 **********/
-    bus_if bus_if (
+    bus_if u_bus_if (
         .clk              (clk),
         .reset            (reset),
         /********** 流水线控制信号 **********/
@@ -70,7 +70,7 @@ module if_stage (
     );
 
     /********** IF阶段流水线寄存器 **********/
-    if_reg if_reg (
+    if_reg u_if_reg (
         .clk         (clk),
         .reset       (reset),
         /********** 获取数据 **********/

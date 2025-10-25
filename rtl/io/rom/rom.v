@@ -17,7 +17,7 @@ module rom (
 );
 
     /********** Xilinx FPGA Block RAM : 单端口ROM **********/
-    x_s3e_sprom x_s3e_sprom (
+    x_s3e_sprom u_x_s3e_sprom (
         .clka  (clk),                     // 时钟
         .addra (addr),                    // 地址
         .douta (rd_data)                  // 读取的数据

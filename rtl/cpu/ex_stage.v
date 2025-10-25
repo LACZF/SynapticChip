@@ -49,7 +49,7 @@ module ex_stage (
     assign fwd_data_o = alu_out;
 
     /********** ALU **********/
-    alu alu (
+    alu u_alu (
         .clk          (clk),
         .reset        (reset),
         .id_insn_i    (id_insn_i),
@@ -62,7 +62,7 @@ module ex_stage (
     );
 
     /********** 流水线寄存器 **********/
-    ex_reg ex_reg (
+    ex_reg u_ex_reg (
         /********** 时钟 & 复位 **********/
         .clk                (clk),
         .reset              (reset),

@@ -132,7 +132,7 @@ module chip (
     assign cpu_irq = {{`CPU_IRQ_CH-3{`LOW}}, irq_uart_rx, irq_uart_tx, irq_timer};
 
     /********** CPU **********/
-    cpu cpu (
+    cpu u_cpu (
         .clk                   (clk),
         .clk_n                 (clk_),
         .reset                 (reset),
@@ -174,7 +174,7 @@ module chip (
     assign m3_req_      = `DISABLE_N;
 
     /********** ROM **********/
-    rom rom (
+    rom u_rom (
         .clk           (clk),
         .reset         (reset),
 
@@ -196,7 +196,7 @@ module chip (
         .NUM_RINGS(2),
         .PE_ARRAY_ROWS(2),
         .PE_ARRAY_COLS(2)
-    ) pe (
+    ) u_pe (
         .clk(clk),
         .reset(reset),
 
@@ -216,7 +216,7 @@ module chip (
 
 `ifdef IMPLEMENT_TIMER
     /********** TIMER **********/
-    timer timer (
+    timer u_timer (
         .clk             (clk),
         .reset           (reset),
 
@@ -238,7 +238,7 @@ module chip (
 
 `ifdef IMPLEMENT_UART
     /********** UART **********/
-    uart uart (
+    uart u_uart (
         .clk             (clk),
         .reset           (reset),
 
@@ -265,7 +265,7 @@ module chip (
 
 `ifdef IMPLEMENT_GPIO
     /********** GPIO **********/
-    gpio gpio (
+    gpio u_gpio (
         .clk             (clk),
         .reset           (reset),
 
@@ -298,7 +298,7 @@ module chip (
         .DATA_WIDTH    (32),
         .ADDR_WIDTH    (32),
         .CS_NUM        (1)
-    ) spi (
+    ) u_spi (
         .clk           (clk),
         .rst_n         (reset == `RESET_DISABLE ? 1'b1 : 1'b0),
 
@@ -333,7 +333,7 @@ module chip (
         .ADDR_WIDTH    (64),
         .DATA_WIDTH    (32),
         .INST_WIDTH    (4)
-    ) jtag (
+    ) u_jtag (
         .clk             (clk),
         .rst_n           (reset == `RESET_DISABLE ? 1'b1 : 1'b0),
 
@@ -361,7 +361,7 @@ module chip (
 `endif
 
     /********** BUS **********/
-    bus bus (
+    bus u_bus (
         .clk               (clk),
         .reset             (reset),
 

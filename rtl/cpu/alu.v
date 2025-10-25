@@ -21,7 +21,7 @@ module alu (
     wire [`WordDataBus] muldiv_out;
 
     // 实例化基本ALU模块（RV64I指令集）
-    RV64I rv64i (
+    RV64I u_rv64i (
         .clk(clk),
         .reset(reset),
         .id_insn_i(id_insn_i),
@@ -34,7 +34,7 @@ module alu (
 
     // 实例化乘除法ALU模块（RV64M指令集）
     `ifdef SUPPORT_RV64M
-        RV64M rv64m (
+        RV64M u_rv64m (
             .clk(clk),
             .reset(reset),
             .id_insn_i(id_insn_i),

@@ -54,7 +54,7 @@ module chip_top_test;
     always #5 clk_ref = ~clk_ref;
 
 	/********** 实例化chip_top **********/
-	chip_top chip_top (
+	chip_top u_chip_top (
 		/********** 时钟 & 复位 **********/
 		.clk_ref	(clk_ref), // 主时钟
 		.reset_sw	(reset_sw) //
@@ -103,20 +103,20 @@ module chip_top_test;
 //	  assign uart_rx = uart_tx; // 回送
 
 	/********** UART模型 **********/
-	uart_rx uart_model (
+	uart_rx u_uart_model (
 		/********** 时钟 & 复位 **********/
-		.clk	  (chip_top.clk),		 // 时钟
-		.reset	  (chip_top.chip_reset), // 异步复位
+		.clk	  (u_chip_top.clk),		   // 时钟
+		.reset	  (u_chip_top.chip_reset), // 异步复位
 		/********** 控制信号 **********/
-		.rx_busy  (rx_busy),			 // 接收中标志位
-		.rx_end	  (rx_end),				 // 接收完成信号
-		.rx_data  (rx_data),			 // 接收的数据
+		.rx_busy  (rx_busy),			   // 接收中标志位
+		.rx_end	  (rx_end),				   // 接收完成信号
+		.rx_data  (rx_data),			   // 接收的数据
 		/********** Receive Signal **********/
-		.rx		  (uart_tx)				 // UART接收信号
+		.rx		  (uart_tx)				   // UART接收信号
 	);
 
 	/********** 发送信号的监测 **********/
-	always @(posedge chip_top.clk) begin
+	always @(posedge u_chip_top.clk) begin
 		if (rx_end == `ENABLE) begin // 输出接收到的文字
 			$write("%c", rx_data);
 		end
@@ -125,8 +125,8 @@ module chip_top_test;
 
 	/********** 测试用例 **********/
 	initial begin
-		$readmemh(`ROM_PRG, chip_top.chip.rom.x_s3e_sprom.mem);
-		$readmemh(`SPM_PRG, chip_top.chip.cpu.spm.x_s3e_dpram.mem);
+		$readmemh(`ROM_PRG, u_chip_top.u_chip.u_rom.u_x_s3e_sprom.mem);
+		$readmemh(`SPM_PRG, u_chip_top.u_chip.u_cpu.u_spm.u_x_s3e_dpram.mem);
 
 		clk_ref	 <= `LOW;
 		reset_sw <= `RESET_ENABLE;

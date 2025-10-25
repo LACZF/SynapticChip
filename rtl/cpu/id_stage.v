@@ -66,7 +66,7 @@ module id_stage (
     assign id_insn_o = if_insn_i;
 
     /********** 指令解码器 **********/
-    decoder decoder (
+    decoder u_decoder (
         /********** IF/ID流水线寄存器 **********/
         .if_pc_i            (if_pc_i),
         .if_insn_i          (if_insn_i),
@@ -110,7 +110,7 @@ module id_stage (
     );
 
     /********** 流水线寄存器 **********/
-    id_reg id_reg (
+    id_reg u_id_reg (
         .clk                (clk),
         .reset              (reset),
         /********** 解码结果 **********/

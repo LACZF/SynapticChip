@@ -64,7 +64,7 @@ module mem_stage (
     assign fwd_data_o        = result;
 
     /********** 内存访问控制模块 **********/
-    mem_ctrl mem_ctrl (
+    mem_ctrl u_mem_ctrl (
         /********** EX/MEM流水线寄存器 **********/
         .ex_en_i             (ex_en_i),
         .ex_mem_op_i         (ex_mem_op_i),
@@ -82,7 +82,7 @@ module mem_stage (
     );
 
     /********** 总线接口 **********/
-    bus_if bus_if (
+    bus_if u_bus_if (
         /********** 时钟 & 复位 **********/
         .clk             (clk),
         .reset           (reset),
@@ -114,7 +114,7 @@ module mem_stage (
     );
 
     /********** MEM阶段流水线寄存器 **********/
-    mem_reg mem_reg (
+    mem_reg u_mem_reg (
         .clk             (clk),
         .reset           (reset),
         /********** 内存访问结果 **********/
