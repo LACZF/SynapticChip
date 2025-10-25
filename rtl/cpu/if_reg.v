@@ -46,7 +46,7 @@ module if_reg (
                      */
                     if_en_o      <= `DISABLE;
                 end else begin
-                    if_pc_o      <= if_pc_o + 1'd1;
+                    if_pc_o      <= if_pc_o + 4;
                     if_insn_o    <= insn_i;
                     if_en_o      <= `ENABLE;
                 end

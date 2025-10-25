@@ -65,7 +65,7 @@ module decoder (
     // U型立即数
     wire [`WordDataBus] u_imm    = {if_insn_i[31:12], 12'b0};
     // J型立即数
-    wire [`WordDataBus] j_imm    = {{31{if_insn_i[31]}}, if_insn_i[31], if_insn_i[19:12], if_insn_i[20], if_insn_i[30:21], 1'b0} >> 2;
+    wire [`WordDataBus] j_imm    = {{31{if_insn_i[31]}}, if_insn_i[31], if_insn_i[19:12], if_insn_i[20], if_insn_i[30:21], 1'b0};
 
     /********** 寄存器读取地址 **********/
     assign gpr_rd_addr0_o  = rs1; // 寄存器读取地址 0
@@ -80,10 +80,10 @@ module decoder (
     /********** 地址 **********/
     wire [`WordDataBus] alu_result; // 中间结果信号
     assign              alu_result = ra_data + i_imm;
-    wire [`WordAddrBus] ret_addr   = if_pc_i + 1'b1;                        // 返回地址
+    wire [`WordAddrBus] ret_addr   = if_pc_i + 4;                           // 返回地址
     wire [`WordAddrBus] br_target  = if_pc_i + b_imm[`WORD_ADDR_MSB:0];     // 分支目标地址
     wire [`WordAddrBus] jr_target  = alu_result[`WordAddrLoc];              // 跳转目标地址 (JALR)
-    wire [`WordAddrBus] j_target   = if_pc_i + j_imm[`WORD_ADDR_MSB:0] - 1; // JAL目标地址
+    wire [`WordAddrBus] j_target   = if_pc_i + j_imm[`WORD_ADDR_MSB:0] - 4; // JAL目标地址
 
     /********** 数据直通 **********/
     always @(*) begin

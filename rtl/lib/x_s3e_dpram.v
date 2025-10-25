@@ -30,11 +30,11 @@ module x_s3e_dpram (
         if ((web == `ENABLE) && (addra == addrb)) begin
             douta      <= dinb;
         end else begin
-            douta      <= mem[addra];
+            douta      <= mem[addra>>2];
         end
         // 写入访问
         if (wea == `ENABLE) begin
-            mem[addra]<= dina;
+            mem[addra>>2]<= dina;
         end
     end
 
@@ -44,11 +44,11 @@ module x_s3e_dpram (
         if ((wea == `ENABLE) && (addrb == addra)) begin
             doutb      <= dina;
         end else begin
-            doutb      <= mem[addrb];
+            doutb      <= mem[addrb>>2];
         end
         // 写入访问
         if (web == `ENABLE) begin
-            mem[addrb]<= dinb;
+            mem[addrb>>2]<= dinb;
         end
     end
 
