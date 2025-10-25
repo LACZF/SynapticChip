@@ -1,5 +1,5 @@
 `ifndef __ROM_HEADER__
-	`define __ROM_HEADER__
+    `define __ROM_HEADER__
 /*
  * 【关于ROM的大小】
  *改变ROM的大小
@@ -19,10 +19,10 @@
   * ROM_ADDR_W在log2（2048）中为11。
  */
 
-	`define ROM_SIZE   8192	// ROM的大小
-	`define ROM_DEPTH  2048	// ROM的深度
-	`define ROM_ADDR_W 11	// 地址宽度
-	`define RomAddrBus 10:0 // 地址总线
-	`define RomAddrLoc 10:0 // 地址的位置
+    `define ROM_SIZE   8192    // ROM的大小
+    `define ROM_DEPTH  2048    // ROM的深度
+    `define ROM_ADDR_W 11      // 地址宽度
+    `define RomAddrBus 10:0    // 地址总线
+    `define RomAddrLoc 10:0    // 地址的位置
 
 `endif

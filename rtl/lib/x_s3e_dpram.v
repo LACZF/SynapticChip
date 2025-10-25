@@ -7,49 +7,49 @@
 
 /********** 模块 **********/
 module x_s3e_dpram (
-	/********** 端口 A **********/
-	input  wire				   clka,  // 时钟
-	input  wire [`SpmAddrBus]  addra, // 地址
-	input  wire [`WordDataBus] dina,  // 写入的数据
-	input  wire				   wea,	  // 写入有效
-	output reg	[`WordDataBus] douta, // 读取的数据
-	/********** 端口 B **********/
-	input  wire				   clkb,  // 时钟
-	input  wire [`SpmAddrBus]  addrb, // 地址
-	input  wire [`WordDataBus] dinb,  // 写入的数据
-	input  wire				   web,	  // 写入有效
-	output reg	[`WordDataBus] doutb  // 读取的数据
+    /********** 端口 A **********/
+    input  wire                   clka,  // 时钟
+    input  wire [`SpmAddrBus]     addra, // 地址
+    input  wire [`WordDataBus]    dina,  // 写入的数据
+    input  wire                   wea,   // 写入有效
+    output reg    [`WordDataBus]  douta, // 读取的数据
+    /********** 端口 B **********/
+    input  wire                   clkb,  // 时钟
+    input  wire [`SpmAddrBus]     addrb, // 地址
+    input  wire [`WordDataBus]    dinb,  // 写入的数据
+    input  wire                   web,   // 写入有效
+    output reg    [`WordDataBus]  doutb  // 读取的数据
 );
 
-	/********** 内存 **********/
-	reg [`WordDataBus] mem [0:`SPM_DEPTH-1];
+    /********** 内存 **********/
+    reg [`WordDataBus] mem [0:`SPM_DEPTH-1];
 
-	/********** 内存访问（端口 A） **********/
-	always @(posedge clka) begin
-		// 读取访问
-		if ((web == `ENABLE) && (addra == addrb)) begin
-			douta	  <= dinb;
-		end else begin
-			douta	  <= mem[addra];
-		end
-		// 写入访问
-		if (wea == `ENABLE) begin
-			mem[addra]<= dina;
-		end
-	end
+    /********** 内存访问（端口 A） **********/
+    always @(posedge clka) begin
+        // 读取访问
+        if ((web == `ENABLE) && (addra == addrb)) begin
+            douta      <= dinb;
+        end else begin
+            douta      <= mem[addra];
+        end
+        // 写入访问
+        if (wea == `ENABLE) begin
+            mem[addra]<= dina;
+        end
+    end
 
-	/********** 内存访问（端口 B） **********/
-	always @(posedge clkb) begin
-		// 读取访问
-		if ((wea == `ENABLE) && (addrb == addra)) begin
-			doutb	  <= dina;
-		end else begin
-			doutb	  <= mem[addrb];
-		end
-		// 写入访问
-		if (web == `ENABLE) begin
-			mem[addrb]<= dinb;
-		end
-	end
+    /********** 内存访问（端口 B） **********/
+    always @(posedge clkb) begin
+        // 读取访问
+        if ((wea == `ENABLE) && (addrb == addra)) begin
+            doutb      <= dina;
+        end else begin
+            doutb      <= mem[addrb];
+        end
+        // 写入访问
+        if (web == `ENABLE) begin
+            mem[addrb]<= dinb;
+        end
+    end
 
 endmodule
