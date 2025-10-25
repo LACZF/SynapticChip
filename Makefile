@@ -16,6 +16,8 @@ else
 ABS_M := $(abspath $(M))
 ifneq (,$(wildcard $(M)/makefile.txt))
 include $(M)/makefile.txt
+else ifeq ($(shell test -f $(M) && echo yes),yes)
+include $(M)
 else
 TEST_TARGET := $(shell basename $(M))
 TEST_ARGS ?= -g2012
@@ -60,7 +62,7 @@ $(COMPLETE_TEST_TARGET):
 	$(QUITE)if [ -d $(ABS_M) ]; then \
 			cp -rf $(ABS_M)/* $(TEST_BUILD_DIR); \
 		else \
-			cp $(ABS_M) $(TEST_BUILD_DIR); \
+			cp -rf $(shell dirname $(ABS_M))/* $(TEST_BUILD_DIR); \
 		fi
 	$(QUITE)cd $(TEST_BUILD_DIR) && $(IVERILOG) -o $(COMPLETE_TEST_TARGET) \
 		$(TEST_ARGS) $(TEST_INCLUDE_DIR) $(TEST_SRC)
