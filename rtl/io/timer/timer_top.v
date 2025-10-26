@@ -4,7 +4,7 @@
 
 `include "timer.v"
 
-module timer (
+module timer_top (
     input  wire                    clk,
     input  wire                    reset,
 

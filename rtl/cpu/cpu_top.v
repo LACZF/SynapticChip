@@ -341,7 +341,7 @@ module cpu_top (
     );
 
     /********** SPM **********/
-    spm u_spm (
+    spm_top u_spm (
         .clk                   (clk),
         .reset                 (reset),
 

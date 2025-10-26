@@ -64,7 +64,7 @@ module io_top #(
     /********** ROM **********/
     generate
         if (IMPLEMENT_ROM) begin : rom_gen
-            rom u_rom (
+            rom_top u_rom (
                 .clk           (clk),
                 .reset         (reset),
 
@@ -85,7 +85,7 @@ module io_top #(
     /********** TIMER **********/
     generate
         if (IMPLEMENT_TIMER) begin : timer_gen
-            timer u_timer (
+            timer_top u_timer (
                 .clk             (clk),
                 .reset           (reset),
 
@@ -109,7 +109,7 @@ module io_top #(
     /********** UART **********/
     generate
         if (IMPLEMENT_UART) begin : uart_gen
-            uart u_uart (
+            uart_top u_uart (
                 .clk               (clk),
                 .reset             (reset),
 
@@ -139,7 +139,7 @@ module io_top #(
     /********** GPIO **********/
     generate
         if (IMPLEMENT_GPIO) begin : gpio_gen
-            gpio #(
+            gpio_top #(
                 .GPIO_IN_CH      (GPIO_IN_CH),
                 .GPIO_OUT_CH     (GPIO_OUT_CH),
                 .GPIO_IO_CH      (GPIO_IO_CH)
@@ -169,7 +169,7 @@ module io_top #(
     /********** SPI **********/
     generate
         if (IMPLEMENT_SPI) begin : spi_gen
-            spi #(
+            spi_top #(
                 .DATA_WIDTH    (32),
                 .ADDR_WIDTH    (32),
                 .CS_NUM        (1)
@@ -202,7 +202,7 @@ module io_top #(
     /********** JTAG **********/
     generate
         if (IMPLEMENT_JTAG) begin : jtag_gen
-            jtag #(
+            jtag_top #(
                 .ADDR_WIDTH      (64),
                 .DATA_WIDTH      (32),
                 .INST_WIDTH      (4)

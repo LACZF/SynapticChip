@@ -4,7 +4,7 @@
 
 `include "spm.v"
 
-module spm (
+module spm_top (
     input  wire                clk,
     input  wire                reset,
 

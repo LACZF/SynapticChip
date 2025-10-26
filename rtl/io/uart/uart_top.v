@@ -4,7 +4,7 @@
 
 `include "uart.v"
 
-module uart (
+module uart_top (
     input  wire                   clk,
     input  wire                   reset,
 

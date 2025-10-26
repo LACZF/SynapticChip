@@ -5,7 +5,7 @@
 
 `include "rom.v"
 
-module rom (
+module rom_top (
     input  wire                   clk,
     input  wire                   reset,
 

@@ -31,18 +31,18 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/if_stage.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_reg.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_stage.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/spm.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/spm_top.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
 
-TEST_SRC += $(TOP_DIR)/rtl/io/jtag/jtag.v
-TEST_SRC += $(TOP_DIR)/rtl/io/spi/spi.v
-TEST_SRC += $(TOP_DIR)/rtl/io/gpio/gpio.v
-TEST_SRC += $(TOP_DIR)/rtl/io/rom/rom.v
-TEST_SRC += $(TOP_DIR)/rtl/io/timer/timer.v
+TEST_SRC += $(TOP_DIR)/rtl/io/jtag/jtag_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/spi/spi_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/gpio/gpio_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/rom/rom_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/timer/timer_top.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
-TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_top.v
 TEST_SRC += $(TOP_DIR)/rtl/io/io_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dpram.v
