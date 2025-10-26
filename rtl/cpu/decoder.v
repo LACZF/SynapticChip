@@ -80,7 +80,7 @@ module decoder (
     /********** 地址 **********/
     wire [`WordDataBus] alu_result; // 中间结果信号
     assign              alu_result = ra_data + i_imm;
-    wire [`WordAddrBus] ret_addr   = if_pc_i + 4;                           // 返回地址
+    wire [`WordAddrBus] ret_addr   = if_pc_i;                           // 返回地址
     wire [`WordAddrBus] br_target  = if_pc_i + b_imm[`WORD_ADDR_MSB:0];     // 分支目标地址
     wire [`WordAddrBus] jr_target  = alu_result[`WordAddrLoc];              // 跳转目标地址 (JALR)
     wire [`WordAddrBus] j_target   = if_pc_i + j_imm[`WORD_ADDR_MSB:0] - 4; // JAL目标地址
@@ -358,7 +358,8 @@ module decoder (
                     br_flag_o  = `ENABLE;
                     br_addr_o  = j_target;
                     br_taken_o = `ENABLE;
-                    alu_in_0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
+                    // alu_in_0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
+                    alu_in_0_o = ret_addr;
                     gpr_we_n_o = `ENABLE_N;
                 end
 
@@ -368,7 +369,8 @@ module decoder (
                     br_flag_o  = `ENABLE;
                     br_addr_o  = jr_target;
                     br_taken_o = `ENABLE;
-                    alu_in_0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
+                    // alu_in_0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
+                    alu_in_0_o = ret_addr;
                     gpr_we_n_o = `ENABLE_N;
                 end
 
