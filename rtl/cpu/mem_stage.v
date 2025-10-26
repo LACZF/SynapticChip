@@ -8,6 +8,7 @@
 module mem_stage (
     input  wire                clk,
     input  wire                reset,
+
     /********** 流水线控制信号 **********/
     input  wire                stall_i,
     input  wire                flush_i,
@@ -31,6 +32,7 @@ module mem_stage (
     output wire [`WordDataBus] bus_wr_data_o,
     /********** EX/MEM流水线寄存器 **********/
     input  wire [`WordAddrBus] ex_pc_i,
+    input  wire [`WordDataBus] ex_insn_i,
     input  wire                ex_en_i,
     input  wire                ex_br_flag_i,
     input  wire [`MemOpBus]    ex_mem_op_i,
@@ -42,6 +44,7 @@ module mem_stage (
     input  wire [`WordDataBus] ex_out_i,
     /********** MEM/WB流水线寄存器 **********/
     output wire [`WordAddrBus] mem_pc_o,
+    output wire [`WordDataBus] mem_insn_o,
     output wire                mem_en_o,
     output wire                mem_br_flag_o,
     output wire [`CtrlOpBus]   mem_ctrl_op_o,
@@ -69,6 +72,8 @@ module mem_stage (
         .reset           (reset),
 
         /********** EX/MEM流水线寄存器 **********/
+        .ex_pc_i             (ex_pc_i),
+        .ex_insn_i           (ex_insn_i),
         .ex_en_i             (ex_en_i),
         .ex_mem_op_i         (ex_mem_op_i),
         .ex_mem_wr_data_i    (ex_mem_wr_data_i),
@@ -128,6 +133,7 @@ module mem_stage (
         .flush_i         (flush_i),
         /********** EX/MEM流水线寄存器 **********/
         .ex_pc_i         (ex_pc_i),
+        .ex_insn_i       (ex_insn_i),
         .ex_en_i         (ex_en_i),
         .ex_br_flag_i    (ex_br_flag_i),
         .ex_ctrl_op_i    (ex_ctrl_op_i),
@@ -136,6 +142,7 @@ module mem_stage (
         .ex_exp_code_i   (ex_exp_code_i),
         /********** MEM/WB流水线寄存器 **********/
         .mem_pc_o        (mem_pc_o),
+        .mem_insn_o      (mem_insn_o),
         .mem_en_o        (mem_en_o),
         .mem_br_flag_o   (mem_br_flag_o),
         .mem_ctrl_op_o   (mem_ctrl_op_o),

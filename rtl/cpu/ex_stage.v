@@ -31,6 +31,7 @@ module ex_stage (
     input  wire [`IsaExpBus]      id_exp_code_i,
     /********** EX/MEM流水线寄存器 **********/
     output wire [`WordAddrBus]    ex_pc_o,
+    output wire [`WordDataBus]    ex_insn_o,
     output wire                   ex_en_o,
     output wire                   ex_br_flag_o,
     output wire [`MemOpBus]       ex_mem_op_o,
@@ -89,6 +90,7 @@ module ex_stage (
         .id_exp_code_i      (id_exp_code_i),
         /********** EX/MEM流水线寄存器 **********/
         .ex_pc_o            (ex_pc_o),
+        .ex_insn_o          (ex_insn_o),
         .ex_en_o            (ex_en_o),
         .ex_br_flag_o       (ex_br_flag_o),
         .ex_mem_op_o        (ex_mem_op_o),

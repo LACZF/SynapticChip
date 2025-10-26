@@ -9,12 +9,18 @@ module spm (
     input  wire                reset,
 
     /********** A端口 : IF阶段 **********/
+    input  wire [`WordAddrBus] if_pc_i,
+    input  wire [`WordDataBus] if_insn_i,
+    input  wire                if_en_i,
     input  wire [`SpmAddrBus]  if_spm_addr_i,
     input  wire                if_spm_as_n_i,
     input  wire                if_spm_rw_i,
     input  wire [`WordDataBus] if_spm_wr_data_i,
     output wire [`WordDataBus] if_spm_rd_data_o,
     /********** B端口 : MEM阶段 **********/
+    input  wire [`WordAddrBus] mem_pc_i,
+    input  wire [`WordDataBus] mem_insn_i,
+    input  wire                mem_en_i,
     input  wire [`SpmAddrBus]  mem_spm_addr_i,
     input  wire                mem_spm_as_n_i,
     input  wire                mem_spm_rw_i,

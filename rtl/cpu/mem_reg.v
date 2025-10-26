@@ -17,6 +17,7 @@ module mem_reg (
     input  wire                       flush_i,                 // 刷新
     /********** EX/MEM流水线寄存器 **********/
     input  wire [`WordAddrBus]        ex_pc_i,                 // 程序计数器
+    input  wire [`WordDataBus]        ex_insn_i,
     input  wire                       ex_en_i,                 // 流水线数据是否有效
     input  wire                       ex_br_flag_i,            // 分支标志位
     input  wire [`CtrlOpBus]          ex_ctrl_op_i,            // 控制寄存器操作
@@ -24,14 +25,15 @@ module mem_reg (
     input  wire                       ex_gpr_we_n_i,           // 通用寄存器写入有效
     input  wire [`IsaExpBus]          ex_exp_code_i,           // 异常代码
     /********** MEM/WB流水线寄存器 **********/
-    output reg    [`WordAddrBus]       mem_pc_o,               // 程序计数器
-    output reg                         mem_en_o,               // 流水线数据是否有效
-    output reg                         mem_br_flag_o,          // 分支标志位
-    output reg    [`CtrlOpBus]         mem_ctrl_op_o,          // 控制寄存器操作
-    output reg    [`RegAddrBus]        mem_dst_addr_o,         // 通用寄存器写入地址
-    output reg                         mem_gpr_we_n_o,         // 通用寄存器写入有效
-    output reg    [`IsaExpBus]         mem_exp_code_o,         // 异常代码
-    output reg    [`WordDataBus]       mem_out_o               // 处理结果
+    output reg  [`WordAddrBus]        mem_pc_o,                // 程序计数器
+    output reg  [`WordDataBus]        mem_insn_o,
+    output reg                        mem_en_o,               // 流水线数据是否有效
+    output reg                        mem_br_flag_o,          // 分支标志位
+    output reg  [`CtrlOpBus]          mem_ctrl_op_o,          // 控制寄存器操作
+    output reg  [`RegAddrBus]         mem_dst_addr_o,         // 通用寄存器写入地址
+    output reg                        mem_gpr_we_n_o,         // 通用寄存器写入有效
+    output reg  [`IsaExpBus]          mem_exp_code_o,         // 异常代码
+    output reg  [`WordDataBus]        mem_out_o               // 处理结果
 );
 
     /********** 流水线寄存器 **********/
@@ -39,6 +41,7 @@ module mem_reg (
         if (reset == `RESET_ENABLE) begin
             /* 异步复位 */
             mem_pc_o          <= `WORD_ADDR_W'h0;
+            mem_insn_o        <= `ISA_NOP;
             mem_en_o          <= `DISABLE;
             mem_br_flag_o     <= `DISABLE;
             mem_ctrl_op_o     <= `CTRL_OP_NOP;
@@ -51,6 +54,7 @@ module mem_reg (
                 /* 流水线寄存器的更新 */
                 if (flush_i == `ENABLE) begin              // 刷新
                     mem_pc_o          <= `WORD_ADDR_W'h0;
+                    mem_insn_o        <= `ISA_NOP;
                     mem_en_o          <= `DISABLE;
                     mem_br_flag_o     <= `DISABLE;
                     mem_ctrl_op_o     <= `CTRL_OP_NOP;
@@ -60,6 +64,7 @@ module mem_reg (
                     mem_out_o         <= `WORD_DATA_W'h0;
                 end else if (miss_align_i == `ENABLE) begin // 未对齐异常
                     mem_pc_o          <= ex_pc_i;
+                    mem_insn_o        <= ex_insn_i;
                     mem_en_o          <= ex_en_i;
                     mem_br_flag_o     <= ex_br_flag_i;
                     mem_ctrl_op_o     <= `CTRL_OP_NOP;
@@ -69,6 +74,7 @@ module mem_reg (
                     mem_out_o         <= `WORD_DATA_W'h0;
                 end else begin                  // 下一个数据
                     mem_pc_o          <= ex_pc_i;
+                    mem_insn_o        <= ex_insn_i;
                     mem_en_o          <= ex_en_i;
                     mem_br_flag_o     <= ex_br_flag_i;
                     mem_ctrl_op_o     <= ex_ctrl_op_i;

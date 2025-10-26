@@ -52,6 +52,7 @@ module cpu (
     wire [`IsaExpBus]               id_exp_code;
 
     wire [`WordAddrBus]             ex_pc;
+    wire [`WordDataBus]             ex_insn;
     wire                            ex_en;
     wire                            ex_br_flag;
     wire [`MemOpBus]                ex_mem_op;
@@ -63,6 +64,7 @@ module cpu (
     wire [`WordDataBus]             ex_out;
 
     wire [`WordAddrBus]             mem_pc;
+    wire [`WordDataBus]             mem_insn;
     wire                            mem_en;
     wire                            mem_br_flag;
     wire [`CtrlOpBus]               mem_ctrl_op;
@@ -205,30 +207,31 @@ module cpu (
 
         .fwd_data_o            (ex_fwd_data),
 
-        .id_pc_i              (id_pc),
-        .id_insn_i            (id_insn),
-        .id_en_i              (id_en),
-        .id_alu_op_i          (id_alu_op),
-        .id_alu_in_0_i        (id_alu_in_0),
-        .id_alu_in_1_i        (id_alu_in_1),
-        .id_br_flag_i         (id_br_flag),
-        .id_mem_op_i          (id_mem_op),
-        .id_mem_wr_data_i     (id_mem_wr_data),
-        .id_ctrl_op_i         (id_ctrl_op),
-        .id_dst_addr_i        (id_dst_addr),
-        .id_gpr_we_n_i        (id_gpr_we_),
-        .id_exp_code_i        (id_exp_code),
+        .id_pc_i               (id_pc),
+        .id_insn_i             (id_insn),
+        .id_en_i               (id_en),
+        .id_alu_op_i           (id_alu_op),
+        .id_alu_in_0_i         (id_alu_in_0),
+        .id_alu_in_1_i         (id_alu_in_1),
+        .id_br_flag_i          (id_br_flag),
+        .id_mem_op_i           (id_mem_op),
+        .id_mem_wr_data_i      (id_mem_wr_data),
+        .id_ctrl_op_i          (id_ctrl_op),
+        .id_dst_addr_i         (id_dst_addr),
+        .id_gpr_we_n_i         (id_gpr_we_),
+        .id_exp_code_i         (id_exp_code),
 
-        .ex_pc_o              (ex_pc),
-        .ex_en_o              (ex_en),
-        .ex_br_flag_o         (ex_br_flag),
-        .ex_mem_op_o          (ex_mem_op),
-        .ex_mem_wr_data_o     (ex_mem_wr_data),
-        .ex_ctrl_op_o         (ex_ctrl_op),
-        .ex_dst_addr_o        (ex_dst_addr),
-        .ex_gpr_we_n_o        (ex_gpr_we_),
-        .ex_exp_code_o        (ex_exp_code),
-        .ex_out_o             (ex_out)
+        .ex_pc_o               (ex_pc),
+        .ex_insn_o             (ex_insn),
+        .ex_en_o               (ex_en),
+        .ex_br_flag_o          (ex_br_flag),
+        .ex_mem_op_o           (ex_mem_op),
+        .ex_mem_wr_data_o      (ex_mem_wr_data),
+        .ex_ctrl_op_o          (ex_ctrl_op),
+        .ex_dst_addr_o         (ex_dst_addr),
+        .ex_gpr_we_n_o         (ex_gpr_we_),
+        .ex_exp_code_o         (ex_exp_code),
+        .ex_out_o              (ex_out)
     );
 
     /********** MEM阶段 **********/
@@ -258,6 +261,7 @@ module cpu (
         .bus_wr_data_o       (mem_bus_wr_data_o),
 
         .ex_pc_i             (ex_pc),
+        .ex_insn_i           (ex_insn),
         .ex_en_i             (ex_en),
         .ex_br_flag_i        (ex_br_flag),
         .ex_mem_op_i         (ex_mem_op),
@@ -269,6 +273,7 @@ module cpu (
         .ex_out_i            (ex_out),
 
         .mem_pc_o            (mem_pc),
+        .mem_insn_o          (mem_insn),
         .mem_en_o            (mem_en),
         .mem_br_flag_o       (mem_br_flag),
         .mem_ctrl_op_o       (mem_ctrl_op),
@@ -322,6 +327,10 @@ module cpu (
         .clk               (clk),
         .reset             (reset),
 
+        .mem_pc_i          (mem_pc),
+        .mem_insn_i        (mem_insn),
+        .mem_en_i          (mem_en),
+
         .rd_addr0_i        (gpr_rd_addr0),
         .rd_data0_o        (gpr_rd_data0),
         .rd_addr1_i        (gpr_rd_addr1),
@@ -337,12 +346,18 @@ module cpu (
         .clk                   (clk),
         .reset                 (reset),
 
+        .if_pc_i               (if_pc),
+        .if_insn_i             (if_insn),
+        .if_en_i               (if_en),
         .if_spm_addr_i         (if_spm_addr[`SpmAddrLoc]),
         .if_spm_as_n_i         (if_spm_as_),
         .if_spm_rw_i           (if_spm_rw),
         .if_spm_wr_data_i      (if_spm_wr_data),
         .if_spm_rd_data_o      (if_spm_rd_data),
 
+        .mem_pc_i              (mem_pc),
+        .mem_insn_i            (mem_insn),
+        .mem_en_i              (mem_en),
         .mem_spm_addr_i        (mem_spm_addr[`SpmAddrLoc]),
         .mem_spm_as_n_i        (mem_spm_as_),
         .mem_spm_rw_i          (mem_spm_rw),

@@ -12,6 +12,8 @@ module mem_ctrl (
 
     /********** EX/MEM流水线寄存器 **********/
     input  wire                   ex_en_i,            // 流水线数据是否有效
+    input  wire [`WordAddrBus]    ex_pc_i,
+    input  wire [`WordDataBus]    ex_insn_i,
     input  wire [`MemOpBus]       ex_mem_op_i,        // 内存操作
     input  wire [`WordDataBus]    ex_mem_wr_data_i,   // 内存写入数据
     input  wire [`WordDataBus]    ex_out_i,           // 处理结果
