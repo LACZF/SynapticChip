@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TOP_DIR="$(dirname $(readlink -f $0))"
+
 if [ -z "$RISCV_PREFIX" ]; then
     if [ "$(uname)" == "Linux" ]; then
         RISCV_PREFIX=riscv64-linux-gnu-
@@ -10,18 +12,30 @@ if [ -z "$RISCV_PREFIX" ]; then
     fi
 fi
 
-# 编译选项
-CFLAGS="-march=rv64im -mabi=lp64 -static -mcmodel=medany -nostartfiles -nostdlib"
+function compile_asm() {
+    local asm_file=$1
+    local elf_file=$2
+    local cflags="-march=rv64im -mabi=lp64 -static -mcmodel=medany -nostartfiles -nostdlib"
 
-# 编译为ELF文件
-${RISCV_PREFIX}as -march=rv64im -o program.o program.s
-${RISCV_PREFIX}ld -T script.ld -o program.elf program.o
+    cflags="-march=rv64im"
+    ${RISCV_PREFIX}as $cflags -o ${asm_file%.s}.o ${asm_file}
+    ${RISCV_PREFIX}ld -T ${TOP_DIR}/script.ld -o ${elf_file} ${asm_file%.s}.o
+}
 
-# 生成反汇编文件用于调试
-${RISCV_PREFIX}objdump -D program.elf > program.dis
+function disassemble() {
+    local elf_file=$1
+    local dis_file=$2
 
-# 生成hex文件
-${RISCV_PREFIX}objcopy -O verilog program.elf program.hex
+    ${RISCV_PREFIX}objdump -D $elf_file > $dis_file
+}
+
+function clean_compile_gen_files() {
+    local asm_file=$1
+    local elf_file=$2
+    local dis_file=$3
+
+    rm -f ${asm_file%.s}.o ${elf_file} ${dis_file}
+}
 
 function asm_to_readmemh_file() {
     local in_file=$1
@@ -56,9 +70,16 @@ function asm_to_readmemh_file() {
     ' $in_file > $out_file
 }
 
-asm_to_readmemh_file program.dis program.hex
+function build_program() {
+    local asm_file=$1
+    local elf_file=$2
+    local dis_file=$3
+    local hex_file=$4
 
-# 清理临时文件
-rm -f program.o
+    compile_asm $asm_file $elf_file
+    disassemble $elf_file $dis_file
+    asm_to_readmemh_file $dis_file $hex_file
+}
 
-echo "编译完成，生成 program.hex 文件"
+build_program program.s program.elf program.dis program.hex
+build_program base_instructions.s base_instructions.elf base_instructions.dis base_instructions.hex
