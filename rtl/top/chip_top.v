@@ -2,11 +2,6 @@
 `include "stddef.v"
 `include "global_config.v"
 
-`include "cpu.v"
-`include "bus.v"
-`include "pe_addr.v"
-`include "pe.v"
-
 module chip_top #(
     parameter MASTER_NUM                = 4,
     parameter SLAVE_NUM                 = 8,
@@ -35,9 +30,9 @@ module chip_top #(
     output wire                         uart_tx,
 
     /********** GPIO  **********/
-    input  wire [`GPIO_IN_CH-1:0]       gpio_in,      // 输入端口
-    output wire [`GPIO_OUT_CH-1:0]      gpio_out,     // 输出端口
-    inout  wire [`GPIO_IO_CH-1:0]       gpio_io,      // 输入输出端口
+    input  wire [GPIO_IN_CH-1:0]        gpio_in,      // 输入端口
+    output wire [GPIO_OUT_CH-1:0]       gpio_out,     // 输出端口
+    inout  wire [GPIO_IO_CH-1:0]        gpio_io,      // 输入输出端口
 
     /********** SPI **********/
     output wire                         spi_cs_n,

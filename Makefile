@@ -37,7 +37,7 @@ endif
 ifneq (,$(filter yosys_synthesis,$(MAKECMDGOALS)))
 ifeq ($(M),)
 M=$(TOP_DIR)/rtl
-TOP_MODULE_ARG := TOP_MODULE=top_system
+TOP_MODULE_ARG := TOP_MODULE=chip_top
 $(warning "M is not set, synth for $(M).")
 else ifeq ($(TOP_MODULE),)
 $(warning "TOP_MODULE is not set.")

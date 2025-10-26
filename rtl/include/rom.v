@@ -19,8 +19,8 @@
   * ROM_ADDR_W在log2（2048）中为11。
  */
 
-    `define ROM_SIZE   8192    // ROM的大小
-    `define ROM_DEPTH  2048    // ROM的深度
+    `define ROM_SIZE   4096    // ROM的大小
+    `define ROM_DEPTH  1024    // ROM的深度
     `define ROM_ADDR_W 11      // 地址宽度
     `define RomAddrBus 10:0    // 地址总线
     `define RomAddrLoc 10:0    // 地址的位置
