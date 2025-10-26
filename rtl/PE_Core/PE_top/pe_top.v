@@ -101,11 +101,11 @@ module pe_top #(
     assign rdy_n_o = cs_valid ? `ENABLE_N : `DISABLE_N;
 
     // Output assignments (internal connections)
-    assign pe_enable = pe_enable_reg;
-    assign pe_reset = pe_reset_reg;
+    assign pe_enable       = pe_enable_reg;
+    assign pe_reset        = pe_reset_reg;
     assign pe_instructions = pe_inst_reg;
-    assign pe_inst_valid = pe_inst_valid_reg;
-    assign route_config = route_config_reg;
+    assign pe_inst_valid   = pe_inst_valid_reg;
+    assign route_config    = route_config_reg;
     assign route_cfg_valid = route_cfg_valid_reg;
 
     // --------------------------
@@ -113,21 +113,21 @@ module pe_top #(
     // --------------------------
 
     // PE interconnection signals
-    wire [NUM_PES-1:0] pe_north_valid;
+    wire [NUM_PES-1:0]               pe_north_valid;
     wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_north_data;
-    wire [NUM_PES-1:0] pe_north_ready;
+    wire [NUM_PES-1:0]               pe_north_ready;
 
-    wire [NUM_PES-1:0] pe_south_valid;
+    wire [NUM_PES-1:0]               pe_south_valid;
     wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_south_data;
-    wire [NUM_PES-1:0] pe_south_ready;
+    wire [NUM_PES-1:0]               pe_south_ready;
 
-    wire [NUM_PES-1:0] pe_east_valid;
+    wire [NUM_PES-1:0]               pe_east_valid;
     wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_east_data;
-    wire [NUM_PES-1:0] pe_east_ready;
+    wire [NUM_PES-1:0]               pe_east_ready;
 
-    wire [NUM_PES-1:0] pe_west_valid;
+    wire [NUM_PES-1:0]               pe_west_valid;
     wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_west_data;
-    wire [NUM_PES-1:0] pe_west_ready;
+    wire [NUM_PES-1:0]               pe_west_ready;
 
     // Instantiate PE array
     genvar i, j;
@@ -171,10 +171,10 @@ module pe_top #(
     endgenerate
 
     // Instantiate routing configuration module
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] north_routes_o;
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] south_routes_o;
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] east_routes_o;
-    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] west_routes_o;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] north_routes;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] south_routes;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] east_routes;
+    wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] west_routes;
 
     pe_route_config #(
         .NUM_PES(NUM_PES),
@@ -184,10 +184,10 @@ module pe_top #(
         .rst_n(reset == `RESET_DISABLE ? 1'b1 : 1'b0),
         .cfg_valid_i(route_cfg_valid),
         .cfg_data_i(route_config),
-        .north_routes_o(north_routes_o),
-        .south_routes_o(south_routes_o),
-        .east_routes_o(east_routes_o),
-        .west_routes_o(west_routes_o)
+        .north_routes_o(north_routes),
+        .south_routes_o(south_routes),
+        .east_routes_o(east_routes),
+        .west_routes_o(west_routes)
     );
 
     // Connect PE inter-routing

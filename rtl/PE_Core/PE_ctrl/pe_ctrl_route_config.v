@@ -25,11 +25,11 @@ module pe_route_config #(
     // Update routing configuration
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            route_table <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+            route_table    <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
             north_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
             south_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-            east_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
-            west_routes_o <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+            east_routes_o  <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
+            west_routes_o  <= {(NUM_PES*4*PE_ID_WIDTH){1'b0}};
         end else if (cfg_valid_i) begin
             route_table <= cfg_data_i;
 

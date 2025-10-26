@@ -69,10 +69,10 @@ module pe_core #(
     // Internal signals
     reg [DATA_WIDTH-1:0] alu_out;
     reg [DATA_WIDTH-1:0] alu_a, alu_b;
-    reg alu_zero, alu_neg;
+    reg                  alu_zero, alu_neg;
 
     // Status registers
-    reg [1:0] mode;
+    reg [1:0]            mode;
     reg [DATA_WIDTH-1:0] pc; // Program counter
     reg [DATA_WIDTH-1:0] mar; // Memory address register
     reg [DATA_WIDTH-1:0] mdr; // Memory data register
@@ -83,17 +83,17 @@ module pe_core #(
 
     // State machine
     reg [2:0] state;
-    parameter S_IDLE = 3'b000;
-    parameter S_FETCH = 3'b001;
-    parameter S_DECODE = 3'b010;
+    parameter S_IDLE    = 3'b000;
+    parameter S_FETCH   = 3'b001;
+    parameter S_DECODE  = 3'b010;
     parameter S_EXECUTE = 3'b011;
-    parameter S_MEMORY = 3'b100;
-    parameter S_COMM = 3'b101;
+    parameter S_MEMORY  = 3'b100;
+    parameter S_COMM    = 3'b101;
 
     // ALU operations
     always @(*) begin
         alu_zero = 0;
-        alu_neg = 0;
+        alu_neg  = 0;
 
         case (opcode)
             `OP_ADD: alu_out = alu_a + alu_b;
@@ -115,15 +115,15 @@ module pe_core #(
     // Main state machine
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state <= S_IDLE;
-            mode <= `MODE_IDLE;
-            pc <= 0;
-            mar <= 0;
-            mdr <= 0;
+            state       <= S_IDLE;
+            mode        <= `MODE_IDLE;
+            pc          <= 0;
+            mar         <= 0;
+            mdr         <= 0;
             out_valid_o <= 0;
-            out_data_o <= 0;
-            busy_o <= 0;
-            status_o <= 0;
+            out_data_o  <= 0;
+            busy_o      <= 0;
+            status_o    <= 0;
 
             // Initialize register file
             for (integer i = 0; i < `NUM_REGS; i = i + 1) begin
@@ -133,14 +133,14 @@ module pe_core #(
             // Initialize communication buffers
             for (integer j = 0; j < 4; j = j + 1) begin
                 comm_buffer[j] <= 0;
-                comm_ready[j] <= 0;
+                comm_ready[j]  <= 0;
             end
         end else if (enable_i) begin
             case (state)
                 S_IDLE: begin
                     busy_o <= 0;
                     if (inst_valid_i) begin
-                        state <= S_FETCH;
+                        state  <= S_FETCH;
                         busy_o <= 1;
                     end
                 end
@@ -172,7 +172,7 @@ module pe_core #(
                         `OP_NOT, `OP_SHL, `OP_SHR: begin
                             // Arithmetic/logic operations
                             reg_file[rd] <= alu_out;
-                            state <= S_IDLE;
+                            state        <= S_IDLE;
                         end
 
                         `OP_LOAD: begin
@@ -180,7 +180,7 @@ module pe_core #(
                             mdr <= mem_data_in_i;
                             if (mem_ack_i) begin
                                 reg_file[rd] <= mem_data_in_i;
-                                state <= S_IDLE;
+                                state        <= S_IDLE;
                             end else begin
                                 state <= S_MEMORY;
                             end
@@ -199,12 +199,12 @@ module pe_core #(
                         `OP_MOVE: begin
                             // Inter-register move
                             reg_file[rd] <= reg_file[rs1];
-                            state <= S_IDLE;
+                            state        <= S_IDLE;
                         end
 
                         `OP_JUMP: begin
                             // Unconditional jump
-                            pc <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
+                            pc    <= reg_file[rs1] + {{(DATA_WIDTH-14){immediate[13]}}, immediate};
                             state <= S_IDLE;
                         end
 
@@ -267,22 +267,22 @@ module pe_core #(
             // Handle communication input
             if (north_valid_i && north_ready_o) begin
                 comm_buffer[0] <= north_data_i;
-                comm_ready[0] <= 1;
+                comm_ready[0]  <= 1;
             end
 
             if (south_valid_i && south_ready_o) begin
                 comm_buffer[1] <= south_data_i;
-                comm_ready[1] <= 1;
+                comm_ready[1]  <= 1;
             end
 
             if (east_valid_i && east_ready_o) begin
                 comm_buffer[2] <= east_data_i;
-                comm_ready[2] <= 1;
+                comm_ready[2]  <= 1;
             end
 
             if (west_valid_i && west_ready_o) begin
                 comm_buffer[3] <= west_data_i;
-                comm_ready[3] <= 1;
+                comm_ready[3]  <= 1;
             end
 
             // Update status output with R15 register value
@@ -291,16 +291,16 @@ module pe_core #(
     end
 
     // Memory interface
-    assign mem_req_o = (state == S_EXECUTE && (opcode == `OP_LOAD || opcode == `OP_STORE)) ||
-                    (state == S_MEMORY);
-    assign mem_we_o = (opcode == `OP_STORE);
-    assign mem_addr_o = mar[ADDR_WIDTH-1:0];
+    assign mem_req_o      = (state == S_EXECUTE && (opcode == `OP_LOAD || opcode == `OP_STORE)) ||
+                            (state == S_MEMORY);
+    assign mem_we_o       = (opcode == `OP_STORE);
+    assign mem_addr_o     = mar[ADDR_WIDTH-1:0];
     assign mem_data_out_o = mdr;
 
     // Communication interface
     assign north_ready_o = !comm_ready[0];
     assign south_ready_o = !comm_ready[1];
-    assign east_ready_o = !comm_ready[2];
-    assign west_ready_o = !comm_ready[3];
+    assign east_ready_o  = !comm_ready[2];
+    assign west_ready_o  = !comm_ready[3];
 
 endmodule

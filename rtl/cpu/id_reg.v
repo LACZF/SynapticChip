@@ -30,8 +30,8 @@ module id_reg (
     output reg  [`WordAddrBus]    id_pc_o,
     output reg                    id_en_o,
     output reg  [`AluOpBus]       id_alu_op_o,
-    output reg  [`WordDataBus]    id_alu_in_0_o,
-    output reg  [`WordDataBus]    id_alu_in_1_o,
+    output reg  [`WordDataBus]    id_alu_in0_o,
+    output reg  [`WordDataBus]    id_alu_in1_o,
     output reg                    id_br_flag_o,
     output reg  [`MemOpBus]       id_mem_op_o,
     output reg  [`WordDataBus]    id_mem_wr_data_o,
@@ -48,8 +48,8 @@ module id_reg (
             id_pc_o             <= `WORD_ADDR_W'h0;
             id_en_o             <= `DISABLE;
             id_alu_op_o         <= `ALU_OP_NOP;
-            id_alu_in_0_o       <= `WORD_DATA_W'h0;
-            id_alu_in_1_o       <= `WORD_DATA_W'h0;
+            id_alu_in0_o        <= `WORD_DATA_W'h0;
+            id_alu_in1_o        <= `WORD_DATA_W'h0;
             id_br_flag_o        <= `DISABLE;
             id_mem_op_o         <= `MEM_OP_NOP;
             id_mem_wr_data_o    <= `WORD_DATA_W'h0;
@@ -64,8 +64,8 @@ module id_reg (
                     id_pc_o            <= `WORD_ADDR_W'h0;
                     id_en_o            <= `DISABLE;
                     id_alu_op_o        <= `ALU_OP_NOP;
-                    id_alu_in_0_o      <= `WORD_DATA_W'h0;
-                    id_alu_in_1_o      <= `WORD_DATA_W'h0;
+                    id_alu_in0_o       <= `WORD_DATA_W'h0;
+                    id_alu_in1_o       <= `WORD_DATA_W'h0;
                     id_br_flag_o       <= `DISABLE;
                     id_mem_op_o        <= `MEM_OP_NOP;
                     id_mem_wr_data_o   <= `WORD_DATA_W'h0;
@@ -82,8 +82,8 @@ module id_reg (
                     id_pc_o            <= if_pc_i;
                     id_en_o            <= if_en_i;
                     id_alu_op_o        <= alu_op_i;
-                    id_alu_in_0_o      <= alu_in0_i;
-                    id_alu_in_1_o      <= alu_in1_i;
+                    id_alu_in0_o       <= alu_in0_i;
+                    id_alu_in1_o       <= alu_in1_i;
                     id_mem_op_o        <= mem_op_i;
                     id_mem_wr_data_o   <= mem_wr_data_i;
                     id_ctrl_op_o       <= ctrl_op_i;

@@ -55,21 +55,21 @@ module router_config #(
         if (!rst_n) begin
             state <= `STATE_IDLE;
             route_cfg_valid_o <= 1'b0;
-            route_cfg_addr_o <= 0;
-            route_cfg_data_o <= 0;
-            status_out_o <= 0;
+            route_cfg_addr_o  <= 0;
+            route_cfg_data_o  <= 0;
+            status_out_o      <= 0;
 
             // Initialize configuration registers
-            config_registers_0 <= 0;
-            config_registers_1 <= 0;
-            config_registers_2 <= 0;
-            config_registers_3 <= 0;
-            config_registers_4 <= 0;
-            config_registers_5 <= 0;
-            config_registers_6 <= 0;
-            config_registers_7 <= 0;
-            config_registers_8 <= 0;
-            config_registers_9 <= 0;
+            config_registers_0  <= 0;
+            config_registers_1  <= 0;
+            config_registers_2  <= 0;
+            config_registers_3  <= 0;
+            config_registers_4  <= 0;
+            config_registers_5  <= 0;
+            config_registers_6  <= 0;
+            config_registers_7  <= 0;
+            config_registers_8  <= 0;
+            config_registers_9  <= 0;
             config_registers_10 <= 0;
             config_registers_11 <= 0;
             config_registers_12 <= 0;
@@ -85,16 +85,16 @@ module router_config #(
                         if (cfg_addr_i < 16) begin
                             // Local configuration register access
                             case (cfg_addr_i)
-                                0: config_registers_0 <= cfg_data_i;
-                                1: config_registers_1 <= cfg_data_i;
-                                2: config_registers_2 <= cfg_data_i;
-                                3: config_registers_3 <= cfg_data_i;
-                                4: config_registers_4 <= cfg_data_i;
-                                5: config_registers_5 <= cfg_data_i;
-                                6: config_registers_6 <= cfg_data_i;
-                                7: config_registers_7 <= cfg_data_i;
-                                8: config_registers_8 <= cfg_data_i;
-                                9: config_registers_9 <= cfg_data_i;
+                                0: config_registers_0   <= cfg_data_i;
+                                1: config_registers_1   <= cfg_data_i;
+                                2: config_registers_2   <= cfg_data_i;
+                                3: config_registers_3   <= cfg_data_i;
+                                4: config_registers_4   <= cfg_data_i;
+                                5: config_registers_5   <= cfg_data_i;
+                                6: config_registers_6   <= cfg_data_i;
+                                7: config_registers_7   <= cfg_data_i;
+                                8: config_registers_8   <= cfg_data_i;
+                                9: config_registers_9   <= cfg_data_i;
                                 10: config_registers_10 <= cfg_data_i;
                                 11: config_registers_11 <= cfg_data_i;
                                 12: config_registers_12 <= cfg_data_i;
@@ -106,9 +106,9 @@ module router_config #(
                         end else begin
                             // Router core configuration access
                             route_cfg_valid_o <= 1'b1;
-                            route_cfg_addr_o <= cfg_addr_i;
-                            route_cfg_data_o <= cfg_data_i;
-                            state <= `STATE_DATA;
+                            route_cfg_addr_o  <= cfg_addr_i;
+                            route_cfg_data_o  <= cfg_data_i;
+                            state             <= `STATE_DATA;
                         end
                     end
 
@@ -119,7 +119,7 @@ module router_config #(
                 `STATE_DATA: begin
                     if (route_cfg_ack_i) begin
                         route_cfg_valid_o <= 1'b0;
-                        state <= `STATE_ACK;
+                        state             <= `STATE_ACK;
                     end
                 end
 

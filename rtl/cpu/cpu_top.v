@@ -35,14 +35,14 @@ module cpu_top (
     wire [`WordDataBus]             id_insn;
     wire                            id_en;
     wire [`AluOpBus]                id_alu_op;
-    wire [`WordDataBus]             id_alu_in_0;
-    wire [`WordDataBus]             id_alu_in_1;
+    wire [`WordDataBus]             id_alu_in0;
+    wire [`WordDataBus]             id_alu_in1;
     wire                            id_br_flag;
     wire [`MemOpBus]                id_mem_op;
     wire [`WordDataBus]             id_mem_wr_data;
     wire [`CtrlOpBus]               id_ctrl_op;
     wire [`RegAddrBus]              id_dst_addr;
-    wire                            id_gpr_we_;
+    wire                            id_gpr_we_n;
     wire [`IsaExpBus]               id_exp_code;
 
     wire [`WordAddrBus]             ex_pc;
@@ -53,7 +53,7 @@ module cpu_top (
     wire [`WordDataBus]             ex_mem_wr_data;
     wire [`CtrlOpBus]               ex_ctrl_op;
     wire [`RegAddrBus]              ex_dst_addr;
-    wire                            ex_gpr_we_;
+    wire                            ex_gpr_we_n;
     wire [`IsaExpBus]               ex_exp_code;
     wire [`WordDataBus]             ex_out;
 
@@ -63,7 +63,7 @@ module cpu_top (
     wire                            mem_br_flag;
     wire [`CtrlOpBus]               mem_ctrl_op;
     wire [`RegAddrBus]              mem_dst_addr;
-    wire                            mem_gpr_we_;
+    wire                            mem_gpr_we_n;
     wire [`IsaExpBus]               mem_exp_code;
     wire [`WordDataBus]             mem_out;
 
@@ -99,13 +99,13 @@ module cpu_top (
 
     wire [`WordDataBus]          if_spm_rd_data;
     wire [`WordAddrBus]          if_spm_addr;
-    wire                         if_spm_as_;
+    wire                         if_spm_as_n;
     wire                         if_spm_rw;
     wire [`WordDataBus]          if_spm_wr_data;
 
     wire [`WordDataBus]          mem_spm_rd_data;
     wire [`WordAddrBus]          mem_spm_addr;
-    wire                         mem_spm_as_;
+    wire                         mem_spm_as_n;
     wire                         mem_spm_rw;
     wire [`WordDataBus]          mem_spm_wr_data;
 
@@ -119,7 +119,7 @@ module cpu_top (
 
         .spm_rd_data_i     (if_spm_rd_data),
         .spm_addr_o        (if_spm_addr),
-        .spm_as_n_o        (if_spm_as_),
+        .spm_as_n_o        (if_spm_as_n),
         .spm_rw_o          (if_spm_rw),
         .spm_wr_data_o     (if_spm_wr_data),
 
@@ -157,7 +157,7 @@ module cpu_top (
         .ex_en_i               (ex_en),
         .ex_fwd_data_i         (ex_fwd_data),
         .ex_dst_addr_i         (ex_dst_addr),
-        .ex_gpr_we_n_i         (ex_gpr_we_),
+        .ex_gpr_we_n_i         (ex_gpr_we_n),
 
         .mem_fwd_data_i        (mem_fwd_data),
 
@@ -179,14 +179,14 @@ module cpu_top (
         .id_insn_o             (id_insn),
         .id_en_o               (id_en),
         .id_alu_op_o           (id_alu_op),
-        .id_alu_in_0_o         (id_alu_in_0),
-        .id_alu_in_1_o         (id_alu_in_1),
+        .id_alu_in0_o          (id_alu_in0),
+        .id_alu_in1_o          (id_alu_in1),
         .id_br_flag_o          (id_br_flag),
         .id_mem_op_o           (id_mem_op),
         .id_mem_wr_data_o      (id_mem_wr_data),
         .id_ctrl_op_o          (id_ctrl_op),
         .id_dst_addr_o         (id_dst_addr),
-        .id_gpr_we_n_o         (id_gpr_we_),
+        .id_gpr_we_n_o         (id_gpr_we_n),
         .id_exp_code_o         (id_exp_code)
     );
 
@@ -205,14 +205,14 @@ module cpu_top (
         .id_insn_i             (id_insn),
         .id_en_i               (id_en),
         .id_alu_op_i           (id_alu_op),
-        .id_alu_in_0_i         (id_alu_in_0),
-        .id_alu_in_1_i         (id_alu_in_1),
+        .id_alu_in0_i          (id_alu_in0),
+        .id_alu_in1_i          (id_alu_in1),
         .id_br_flag_i          (id_br_flag),
         .id_mem_op_i           (id_mem_op),
         .id_mem_wr_data_i      (id_mem_wr_data),
         .id_ctrl_op_i          (id_ctrl_op),
         .id_dst_addr_i         (id_dst_addr),
-        .id_gpr_we_n_i         (id_gpr_we_),
+        .id_gpr_we_n_i         (id_gpr_we_n),
         .id_exp_code_i         (id_exp_code),
 
         .ex_pc_o               (ex_pc),
@@ -223,7 +223,7 @@ module cpu_top (
         .ex_mem_wr_data_o      (ex_mem_wr_data),
         .ex_ctrl_op_o          (ex_ctrl_op),
         .ex_dst_addr_o         (ex_dst_addr),
-        .ex_gpr_we_n_o         (ex_gpr_we_),
+        .ex_gpr_we_n_o         (ex_gpr_we_n),
         .ex_exp_code_o         (ex_exp_code),
         .ex_out_o              (ex_out)
     );
@@ -241,7 +241,7 @@ module cpu_top (
 
         .spm_rd_data_i       (mem_spm_rd_data),
         .spm_addr_o          (mem_spm_addr),
-        .spm_as_n_o          (mem_spm_as_),
+        .spm_as_n_o          (mem_spm_as_n),
         .spm_rw_o            (mem_spm_rw),
         .spm_wr_data_o       (mem_spm_wr_data),
 
@@ -262,7 +262,7 @@ module cpu_top (
         .ex_mem_wr_data_i    (ex_mem_wr_data),
         .ex_ctrl_op_i        (ex_ctrl_op),
         .ex_dst_addr_i       (ex_dst_addr),
-        .ex_gpr_we_n_i       (ex_gpr_we_),
+        .ex_gpr_we_n_i       (ex_gpr_we_n),
         .ex_exp_code_i       (ex_exp_code),
         .ex_out_i            (ex_out),
 
@@ -272,7 +272,7 @@ module cpu_top (
         .mem_br_flag_o       (mem_br_flag),
         .mem_ctrl_op_o       (mem_ctrl_op),
         .mem_dst_addr_o      (mem_dst_addr),
-        .mem_gpr_we_n_o      (mem_gpr_we_),
+        .mem_gpr_we_n_o      (mem_gpr_we_n),
         .mem_exp_code_o      (mem_exp_code),
         .mem_out_o           (mem_out)
     );
@@ -330,7 +330,7 @@ module cpu_top (
         .rd_addr1_i        (gpr_rd_addr1),
         .rd_data1_o        (gpr_rd_data1),
 
-        .we_n_i            (mem_gpr_we_),
+        .we_n_i            (mem_gpr_we_n),
         .wr_addr_i         (mem_dst_addr),
         .wr_data_i         (mem_out)
     );
@@ -344,7 +344,7 @@ module cpu_top (
         .if_insn_i             (if_insn),
         .if_en_i               (if_en),
         .if_spm_addr_i         (if_spm_addr[`SpmAddrLoc]),
-        .if_spm_as_n_i         (if_spm_as_),
+        .if_spm_as_n_i         (if_spm_as_n),
         .if_spm_rw_i           (if_spm_rw),
         .if_spm_wr_data_i      (if_spm_wr_data),
         .if_spm_rd_data_o      (if_spm_rd_data),
@@ -353,7 +353,7 @@ module cpu_top (
         .mem_insn_i            (mem_insn),
         .mem_en_i              (mem_en),
         .mem_spm_addr_i        (mem_spm_addr[`SpmAddrLoc]),
-        .mem_spm_as_n_i        (mem_spm_as_),
+        .mem_spm_as_n_i        (mem_spm_as_n),
         .mem_spm_rw_i          (mem_spm_rw),
         .mem_spm_wr_data_i     (mem_spm_wr_data),
         .mem_spm_rd_data_o     (mem_spm_rd_data)

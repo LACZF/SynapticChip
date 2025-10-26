@@ -67,7 +67,7 @@ module pe_node #(
 
     // Address decoding
     wire local_access = (mem_addr < `MEM_DEPTH);
-    wire ext_access = !local_access;
+    wire ext_access   = !local_access;
 
     // Local memory access
     always @(posedge clk or negedge rst_n) begin
@@ -91,12 +91,12 @@ module pe_node #(
 
     // Memory data selection
     assign mem_data_in = local_access ? local_mem[mem_addr] : ext_mem_data_in_i;
-    assign mem_ack = local_access ? local_mem_ack : ext_mem_ack_i;
+    assign mem_ack     = local_access ? local_mem_ack : ext_mem_ack_i;
 
     // External memory interface
-    assign ext_mem_req_o = mem_req && ext_access;
-    assign ext_mem_we_o = mem_we;
-    assign ext_mem_addr_o = mem_addr;
+    assign ext_mem_req_o      = mem_req && ext_access;
+    assign ext_mem_we_o       = mem_we;
+    assign ext_mem_addr_o     = mem_addr;
     assign ext_mem_data_out_o = mem_data_out;
 
     // PE core instantiation

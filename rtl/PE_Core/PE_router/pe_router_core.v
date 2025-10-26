@@ -98,13 +98,13 @@ module pe_router_core #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             route_algorithm <= `ROUTE_XY;
-            route_table <= {(NUM_PORTS*NUM_PORTS){1'b0}};
-            port_enable <= {NUM_PORTS{1'b1}};
+            route_table     <= {(NUM_PORTS*NUM_PORTS){1'b0}};
+            port_enable     <= {NUM_PORTS{1'b1}};
         end else if (cfg_valid_i) begin
             case (cfg_addr_i)
-                `REG_ROUTE_ALGO: route_algorithm <= cfg_data_i[1:0];
-                `REG_ROUTE_TABLE: route_table <= cfg_data_i[(NUM_PORTS*NUM_PORTS)-1:0];
-                `REG_PORT_CTRL: port_enable <= cfg_data_i[NUM_PORTS-1:0];
+                `REG_ROUTE_ALGO:  route_algorithm <= cfg_data_i[1:0];
+                `REG_ROUTE_TABLE: route_table     <= cfg_data_i[(NUM_PORTS*NUM_PORTS)-1:0];
+                `REG_PORT_CTRL:   port_enable     <= cfg_data_i[NUM_PORTS-1:0];
             endcase
         end
     end
@@ -113,63 +113,63 @@ module pe_router_core #(
     always @(*) begin
         // Routing decision for port 0
         case (route_algorithm)
-            `ROUTE_XY: route_decision_0 = route_table[0*NUM_PORTS +: NUM_PORTS];
+            `ROUTE_XY:        route_decision_0 = route_table[0*NUM_PORTS +: NUM_PORTS];
             `ROUTE_WESTFIRST: route_decision_0 = route_table[0*NUM_PORTS +: NUM_PORTS];
             `ROUTE_NORTHLAST: route_decision_0 = route_table[0*NUM_PORTS +: NUM_PORTS];
-            `ROUTE_CUSTOM: route_decision_0 = route_table[0*NUM_PORTS +: NUM_PORTS];
-            default: route_decision_0 = `PORT_LOCAL;
+            `ROUTE_CUSTOM:    route_decision_0 = route_table[0*NUM_PORTS +: NUM_PORTS];
+            default:          route_decision_0 = `PORT_LOCAL;
         endcase
 
         // Routing decision for port 1
         case (route_algorithm)
-            `ROUTE_XY: route_decision_1 = route_table[1*NUM_PORTS +: NUM_PORTS];
+            `ROUTE_XY:        route_decision_1 = route_table[1*NUM_PORTS +: NUM_PORTS];
             `ROUTE_WESTFIRST: route_decision_1 = route_table[1*NUM_PORTS +: NUM_PORTS];
             `ROUTE_NORTHLAST: route_decision_1 = route_table[1*NUM_PORTS +: NUM_PORTS];
-            `ROUTE_CUSTOM: route_decision_1 = route_table[1*NUM_PORTS +: NUM_PORTS];
-            default: route_decision_1 = `PORT_LOCAL;
+            `ROUTE_CUSTOM:    route_decision_1 = route_table[1*NUM_PORTS +: NUM_PORTS];
+            default:          route_decision_1 = `PORT_LOCAL;
         endcase
 
         // Routing decision for port 2
         case (route_algorithm)
-            `ROUTE_XY: route_decision_2 = route_table[2*NUM_PORTS +: NUM_PORTS];
+            `ROUTE_XY:        route_decision_2 = route_table[2*NUM_PORTS +: NUM_PORTS];
             `ROUTE_WESTFIRST: route_decision_2 = route_table[2*NUM_PORTS +: NUM_PORTS];
             `ROUTE_NORTHLAST: route_decision_2 = route_table[2*NUM_PORTS +: NUM_PORTS];
-            `ROUTE_CUSTOM: route_decision_2 = route_table[2*NUM_PORTS +: NUM_PORTS];
-            default: route_decision_2 = `PORT_LOCAL;
+            `ROUTE_CUSTOM:    route_decision_2 = route_table[2*NUM_PORTS +: NUM_PORTS];
+            default:          route_decision_2 = `PORT_LOCAL;
         endcase
 
         // Routing decision for port 3
         case (route_algorithm)
-            `ROUTE_XY: route_decision_3 = route_table[3*NUM_PORTS +: NUM_PORTS];
+            `ROUTE_XY:        route_decision_3 = route_table[3*NUM_PORTS +: NUM_PORTS];
             `ROUTE_WESTFIRST: route_decision_3 = route_table[3*NUM_PORTS +: NUM_PORTS];
             `ROUTE_NORTHLAST: route_decision_3 = route_table[3*NUM_PORTS +: NUM_PORTS];
-            `ROUTE_CUSTOM: route_decision_3 = route_table[3*NUM_PORTS +: NUM_PORTS];
-            default: route_decision_3 = `PORT_LOCAL;
+            `ROUTE_CUSTOM:    route_decision_3 = route_table[3*NUM_PORTS +: NUM_PORTS];
+            default:          route_decision_3 = `PORT_LOCAL;
         endcase
 
         // Routing decision for port 4
         case (route_algorithm)
-            `ROUTE_XY: route_decision_4 = route_table[4*NUM_PORTS +: NUM_PORTS];
+            `ROUTE_XY:        route_decision_4 = route_table[4*NUM_PORTS +: NUM_PORTS];
             `ROUTE_WESTFIRST: route_decision_4 = route_table[4*NUM_PORTS +: NUM_PORTS];
             `ROUTE_NORTHLAST: route_decision_4 = route_table[4*NUM_PORTS +: NUM_PORTS];
-            `ROUTE_CUSTOM: route_decision_4 = route_table[4*NUM_PORTS +: NUM_PORTS];
-            default: route_decision_4 = `PORT_LOCAL;
+            `ROUTE_CUSTOM:    route_decision_4 = route_table[4*NUM_PORTS +: NUM_PORTS];
+            default:          route_decision_4 = `PORT_LOCAL;
         endcase
     end
 
     // Buffer management for port 0
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            write_ptr_0 <= 0;
-            read_ptr_0 <= 0;
+            write_ptr_0    <= 0;
+            read_ptr_0     <= 0;
             buffer_empty_0 <= 1'b1;
-            buffer_full_0 <= 1'b0;
+            buffer_full_0  <= 1'b0;
         end else begin
             // Write to buffer
             if (data_in_valid_i[0] && data_in_ready_o[0] && port_enable[0]) begin
                 input_buffers_0[write_ptr_0] <= data_in_i[0*DATA_WIDTH +: DATA_WIDTH];
-                write_ptr_0 <= write_ptr_0 + 1;
-                buffer_empty_0 <= 1'b0;
+                write_ptr_0                  <= write_ptr_0 + 1;
+                buffer_empty_0               <= 1'b0;
 
                 if (write_ptr_0 + 1 == read_ptr_0) begin
                     buffer_full_0 <= 1'b1;
@@ -190,16 +190,16 @@ module pe_router_core #(
     // Buffer management for port 1
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            write_ptr_1 <= 0;
-            read_ptr_1 <= 0;
+            write_ptr_1    <= 0;
+            read_ptr_1     <= 0;
             buffer_empty_1 <= 1'b1;
-            buffer_full_1 <= 1'b0;
+            buffer_full_1  <= 1'b0;
         end else begin
             // Write to buffer
             if (data_in_valid_i[1] && data_in_ready_o[1] && port_enable[1]) begin
                 input_buffers_1[write_ptr_1] <= data_in_i[1*DATA_WIDTH +: DATA_WIDTH];
-                write_ptr_1 <= write_ptr_1 + 1;
-                buffer_empty_1 <= 1'b0;
+                write_ptr_1                  <= write_ptr_1 + 1;
+                buffer_empty_1               <= 1'b0;
 
                 if (write_ptr_1 + 1 == read_ptr_1) begin
                     buffer_full_1 <= 1'b1;
@@ -220,16 +220,16 @@ module pe_router_core #(
     // Buffer management for port 2
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            write_ptr_2 <= 0;
-            read_ptr_2 <= 0;
+            write_ptr_2    <= 0;
+            read_ptr_2     <= 0;
             buffer_empty_2 <= 1'b1;
-            buffer_full_2 <= 1'b0;
+            buffer_full_2  <= 1'b0;
         end else begin
             // Write to buffer
             if (data_in_valid_i[2] && data_in_ready_o[2] && port_enable[2]) begin
                 input_buffers_2[write_ptr_2] <= data_in_i[2*DATA_WIDTH +: DATA_WIDTH];
-                write_ptr_2 <= write_ptr_2 + 1;
-                buffer_empty_2 <= 1'b0;
+                write_ptr_2                  <= write_ptr_2 + 1;
+                buffer_empty_2               <= 1'b0;
 
                 if (write_ptr_2 + 1 == read_ptr_2) begin
                     buffer_full_2 <= 1'b1;
@@ -250,16 +250,16 @@ module pe_router_core #(
     // Buffer management for port 3
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            write_ptr_3 <= 0;
-            read_ptr_3 <= 0;
+            write_ptr_3    <= 0;
+            read_ptr_3     <= 0;
             buffer_empty_3 <= 1'b1;
-            buffer_full_3 <= 1'b0;
+            buffer_full_3  <= 1'b0;
         end else begin
             // Write to buffer
             if (data_in_valid_i[3] && data_in_ready_o[3] && port_enable[3]) begin
                 input_buffers_3[write_ptr_3] <= data_in_i[3*DATA_WIDTH +: DATA_WIDTH];
-                write_ptr_3 <= write_ptr_3 + 1;
-                buffer_empty_3 <= 1'b0;
+                write_ptr_3                  <= write_ptr_3 + 1;
+                buffer_empty_3               <= 1'b0;
 
                 if (write_ptr_3 + 1 == read_ptr_3) begin
                     buffer_full_3 <= 1'b1;
@@ -280,16 +280,16 @@ module pe_router_core #(
     // Buffer management for port 4
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            write_ptr_4 <= 0;
-            read_ptr_4 <= 0;
+            write_ptr_4    <= 0;
+            read_ptr_4     <= 0;
             buffer_empty_4 <= 1'b1;
-            buffer_full_4 <= 1'b0;
+            buffer_full_4  <= 1'b0;
         end else begin
             // Write to buffer
             if (data_in_valid_i[4] && data_in_ready_o[4] && port_enable[4]) begin
                 input_buffers_4[write_ptr_4] <= data_in_i[4*DATA_WIDTH +: DATA_WIDTH];
-                write_ptr_4 <= write_ptr_4 + 1;
-                buffer_empty_4 <= 1'b0;
+                write_ptr_4                  <= write_ptr_4 + 1;
+                buffer_empty_4               <= 1'b0;
 
                 if (write_ptr_4 + 1 == read_ptr_4) begin
                     buffer_full_4 <= 1'b1;
@@ -319,9 +319,9 @@ module pe_router_core #(
     // Arbitration and data forwarding for output port 0
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            arbiter_state_0 <= `STATE_IDLE;
-            current_grant_0 <= 0;
-            data_out_valid_o[0] <= 1'b0;
+            arbiter_state_0                        <= `STATE_IDLE;
+            current_grant_0                        <= 0;
+            data_out_valid_o[0]                    <= 1'b0;
             data_out_o[0*DATA_WIDTH +: DATA_WIDTH] <= 0;
         end else begin
             case (arbiter_state_0)
@@ -350,7 +350,7 @@ module pe_router_core #(
                 `STATE_ARB: begin
                     // Arbitration state, waiting for output port to be ready
                     if (data_out_ready_i[0]) begin
-                        arbiter_state_0 <= `STATE_DATA;
+                        arbiter_state_0     <= `STATE_DATA;
                         data_out_valid_o[0] <= 1'b1;
 
                         // Select data based on granted port
@@ -368,7 +368,7 @@ module pe_router_core #(
                     // Data transfer state
                     if (data_out_ready_i[0]) begin
                         data_out_valid_o[0] <= 1'b0;
-                        arbiter_state_0 <= `STATE_IDLE;
+                        arbiter_state_0     <= `STATE_IDLE;
                     end
                 end
             endcase

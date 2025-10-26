@@ -20,8 +20,8 @@ module ex_stage (
     input  wire [`WordDataBus]    id_insn_i,
     input  wire                   id_en_i,
     input  wire [`AluOpBus]       id_alu_op_i,
-    input  wire [`WordDataBus]    id_alu_in_0_i,
-    input  wire [`WordDataBus]    id_alu_in_1_i,
+    input  wire [`WordDataBus]    id_alu_in0_i,
+    input  wire [`WordDataBus]    id_alu_in1_i,
     input  wire                   id_br_flag_i,
     input  wire [`MemOpBus]       id_mem_op_i,
     input  wire [`WordDataBus]    id_mem_wr_data_i,
@@ -58,8 +58,8 @@ module ex_stage (
         .id_insn_i    (id_insn_i),
         .id_en_i      (id_en_i),
 
-        .in0_i        (id_alu_in_0_i),
-        .in1_i        (id_alu_in_1_i),
+        .in0_i        (id_alu_in0_i),
+        .in1_i        (id_alu_in1_i),
         .op_i         (id_alu_op_i),
         .result_o     (alu_out),
         .overflow_o   (alu_of)

@@ -40,8 +40,8 @@ module id_stage (
     output wire [`WordDataBus]     id_insn_o,
     output wire                    id_en_o,
     output wire [`AluOpBus]        id_alu_op_o,         // ALU操作
-    output wire [`WordDataBus]     id_alu_in_0_o,       // ALU输入 0
-    output wire [`WordDataBus]     id_alu_in_1_o,       // ALU输入 1
+    output wire [`WordDataBus]     id_alu_in0_o,       // ALU输入 0
+    output wire [`WordDataBus]     id_alu_in1_o,       // ALU输入 1
     output wire                    id_br_flag_o,
     output wire [`MemOpBus]        id_mem_op_o,
     output wire [`WordDataBus]     id_mem_wr_data_o,
@@ -60,7 +60,7 @@ module id_stage (
     wire  [`WordDataBus]           mem_wr_data;
     wire  [`CtrlOpBus]             ctrl_op;
     wire  [`RegAddrBus]            dst_addr;            // GPR写入地址
-    wire                           gpr_we_;             // GPR写入有效
+    wire                           gpr_we_n;             // GPR写入有效
     wire  [`IsaExpBus]             exp_code;
 
     assign id_insn_o = if_insn_i;
@@ -107,7 +107,7 @@ module id_stage (
         .mem_wr_data_o      (mem_wr_data),
         .ctrl_op_o          (ctrl_op),
         .dst_addr_o         (dst_addr),
-        .gpr_we_n_o         (gpr_we_),
+        .gpr_we_n_o         (gpr_we_n),
         .exp_code_o         (exp_code),
         .ld_hazard_o        (ld_hazard_o)
     );
@@ -126,7 +126,7 @@ module id_stage (
         .mem_wr_data_i      (mem_wr_data),
         .ctrl_op_i          (ctrl_op),
         .dst_addr_i         (dst_addr),
-        .gpr_we_n_i         (gpr_we_),
+        .gpr_we_n_i         (gpr_we_n),
         .exp_code_i         (exp_code),
         /********** 流水线控制信号 **********/
         .stall_i            (stall_i),
@@ -138,8 +138,8 @@ module id_stage (
         .id_pc_o            (id_pc_o),
         .id_en_o            (id_en_o),
         .id_alu_op_o        (id_alu_op_o),
-        .id_alu_in_0_o      (id_alu_in_0_o),
-        .id_alu_in_1_o      (id_alu_in_1_o),
+        .id_alu_in0_o       (id_alu_in0_o),
+        .id_alu_in1_o       (id_alu_in1_o),
         .id_br_flag_o       (id_br_flag_o),
         .id_mem_op_o        (id_mem_op_o),
         .id_mem_wr_data_o   (id_mem_wr_data_o),
