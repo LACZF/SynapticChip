@@ -269,13 +269,13 @@ module chip (
         .clk             (clk),
         .reset           (reset),
 
-        .cs_             (s4_cs_),
-        .as_             (s_as_),
-        .rw              (s_rw),
-        .addr            (s_addr[`GpioAddrLoc]),
-        .wr_data         (s_wr_data),
-        .rd_data         (s4_rd_data),
-        .rdy_            (s4_rdy_)
+        .cs_n_i          (s4_cs_),
+        .as_n_i          (s_as_),
+        .rw_i            (s_rw),
+        .addr_i          (s_addr[`GpioAddrLoc]),
+        .wr_data_i       (s_wr_data),
+        .rd_data_i       (s4_rd_data),
+        .rdy_n_o         (s4_rdy_)
 
 `ifdef GPIO_IN_CH
         , .gpio_in       (gpio_in)
