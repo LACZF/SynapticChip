@@ -4,7 +4,7 @@
 
 `include "bus.v"
 
-module bus_arbiter # (
+module bus_arbiter #(
     parameter MASTER_NUM = `BUS_MASTER_CH
 )(
     input  wire                   clk,

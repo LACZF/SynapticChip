@@ -4,7 +4,7 @@
 
 `include "bus.v"
 
-module bus #(
+module bus_top #(
     parameter MASTER_NUM = `BUS_MASTER_CH,
     parameter SLAVE_NUM  = `BUS_SLAVE_CH
 ) (

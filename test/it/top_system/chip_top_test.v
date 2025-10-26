@@ -122,7 +122,7 @@ module chip_top_test;
 
     /********** 测试用例 **********/
     initial begin
-        $readmemh(`ROM_PRG, u_chip_top.u_rom.u_x_s3e_sprom.mem);
+        $readmemh(`ROM_PRG, u_chip_top.u_io.u_rom.u_x_s3e_sprom.mem);
         $readmemh(`SPM_PRG, u_chip_top.u_cpu.u_spm.u_x_s3e_dpram.mem);
 
         clk   <= `LOW;

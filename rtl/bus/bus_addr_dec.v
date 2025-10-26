@@ -4,7 +4,7 @@
 
 `include "bus.v"
 
-module bus_addr_dec # (
+module bus_addr_dec #(
     parameter ADDR_WIDTH             = 30,
     parameter SLAVE_NUM              = `BUS_SLAVE_CH
 )(

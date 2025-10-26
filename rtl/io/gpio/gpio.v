@@ -14,7 +14,7 @@ module gpio (
     input  wire                        rw_i,      // Read / Write
     input  wire [`GpioAddrBus]         addr_i,    // 地址
     input  wire [`WordDataBus]         wr_data_i, // 写入的数据
-    output reg    [`WordDataBus]       rd_data_i, // 读取的数据
+    output reg   [`WordDataBus]        rd_data_o, // 读取的数据
     output reg                         rdy_n_o    // 就绪信号
     /********** 通用输入输出接口 **********/
 `ifdef GPIO_IN_CH     // 输入端口的实现
@@ -53,7 +53,7 @@ module gpio (
     always @(posedge clk or `RESET_EDGE reset) begin
         if (reset == `RESET_ENABLE) begin
             /* 异步复位 */
-            rd_data_i     <= `WORD_DATA_W'h0;
+            rd_data_o     <= `WORD_DATA_W'h0;
             rdy_n_o       <= `DISABLE_N;
 `ifdef GPIO_OUT_CH     // 输出端口复位
             gpio_out <= {`GPIO_OUT_CH{`LOW}};
@@ -74,25 +74,25 @@ module gpio (
                 case (addr_i)
 `ifdef GPIO_IN_CH    // 输入端口的读取
                     `GPIO_ADDR_IN_DATA    : begin // 控制寄存器 0
-                        rd_data_i     <= {{`WORD_DATA_W-`GPIO_IN_CH{1'b0}}, gpio_in};
+                        rd_data_o     <= {{`WORD_DATA_W-`GPIO_IN_CH{1'b0}}, gpio_in};
                     end
 `endif
 `ifdef GPIO_OUT_CH    // 输出端口的读取
                     `GPIO_ADDR_OUT_DATA : begin // 控制寄存器 1
-                        rd_data_i     <= {{`WORD_DATA_W-`GPIO_OUT_CH{1'b0}}, gpio_out};
+                        rd_data_o     <= {{`WORD_DATA_W-`GPIO_OUT_CH{1'b0}}, gpio_out};
                     end
 `endif
 `ifdef GPIO_IO_CH    // 输入输出端口的读取
                     `GPIO_ADDR_IO_DATA    : begin // 控制寄存器 2
-                        rd_data_i     <= {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}}, io_in};
+                        rd_data_o     <= {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}}, io_in};
                      end
                     `GPIO_ADDR_IO_DIR    : begin // 控制寄存器 3
-                        rd_data_i     <= {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}}, io_dir};
+                        rd_data_o     <= {{`WORD_DATA_W-`GPIO_IO_CH{1'b0}}, io_dir};
                     end
 `endif
                 endcase
             end else begin
-                rd_data_i     <= `WORD_DATA_W'h0;
+                rd_data_o     <= `WORD_DATA_W'h0;
             end
             /* 写入访问 */
             if ((cs_n_i == `ENABLE_N) && (as_n_i == `ENABLE_N) && (rw_i == `WRITE)) begin

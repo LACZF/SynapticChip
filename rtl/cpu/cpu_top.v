@@ -6,7 +6,7 @@
 `include "bus.v"
 `include "spm.v"
 
-module cpu (
+module cpu_top (
     input  wire                      clk,
     input  wire                      reset,
 

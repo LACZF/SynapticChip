@@ -13,13 +13,12 @@ TEST_SRC += $(TOP_DIR)/rtl/bus/bus_addr_dec.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/bus_arbiter.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/bus_master_mux.v
 TEST_SRC += $(TOP_DIR)/rtl/bus/bus_slave_mux.v
-TEST_SRC += $(TOP_DIR)/rtl/bus/bus.v
+TEST_SRC += $(TOP_DIR)/rtl/bus/bus_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/cpu/alu.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/RV64I.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/RV64M.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/bus_if.v
-TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/decoder.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/ex_reg.v
@@ -33,6 +32,7 @@ TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_reg.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/mem_stage.v
 TEST_SRC += $(TOP_DIR)/rtl/cpu/spm.v
+TEST_SRC += $(TOP_DIR)/rtl/cpu/cpu_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/io/jtag/jtag.v
 TEST_SRC += $(TOP_DIR)/rtl/io/spi/spi.v
@@ -43,6 +43,7 @@ TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart.v
+TEST_SRC += $(TOP_DIR)/rtl/io/io_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dpram.v
 TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_sprom.v
