@@ -44,7 +44,6 @@ TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart.v
 
-TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dcm.v
 TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_dpram.v
 TEST_SRC += $(TOP_DIR)/rtl/lib/x_s3e_sprom.v
 
@@ -57,7 +56,5 @@ TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/top/chip_top.v
-TEST_SRC += $(TOP_DIR)/rtl/top/chip.v
-TEST_SRC += $(TOP_DIR)/rtl/top/clk_gen.v
 
 TEST_SRC += $(CUR_DIR)/chip_top_test.v

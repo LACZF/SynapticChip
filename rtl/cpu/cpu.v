@@ -8,7 +8,6 @@
 
 module cpu (
     input  wire                      clk,
-    input  wire                      clk_n,
     input  wire                      reset,
 
     input  wire [`WordDataBus]       if_bus_rd_data_i,

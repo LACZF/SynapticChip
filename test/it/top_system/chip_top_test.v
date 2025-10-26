@@ -22,10 +22,10 @@
 /********** 模块 **********/
 module chip_top_test;
     /********** 输入/输出信号 **********/
-    reg                       clk_ref;
-    reg                       reset_sw;
+    reg                       clk;
+    reg                       reset;
     // UART
-`ifdef IMPLEMENT_UART // UART実装
+`ifdef IMPLEMENT_UART
     wire                      uart_rx;       // UART接收信号
     wire                      uart_tx;       // UART发送信号
 `endif
@@ -46,16 +46,16 @@ module chip_top_test;
 `ifdef IMPLEMENT_UART // UART实现
     wire                     rx_busy;          // 接收中标志
     wire                     rx_end;           // 接收完成标志
-    wire [`ByteDataBus]         rx_data;       // 接收的数据
+    wire [`ByteDataBus]      rx_data;          // 接收的数据
 `endif
 
     /********** 时钟生成 **********/
-    always #5 clk_ref = ~clk_ref;
+    always #5 clk = ~clk;
 
     /********** 实例化chip_top **********/
     chip_top u_chip_top (
-        .clk_ref    (clk_ref),
-        .reset_sw    (reset_sw)
+        .clk         (clk),
+        .reset       (reset)
         /********** UART **********/
 `ifdef IMPLEMENT_UART // UART
         , .uart_rx    (uart_rx)  // UART受信信号
@@ -102,8 +102,8 @@ module chip_top_test;
 
     /********** UART模型 **********/
     uart_rx u_uart_model (
-        .clk        (u_chip_top.clk),
-        .reset      (u_chip_top.chip_reset),
+        .clk        (clk),
+        .reset      (reset),
         /********** 控制信号 **********/
         .rx_busy_o  (rx_busy),
         .rx_end_o   (rx_end),
@@ -113,7 +113,7 @@ module chip_top_test;
     );
 
     /********** 发送信号的监测 **********/
-    always @(posedge u_chip_top.clk) begin
+    always @(posedge clk) begin
         if (rx_end == `ENABLE) begin // 输出接收到的文字
             $write("%c", rx_data);
         end
@@ -122,14 +122,14 @@ module chip_top_test;
 
     /********** 测试用例 **********/
     initial begin
-        $readmemh(`ROM_PRG, u_chip_top.u_chip.u_rom.u_x_s3e_sprom.mem);
-        $readmemh(`SPM_PRG, u_chip_top.u_chip.u_cpu.u_spm.u_x_s3e_dpram.mem);
+        $readmemh(`ROM_PRG, u_chip_top.u_rom.u_x_s3e_sprom.mem);
+        $readmemh(`SPM_PRG, u_chip_top.u_cpu.u_spm.u_x_s3e_dpram.mem);
 
-        clk_ref     <= `LOW;
-        reset_sw <= `RESET_ENABLE;
+        clk   <= `LOW;
+        reset <= `RESET_ENABLE;
 
-        @(posedge clk_ref);
-        reset_sw <= `RESET_DISABLE;
+        @(posedge clk);
+        reset <= `RESET_DISABLE;
 
         # `SIM_CYCLE $finish;
     end
