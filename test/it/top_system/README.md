@@ -1,14 +1,23 @@
 # Test for chip
 
+## Prepare
+
+### Prepare instructions.hex(option)
+```bash
+cd $REPO_TOP_DIR/test/it/top_system/
+./build_program.sh
+```
+
+
 ## Test cmd
 
-### Default test(test by uart)
+### Test by uart
 ```bash
 cd $REPO_TOP_DIR
-make test M=test/it/top_system
+make test M=test/it/top_system/makefile_uart.txt
 ```
-### Test instructions by hex.
+### Test base instructions by hex.
 ```bash
 cd $REPO_TOP_DIR
-make test M=test/it/top_system TEST_ARGS="-DROM_PRG=\\\"instructions.hex\\\" -DSPM_PRG=\\\"instructions.hex\\\" -DSIM_CYCLE=100000"
+make test M=test/it/top_system/makefile_base.txt
 ```
