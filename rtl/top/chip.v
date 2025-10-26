@@ -220,15 +220,15 @@ module chip (
         .clk             (clk),
         .reset           (reset),
 
-        .cs_             (s2_cs_),
-        .as_             (s_as_),
-        .addr            (s_addr[`TimerAddrLoc]),
-        .rw              (s_rw),
-        .wr_data         (s_wr_data),
-        .rd_data         (s2_rd_data),
-        .rdy_            (s2_rdy_),
+        .cs_n_i          (s2_cs_),
+        .as_n_i          (s_as_),
+        .rw_i            (s_rw),
+        .addr_i          (s_addr[`TimerAddrLoc]),
+        .wr_data_i       (s_wr_data),
+        .rd_data_o       (s2_rd_data),
+        .rdy_n_o         (s2_rdy_),
 
-        .irq             (irq_timer)
+        .irq_o           (irq_timer)
      );
 `else
     assign s2_rd_data = `WORD_DATA_W'h0;
