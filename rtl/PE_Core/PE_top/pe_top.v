@@ -18,13 +18,13 @@ module pe_top #(
     input                              reset,
 
     // Bus interface
-    input                              cs_,
-    input                              as_,
-    input                              rw,
-    input  [ADDR_WIDTH-1:0]            addr,
-    input  [DATA_WIDTH-1:0]            wr_data,
-    output [DATA_WIDTH-1:0]            rd_data,
-    output                             rdy_
+    input                              cs_n_i,
+    input                              as_n_i,
+    input                              rw_i,
+    input  [ADDR_WIDTH-1:0]            addr_i,
+    input  [DATA_WIDTH-1:0]            wr_data_i,
+    output [DATA_WIDTH-1:0]            rd_data_o,
+    output                             rdy_n_o
 );
 
     // Internal control signals (previously between pe_ctrl and pe_top)
@@ -52,11 +52,11 @@ module pe_top #(
     reg                                route_cfg_valid_reg;
 
     // Register selection
-    wire [7:0]                         reg_offset = addr[7:0];
-    wire                               cs_valid = ~cs_ & ~as_;
+    wire [7:0]                         reg_offset = addr_i[7:0];
+    wire                               cs_valid = ~cs_n_i & ~as_n_i;
 
     // Read data mux
-    assign rd_data = (cs_valid && rw == `READ) ?
+    assign rd_data_o = (cs_valid && rw_i == `READ) ?
                     (reg_offset == `PE_CTRL_ADDR ? {{(DATA_WIDTH-2){1'b0}}, pe_enable_reg, pe_reset_reg} :
                      reg_offset == `PE_STATUS_ADDR ? pe_status[DATA_WIDTH-1:0] :
                      reg_offset == `PE_INST_ADDR ? pe_inst_reg[DATA_WIDTH-1:0] :
@@ -67,29 +67,29 @@ module pe_top #(
     // Write handling
     always @(posedge clk or `RESET_EDGE reset) begin
         if (reset == `RESET_ENABLE) begin
-            pe_enable_reg <= {NUM_PES{1'b0}};
-            pe_reset_reg <= {NUM_PES{1'b0}};
-            pe_inst_reg <= 0;
-            pe_inst_valid_reg <= 1'b0;
-            route_config_reg <= 0;
+            pe_enable_reg       <= {NUM_PES{1'b0}};
+            pe_reset_reg        <= {NUM_PES{1'b0}};
+            pe_inst_reg         <= 0;
+            pe_inst_valid_reg   <= 1'b0;
+            route_config_reg    <= 0;
             route_cfg_valid_reg <= 1'b0;
         end else begin
             // Default values
             pe_inst_valid_reg <= 1'b0;
             route_cfg_valid_reg <= 1'b0;
 
-            if (cs_valid && rw == `WRITE) begin
+            if (cs_valid && rw_i == `WRITE) begin
                 case (reg_offset)
                     `PE_CTRL_ADDR: begin
-                        pe_enable_reg <= wr_data[0+:NUM_PES];
-                        pe_reset_reg <= wr_data[NUM_PES+:NUM_PES];
+                        pe_enable_reg <= wr_data_i[0+:NUM_PES];
+                        pe_reset_reg  <= wr_data_i[NUM_PES+:NUM_PES];
                     end
                     `PE_INST_ADDR: begin
-                        pe_inst_reg <= wr_data;
+                        pe_inst_reg       <= wr_data_i;
                         pe_inst_valid_reg <= 1'b1;
                     end
                     `PE_ROUTE_ADDR: begin
-                        route_config_reg <= wr_data;
+                        route_config_reg    <= wr_data_i;
                         route_cfg_valid_reg <= 1'b1;
                     end
                 endcase
@@ -98,7 +98,7 @@ module pe_top #(
     end
 
     // Ready signal
-    assign rdy_ = cs_valid ? `ENABLE_N : `DISABLE_N;
+    assign rdy_n_o = cs_valid ? `ENABLE_N : `DISABLE_N;
 
     // Output assignments (internal connections)
     assign pe_enable = pe_enable_reg;

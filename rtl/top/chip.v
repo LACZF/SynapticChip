@@ -185,34 +185,7 @@ module chip (
         .rdy_n_o       (s0_rdy_n)
     );
 
-`ifdef IMPLEMENT_PE
-    /********** Integrated PE Module **********/
-    pe_top #(
-        .ADDR_WIDTH(`WORD_ADDR_W),
-        .DATA_WIDTH(`WORD_DATA_W),
-        .NUM_PES(4),
-        .INST_WIDTH(32),
-        .PE_ID_WIDTH(4),
-        .NUM_RINGS(2),
-        .PE_ARRAY_ROWS(2),
-        .PE_ARRAY_COLS(2)
-    ) u_pe (
-        .clk(clk),
-        .reset(reset),
-
-        .cs_(s1_cs_n),
-        .as_(s_as_n),
-        .rw(s_rw),
-        .addr(s_addr),
-        .wr_data(s_wr_data),
-        .rd_data(s1_rd_data),
-        .rdy_(s1_rdy_n)
-    );
-`else
-    /* 暂未使用 */
-    assign s1_rd_data   = `WORD_DATA_W'h0;
-    assign s1_rdy_n      = `DISABLE_N;
-`endif
+    /* 1 occupied by spm */
 
 `ifdef IMPLEMENT_TIMER
     /********** TIMER **********/
@@ -232,7 +205,7 @@ module chip (
      );
 `else
     assign s2_rd_data = `WORD_DATA_W'h0;
-    assign s2_rdy_n    = `DISABLE_N;
+    assign s2_rdy_n   = `DISABLE_N;
     assign irq_timer  = `DISABLE;
 `endif
 
@@ -258,7 +231,7 @@ module chip (
     );
 `else
     assign s3_rd_data  = `WORD_DATA_W'h0;
-    assign s3_rdy_n       = `DISABLE_N;
+    assign s3_rdy_n    = `DISABLE_N;
     assign irq_uart_rx = `DISABLE;
     assign irq_uart_tx = `DISABLE;
 `endif
@@ -289,7 +262,7 @@ module chip (
     );
 `else
     assign s4_rd_data   = `WORD_DATA_W'h0;
-    assign s4_rdy_n      = `DISABLE_N;
+    assign s4_rdy_n     = `DISABLE_N;
 `endif
 
 `ifdef IMPLEMENT_SPI
@@ -317,15 +290,40 @@ module chip (
 `else
     /* 暂未使用 */
     assign s5_rd_data   = `WORD_DATA_W'h0;
-    assign s5_rdy_n      = `DISABLE_N;
+    assign s5_rdy_n     = `DISABLE_N;
     assign spi_cs_n     = 1'b1;
     assign spi_clk      = 1'b0;
     assign spi_mosi     = 1'b0;
 `endif
 
+`ifdef IMPLEMENT_PE
+    /********** Integrated PE Module **********/
+    pe_top #(
+        .ADDR_WIDTH(`WORD_ADDR_W),
+        .DATA_WIDTH(`WORD_DATA_W),
+        .NUM_PES(4),
+        .INST_WIDTH(32),
+        .PE_ID_WIDTH(4),
+        .NUM_RINGS(2),
+        .PE_ARRAY_ROWS(2),
+        .PE_ARRAY_COLS(2)
+    ) u_pe (
+        .clk(clk),
+        .reset(reset),
+
+        .cs_n_i(s6_cs_n),
+        .as_n_i(s_as_n),
+        .rw_i(s_rw),
+        .addr_i(s_addr),
+        .wr_data_i(s_wr_data),
+        .rd_data_o(s6_rd_data),
+        .rdy_n_o(s6_rdy_n)
+    );
+`else
     /* 暂未使用 */
     assign s6_rd_data   = `WORD_DATA_W'h0;
     assign s6_rdy_n      = `DISABLE_N;
+`endif
 
 `ifdef IMPLEMENT_JTAG
     /********** JTAG **********/
@@ -355,7 +353,7 @@ module chip (
     );
 `else
     assign s7_rd_data    = `WORD_DATA_W'h0;
-    assign s7_rdy_n       = `DISABLE_N;
+    assign s7_rdy_n      = `DISABLE_N;
     assign tdo           = `LOW;
     assign tdo_en        = `LOW;
 `endif
