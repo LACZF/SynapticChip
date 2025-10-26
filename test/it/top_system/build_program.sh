@@ -18,7 +18,7 @@ ${RISCV_PREFIX}as -march=rv64im -o program.o program.s
 ${RISCV_PREFIX}ld -T script.ld -o program.elf program.o
 
 # 生成反汇编文件用于调试
-${RISCV_PREFIX}objdump -d program.elf > program.dis
+${RISCV_PREFIX}objdump -D program.elf > program.dis
 
 # 生成hex文件
 ${RISCV_PREFIX}objcopy -O verilog program.elf program.hex

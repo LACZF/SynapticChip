@@ -5,7 +5,7 @@ program.elf:     file format elf64-littleriscv
 Disassembly of section .text:
 
 0000000000000000 <_start>:
-   0:	00008137          	lui	sp,0x8
+   0:	00001137          	lui	sp,0x1
    4:	018000ef          	jal	1c <uart_init>
 
 0000000000000008 <main_loop>:
@@ -16,10 +16,10 @@ Disassembly of section .text:
   18:	ff1ff06f          	j	8 <main_loop>
 
 000000000000001c <uart_init>:
-  1c:	ff810113          	addi	sp,sp,-8 # 7ff8 <message+0x7e94>
+  1c:	ff810113          	addi	sp,sp,-8 # ff8 <message+0xe94>
   20:	00112223          	sw	ra,4(sp)
-  24:	10000537          	lui	a0,0x10000
-  28:	0055051b          	addiw	a0,a0,5 # 10000005 <UART_LSR>
+  24:	18000537          	lui	a0,0x18000
+  28:	0055051b          	addiw	a0,a0,5 # 18000005 <UART_LSR>
   2c:	06000593          	li	a1,96
   30:	00b50023          	sb	a1,0(a0)
   34:	00412083          	lw	ra,4(sp)
@@ -27,16 +27,16 @@ Disassembly of section .text:
   3c:	00008067          	ret
 
 0000000000000040 <uart_check_rx>:
-  40:	10000537          	lui	a0,0x10000
-  44:	0055051b          	addiw	a0,a0,5 # 10000005 <UART_LSR>
+  40:	18000537          	lui	a0,0x18000
+  44:	0055051b          	addiw	a0,a0,5 # 18000005 <UART_LSR>
   48:	00050503          	lb	a0,0(a0)
   4c:	00157513          	andi	a0,a0,1
   50:	00a03533          	snez	a0,a0
   54:	00008067          	ret
 
 0000000000000058 <uart_read_byte>:
-  58:	10000537          	lui	a0,0x10000
-  5c:	00050503          	lb	a0,0(a0) # 10000000 <UART_BASE>
+  58:	18000537          	lui	a0,0x18000
+  5c:	00050503          	lb	a0,0(a0) # 18000000 <UART_BASE>
   60:	00008067          	ret
 
 0000000000000064 <uart_write_byte>:
@@ -45,14 +45,14 @@ Disassembly of section .text:
   6c:	00a12023          	sw	a0,0(sp)
 
 0000000000000070 <wait_tx_ready>:
-  70:	100005b7          	lui	a1,0x10000
-  74:	0055859b          	addiw	a1,a1,5 # 10000005 <UART_LSR>
+  70:	180005b7          	lui	a1,0x18000
+  74:	0055859b          	addiw	a1,a1,5 # 18000005 <UART_LSR>
   78:	00058583          	lb	a1,0(a1)
   7c:	0205f593          	andi	a1,a1,32
   80:	fe0588e3          	beqz	a1,70 <wait_tx_ready>
   84:	00012503          	lw	a0,0(sp)
-  88:	100005b7          	lui	a1,0x10000
-  8c:	00a58023          	sb	a0,0(a1) # 10000000 <UART_BASE>
+  88:	180005b7          	lui	a1,0x18000
+  8c:	00a58023          	sb	a0,0(a1) # 18000000 <UART_BASE>
   90:	00412083          	lw	ra,4(sp)
   94:	00810113          	addi	sp,sp,8
   98:	00008067          	ret
@@ -132,3 +132,38 @@ Disassembly of section .text:
  158:	00012083          	lw	ra,0(sp)
  15c:	00410113          	addi	sp,sp,4
  160:	00008067          	ret
+
+Disassembly of section .data:
+
+0000000000000164 <message>:
+ 164:	4952                	.insn	2, 0x4952
+ 166:	562d4353          	.insn	4, 0x562d4353
+ 16a:	5520                	.insn	2, 0x5520
+ 16c:	5241                	.insn	2, 0x5241
+ 16e:	2054                	.insn	2, 0x2054
+ 170:	6554                	.insn	2, 0x6554
+ 172:	50207473          	.insn	4, 0x50207473
+ 176:	6f72                	.insn	2, 0x6f72
+ 178:	6d617267          	.insn	4, 0x6d617267
+ 17c:	000a                	.insn	2, 0x000a
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	2741                	.insn	2, 0x2741
+   2:	0000                	.insn	2, 0x0000
+   4:	7200                	.insn	2, 0x7200
+   6:	7369                	.insn	2, 0x7369
+   8:	01007663          	bgeu	zero,a6,14 <main_loop+0xc>
+   c:	001d                	.insn	2, 0x001d
+   e:	0000                	.insn	2, 0x0000
+  10:	7205                	.insn	2, 0x7205
+  12:	3676                	.insn	2, 0x3676
+  14:	6934                	.insn	2, 0x6934
+  16:	7032                	.insn	2, 0x7032
+  18:	5f31                	.insn	2, 0x5f31
+  1a:	326d                	.insn	2, 0x326d
+  1c:	3070                	.insn	2, 0x3070
+  1e:	7a5f 6d6d 6c75      	.insn	6, 0x6c756d6d7a5f
+  24:	7031                	.insn	2, 0x7031
+  26:	0030                	.insn	2, 0x0030
