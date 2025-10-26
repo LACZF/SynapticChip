@@ -178,11 +178,11 @@ module chip (
         .clk           (clk),
         .reset         (reset),
 
-        .cs_           (s0_cs_),
-        .as_           (s_as_),
-        .addr          (s_addr[`RomAddrLoc]),
-        .rd_data       (s0_rd_data),
-        .rdy_          (s0_rdy_)
+        .cs_n_i        (s0_cs_),
+        .as_n_i        (s_as_),
+        .addr_i        (s_addr[`RomAddrLoc]),
+        .rd_data_o     (s0_rd_data),
+        .rdy_n_o       (s0_rdy_)
     );
 
 `ifdef IMPLEMENT_PE
