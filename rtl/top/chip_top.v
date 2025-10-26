@@ -3,7 +3,7 @@
 `include "global_config.v"
 
 module chip_top #(
-    parameter MASTER_NUM                = 4,
+    parameter CPU_NUM                   = 1,
     parameter SLAVE_NUM                 = 8,
     parameter IMPLEMENT_ROM             = 1,
     parameter IMPLEMENT_JTAG            = 0,
@@ -40,6 +40,7 @@ module chip_top #(
     output wire                         spi_mosi,
     input  wire                         spi_miso
 );
+    localparam MASTER_NUM               = CPU_NUM * 2;
 
     wire [`WordDataBus]                 m_rd_data;
     wire                                m_rdy_n;
@@ -68,32 +69,46 @@ module chip_top #(
 
     assign cpu_irq = {{`CPU_IRQ_CH-3{`LOW}}, irq_uart_rx, irq_uart_tx, irq_timer};
 
-    /********** CPU **********/
-    cpu_top u_cpu (
-        .clk                   (clk),
-        .reset                 (reset),
+    /********** CPU数组 **********/
+    generate
+        genvar i;
+        for (i = 0; i < CPU_NUM; i = i + 1) begin : cpu_gen
+            cpu_top u_cpu (
+                .clk                   (clk),
+                .reset                 (reset),
 
-        // IF Stage
-        .if_bus_rd_data_i      (m_rd_data),
-        .if_bus_rdy_n_i        (m_rdy_n),
-        .if_bus_grnt_n_i       (m_grnt_n[0]),
-        .if_bus_req_n_o        (m_req_n[0]),
-        .if_bus_addr_o         (m_addr[0]),
-        .if_bus_as_n_o         (m_as_n[0]),
-        .if_bus_rw_o           (m_rw[0]),
-        .if_bus_wr_data_o      (m_wr_data[0]),
-        // MEM Stage
-        .mem_bus_rd_data_i     (m_rd_data),
-        .mem_bus_rdy_n_i       (m_rdy_n),
-        .mem_bus_grnt_n_i      (m_grnt_n[1]),
-        .mem_bus_req_n_o       (m_req_n[1]),
-        .mem_bus_addr_o        (m_addr[1]),
-        .mem_bus_as_n_o        (m_as_n[1]),
-        .mem_bus_rw_o          (m_rw[1]),
-        .mem_bus_wr_data_o     (m_wr_data[1]),
+                // IF Stage
+                .if_bus_rd_data_i      (m_rd_data),
+                .if_bus_rdy_n_i        (m_rdy_n),
+                .if_bus_grnt_n_i       (m_grnt_n[2*i]),
+                .if_bus_req_n_o        (m_req_n[2*i]),
+                .if_bus_addr_o         (m_addr[2*i]),
+                .if_bus_as_n_o         (m_as_n[2*i]),
+                .if_bus_rw_o           (m_rw[2*i]),
+                .if_bus_wr_data_o      (m_wr_data[2*i]),
+                // MEM Stage
+                .mem_bus_rd_data_i     (m_rd_data),
+                .mem_bus_rdy_n_i       (m_rdy_n),
+                .mem_bus_grnt_n_i      (m_grnt_n[2*i + 1]),
+                .mem_bus_req_n_o       (m_req_n[2*i + 1]),
+                .mem_bus_addr_o        (m_addr[2*i + 1]),
+                .mem_bus_as_n_o        (m_as_n[2*i + 1]),
+                .mem_bus_rw_o          (m_rw[2*i + 1]),
+                .mem_bus_wr_data_o     (m_wr_data[2*i + 1]),
 
-        .cpu_irq_i             (cpu_irq)
-    );
+                .cpu_irq_i             (cpu_irq)
+            );
+        end
+
+        // 将未使用的总线主控信号接地
+        for (i = CPU_NUM * 2; i < MASTER_NUM; i = i + 1) begin : unused_master_gen
+            assign m_req_n[i] = `ENABLE_N;
+            assign m_addr[i] = {`WORD_ADDR_W{`LOW}};
+            assign m_as_n[i] = `ENABLE_N;
+            assign m_rw[i] = `READ;
+            assign m_wr_data[i] = {`WORD_DATA_W{`LOW}};
+        end
+    endgenerate
 
     /********** IO模块 **********/
     io_top #(

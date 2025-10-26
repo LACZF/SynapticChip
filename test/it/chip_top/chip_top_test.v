@@ -1,20 +1,9 @@
-/*
- -- ============================================================================
- -- FILE NAME    : chip_top_test.v
- -- DESCRIPTION :
- -- ----------------------------------------------------------------------------
- -- ============================================================================
-*/
 
-/********** 时间尺度 **********/
-`timescale 1ns/1ps                     // 时间尺度
-
-/********** 通用头文件 **********/
+`timescale 1ns/1ps
 
 `include "stddef.v"
 `include "global_config.v"
 
-/********** 单个头文件 **********/
 `include "bus.v"
 `include "cpu.v"
 `include "gpio.v"
@@ -23,6 +12,8 @@ module chip_top_test;
     /********** 输入/输出信号 **********/
     reg                       clk;
     reg                       reset;
+
+    localparam CPU_NUM        = 1;
 
     // UART
     wire                      uart_rx;       // UART接收信号
@@ -43,7 +34,7 @@ module chip_top_test;
 
     /********** 实例化chip_top **********/
     chip_top #(
-        .MASTER_NUM      (4),
+        .CPU_NUM         (CPU_NUM),
         .SLAVE_NUM       (8),
         .IMPLEMENT_ROM   (1),
         .IMPLEMENT_JTAG  (1),
@@ -104,8 +95,6 @@ module chip_top_test;
     /********** 测试用例 **********/
     initial begin
         $readmemh(`ROM_PRG, u_chip_top.u_io.rom_gen.u_rom.u_x_s3e_sprom.mem);
-        $readmemh(`SPM_PRG, u_chip_top.u_cpu.u_spm.u_x_s3e_dpram.mem);
-
         clk   <= `LOW;
         reset <= `RESET_ENABLE;
 
@@ -114,6 +103,15 @@ module chip_top_test;
 
         # `SIM_CYCLE $finish;
     end
+
+    generate
+        genvar i;
+        for (i = 0; i < CPU_NUM; i = i + 1) begin : spm_init_gen
+            initial begin
+                $readmemh(`SPM_PRG, u_chip_top.cpu_gen[i].u_cpu.u_spm.u_x_s3e_dpram.mem);
+            end
+        end
+    endgenerate
 
     /********** 输出波形 **********/
     initial begin

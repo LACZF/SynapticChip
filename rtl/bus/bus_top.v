@@ -43,7 +43,9 @@ module bus_top #(
     wire [MASTER_NUM-1:0][`WordDataBus] m_wr_data;
 
     /********** 总线仲裁器 **********/
-    bus_arbiter u_bus_arbiter (
+    bus_arbiter #(
+        .MASTER_NUM (MASTER_NUM)
+    ) u_bus_arbiter (
         .clk           (clk),
         .reset         (reset),
         .m_req_n_i     (m_req_n_i),   // 请求总线数组
@@ -56,7 +58,7 @@ module bus_top #(
     /********** 总线主控信号数组维度调整 **********/
     generate
         genvar i;
-        for (i = 0; i < MASTER_NUM; i = i + 1) begin : bus_master_signal_assignment
+        for (i = 0; i < MASTER_NUM; i = i + 1) begin : bus_master_assign
             assign m_addr[i]    = m_addr_i[i];
             assign m_as_n[i]    = m_as_n_i[i];
             assign m_rw[i]      = m_rw_i[i];

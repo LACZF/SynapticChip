@@ -5,7 +5,7 @@
 `include "bus.v"
 
 module bus_arbiter #(
-    parameter MASTER_NUM = `BUS_MASTER_CH
+    parameter MASTER_NUM = 4
 )(
     input  wire                   clk,
     input  wire                   reset,
