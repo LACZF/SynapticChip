@@ -8,6 +8,7 @@
 module id_reg (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** 解码结果 **********/
     input  wire [`AluOpBus]       alu_op_i,
     input  wire [`WordDataBus]    alu_in_0_i,

@@ -7,6 +7,7 @@
 module bus (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** 总线主控信号 **********/
     // 总线主控共享信号
     output wire [`WordDataBus]    m_rd_data_o,    // 读出的数据
@@ -81,9 +82,9 @@ module bus (
 
     /********** 总线仲裁器 **********/
     bus_arbiter u_bus_arbiter (
-        /********** 时钟 & 复位 **********/
-        .clk            (clk),          // 时钟
-        .reset          (reset),        // 异步复位
+        .clk            (clk),
+        .reset          (reset),
+
         /********** 仲裁信号 **********/
         // 0号总线主控
         .m0_req_n_i     (m0_req_n_i),   // 请求总线
@@ -101,6 +102,9 @@ module bus (
 
     /********** 总线主控用多路复用器 **********/
     bus_master_mux u_bus_master_mux (
+        .clk          (clk),
+        .reset        (reset),
+
         /********** 总线主控信号 **********/
         // 0号总线主控
         .m0_addr_i    (m0_addr_i),      // 地址
@@ -135,6 +139,9 @@ module bus (
 
     /********** 地址解码器 **********/
     bus_addr_dec u_bus_addr_dec (
+        .clk          (clk),
+        .reset        (reset),
+
         /********** 地址 **********/
         .s_addr_i     (s_addr_o),     // 地址
         /********** 片选 **********/
@@ -150,6 +157,9 @@ module bus (
 
     /********** 总线从属用多路复用器 **********/
     bus_slave_mux u_bus_slave_mux (
+        .clk          (clk),
+        .reset        (reset),
+
         /********** 片选 **********/
         .s0_cs_n_i    (s0_cs_n_o),      // 0号总线从属
         .s1_cs_n_i    (s1_cs_n_o),      // 1号总线从属

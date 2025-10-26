@@ -6,6 +6,9 @@
 `include "cpu.v"
 
 module decoder (
+    input  wire                   clk,
+    input  wire                   reset,
+
     /********** IF/ID流水线寄存器 **********/
     input  wire [`WordAddrBus]    if_pc_i,             // 程序计数器
     input  wire [`WordDataBus]    if_insn_i,           // 指令

@@ -8,6 +8,7 @@
 module rom (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** 总线接口 **********/
     input  wire                   cs_,        // 片选信号
     input  wire                   as_,        // 地址选通

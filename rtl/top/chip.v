@@ -56,73 +56,73 @@ module chip (
 `endif
 );
 
-    wire [`WordDataBus] m_rd_data;
-    wire                m_rdy_;
+    wire [`WordDataBus]    m_rd_data;
+    wire                   m_rdy_;
 
-    wire                m0_req_;
-    wire [`WordAddrBus] m0_addr;
-    wire                m0_as_;
-    wire                m0_rw;
-    wire [`WordDataBus] m0_wr_data;
-    wire                m0_grnt_;
+    wire                   m0_req_;
+    wire [`WordAddrBus]    m0_addr;
+    wire                   m0_as_;
+    wire                   m0_rw;
+    wire [`WordDataBus]    m0_wr_data;
+    wire                   m0_grnt_;
 
-    wire                m1_req_;
-    wire [`WordAddrBus] m1_addr;
-    wire                m1_as_;
-    wire                m1_rw;
-    wire [`WordDataBus] m1_wr_data;
-    wire                m1_grnt_;
+    wire                   m1_req_;
+    wire [`WordAddrBus]    m1_addr;
+    wire                   m1_as_;
+    wire                   m1_rw;
+    wire [`WordDataBus]    m1_wr_data;
+    wire                   m1_grnt_;
 
-    wire                m2_req_;
-    wire [`WordAddrBus] m2_addr;
-    wire                m2_as_;
-    wire                m2_rw;
-    wire [`WordDataBus] m2_wr_data;
-    wire                m2_grnt_;
+    wire                   m2_req_;
+    wire [`WordAddrBus]    m2_addr;
+    wire                   m2_as_;
+    wire                   m2_rw;
+    wire [`WordDataBus]    m2_wr_data;
+    wire                   m2_grnt_;
 
-    wire                m3_req_;
-    wire [`WordAddrBus] m3_addr;
-    wire                m3_as_;
-    wire                m3_rw;
-    wire [`WordDataBus] m3_wr_data;
-    wire                m3_grnt_;
+    wire                   m3_req_;
+    wire [`WordAddrBus]    m3_addr;
+    wire                   m3_as_;
+    wire                   m3_rw;
+    wire [`WordDataBus]    m3_wr_data;
+    wire                   m3_grnt_;
 
-    wire [`WordAddrBus] s_addr;
-    wire                s_as_;
-    wire                s_rw;
-    wire [`WordDataBus] s_wr_data;
+    wire [`WordAddrBus]    s_addr;
+    wire                   s_as_;
+    wire                   s_rw;
+    wire [`WordDataBus]    s_wr_data;
 
-    wire [`WordDataBus] s0_rd_data;
-    wire                s0_rdy_;
-    wire                s0_cs_;
+    wire [`WordDataBus]    s0_rd_data;
+    wire                   s0_rdy_;
+    wire                   s0_cs_;
 
-    wire [`WordDataBus] s1_rd_data;
-    wire                s1_rdy_;
-    wire                s1_cs_;
+    wire [`WordDataBus]    s1_rd_data;
+    wire                   s1_rdy_;
+    wire                   s1_cs_;
 
-    wire [`WordDataBus] s2_rd_data;
-    wire                s2_rdy_;
-    wire                s2_cs_;
+    wire [`WordDataBus]    s2_rd_data;
+    wire                   s2_rdy_;
+    wire                   s2_cs_;
 
-    wire [`WordDataBus] s3_rd_data;
-    wire                s3_rdy_;
-    wire                s3_cs_;
+    wire [`WordDataBus]    s3_rd_data;
+    wire                   s3_rdy_;
+    wire                   s3_cs_;
 
-    wire [`WordDataBus] s4_rd_data;
-    wire                s4_rdy_;
-    wire                s4_cs_;
+    wire [`WordDataBus]    s4_rd_data;
+    wire                   s4_rdy_;
+    wire                   s4_cs_;
 
-    wire [`WordDataBus] s5_rd_data;
-    wire                s5_rdy_;
-    wire                s5_cs_;
+    wire [`WordDataBus]    s5_rd_data;
+    wire                   s5_rdy_;
+    wire                   s5_cs_;
 
-    wire [`WordDataBus] s6_rd_data;
-    wire                s6_rdy_;
-    wire                s6_cs_;
+    wire [`WordDataBus]    s6_rd_data;
+    wire                   s6_rdy_;
+    wire                   s6_cs_;
 
-    wire [`WordDataBus] s7_rd_data;
-    wire                s7_rdy_;
-    wire                s7_cs_;
+    wire [`WordDataBus]    s7_rd_data;
+    wire                   s7_rdy_;
+    wire                   s7_cs_;
 
     wire                   irq_timer;
     wire                   irq_uart_rx;

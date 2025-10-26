@@ -6,6 +6,8 @@
 
 module spm (
     input  wire                clk,
+    input  wire                reset,
+
     /********** A端口 : IF阶段 **********/
     input  wire [`SpmAddrBus]  if_spm_addr_i,
     input  wire                if_spm_as_n_i,

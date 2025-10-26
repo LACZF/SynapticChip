@@ -8,6 +8,7 @@
 module bus_if (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** 流水线控制信号 **********/
     input  wire                   stall_i,
     input  wire                   flush_i,

@@ -8,6 +8,7 @@
 module ex_reg (
     input  wire                  clk,
     input  wire                  reset,
+
     /********** ALU的输出 **********/
     input  wire [`WordDataBus]   alu_out_i,           // 运算结果
     input  wire                  alu_of_i,            // 溢出

@@ -5,6 +5,9 @@
 `include "bus.v"
 
 module bus_master_mux (
+    input  wire                   clk,
+    input  wire                   reset,
+
     /********** 总线主控信号 **********/
     // 0号总线主控
     input  wire [`WordAddrBus]    m0_addr_i,       // 地址

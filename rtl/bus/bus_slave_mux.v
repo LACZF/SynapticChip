@@ -6,6 +6,9 @@
 `include "bus.v"
 
 module bus_slave_mux (
+    input  wire                   clk,
+    input  wire                   reset,
+
     /********** 芯片选择 **********/
     input  wire                   s0_cs_n_i,       // 0号总线从属
     input  wire                   s1_cs_n_i,       // 1号总线从属

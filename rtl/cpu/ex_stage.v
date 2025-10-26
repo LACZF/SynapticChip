@@ -8,6 +8,7 @@
 module ex_stage (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** 流水线控制信号 **********/
     input  wire                   stall_i,
     input  wire                   flush_i,
@@ -65,9 +66,9 @@ module ex_stage (
 
     /********** 流水线寄存器 **********/
     ex_reg u_ex_reg (
-        /********** 时钟 & 复位 **********/
         .clk                (clk),
         .reset              (reset),
+
         /********** ALU的输出 **********/
         .alu_out_i          (alu_out),
         .alu_of_i           (alu_of),

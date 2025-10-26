@@ -8,6 +8,7 @@
 module mem_reg (
     input  wire                       clk,
     input  wire                       reset,
+
     /********** 内存访问结果 **********/
     input  wire [`WordDataBus]        result_i,                // 结果
     input  wire                       miss_align_i,            // 未对齐

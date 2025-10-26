@@ -8,6 +8,7 @@
 module RV64I (
     input  wire                   clk,
     input  wire                   reset,
+
     input  wire [`WordAddrBus]    id_pc_i,
     input  wire [`WordDataBus]    id_insn_i,
     input  wire                   id_en_i,

@@ -8,6 +8,7 @@
 module if_reg (
     input  wire                  clk,
     input  wire                  reset,
+
     /********** 读取数据 **********/
     input  wire [`WordDataBus]   insn_i,
     /********** 流水线控制信号 **********/

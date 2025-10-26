@@ -7,6 +7,7 @@
 module if_stage (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** SPM接口 **********/
     input  wire [`WordDataBus]    spm_rd_data_i,   // 读取的数据
     output wire [`WordAddrBus]    spm_addr_o,      // 地址
@@ -42,6 +43,7 @@ module if_stage (
     bus_if u_bus_if (
         .clk              (clk),
         .reset            (reset),
+
         /********** 流水线控制信号 **********/
         .stall_i          (stall_i),              // 延迟信号
         .flush_i          (flush_i),              // 刷新信号
@@ -73,6 +75,7 @@ module if_stage (
     if_reg u_if_reg (
         .clk         (clk),
         .reset       (reset),
+
         /********** 获取数据 **********/
         .insn_i      (insn),               // 取指令
         /********** 流水线控制信号 **********/

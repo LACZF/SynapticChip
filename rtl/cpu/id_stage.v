@@ -67,6 +67,9 @@ module id_stage (
 
     /********** 指令解码器 **********/
     decoder u_decoder (
+        .clk                (clk),
+        .reset              (reset),
+
         /********** IF/ID流水线寄存器 **********/
         .if_pc_i            (if_pc_i),
         .if_insn_i          (if_insn_i),
@@ -113,6 +116,7 @@ module id_stage (
     id_reg u_id_reg (
         .clk                (clk),
         .reset              (reset),
+
         /********** 解码结果 **********/
         .alu_op_i           (alu_op),
         .alu_in_0_i         (alu_in_0),

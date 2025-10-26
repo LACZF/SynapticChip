@@ -8,6 +8,7 @@
 module alu (
     input  wire                   clk,
     input  wire                   reset,
+
     input  wire [`WordAddrBus]    id_pc_i,
     input  wire [`WordDataBus]    id_insn_i,
     input  wire                   id_en_i,
@@ -26,6 +27,7 @@ module alu (
     RV64I u_rv64i (
         .clk          (clk),
         .reset        (reset),
+
         .id_pc_i      (id_pc_i),
         .id_insn_i    (id_insn_i),
         .id_en_i      (id_en_i),
@@ -41,6 +43,7 @@ module alu (
         RV64M u_rv64m (
             .clk          (clk),
             .reset        (reset),
+
             .id_pc_i      (id_pc_i),
             .id_insn_i    (id_insn_i),
             .id_en_i      (id_en_i),

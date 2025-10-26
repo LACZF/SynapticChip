@@ -334,7 +334,9 @@ module cpu (
 
     /********** SPM **********/
     spm u_spm (
-        .clk                   (clk_n),
+        .clk                   (clk),
+        .reset                 (reset),
+
         .if_spm_addr_i         (if_spm_addr[`SpmAddrLoc]),
         .if_spm_as_n_i         (if_spm_as_),
         .if_spm_rw_i           (if_spm_rw),

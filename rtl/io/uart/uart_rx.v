@@ -7,6 +7,7 @@
 module uart_rx (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** 控制信号 **********/
     output wire                   rx_busy, // 接收中标志信号
     output reg                    rx_end,  // 接收完成信号

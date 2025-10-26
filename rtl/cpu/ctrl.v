@@ -10,6 +10,7 @@
 module ctrl (
     input  wire                       clk,
     input  wire                       reset,
+
     /********** 控制寄存器接口 **********/
     input  wire [`RegAddrBus]         creg_rd_addr_i,   // 读取地址
     output reg    [`WordDataBus]      creg_rd_data_o,   // 读取数据

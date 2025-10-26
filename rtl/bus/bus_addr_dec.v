@@ -7,6 +7,9 @@
 module bus_addr_dec # (
     parameter ADDR_WIDTH       = 30
 )(
+    input  wire                      clk,
+    input  wire                      reset,
+
     input  wire [ADDR_WIDTH-1:0]     s_addr_i,
     output reg                       s0_cs_n_o,
     output reg                       s1_cs_n_o,

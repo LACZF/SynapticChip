@@ -7,6 +7,9 @@
 `include "bus.v"
 
 module mem_ctrl (
+    input  wire                   clk,
+    input  wire                   reset,
+
     /********** EX/MEM流水线寄存器 **********/
     input  wire                   ex_en_i,            // 流水线数据是否有效
     input  wire [`MemOpBus]       ex_mem_op_i,        // 内存操作
@@ -54,7 +57,7 @@ module mem_ctrl (
                     /* 字节偏移的检测 */
                     if (offset == `BYTE_OFFSET_WORD) begin // 对齐
                         rw_o           = `WRITE;
-                        as_n_o          = `ENABLE_N;
+                        as_n_o         = `ENABLE_N;
                     end else begin                           // 未对齐
                         miss_align_o   = `ENABLE;
                     end

@@ -7,6 +7,7 @@
 module uart_tx (
     input  wire                   clk,
     input  wire                   reset,
+
     /********** 控制信号 **********/
     input  wire                   tx_start,    // 发送开始信号
     input  wire [`ByteDataBus]    tx_data,     // 发送的数据

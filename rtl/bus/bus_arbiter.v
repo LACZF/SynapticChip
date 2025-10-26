@@ -7,6 +7,7 @@
 module bus_arbiter (
     input  wire       clk,
     input  wire       reset,
+
     /********** 仲裁信号 **********/
     // 0号总线主控
     input  wire       m0_req_n_i,     // 请求总线

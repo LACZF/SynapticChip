@@ -65,6 +65,9 @@ module mem_stage (
 
     /********** 内存访问控制模块 **********/
     mem_ctrl u_mem_ctrl (
+        .clk             (clk),
+        .reset           (reset),
+
         /********** EX/MEM流水线寄存器 **********/
         .ex_en_i             (ex_en_i),
         .ex_mem_op_i         (ex_mem_op_i),
@@ -83,9 +86,9 @@ module mem_stage (
 
     /********** 总线接口 **********/
     bus_if u_bus_if (
-        /********** 时钟 & 复位 **********/
         .clk             (clk),
         .reset           (reset),
+
         /********** 流水线控制信号 **********/
         .stall_i         (stall_i),
         .flush_i         (flush_i),
