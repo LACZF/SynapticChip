@@ -239,22 +239,22 @@ module chip (
 `ifdef IMPLEMENT_UART
     /********** UART **********/
     uart u_uart (
-        .clk             (clk),
-        .reset           (reset),
+        .clk               (clk),
+        .reset             (reset),
 
-        .cs_             (s3_cs_),
-        .as_             (s_as_),
-        .rw              (s_rw),
-        .addr            (s_addr[`UartAddrLoc]),
-        .wr_data         (s_wr_data),
-        .rd_data         (s3_rd_data),
-        .rdy_            (s3_rdy_),
+        .cs_n_i            (s3_cs_),
+        .as_n_i            (s_as_),
+        .rw_i              (s_rw),
+        .addr_i            (s_addr[`UartAddrLoc]),
+        .wr_data_i         (s_wr_data),
+        .rd_data_o         (s3_rd_data),
+        .rdy_n_o           (s3_rdy_),
 
-        .irq_rx          (irq_uart_rx),
-        .irq_tx          (irq_uart_tx),
+        .irq_rx_o          (irq_uart_rx),
+        .irq_tx_o          (irq_uart_tx),
 
-        .rx              (uart_rx),
-        .tx              (uart_tx)
+        .rx_i              (uart_rx),
+        .tx_o              (uart_tx)
     );
 `else
     assign s3_rd_data  = `WORD_DATA_W'h0;

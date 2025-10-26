@@ -9,11 +9,11 @@ module uart_rx (
     input  wire                   reset,
 
     /********** 控制信号 **********/
-    output wire                   rx_busy, // 接收中标志信号
-    output reg                    rx_end,  // 接收完成信号
-    output reg    [`ByteDataBus]  rx_data, // 接收数据兼移位寄存器
+    output wire                   rx_busy_o, // 接收中标志信号
+    output reg                    rx_end_o,  // 接收完成信号
+    output reg    [`ByteDataBus]  rx_data_o, // 接收数据兼移位寄存器
     /********** UART接收信号 **********/
-    input  wire                   rx       // UART接收信号
+    input  wire                   rx_i       // UART接收信号
 );
 
     /********** 内部信号 **********/
@@ -22,14 +22,14 @@ module uart_rx (
     reg [`UartBitCntBus]          bit_cnt; // 比特计数器
 
     /********** 接收中标志信号的生成 **********/
-    assign rx_busy = (state != `UART_STATE_IDLE) ? `ENABLE : `DISABLE;
+    assign rx_busy_o = (state != `UART_STATE_IDLE) ? `ENABLE : `DISABLE;
 
     /********** 接收逻辑电路 **********/
     always @(posedge clk or `RESET_EDGE reset) begin
         if (reset == `RESET_ENABLE) begin
             /* 异步复位 */
-            rx_end    <= `DISABLE;
-            rx_data   <= `BYTE_DATA_W'h0;
+            rx_end_o    <= `DISABLE;
+            rx_data_o   <= `BYTE_DATA_W'h0;
             state     <= `UART_STATE_IDLE;
             div_cnt   <= `UART_DIV_RATE / 2;
             bit_cnt   <= `UART_BIT_CNT_W'h0;
@@ -37,10 +37,10 @@ module uart_rx (
             /* 接收模块状态 */
             case (state)
                 `UART_STATE_IDLE : begin // 空闲状态
-                    if (rx == `UART_START_BIT) begin // 接收开始
+                    if (rx_i == `UART_START_BIT) begin // 接收开始
                         state    <= `UART_STATE_RX;
                     end
-                    rx_end    <= `DISABLE;
+                    rx_end_o    <= `DISABLE;
                 end
                 `UART_STATE_RX     : begin // 接收中
                     /* 依据时钟分配调整波特率 */
@@ -52,12 +52,12 @@ module uart_rx (
                                 bit_cnt  <= `UART_BIT_CNT_START;
                                 div_cnt  <= `UART_DIV_RATE / 2;
                                 /* 帧错误的检测 */
-                                if (rx == `UART_STOP_BIT) begin
-                                    rx_end    <= `ENABLE;
+                                if (rx_i == `UART_STOP_BIT) begin
+                                    rx_end_o    <= `ENABLE;
                                 end
                             end
                             default                : begin // 接收数据
-                                rx_data <= {rx, rx_data[`BYTE_MSB:`LSB+1]};
+                                rx_data_o <= {rx_i, rx_data_o[`BYTE_MSB:`LSB+1]};
                                 bit_cnt <= bit_cnt + 1'b1;
                                 div_cnt <= `UART_DIV_RATE;
                             end
