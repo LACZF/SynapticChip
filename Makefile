@@ -48,7 +48,7 @@ endif
 READ_RTL_ARGS += -sv
 endif
 
-ifeq ($(DEBUG),1)
+ifneq ($(DEBUG),0)
 TEST_ARGS += -D DEBUG=1
 endif
 
