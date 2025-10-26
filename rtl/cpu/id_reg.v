@@ -27,18 +27,18 @@ module id_reg (
     input  wire [`WordAddrBus]    if_pc_i,
     input  wire                   if_en_i,
     /********** ID/EX流水线寄存器 **********/
-    output reg    [`WordAddrBus]  id_pc_o,
+    output reg  [`WordAddrBus]    id_pc_o,
     output reg                    id_en_o,
-    output reg    [`AluOpBus]     id_alu_op_o,
-    output reg    [`WordDataBus]  id_alu_in_0_o,
-    output reg    [`WordDataBus]  id_alu_in_1_o,
+    output reg  [`AluOpBus]       id_alu_op_o,
+    output reg  [`WordDataBus]    id_alu_in_0_o,
+    output reg  [`WordDataBus]    id_alu_in_1_o,
     output reg                    id_br_flag_o,
-    output reg    [`MemOpBus]     id_mem_op_o,
-    output reg    [`WordDataBus]  id_mem_wr_data_o,
-    output reg    [`CtrlOpBus]    id_ctrl_op_o,
-    output reg    [`RegAddrBus]   id_dst_addr_o,
+    output reg  [`MemOpBus]       id_mem_op_o,
+    output reg  [`WordDataBus]    id_mem_wr_data_o,
+    output reg  [`CtrlOpBus]      id_ctrl_op_o,
+    output reg  [`RegAddrBus]     id_dst_addr_o,
     output reg                    id_gpr_we_n_o,
-    output reg [`IsaExpBus]       id_exp_code_o
+    output reg  [`IsaExpBus]      id_exp_code_o
 );
 
     /********** 流水线寄存器 **********/

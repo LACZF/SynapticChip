@@ -13,8 +13,8 @@ module ctrl (
 
     /********** 控制寄存器接口 **********/
     input  wire [`RegAddrBus]         creg_rd_addr_i,   // 读取地址
-    output reg    [`WordDataBus]      creg_rd_data_o,   // 读取数据
-    output reg    [`CpuExeModeBus]    exe_mode_o,       // 执行模式
+    output reg  [`WordDataBus]        creg_rd_data_o,   // 读取数据
+    output reg  [`CpuExeModeBus]      exe_mode_o,       // 执行模式
     /********** 中断 **********/
     input  wire [`CPU_IRQ_CH-1:0]     irq_i,            // 中断请求
     output reg                        int_detect_o,     // 中断检测
@@ -48,16 +48,16 @@ module ctrl (
 
     /********** 控制寄存器 **********/
     reg                               int_en;           // 0号控制寄存器 : 中断有效
-    reg     [`CpuExeModeBus]          pre_exe_mode;     // 1号控制寄存器 : 执行模式
+    reg         [`CpuExeModeBus]      pre_exe_mode;     // 1号控制寄存器 : 执行模式
     reg                               pre_int_en;       // 1号控制寄存器 : 中断有效
-    reg     [`WordAddrBus]            epc;              // 3号控制寄存器 : 异常程序计数器
-    reg     [`WordAddrBus]            exp_vector;       // 4号控制寄存器 : 异常向量
-    reg     [`IsaExpBus]              exp_code;         // 5号控制寄存器 : 异常代码
+    reg         [`WordAddrBus]        epc;              // 3号控制寄存器 : 异常程序计数器
+    reg         [`WordAddrBus]        exp_vector;       // 4号控制寄存器 : 异常向量
+    reg         [`IsaExpBus]          exp_code;         // 5号控制寄存器 : 异常代码
     reg                               dly_flag;         // 6号控制寄存器 : 延迟间隙标志位
-    reg     [`CPU_IRQ_CH-1:0]         mask;             // 7号控制寄存器 : 中断屏蔽
+    reg         [`CPU_IRQ_CH-1:0]     mask;             // 7号控制寄存器 : 中断屏蔽
 
     /********** 内部信号 **********/
-    reg [`WordAddrBus]                pre_pc;           // 前一个程序寄存器
+    reg         [`WordAddrBus]        pre_pc;           // 前一个程序寄存器
     reg                               br_flag;          // 分支标志位
 
     /********** 流水线控制信号 **********/
@@ -110,8 +110,7 @@ module ctrl (
                creg_rd_data_o = {{`WORD_DATA_W-2{1'b0}}, int_en, exe_mode_o};
            end
            `CREG_ADDR_PRE_STATUS : begin // 1号 :异常发生前的状态
-               creg_rd_data_o = {{`WORD_DATA_W-2{1'b0}},
-                   pre_int_en, pre_exe_mode};
+               creg_rd_data_o = {{`WORD_DATA_W-2{1'b0}}, pre_int_en, pre_exe_mode};
            end
            `CREG_ADDR_PC         : begin // 2号 :程序计数器
                creg_rd_data_o = {id_pc_i, `BYTE_OFFSET_W'h0};
@@ -123,8 +122,7 @@ module ctrl (
                creg_rd_data_o = {exp_vector, `BYTE_OFFSET_W'h0};
            end
            `CREG_ADDR_CAUSE         : begin // 5号 :异常原因
-               creg_rd_data_o = {{`WORD_DATA_W-1-`ISA_EXP_W{1'b0}},
-                   dly_flag, exp_code};
+               creg_rd_data_o = {{`WORD_DATA_W-1-`ISA_EXP_W{1'b0}}, dly_flag, exp_code};
            end
            `CREG_ADDR_INT_MASK     : begin // 6号 :中断屏蔽
                creg_rd_data_o = {{`WORD_DATA_W-`CPU_IRQ_CH{1'b0}}, mask};
@@ -139,8 +137,7 @@ module ctrl (
                creg_rd_data_o = $unsigned(`SPM_SIZE);
            end
            `CREG_ADDR_CPU_INFO     : begin // 9号:CPU信息
-               creg_rd_data_o = {`RELEASE_YEAR, `RELEASE_MONTH,
-                   `RELEASE_VERSION, `RELEASE_REVISION};
+               creg_rd_data_o = {`RELEASE_YEAR, `RELEASE_MONTH, `RELEASE_VERSION, `RELEASE_REVISION};
            end
            default             : begin // 默认值
                creg_rd_data_o = `WORD_DATA_W'h0;

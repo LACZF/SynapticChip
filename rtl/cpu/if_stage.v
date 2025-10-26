@@ -9,11 +9,11 @@ module if_stage (
     input  wire                   reset,
 
     /********** SPM接口 **********/
-    input  wire [`WordDataBus]    spm_rd_data_i,   // 读取的数据
-    output wire [`WordAddrBus]    spm_addr_o,      // 地址
-    output wire                   spm_as_n_o,      // 地址选通
-    output wire                   spm_rw_o,        // 读/写
-    output wire [`WordDataBus]    spm_wr_data_o,   // 写入的数据
+    input  wire [`WordDataBus]    spm_rd_data_i,    // 读取的数据
+    output wire [`WordAddrBus]    spm_addr_o,       // 地址
+    output wire                   spm_as_n_o,       // 地址选通
+    output wire                   spm_rw_o,         // 读/写
+    output wire [`WordDataBus]    spm_wr_data_o,    // 写入的数据
     /********** 总线接口 **********/
     input  wire [`WordDataBus]    bus_rd_data_i,    // 读取的数据
     input  wire                   bus_rdy_n_i,      // 就绪
@@ -77,16 +77,16 @@ module if_stage (
         .reset       (reset),
 
         /********** 获取数据 **********/
-        .insn_i      (insn),               // 取指令
+        .insn_i      (insn),                      // 取指令
         /********** 流水线控制信号 **********/
-        .stall_i     (stall_i),            // 延迟
-        .flush_i     (flush_i),            // 刷新
-        .new_pc_i    (new_pc_i),           // 新程序计数器值
-        .br_taken_i  (br_taken_i),         // 分支成立
-        .br_addr_i   (br_addr_i),          // 分支目标地址
+        .stall_i     (stall_i),                   // 延迟
+        .flush_i     (flush_i),                   // 刷新
+        .new_pc_i    (new_pc_i),                  // 新程序计数器值
+        .br_taken_i  (br_taken_i),                // 分支成立
+        .br_addr_i   (br_addr_i),                 // 分支目标地址
         /********** IF/ID流水线寄存器 **********/
-        .if_pc_o     (if_pc_o),            // 程序计数器
-        .if_insn_o   (if_insn_o),          // 指令
+        .if_pc_o     (if_pc_o),                   // 程序计数器
+        .if_insn_o   (if_insn_o),                 // 指令
         .if_en_o     (if_en_o)             // 流水线数据有效标志位
     );
 

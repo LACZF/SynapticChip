@@ -57,7 +57,7 @@ module mem_stage (
     /********** 内部信号 **********/
     wire [`WordDataBus]      rd_data;
     wire [`WordAddrBus]      addr;
-    wire                     as_;
+    wire                     as_n;
     wire                     rw;
     wire [`WordDataBus]      wr_data;
     wire [`WordDataBus]      result;
@@ -81,7 +81,7 @@ module mem_stage (
         /********** 内存访问接口 **********/
         .rd_data_i           (rd_data),
         .addr_o              (addr),
-        .as_n_o              (as_),
+        .as_n_o              (as_n),
         .rw_o                (rw),
         .wr_data_o           (wr_data),
         /********** 内存访问结果 **********/
@@ -100,7 +100,7 @@ module mem_stage (
         .busy_o          (busy_o),
         /********** CPU接口 **********/
         .addr_i          (addr),
-        .as_n_i          (as_),
+        .as_n_i          (as_n),
         .rw_i            (rw),
         .wr_data_i       (wr_data),
         .rd_data_o       (rd_data),

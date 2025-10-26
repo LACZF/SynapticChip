@@ -14,10 +14,10 @@ module decoder (
     input  wire [`WordDataBus]    if_insn_i,           // 指令
     input  wire                   if_en_i,             // 流水线数据的有效标志位
     /********** GPR接口 **********/
-    input  wire [`WordDataBus]    gpr_rd_data0_i,     // 读取数据 0
-    input  wire [`WordDataBus]    gpr_rd_data1_i,     // 读取数据 1
-    output wire [`RegAddrBus]     gpr_rd_addr0_o,     // 读取地址 0
-    output wire [`RegAddrBus]     gpr_rd_addr1_o,     // 读取地址 1
+    input  wire [`WordDataBus]    gpr_rd_data0_i,      // 读取数据 0
+    input  wire [`WordDataBus]    gpr_rd_data1_i,      // 读取数据 1
+    output wire [`RegAddrBus]     gpr_rd_addr0_o,      // 读取地址 0
+    output wire [`RegAddrBus]     gpr_rd_addr1_o,      // 读取地址 1
     /********** 数据直通 **********/
     // 来自ID阶段的数据直通
     input  wire                   id_en_i,             // 流水线数据有效
@@ -36,18 +36,18 @@ module decoder (
     input  wire [`WordDataBus]    creg_rd_data_i,      // 读取的数据
     output wire [`RegAddrBus]     creg_rd_addr_o,      // 读取的地址
     /********** 解码结果 **********/
-    output reg   [`AluOpBus]      alu_op_o,            // ALU操作
-    output reg   [`WordDataBus]   alu_in0_o,           // ALU输入 0
-    output reg   [`WordDataBus]   alu_in1_o,           // ALU输入 1
-    output reg   [`WordAddrBus]   br_addr_o,           // 分支地址
+    output reg  [`AluOpBus]       alu_op_o,            // ALU操作
+    output reg  [`WordDataBus]    alu_in0_o,           // ALU输入 0
+    output reg  [`WordDataBus]    alu_in1_o,           // ALU输入 1
+    output reg  [`WordAddrBus]    br_addr_o,           // 分支地址
     output reg                    br_taken_o,          // 分支成立
     output reg                    br_flag_o,           // 分支标志位
-    output reg   [`MemOpBus]      mem_op_o,            // 内存操作
-    output wire  [`WordDataBus]   mem_wr_data_o,       // 内存写入数据
-    output reg   [`CtrlOpBus]     ctrl_op_o,           // 控制操作
-    output reg   [`RegAddrBus]    dst_addr_o,          // 通用寄存器写入地址
+    output reg  [`MemOpBus]       mem_op_o,            // 内存操作
+    output wire [`WordDataBus]    mem_wr_data_o,       // 内存写入数据
+    output reg  [`CtrlOpBus]      ctrl_op_o,           // 控制操作
+    output reg  [`RegAddrBus]     dst_addr_o,          // 通用寄存器写入地址
     output reg                    gpr_we_n_o,          // 通用寄存器写入有效
-    output reg   [`IsaExpBus]     exp_code_o,          // 异常代码
+    output reg  [`IsaExpBus]      exp_code_o,          // 异常代码
     output reg                    ld_hazard_o          // Load冒险
 );
 

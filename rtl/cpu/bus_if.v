@@ -18,7 +18,7 @@ module bus_if (
     input  wire                   as_n_i,
     input  wire                   rw_i,
     input  wire [`WordDataBus]    wr_data_i,
-    output reg    [`WordDataBus]  rd_data_o,
+    output reg  [`WordDataBus]    rd_data_o,
     /********** SPM接口 **********/
     input  wire [`WordDataBus]    spm_rd_data_i,
     output wire [`WordAddrBus]    spm_addr_o,
@@ -30,15 +30,15 @@ module bus_if (
     input  wire                   bus_rdy_n_i,
     input  wire                   bus_grnt_n_i,
     output reg                    bus_req_n_o,
-    output reg    [`WordAddrBus]  bus_addr_o,
+    output reg  [`WordAddrBus]    bus_addr_o,
     output reg                    bus_as_n_o,
     output reg                    bus_rw_o,
-    output reg    [`WordDataBus]  bus_wr_data_o
+    output reg  [`WordDataBus]    bus_wr_data_o
 );
 
     /********** 内部信号 **********/
-    reg     [`BusIfStateBus]       state;             // 总线接口状态
-    reg     [`WordDataBus]         rd_buf;            // 读取缓冲
+    reg  [`BusIfStateBus]          state;             // 总线接口状态
+    reg  [`WordDataBus]            rd_buf;            // 读取缓冲
     wire [`BusSlaveIndexBus]       s_index;           // 总线从属索引
 
     /********** 生成总线从属索引 **********/

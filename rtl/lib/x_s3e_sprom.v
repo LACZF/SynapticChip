@@ -6,8 +6,8 @@
 `include "rom.v"
 
 module x_s3e_sprom (
-    input wire                  clka,     // 时钟
-    input wire [`RomAddrBus]    addra,    // 读取地址
+    input  wire                 clka,     // 时钟
+    input  wire [`RomAddrBus]   addra,    // 读取地址
     output reg [`WordDataBus]   douta     // 读取的数据
 );
 
