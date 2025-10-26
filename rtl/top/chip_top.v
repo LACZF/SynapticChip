@@ -8,51 +8,46 @@
 `include "pe.v"
 
 module chip_top #(
-    parameter MASTER_NUM = `BUS_MASTER_CH,
-    parameter SLAVE_NUM  = `BUS_SLAVE_CH
+    parameter MASTER_NUM                = 4,
+    parameter SLAVE_NUM                 = 8,
+    parameter IMPLEMENT_ROM             = 1,
+    parameter IMPLEMENT_JTAG            = 0,
+    parameter IMPLEMENT_UART            = 1,
+    parameter IMPLEMENT_GPIO            = 1,
+    parameter IMPLEMENT_SPI             = 0,
+    parameter IMPLEMENT_TIMER           = 1,
+    parameter GPIO_IN_CH                = 1,
+    parameter GPIO_OUT_CH               = 1,
+    parameter GPIO_IO_CH                = 1
 ) (
     input  wire                         clk,
-    input  wire                         reset
+    input  wire                         reset,
 
-`ifdef IMPLEMENT_JTAG
     /********** JTAG  **********/
-    , input  wire                       tck
-    , input  wire                       tms
-    , input  wire                       tdi
-    , output wire                       tdo
-    , output wire                       tdo_en
-`endif
+    input  wire                         tck,
+    input  wire                         tms,
+    input  wire                         tdi,
+    output wire                         tdo,
+    output wire                         tdo_en,
 
-`ifdef IMPLEMENT_UART
     /********** UART  **********/
-    , input     wire                    uart_rx
-    , output wire                       uart_tx
-`endif
+    input  wire                         uart_rx,
+    output wire                         uart_tx,
 
-`ifdef IMPLEMENT_GPIO // GPIO实现
     /********** GPIO  **********/
-`ifdef GPIO_IN_CH     // 输入端口的实现
-    , input wire [`GPIO_IN_CH-1:0]      gpio_in      // 输入端口
-`endif
-`ifdef GPIO_OUT_CH     // 输出端口实现
-    , output wire [`GPIO_OUT_CH-1:0]    gpio_out     // 输出端口
-`endif
-`ifdef GPIO_IO_CH     // 输入/输出端口的实现
-    , inout wire [`GPIO_IO_CH-1:0]      gpio_io      // 输入输出端口
-`endif
-`endif
+    input  wire [`GPIO_IN_CH-1:0]       gpio_in,      // 输入端口
+    output wire [`GPIO_OUT_CH-1:0]      gpio_out,     // 输出端口
+    inout  wire [`GPIO_IO_CH-1:0]       gpio_io,      // 输入输出端口
 
-`ifdef IMPLEMENT_SPI
     /********** SPI **********/
-    , output wire                       spi_cs_n
-    , output wire                       spi_clk
-    , output wire                       spi_mosi
-    , input  wire                       spi_miso
-`endif
+    output wire                         spi_cs_n,
+    output wire                         spi_clk,
+    output wire                         spi_mosi,
+    input  wire                         spi_miso
 );
 
-    wire [`WordDataBus]    m_rd_data;
-    wire                   m_rdy_n;
+    wire [`WordDataBus]                 m_rd_data;
+    wire                                m_rdy_n;
 
     /********** 总线信号数组 **********/
     wire [MASTER_NUM-1:0]               m_req_n;
@@ -66,15 +61,15 @@ module chip_top #(
     wire [SLAVE_NUM-1:0]                s_rdy_n;
     wire [SLAVE_NUM-1:0]                s_cs_n;
 
-    wire [`WordAddrBus]    s_addr;
-    wire                   s_as_n;
-    wire                   s_rw;
-    wire [`WordDataBus]    s_wr_data;
+    wire [`WordAddrBus]                 s_addr;
+    wire                                s_as_n;
+    wire                                s_rw;
+    wire [`WordDataBus]                 s_wr_data;
 
-    wire                   irq_timer;
-    wire                   irq_uart_rx;
-    wire                   irq_uart_tx;
-    wire [`CPU_IRQ_CH-1:0] cpu_irq;
+    wire                                irq_timer;
+    wire                                irq_uart_rx;
+    wire                                irq_uart_tx;
+    wire [`CPU_IRQ_CH-1:0]              cpu_irq;
 
     assign cpu_irq = {{`CPU_IRQ_CH-3{`LOW}}, irq_uart_rx, irq_uart_tx, irq_timer};
 
@@ -107,8 +102,17 @@ module chip_top #(
 
     /********** IO模块 **********/
     io_top #(
-        .MASTER_NUM    (MASTER_NUM),
-        .SLAVE_NUM     (SLAVE_NUM)
+        .MASTER_NUM             (MASTER_NUM),
+        .SLAVE_NUM              (SLAVE_NUM),
+        .IMPLEMENT_ROM          (IMPLEMENT_ROM),
+        .IMPLEMENT_JTAG         (IMPLEMENT_JTAG),
+        .IMPLEMENT_UART         (IMPLEMENT_UART),
+        .IMPLEMENT_GPIO         (IMPLEMENT_GPIO),
+        .IMPLEMENT_SPI          (IMPLEMENT_SPI),
+        .IMPLEMENT_TIMER        (IMPLEMENT_TIMER),
+        .GPIO_IN_CH             (GPIO_IN_CH),
+        .GPIO_OUT_CH            (GPIO_OUT_CH),
+        .GPIO_IO_CH             (GPIO_IO_CH)
     ) u_io (
         .clk           (clk),
         .reset         (reset),
@@ -125,46 +129,31 @@ module chip_top #(
         // 中断信号
         .irq_timer     (irq_timer),
         .irq_uart_rx   (irq_uart_rx),
-        .irq_uart_tx   (irq_uart_tx)
+        .irq_uart_tx   (irq_uart_tx),
 
-`ifdef IMPLEMENT_JTAG
         // JTAG接口
-        , .tck          (tck)
-        , .tms          (tms)
-        , .tdi          (tdi)
-        , .tdo          (tdo)
-        , .tdo_en       (tdo_en)
-`endif
+        .tck           (tck),
+        .tms           (tms),
+        .tdi           (tdi),
+        .tdo           (tdo),
+        .tdo_en        (tdo_en),
 
-`ifdef IMPLEMENT_UART
         // UART接口
-        , .uart_rx      (uart_rx)
-        , .uart_tx      (uart_tx)
-`endif
+        .uart_rx       (uart_rx),
+        .uart_tx       (uart_tx),
 
-`ifdef IMPLEMENT_GPIO
         // GPIO接口
-`ifdef GPIO_IN_CH     // 输入端口的实现
-        , .gpio_in      (gpio_in)      // 输入端口
-`endif
-`ifdef GPIO_OUT_CH     // 输出端口实现
-        , .gpio_out     (gpio_out)     // 输出端口
-`endif
-`ifdef GPIO_IO_CH     // 输入/输出端口的实现
-        , .gpio_io      (gpio_io)      // 输入输出端口
-`endif
-`endif
+        .gpio_in       (gpio_in),      // 输入端口
+        .gpio_out      (gpio_out),     // 输出端口
+        .gpio_io       (gpio_io),      // 输入输出端口
 
-`ifdef IMPLEMENT_SPI
         // SPI接口
-        , .spi_cs_n     (spi_cs_n)
-        , .spi_clk      (spi_clk)
-        , .spi_mosi     (spi_mosi)
-        , .spi_miso     (spi_miso)
-`endif
+        .spi_cs_n      (spi_cs_n),
+        .spi_clk       (spi_clk),
+        .spi_mosi      (spi_mosi),
+        .spi_miso      (spi_miso)
     );
 
-`ifdef IMPLEMENT_PE
     /********** Integrated PE Module **********/
     pe_top #(
         .ADDR_WIDTH(`WORD_ADDR_W),
@@ -187,11 +176,6 @@ module chip_top #(
         .rd_data_o(s_rd_data[6]),
         .rdy_n_o(s_rdy_n[6])
     );
-`else
-    /* 暂未使用 */
-    assign s_rd_data[6]    = `WORD_DATA_W'h0;
-    assign s_rdy_n[6]      = `DISABLE_N;
-`endif
 
     /********** BUS **********/
     bus_top #(
