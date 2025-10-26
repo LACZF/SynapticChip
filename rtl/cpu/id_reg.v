@@ -11,8 +11,8 @@ module id_reg (
 
     /********** 解码结果 **********/
     input  wire [`AluOpBus]       alu_op_i,
-    input  wire [`WordDataBus]    alu_in_0_i,
-    input  wire [`WordDataBus]    alu_in_1_i,
+    input  wire [`WordDataBus]    alu_in0_i,
+    input  wire [`WordDataBus]    alu_in1_i,
     input  wire                   br_flag_i,
     input  wire [`MemOpBus]       mem_op_i,
     input  wire [`WordDataBus]    mem_wr_data_i,
@@ -82,8 +82,8 @@ module id_reg (
                     id_pc_o            <= if_pc_i;
                     id_en_o            <= if_en_i;
                     id_alu_op_o        <= alu_op_i;
-                    id_alu_in_0_o      <= alu_in_0_i;
-                    id_alu_in_1_o      <= alu_in_1_i;
+                    id_alu_in_0_o      <= alu_in0_i;
+                    id_alu_in_1_o      <= alu_in1_i;
                     id_mem_op_o        <= mem_op_i;
                     id_mem_wr_data_o   <= mem_wr_data_i;
                     id_ctrl_op_o       <= ctrl_op_i;

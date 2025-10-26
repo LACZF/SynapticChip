@@ -37,8 +37,8 @@ module decoder (
     output wire [`RegAddrBus]     creg_rd_addr_o,      // 读取的地址
     /********** 解码结果 **********/
     output reg   [`AluOpBus]      alu_op_o,            // ALU操作
-    output reg   [`WordDataBus]   alu_in_0_o,          // ALU输入 0
-    output reg   [`WordDataBus]   alu_in_1_o,          // ALU输入 1
+    output reg   [`WordDataBus]   alu_in0_o,           // ALU输入 0
+    output reg   [`WordDataBus]   alu_in1_o,           // ALU输入 1
     output reg   [`WordAddrBus]   br_addr_o,           // 分支地址
     output reg                    br_taken_o,          // 分支成立
     output reg                    br_flag_o,           // 分支标志位
@@ -126,8 +126,8 @@ module decoder (
     always @(*) begin
         /* 默认值 */
         alu_op_o    = `ALU_OP_NOP;
-        alu_in_0_o  = ra_data;
-        alu_in_1_o  = rb_data;
+        alu_in0_o   = ra_data;
+        alu_in1_o   = rb_data;
         br_taken_o  = `DISABLE;
         br_flag_o   = `DISABLE;
         br_addr_o   = {`WORD_ADDR_W{1'b0}};
@@ -203,55 +203,55 @@ module decoder (
                         `RISCV_FUNC3_ADDI: begin
                             // ADDI 指令
                             alu_op_o   = `ALU_OP_ADDS;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_SLTI: begin
                             // SLTI 指令
                             alu_op_o   = `ALU_OP_SUBS;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_SLTIU: begin
                             // SLTIU 指令
                             alu_op_o   = `ALU_OP_SUBU;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_XORI: begin
                             // XORI 指令
                             alu_op_o   = `ALU_OP_XOR;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_ORI: begin
                             // ORI 指令
                             alu_op_o   = `ALU_OP_OR;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_ANDI: begin
                             // ANDI 指令
                             alu_op_o   = `ALU_OP_AND;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_SLLI: begin
                             // SLLI 指令
                             alu_op_o   = `ALU_OP_SHLL;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_SRLI_SRAI: begin
                             if (func7 == 7'b0000000) begin
                                 // SRLI 指令
                                 alu_op_o   = `ALU_OP_SHRL;
-                                alu_in_1_o = i_imm;
+                                alu_in1_o  = i_imm;
                                 gpr_we_n_o = `ENABLE_N;
                             end else if (func7 == 7'b0100000) begin
                                 // SRAI 指令
                                 alu_op_o   = `ALU_OP_SHRL;
-                                alu_in_1_o = i_imm;
+                                alu_in1_o  = i_imm;
                                 gpr_we_n_o = `ENABLE_N;
                             end
                         end
@@ -264,35 +264,35 @@ module decoder (
                         `RISCV_FUNC3_LB: begin
                             // LB 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             mem_op_o   = `MEM_OP_LDW;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_LH: begin
                             // LH 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             mem_op_o   = `MEM_OP_LDW;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_LW: begin
                             // LW 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             mem_op_o   = `MEM_OP_LDW;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_LBU: begin
                             // LBU 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             mem_op_o   = `MEM_OP_LDW;
                             gpr_we_n_o = `ENABLE_N;
                         end
                         `RISCV_FUNC3_LHU: begin
                             // LHU 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = i_imm;
+                            alu_in1_o  = i_imm;
                             mem_op_o   = `MEM_OP_LDW;
                             gpr_we_n_o = `ENABLE_N;
                         end
@@ -305,19 +305,19 @@ module decoder (
                         `RISCV_FUNC3_SB: begin
                             // SB 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = s_imm;
+                            alu_in1_o  = s_imm;
                             mem_op_o   = `MEM_OP_STW;
                         end
                         `RISCV_FUNC3_SH: begin
                             // SH 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = s_imm;
+                            alu_in1_o  = s_imm;
                             mem_op_o   = `MEM_OP_STW;
                         end
                         `RISCV_FUNC3_SW: begin
                             // SW 指令
                             alu_op_o   = `ALU_OP_ADDU;
-                            alu_in_1_o = s_imm;
+                            alu_in1_o  = s_imm;
                             mem_op_o   = `MEM_OP_STW;
                         end
                     endcase
@@ -361,8 +361,8 @@ module decoder (
                     br_flag_o  = `ENABLE;
                     br_addr_o  = j_target;
                     br_taken_o = `ENABLE;
-                    // alu_in_0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
-                    alu_in_0_o = ret_addr;
+                    // alu_in0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
+                    alu_in0_o  = ret_addr;
                     gpr_we_n_o = `ENABLE_N;
                 end
 
@@ -372,16 +372,16 @@ module decoder (
                     br_flag_o  = `ENABLE;
                     br_addr_o  = jr_target;
                     br_taken_o = `ENABLE;
-                    // alu_in_0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
-                    alu_in_0_o = ret_addr;
+                    // alu_in0_o = {ret_addr, {`BYTE_OFFSET_W{1'b0}}};
+                    alu_in0_o  = ret_addr;
                     gpr_we_n_o = `ENABLE_N;
                 end
 
                 // LUI 指令
                 `RISCV_OPCODE_U_TYPE: begin
                     // LUI 指令
-                    alu_in_0_o = {`WORD_DATA_W{1'b0}};
-                    alu_in_1_o = u_imm;
+                    alu_in0_o  = {`WORD_DATA_W{1'b0}};
+                    alu_in1_o  = u_imm;
                     alu_op_o   = `ALU_OP_ADDU;
                     gpr_we_n_o = `ENABLE_N;
                 end

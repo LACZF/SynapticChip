@@ -53,8 +53,8 @@ module id_stage (
 
     /********** 解码信号 **********/
     wire  [`AluOpBus]              alu_op;              // ALU操作
-    wire  [`WordDataBus]           alu_in_0;            // ALU输入 0
-    wire  [`WordDataBus]           alu_in_1;            // ALU输入 1
+    wire  [`WordDataBus]           alu_in0;             // ALU输入 0
+    wire  [`WordDataBus]           alu_in1;             // ALU输入 1
     wire                           br_flag;
     wire  [`MemOpBus]              mem_op;
     wire  [`WordDataBus]           mem_wr_data;
@@ -98,8 +98,8 @@ module id_stage (
         .creg_rd_addr_o     (creg_rd_addr_o),
         /********** 解码结果 **********/
         .alu_op_o           (alu_op),
-        .alu_in_0_o         (alu_in_0),
-        .alu_in_1_o         (alu_in_1),
+        .alu_in0_o          (alu_in0),
+        .alu_in1_o          (alu_in1),
         .br_addr_o          (br_addr_o),
         .br_taken_o         (br_taken_o),
         .br_flag_o          (br_flag),
@@ -119,8 +119,8 @@ module id_stage (
 
         /********** 解码结果 **********/
         .alu_op_i           (alu_op),
-        .alu_in_0_i         (alu_in_0),
-        .alu_in_1_i         (alu_in_1),
+        .alu_in0_i          (alu_in0),
+        .alu_in1_i          (alu_in1),
         .br_flag_i          (br_flag),
         .mem_op_i           (mem_op),
         .mem_wr_data_i      (mem_wr_data),
