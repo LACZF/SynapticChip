@@ -7,6 +7,7 @@
 /********** RISC-V 指令格式定义 **********/
 // R-Type 指令
 `define RISCV_OPCODE_R_TYPE    7'b0110011
+`define RISCV_OPCODE_R_TYPE_W  7'b0111011  // 32位寄存器-寄存器运算指令（如addw）的opcode
 `define RISCV_R_TYPE_FUNC3_LOC 14:12
 `define RISCV_R_TYPE_FUNC7_LOC 31:25
 `define RISCV_R_TYPE_RD_LOC    11:7
@@ -15,6 +16,7 @@
 
 // I-Type 指令
 `define RISCV_OPCODE_I_TYPE    7'b0010011
+`define RISCV_OPCODE_I_TYPE_W  7'b0011011  // 32位立即数运算指令（如addiw）的opcode
 `define RISCV_I_TYPE_FUNC3_LOC 14:12
 `define RISCV_I_TYPE_RD_LOC    11:7
 `define RISCV_I_TYPE_RS1_LOC   19:15
@@ -76,8 +78,20 @@
 `define RISCV_FUNC7_SRL        7'b0000000
 `define RISCV_FUNC7_SRA        7'b0100000
 
+// R-Type-W 32位寄存器-寄存器运算指令功能码
+`define RISCV_FUNC3_ADDW       3'b000  // ADDW 使用与 ADD 相同的 func3
+`define RISCV_FUNC3_SUBW       3'b000  // SUBW 使用与 SUB 相同的 func3
+`define RISCV_FUNC3_SLLW       3'b001  // SLLW 使用与 SLL 相同的 func3
+`define RISCV_FUNC3_SRLW       3'b101  // SRLW 使用与 SRL 相同的 func3
+`define RISCV_FUNC3_SRAW       3'b101  // SRAW 使用与 SRA 相同的 func3
+`define RISCV_FUNC7_W          7'b0000001  // 32位指令的func7标识位
+
 // I-Type 功能码
 `define RISCV_FUNC3_ADDI       3'b000
+`define RISCV_FUNC3_ADDIW      3'b000  // ADDIW 使用与 ADDI 相同的 func3
+`define RISCV_FUNC3_SLLIW      3'b001  // SLLIW 使用与 SLLI 相同的 func3
+`define RISCV_FUNC3_SRLIW      3'b101  // SRLIW 使用与 SRLI 相同的 func3
+`define RISCV_FUNC3_SRAIW      3'b101  // SRAIW 使用与 SRAI 相同的 func3
 `define RISCV_FUNC3_SLTI       3'b010
 `define RISCV_FUNC3_SLTIU      3'b011
 `define RISCV_FUNC3_XORI       3'b100

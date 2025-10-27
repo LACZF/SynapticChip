@@ -197,6 +197,40 @@ module decoder (
                     endcase
                 end
 
+                // R-Type-W 32位寄存器-寄存器运算指令
+                `RISCV_OPCODE_R_TYPE_W: begin
+                    case (func3)
+                        `RISCV_FUNC3_ADDW: begin
+                            if (func7 == `RISCV_FUNC7_ADD) begin
+                                // ADDW 指令
+                                alu_op_o   = `ALU_OP_ADDS;
+                                gpr_we_n_o = `ENABLE_N;
+                            end else if (func7 == `RISCV_FUNC7_SUB) begin
+                                // SUBW 指令
+                                alu_op_o   = `ALU_OP_SUBS;
+                                gpr_we_n_o = `ENABLE_N;
+                            end
+                        end
+                        `RISCV_FUNC3_SLLW: begin
+                            // SLLW 指令（逻辑左移，32位）
+                            alu_op_o   = `ALU_OP_SHLL;
+                            gpr_we_n_o = `ENABLE_N;
+                        end
+                        `RISCV_FUNC3_SRLW: begin
+                            // SRLW/SRAW 指令（逻辑右移/算术右移，32位）
+                            if (func7 == `RISCV_FUNC7_SRL) begin
+                                // SRLW 指令
+                                alu_op_o   = `ALU_OP_SHRL;
+                                gpr_we_n_o = `ENABLE_N;
+                            end else if (func7 == `RISCV_FUNC7_SRA) begin
+                                // SRAW 指令
+                                alu_op_o   = `ALU_OP_SHRL;
+                                gpr_we_n_o = `ENABLE_N;
+                            end
+                        end
+                    endcase
+                end
+
                 // I-Type 指令
                 `RISCV_OPCODE_I_TYPE: begin
                     case (func3)
@@ -397,6 +431,38 @@ module decoder (
                             exp_code_o = `RISCV_EXP_BREAKPOINT;
                         end
                     end
+                end
+
+                // 32位I-Type立即数运算指令（如addiw）
+                `RISCV_OPCODE_I_TYPE_W: begin
+                    case (func3)
+                        `RISCV_FUNC3_ADDIW: begin
+                            // ADDIW 指令
+                            alu_op_o   = `ALU_OP_ADDS;
+                            alu_in1_o  = i_imm;
+                            gpr_we_n_o = `ENABLE_N;
+                        end
+
+                        `RISCV_FUNC3_SLLIW: begin
+                            // SLLIW 指令（逻辑左移，32位）
+                            alu_op_o   = `ALU_OP_SHLL;
+                            alu_in1_o  = i_imm;
+                            gpr_we_n_o = `ENABLE_N;
+                        end
+
+                        `RISCV_FUNC3_SRLIW: begin
+                            // SRLIW/SRAIW 指令（逻辑右移/算术右移，32位）
+                            if (func7 == `RISCV_FUNC7_SRA) begin
+                                // SRAIW 指令
+                                alu_op_o   = `ALU_OP_SHRL;
+                            end else begin
+                                // SRLIW 指令
+                                alu_op_o   = `ALU_OP_SHRL;
+                            end
+                            alu_in1_o  = i_imm;
+                            gpr_we_n_o = `ENABLE_N;
+                        end
+                    endcase
                 end
 
                 // 默认值：未定义指令

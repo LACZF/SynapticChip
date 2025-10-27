@@ -24,9 +24,15 @@ module RV64I (
     wire signed [`WordDataBus] s_in_0 = $signed(in0_i);
     wire signed [`WordDataBus] s_in_1 = $signed(in1_i);
     wire signed [`WordDataBus] s_out  = $signed(result_o);
+    wire [6:0] opcode = id_insn_i[6:0];  // 提取指令的opcode
+    wire is_32bit_inst;  // 是否为32位指令标志
+
+    // 判断是否为32位指令（I-Type-W或R-Type-W）
+    assign is_32bit_inst = (opcode == `RISCV_OPCODE_I_TYPE_W) || (opcode == `RISCV_OPCODE_R_TYPE_W);
 
     /********** 算术逻辑运算 **********/
     always @(*) begin
+        // 先执行基本的64位运算
         case (op_i)
             `ALU_OP_AND  : begin // 逻辑与（AND）
                 result_o    = in0_i & in1_i;
@@ -49,8 +55,16 @@ module RV64I (
             `ALU_OP_SUBU : begin // 无符号减法 (SLTU, SLTIU)
                 result_o    = in0_i - in1_i;
             end
-            `ALU_OP_SHRL : begin // 逻辑右移 (SRL, SRLI)
-                result_o    = in0_i >> in1_i[`ShAmountLoc];
+            `ALU_OP_SHRL : begin
+                // 区分逻辑右移(SRL/SRLI/SRLIW)和算术右移(SRA/SRAI/SRAIW)
+                // 检查func7字段: 0000000表示逻辑右移，0100000表示算术右移
+                if (id_insn_i[30] == 1'b1) begin
+                    // 算术右移 (SRA, SRAI, SRAIW)
+                    result_o = $signed(in0_i) >>> in1_i[`ShAmountLoc];
+                end else begin
+                    // 逻辑右移 (SRL, SRLI, SRLIW)
+                    result_o = in0_i >> in1_i[`ShAmountLoc];
+                end
             end
             `ALU_OP_SHLL : begin // 逻辑左移 (SLL, SLLI)
                 result_o    = in0_i << in1_i[`ShAmountLoc];
@@ -59,6 +73,14 @@ module RV64I (
                 result_o    = in0_i;
             end
         endcase
+
+        // 对于32位指令，截断结果到32位并符号扩展
+        if (is_32bit_inst) begin
+            // 先截断到32位
+            result_o = {result_o[31:0]};
+            // 然后进行符号扩展到64位
+            result_o = {{32{result_o[31]}}, result_o[31:0]};
+        end
     end
 
     /********** 溢出检测 **********/

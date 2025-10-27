@@ -25,6 +25,10 @@
     `define ALU_OP_SUBU             4'h7 // 无符号减法
     `define ALU_OP_SHRL             4'h8 // 逻辑右移
     `define ALU_OP_SHLL             4'h9 // 逻辑左移
+    // 别名定义，兼容不同的命名方式
+    `define ALU_OP_SRL              `ALU_OP_SHRL // 逻辑右移别名
+    `define ALU_OP_SLL              `ALU_OP_SHLL // 逻辑左移别名
+    `define ALU_OP_SRA              `ALU_OP_SHRL // 算术右移使用与逻辑右移相同的操作码
     // RV64M 扩展操作码
     `define ALU_OP_MUL              4'ha // 乘法
     `define ALU_OP_MULH             4'hb // 高位乘法（有符号）
