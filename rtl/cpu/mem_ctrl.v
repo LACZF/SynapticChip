@@ -47,25 +47,17 @@ module mem_ctrl (
         if (ex_en_i == `ENABLE) begin
             case (ex_mem_op_i)
                 `MEM_OP_LDW : begin // 字读取
-                    /* 字节偏移的检测 */
-                    if (offset == `BYTE_OFFSET_WORD) begin // 对齐
-                        result_o       = rd_data_i;
-                        as_n_o         = `ENABLE_N;
-                    end else begin                           // 未对齐
-                        miss_align_o   = `ENABLE;
-                    end
+                    // 支持非对齐地址访问
+                    result_o       = rd_data_i;
+                    as_n_o         = `ENABLE_N;
                 end
                 `MEM_OP_STW : begin // 字写入
-                    /* 字节偏移的检测 */
-                    if (offset == `BYTE_OFFSET_WORD) begin // 对齐
-                        rw_o           = `WRITE;
-                        as_n_o         = `ENABLE_N;
-                    end else begin                           // 未对齐
-                        miss_align_o   = `ENABLE;
-                    end
+                    // 支持非对齐地址访问
+                    rw_o           = `WRITE;
+                    as_n_o         = `ENABLE_N;
                 end
                 default : begin // 无内存访问
-                    result_o            = ex_out_i;
+                    result_o       = ex_out_i;
                 end
             endcase
         end

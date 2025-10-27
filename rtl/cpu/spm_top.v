@@ -28,9 +28,18 @@ module spm_top (
     output wire [`WordDataBus] mem_spm_rd_data_o
 );
 
-    /********** 写入有效 **********/
+    /********** 内部信号 **********/
     reg                           wea;            // A端口
     reg                           web;            // B端口
+    wire [`SpmAddrBus]            aligned_addr_b; // 对齐后的地址B
+    wire [`ByteOffsetBus]         byte_offset_b;  // 字节偏移B
+    reg  [`WordDataBus]           shifted_data_b; // 移位后的数据B
+    wire [`WordDataBus]           rd_data_b; // 临时读取数据B
+
+    /********** 计算对齐地址和字节偏移 **********/
+    /* IF阶段通常只进行指令读取，不需要非对齐处理 */
+    assign aligned_addr_b = {mem_spm_addr_i[`SPM_ADDR_W-1:2], 2'b00}; // 4字节对齐
+    assign byte_offset_b  = mem_spm_addr_i[1:0]; // 字节偏移
 
     /********** 写入有效信号的生成 **********/
     always @(*) begin
@@ -60,10 +69,25 @@ module spm_top (
         .douta (if_spm_rd_data_o),  // 读取的数据
         /********** B端口 : MEM阶段 **********/
         .clkb  (clk),               // 时钟
-        .addrb (mem_spm_addr_i),    // 地址
+        .addrb (aligned_addr_b),    // 对齐后的地址
         .dinb  (mem_spm_wr_data_i), // 写入的数据
         .web   (web),               // 写入有效
-        .doutb (mem_spm_rd_data_o)  // 读取的数据
+        .doutb (rd_data_b)          // 临时读取的数据
     );
+
+    /********** 非对齐读取处理 - B端口(MEM阶段) **********/
+    // 根据字节偏移进行移位处理，支持非对齐字读取
+    always @(*) begin
+        case (byte_offset_b)
+            2'b00:   shifted_data_b = rd_data_b;                // 对齐地址，无需移位
+            2'b01:   shifted_data_b = {rd_data_b[23:0], 8'b0};  // 偏移1字节
+            2'b10:   shifted_data_b = {rd_data_b[15:0], 16'b0}; // 偏移2字节
+            2'b11:   shifted_data_b = {rd_data_b[7:0], 24'b0};  // 偏移3字节
+            default: shifted_data_b = rd_data_b;
+        endcase
+    end
+
+    // 输出处理后的数据
+    assign mem_spm_rd_data_o = shifted_data_b;
 
 endmodule
