@@ -40,7 +40,7 @@
     `define BYTE_OFFSET_W          2         // 位移宽度
     `define ByteOffsetBus          1:0       // 位移总线
     /********** 地址位置 *********/
-    `define WordAddrLoc            31:2      // 字地址位置
+    `define WordAddrLoc            31:0      // 字地址位置
     `define ByteOffsetLoc          1:0       // 字节位移位置
     /********** 字节偏移值 *********/
     `define BYTE_OFFSET_WORD       2'b00     // 字边界
