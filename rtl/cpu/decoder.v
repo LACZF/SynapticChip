@@ -339,18 +339,21 @@ module decoder (
                         `RISCV_FUNC3_SB: begin
                             // SB 指令
                             alu_op_o   = `ALU_OP_ADDU;
+                            alu_in0_o  = ra_data;
                             alu_in1_o  = s_imm;
                             mem_op_o   = `MEM_OP_STW;
                         end
                         `RISCV_FUNC3_SH: begin
                             // SH 指令
                             alu_op_o   = `ALU_OP_ADDU;
+                            alu_in0_o  = ra_data;
                             alu_in1_o  = s_imm;
                             mem_op_o   = `MEM_OP_STW;
                         end
                         `RISCV_FUNC3_SW: begin
                             // SW 指令
                             alu_op_o   = `ALU_OP_ADDU;
+                            alu_in0_o  = ra_data;
                             alu_in1_o  = s_imm;
                             mem_op_o   = `MEM_OP_STW;
                         end
