@@ -22,8 +22,8 @@
 
     `define SPM_SIZE   4096    // SPM的容量
     `define SPM_DEPTH  1024     // SPM的深度
-    `define SPM_ADDR_W 12       // 地址宽
-    `define SpmAddrBus 11:0     // 地址总线
-    `define SpmAddrLoc 11:0     // 地址的位置
+    `define SPM_ADDR_W 20       // 地址宽
+    `define SpmAddrBus 19:0     // 地址总线
+    `define SpmAddrLoc 19:0     // 地址的位置
 
 `endif

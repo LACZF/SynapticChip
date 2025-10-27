@@ -35,13 +35,15 @@ module spm_top (
     /********** 写入有效信号的生成 **********/
     always @(*) begin
         /* A端口 */
-        if ((if_spm_as_n_i == `ENABLE_N) && (if_spm_rw_i == `WRITE)) begin
+        /* TODO: 暂时未使用片选信号 */
+        if ((if_spm_rw_i == `WRITE)) begin
             wea = `MEM_ENABLE;    // 写入有效
         end else begin
             wea = `MEM_DISABLE;   // 写入无效
         end
         /* B端口 */
-        if ((mem_spm_as_n_i == `ENABLE_N) && (mem_spm_rw_i == `WRITE)) begin
+        /* TODO: 暂时未使用片选信号 */
+        if ((mem_spm_rw_i == `WRITE)) begin
             web = `MEM_ENABLE;    // 写入有效
         end else begin
             web = `MEM_DISABLE;   // 写入无效
