@@ -29,8 +29,12 @@ function run_cmd() { # do_not_function_help
 	local cmd="$@"
 
 	log DEBUG "run : $cmd."
+	local start_time=$(date +%s%N)
 	eval $cmd
-	log DEBUG "run cmd($cmd) done, ret : $?."
+	local ret_code=$?
+	local end_time=$(date +%s%N)
+	local duration=$(( ($end_time - $start_time) / 1000000 ))  # 转换为毫秒
+	log DEBUG "run cmd($cmd) done, ret : $ret_code, duration: ${duration}ms."
 }
 
 function contain_key() { # do_not_function_help
