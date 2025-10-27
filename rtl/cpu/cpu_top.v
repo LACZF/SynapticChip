@@ -1,6 +1,9 @@
 `include "global_config.v"
 `include "stddef.v"
 
+`include "isa.v"
+`include "spm.v"
+
 module cpu_top (
     input  wire                      clk,
     input  wire                      reset,
