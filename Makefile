@@ -2,6 +2,7 @@
 IVERILOG ?= $(shell which iverilog)
 VVP ?= $(shell which vvp)
 TOP_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SCRIPT_DIR := $(TOP_DIR)/scripts
 
 ifeq ($(V),1)
 QUITE :=
@@ -101,7 +102,16 @@ all_test: all_ut all_it
 # YOSYS_ENV ?= OUTPUT_SVG=1
 yosys_synthesis:
 	READ_RTL_ARGS="$(READ_RTL_ARGS) -I$(shell realpath $$(dirname $(M)))" \
-		$(YOSYS_ENV) $(TOP_MODULE_ARG) $(TOP_DIR)/yosys.sh synth $(M)
+		$(YOSYS_ENV) $(TOP_MODULE_ARG) $(SCRIPT_DIR)/yosys.sh synth $(M)
+
+patch_save:
+	$(QUITE)cd $(TOP_DIR) && $(SCRIPT_DIR)/tools.sh gen_top_patch
+
+patch_apply:
+	$(QUITE)cd $(TOP_DIR) && $(SCRIPT_DIR)/tools.sh top_patch_apply
+
+patch_revert:
+	$(QUITE)cd $(TOP_DIR) && $(SCRIPT_DIR)/tools.sh top_patch_revert
 
 all:
 	$(QUITE)echo "Start ut."

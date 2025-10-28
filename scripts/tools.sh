@@ -1,6 +1,7 @@
 #!/bin/bash
 
 TOP_DIR="$(dirname $(readlink -f $0))"
+REPO_DIR=$(realpath $TOP_DIR/..)
 
 function get_vulue() { # do_not_function_help
 	local prefix="$1"
@@ -59,7 +60,7 @@ function git_foreach_cmd() { # do_not_function_help
 
 function gen_dir_patch() { # do_not_function_help
 	local src_dir=$(pwd)
-	local patch_dir=$(echo $src_dir | sed "s,$TOP_DIR,$PATCH_SUBDIR,g")
+	local patch_dir=$(echo $src_dir | sed "s,$REPO_DIR,$PATCH_SUBDIR,g")
 	local patch_name=$(basename $src_dir)
 
 	log "------------------------"
@@ -81,12 +82,12 @@ function gen_dir_patch() { # do_not_function_help
 	log "------------------------"
 }
 
-function gen_patch() { # [SRC_DIR(default : $TOP_DIR)] [PATCH_DIR(default : $TOP_DIR/patch/$OSTYPE)]
-	local src_dir=$(get_vulue "" "$TOP_DIR" "$1")
-	local patch_dir=$(get_vulue "" "$TOP_DIR/patch/$OSTYPE" "$2")
+function gen_patch() { # [SRC_DIR(default : $REPO_DIR)] [PATCH_DIR(default : $REPO_DIR/patch)]
+	local src_dir=$(get_vulue "" "$REPO_DIR" "$1")
+	local patch_dir=$(get_vulue "" "$REPO_DIR/patch" "$2")
 	local script=$(realpath $0)
 
-	export TOP_DIR=$TOP_DIR
+	export REPO_DIR=$REPO_DIR
 	export PATCH_SUBDIR=$patch_dir
 	export VERBOSE=1
 	cd $src_dir
@@ -102,9 +103,9 @@ function gen_patch() { # [SRC_DIR(default : $TOP_DIR)] [PATCH_DIR(default : $TOP
 	cd - 2>/dev/null
 }
 
-function gen_top_patch() { # [PATCH_DIR(default : $TOP_DIR/patch/$OSTYPE)]
-	local src_dir=$TOP_DIR
-	local patch_dir=$(get_vulue "" "$TOP_DIR/patch/$OSTYPE" "$1")
+function gen_top_patch() { # [PATCH_DIR(default : $REPO_DIR/patch)]
+	local src_dir=$REPO_DIR
+	local patch_dir=$(get_vulue "" "$REPO_DIR/patch" "$1")
 	SKIP_ROOT=1 gen_patch $src_dir $(realpath $patch_dir)
 }
 
@@ -121,10 +122,12 @@ function do_git_apply() { # do_not_function_help
 	fi
 
 	if [ "$is_revert"x = "1"x ]; then
-		apply_param="-R"
-		sort_param="-r"
+		apply_param+="-R"
+		sort_param+="-r"
 	fi
 
+	apply_param+=" --whitespace=fix"
+	apply_param+=" --whitespace=nowarn"
 	patch_dir=$(realpath $patch_dir)
 	if [ -f $patch_dir ]; then
 		git -C $src_dir apply $apply_param $patch_dir
@@ -150,13 +153,11 @@ function patch_revert() { # PATCH_DIR SRC_DIR
 }
 
 function top_patch_apply() {
-	# patch_apply $TOP_DIR/patch/common $TOP_DIR
-	patch_apply $TOP_DIR/patch/$OSTYPE $TOP_DIR
+	patch_apply $REPO_DIR/patch/ $REPO_DIR
 }
 
 function top_patch_revert() {
-	# patch_revert $TOP_DIR/patch/common $TOP_DIR
-	patch_revert $TOP_DIR/patch/$OSTYPE $TOP_DIR
+	patch_revert $REPO_DIR/patch/ $REPO_DIR
 }
 
 default_cmd="help"
