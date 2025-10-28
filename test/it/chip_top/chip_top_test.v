@@ -95,15 +95,17 @@ module chip_top_test;
 
     /********** 测试用例 **********/
     initial begin
+`ifdef SUPPORT_ROM
         $readmemh(`ROM_PRG, u_chip_top.u_rom.u_gen_ram.ram);
+`endif
         $readmemh(`SPM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
         clk   <= 0;
         rst_n <= 0;
 
         @(posedge clk);
-        rst_n <= 1;
-        @(posedge clk);
         rst_n <= 0;
+        @(posedge clk);
+        rst_n <= 1;
 
         # `SIM_CYCLE $finish;
     end

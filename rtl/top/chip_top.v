@@ -228,6 +228,7 @@ module chip_top #(
         end
     endgenerate
 
+`ifdef SUPPORT_ROM
     assign slave_addr_mask[Rom] = `ROM_ADDR_MASK;
     assign slave_addr_base[Rom] = `ROM_ADDR_BASE;
     // 1.指令存储器
@@ -248,6 +249,13 @@ module chip_top #(
 
     assign slave_addr_mask[Ram] = `RAM_ADDR_MASK;
     assign slave_addr_base[Ram] = `RAM_ADDR_BASE;
+`else
+    `define ALL_ADDR_MASK       ~32'hfffff
+    `define ALL_ADDR_BASE       32'h00000000
+    assign slave_addr_mask[Ram] = `ALL_ADDR_MASK;
+    assign slave_addr_base[Ram] = `ALL_ADDR_BASE;
+`endif
+
     // 2.数据存储器
     ram #(
         .DP(`RAM_DEPTH)
