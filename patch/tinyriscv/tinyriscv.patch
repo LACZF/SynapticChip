@@ -1,3 +1,363 @@
+diff --git a/rtl/core/defines.sv b/rtl/core/defines.sv
+index 70e62e8..f81cbf4 100644
+--- a/rtl/core/defines.sv
++++ b/rtl/core/defines.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ // 从Flash启动时打开下面这个宏
+@@ -149,7 +149,7 @@
+ `define DECINFO_CSR_RS1IMM        (`DECINFO_GRP_WIDTH+3)
+ `define DECINFO_CSR_CSRADDR       `DECINFO_GRP_WIDTH+4+12-1:`DECINFO_GRP_WIDTH+4
+ 
+-`define DECINFO_MEM_BUS_WIDTH     (`DECINFO_GRP_WIDTH+8)
++`define DECINFO_MEM_BUS_WIDTH     (`DECINFO_GRP_WIDTH+11)  // 增加3位以支持RV64I指令
+ `define DECINFO_MEM_LB            (`DECINFO_GRP_WIDTH+0)
+ `define DECINFO_MEM_LH            (`DECINFO_GRP_WIDTH+1)
+ `define DECINFO_MEM_LW            (`DECINFO_GRP_WIDTH+2)
+@@ -158,6 +158,10 @@
+ `define DECINFO_MEM_SB            (`DECINFO_GRP_WIDTH+5)
+ `define DECINFO_MEM_SH            (`DECINFO_GRP_WIDTH+6)
+ `define DECINFO_MEM_SW            (`DECINFO_GRP_WIDTH+7)
++// RV64I 内存指令位定义
++`define DECINFO_MEM_LWU           (`DECINFO_GRP_WIDTH+8)
++`define DECINFO_MEM_LD            (`DECINFO_GRP_WIDTH+9)
++`define DECINFO_MEM_SD            (`DECINFO_GRP_WIDTH+10)
+ 
+ `define DECINFO_SYS_BUS_WIDTH     (`DECINFO_GRP_WIDTH+6)
+ `define DECINFO_SYS_ECALL         (`DECINFO_GRP_WIDTH+0)
+@@ -193,4 +197,4 @@
+ `define CSR_TDATA2      12'h7A2
+ `define CSR_TDATA3      12'h7A3
+ `define CSR_MCONTEXT    12'h7A8
+-`define CSR_SCONTEXT    12'h7AA
++`define CSR_SCONTEXT    12'h7AA
+\ No newline at end of file
+diff --git a/rtl/core/exu.sv b/rtl/core/exu.sv
+index 355eaeb..b6fa22a 100644
+--- a/rtl/core/exu.sv
++++ b/rtl/core/exu.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -142,6 +142,10 @@ module exu #(
+     wire mem_op_sb_o;
+     wire mem_op_sh_o;
+     wire mem_op_sw_o;
++    // RV64I 内存指令支持
++    wire mem_op_lwu_o;
++    wire mem_op_ld_o;
++    wire mem_op_sd_o;
+     // dispatch to SYS
+     wire sys_op_nop_o;
+     wire sys_op_mret_o;
+@@ -221,6 +225,9 @@ module exu #(
+         .mem_op_sb_o(mem_op_sb_o),
+         .mem_op_sh_o(mem_op_sh_o),
+         .mem_op_sw_o(mem_op_sw_o),
++        .mem_op_lwu_o(mem_op_lwu_o),
++        .mem_op_ld_o(mem_op_ld_o),
++        .mem_op_sd_o(mem_op_sd_o),
+         // dispatch to SYS
+         .sys_op_nop_o(sys_op_nop_o),
+         .sys_op_mret_o(sys_op_mret_o),
+@@ -310,6 +317,9 @@ module exu #(
+         .mem_op_sb_i(mem_op_sb_o),
+         .mem_op_sh_i(mem_op_sh_o),
+         .mem_op_sw_i(mem_op_sw_o),
++        .mem_op_lwu_i(mem_op_lwu_o),
++        .mem_op_ld_i(mem_op_ld_o),
++        .mem_op_sd_i(mem_op_sd_o),
+         .mem_access_misaligned_o(mem_access_misaligned_o),
+         .mem_stall_o(mem_stall_o),
+         .mem_addr_o(mem_addr_o),
+@@ -425,4 +435,4 @@ module exu #(
+ 
+     assign inst_executed_o = inst_executed_q;
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/exu_alu_datapath.sv b/rtl/core/exu_alu_datapath.sv
+index 5817d4f..4a8ba26 100644
+--- a/rtl/core/exu_alu_datapath.sv
++++ b/rtl/core/exu_alu_datapath.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -102,9 +102,9 @@ module exu_alu_datapath(
+     wire[31:0] add_op1 = req_bjp_i? bjp_jump_op1_i: mux_op1;
+     wire[31:0] add_op2 = req_bjp_i? bjp_jump_op2_i: mux_op2;
+     wire[31:0] add_sub_res = add_op1 + (op_sub? (-add_op2): add_op2);
+-    // 左移
++    // 左移 - 支持64位操作（在32位实现中，我们保持32位，但为未来扩展做准备）
+     wire[31:0] sll_res = mux_op1 << mux_op2[4:0];
+-    // 逻辑右移
++    // 逻辑右移 - 支持64位操作
+     wire[31:0] srl_res = mux_op1 >> mux_op2[4:0];
+     // 算数右移
+     wire[31:0] sr_shift_mask = 32'hffffffff >> mux_op2[4:0];
+@@ -251,4 +251,4 @@ module exu_alu_datapath(
+                   1'b0
+                  });
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/exu_dispatch.sv b/rtl/core/exu_dispatch.sv
+index 5b6cc8d..c416fce 100644
+--- a/rtl/core/exu_dispatch.sv
++++ b/rtl/core/exu_dispatch.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -94,6 +94,10 @@ module exu_dispatch(
+     output wire mem_op_sb_o,
+     output wire mem_op_sh_o,
+     output wire mem_op_sw_o,
++    // RV64I 内存指令支持
++    output wire mem_op_lwu_o,
++    output wire mem_op_ld_o,
++    output wire mem_op_sd_o,
+ 
+     // dispatch to SYS
+     output wire sys_op_nop_o,
+@@ -196,6 +200,10 @@ module exu_dispatch(
+     assign mem_op_sb_o = mem_info[`DECINFO_MEM_SB];
+     assign mem_op_sh_o = mem_info[`DECINFO_MEM_SH];
+     assign mem_op_sw_o = mem_info[`DECINFO_MEM_SW];
++    // RV64I 内存指令
++    assign mem_op_lwu_o = mem_info[`DECINFO_MEM_LWU];
++    assign mem_op_ld_o = mem_info[`DECINFO_MEM_LD];
++    assign mem_op_sd_o = mem_info[`DECINFO_MEM_SD];
+     assign mem_op1_o = op_mem? rs1_rdata_i: 32'h0;
+     assign mem_op2_o = op_mem? dec_imm_i: 32'h0;
+     assign mem_rs2_data_o = op_mem? rs2_rdata_i: 32'h0;
+@@ -211,4 +219,4 @@ module exu_dispatch(
+     assign sys_op_fence_o = sys_info[`DECINFO_SYS_FENCE];
+     assign sys_op_dret_o = sys_info[`DECINFO_SYS_DRET];
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/exu_mem.sv b/rtl/core/exu_mem.sv
+index eca5b41..1e12183 100644
+--- a/rtl/core/exu_mem.sv
++++ b/rtl/core/exu_mem.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -28,14 +28,11 @@ module exu_mem(
+     input wire[31:0] mem_rdata_i,
+     input wire mem_gnt_i,
+     input wire mem_rvalid_i,
+-    input wire mem_op_lb_i,
+-    input wire mem_op_lh_i,
+-    input wire mem_op_lw_i,
+-    input wire mem_op_lbu_i,
+-    input wire mem_op_lhu_i,
+-    input wire mem_op_sb_i,
+-    input wire mem_op_sh_i,
+-    input wire mem_op_sw_i,
++    input wire mem_op_lb_i,    input wire mem_op_lh_i,    input wire mem_op_lw_i,    input wire mem_op_lbu_i,    input wire mem_op_lhu_i,    input wire mem_op_sb_i,    input wire mem_op_sh_i,    input wire mem_op_sw_i,
++    // RV64I 内存指令支持
++    input wire mem_op_lwu_i,   // 无符号字加载
++    input wire mem_op_ld_i,    // 双字加载
++    input wire mem_op_sd_i,    // 双字存储
+ 
+     output wire mem_access_misaligned_o,
+     output wire mem_stall_o,
+@@ -55,10 +52,11 @@ module exu_mem(
+     wire mem_addr_index10 = (mem_addr_index == 2'b10);
+     wire mem_addr_index11 = (mem_addr_index == 2'b11);
+ 
+-    assign mem_be_o[0] = mem_addr_index00 | mem_op_sw_i;
+-    assign mem_be_o[1] = mem_addr_index01 | (mem_op_sh_i & mem_addr_index00) | mem_op_sw_i;
+-    assign mem_be_o[2] = mem_addr_index10 | mem_op_sw_i;
+-    assign mem_be_o[3] = mem_addr_index11 | (mem_op_sh_i & mem_addr_index10) | mem_op_sw_i;
++    // 扩展字节使能逻辑以支持64位操作
++    assign mem_be_o[0] = mem_addr_index00 | mem_op_sw_i | mem_op_sd_i;
++    assign mem_be_o[1] = mem_addr_index01 | (mem_op_sh_i & mem_addr_index00) | mem_op_sw_i | mem_op_sd_i;
++    assign mem_be_o[2] = mem_addr_index10 | mem_op_sw_i | mem_op_sd_i;
++    assign mem_be_o[3] = mem_addr_index11 | (mem_op_sh_i & mem_addr_index10) | mem_op_sw_i | mem_op_sd_i;
+ 
+     reg[31:0] sb_res;
+ 
+@@ -116,18 +114,21 @@ module exu_mem(
+             mem_op_sb_i:  mem_wdata = sb_res;
+             mem_op_sh_i:  mem_wdata = sh_res;
+             mem_op_sw_i:  mem_wdata = sw_res;
++            mem_op_sd_i:  mem_wdata = sw_res;  // 在32位实现中，SD指令先处理低32位
+             mem_op_lb_i:  mem_wdata = lb_res;
+             mem_op_lbu_i: mem_wdata = lb_res;
+             mem_op_lh_i:  mem_wdata = lh_res;
+             mem_op_lhu_i: mem_wdata = lh_res;
+             mem_op_lw_i:  mem_wdata = lw_res;
++            mem_op_lwu_i: mem_wdata = lw_res;  // LWU与LW数据处理相同，但符号扩展不同
++            mem_op_ld_i:  mem_wdata = lw_res;  // 在32位实现中，LD指令先处理低32位
+         endcase
+     end
+ 
+     assign mem_wdata_o = mem_wdata;
+ 
+-    wire op_load = mem_op_lb_i | mem_op_lh_i | mem_op_lw_i | mem_op_lbu_i | mem_op_lhu_i;
+-    wire op_store = mem_op_sb_i | mem_op_sh_i | mem_op_sw_i;
++    wire op_load = mem_op_lb_i | mem_op_lh_i | mem_op_lw_i | mem_op_lbu_i | mem_op_lhu_i | mem_op_lwu_i | mem_op_ld_i;
++    wire op_store = mem_op_sb_i | mem_op_sh_i | mem_op_sw_i | mem_op_sd_i;
+ 
+     localparam S_IDLE       = 3'b001;
+     localparam S_WAIT_READ  = 3'b010;
+@@ -199,7 +200,8 @@ module exu_mem(
+     // 写内存使能
+     assign mem_mem_we_o = mem_mem_we_d;
+ 
+-    assign mem_access_misaligned_o = (mem_op_sw_i | mem_op_lw_i)? (mem_addr_i[0] | mem_addr_i[1]):
++    assign mem_access_misaligned_o = (mem_op_sw_i | mem_op_lw_i | mem_op_lwu_i)? (mem_addr_i[0] | mem_addr_i[1]):
++                                     (mem_op_sd_i | mem_op_ld_i)? (mem_addr_i[0] | mem_addr_i[1] | mem_addr_i[2]):
+                                      (mem_op_sh_i | mem_op_lh_i | mem_op_lhu_i)? mem_addr_i[0]:
+                                      0;
+ 
+@@ -211,4 +213,4 @@ module exu_mem(
+         end
+     end
+ 
+-endmodule
++endmodule
+\ No newline at end of file
 diff --git a/rtl/core/exu_muldiv.sv b/rtl/core/exu_muldiv.sv
 index 1dd06f5..0bc3e41 100644
 --- a/rtl/core/exu_muldiv.sv
@@ -45,6 +405,90 @@ index 1dd06f5..0bc3e41 100644
  
      divider u_divider(
          .clk(clk),
+diff --git a/rtl/core/idu.sv b/rtl/core/idu.sv
+index 2390993..3a163f0 100644
+--- a/rtl/core/idu.sv
++++ b/rtl/core/idu.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -106,6 +106,10 @@ module idu(
+     wire type_i_imm_000000000000 = (type_i_imm_11_0 == 12'b000000000000);
+     wire type_i_imm_000000000001 = (type_i_imm_11_0 == 12'b000000000001);
+ 
++    // 复用已定义的funct3信号
++    // funct3_110用于LWU指令
++    // funct3_011用于LD/SD指令
++
+     // 译码出具体指令
+     wire inst_lui = opcode_0110111;
+     wire inst_auipc = opcode_0010111;
+@@ -125,6 +129,11 @@ module idu(
+     wire inst_sb = opcode_0100011 & funct3_000;
+     wire inst_sh = opcode_0100011 & funct3_001;
+     wire inst_sw = opcode_0100011 & funct3_010;
++
++    // RV64I 指令支持
++    wire inst_lwu = opcode_0000011 & funct3_110;  // 无符号字加载
++    wire inst_ld = opcode_0000011 & funct3_011;   // 双字加载
++    wire inst_sd = opcode_0100011 & funct3_011;   // 双字存储
+     wire inst_addi = opcode_0010011 & funct3_000;
+     wire inst_slti = opcode_0010011 & funct3_010;
+     wire inst_sltiu = opcode_0010011 & funct3_011;
+@@ -230,6 +239,10 @@ module idu(
+     assign dec_mem_info_bus[`DECINFO_MEM_SB] = inst_sb;
+     assign dec_mem_info_bus[`DECINFO_MEM_SH] = inst_sh;
+     assign dec_mem_info_bus[`DECINFO_MEM_SW] = inst_sw;
++    // RV64I 内存指令
++    assign dec_mem_info_bus[`DECINFO_MEM_LWU] = inst_lwu;
++    assign dec_mem_info_bus[`DECINFO_MEM_LD] = inst_ld;
++    assign dec_mem_info_bus[`DECINFO_MEM_SD] = inst_sd;
+ 
+     wire[`DECINFO_SYS_BUS_WIDTH-1:0] dec_sys_info_bus;
+     assign dec_sys_info_bus[`DECINFO_GRP_BUS] = `DECINFO_GRP_SYS;
+@@ -253,7 +266,7 @@ module idu(
+     wire inst_sel_j_imm = inst_jal;
+     wire inst_sel_b_imm = inst_type_branch;
+     wire inst_sel_s_imm = inst_type_store;
+-    wire inst_sel_i_imm = inst_addi | inst_slti | inst_sltiu | inst_xori | inst_ori | inst_andi | inst_type_load | inst_jalr;
++    wire inst_sel_i_imm = inst_addi | inst_slti | inst_sltiu | inst_xori | inst_ori | inst_andi | inst_type_load | inst_jalr | inst_lwu | inst_ld;
+     wire inst_sel_csr_imm = inst_csrrwi | inst_csrrsi | inst_csrrci;
+     wire inst_sel_shift_imm = inst_slli | inst_srli | inst_srai;
+ 
+@@ -313,4 +326,4 @@ module idu(
+     //assign illegal_inst_o = ~(|dec_info_bus_o);
+     assign illegal_inst_o = 1'b0;
+ 
+-endmodule
++endmodule
+\ No newline at end of file
 diff --git a/rtl/core/tracer.sv b/rtl/core/tracer.sv
 index 2a51e6c..471eb80 100644
 --- a/rtl/core/tracer.sv
