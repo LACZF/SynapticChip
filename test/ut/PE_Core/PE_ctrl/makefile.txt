@@ -1,0 +1,11 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := tb_pe_controller
+TEST_ARGS ?= -g2005-sv
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
+
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
+TEST_SRC += $(CUR_DIR)/tb_pe_controller.v
