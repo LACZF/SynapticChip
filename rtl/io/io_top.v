@@ -1,0 +1,191 @@
+`include "stddef.v"
+`include "global_config.v"
+
+`include "timer.v"
+`include "uart.v"
+`include "gpio.v"
+`include "spi_addr.v"
+`include "spi.v"
+
+module io_top #(
+    parameter SLAVES               = 8,
+    parameter START_SLAVE          = 2,
+    parameter IMPLEMENT_UART       = 1,
+    parameter IMPLEMENT_GPIO       = 1,
+    parameter IMPLEMENT_SPI        = 0,
+    parameter IMPLEMENT_TIMER      = 1,
+    parameter GPIO_IN_CH           = 1,
+    parameter GPIO_OUT_CH          = 1,
+    parameter GPIO_IO_CH           = 1
+) (
+    input  wire                               clk,
+    input  wire                               rst_n,
+
+    // 总线接口
+    input  wire                               slave_req        [SLAVES],
+    input  wire [31:0]                        slave_addr       [SLAVES],
+    input  wire                               slave_we         [SLAVES],
+    input  wire [ 3:0]                        slave_be         [SLAVES],
+    input  wire [31:0]                        slave_wdata      [SLAVES],
+    output wire                               slave_gnt        [SLAVES],
+    output wire                               slave_rvalid     [SLAVES],
+    output wire [31:0]                        slave_rdata      [SLAVES],
+
+    input  wire [31:0]                        slave_addr_mask  [SLAVES],
+    input  wire [31:0]                        slave_addr_base  [SLAVES],
+
+    // 中断信号
+    output wire                               irq_timer,
+    output wire                               irq_uart_rx,
+    output wire                               irq_uart_tx,
+
+    // UART接口
+    input  wire                               uart_rx,
+    output wire                               uart_tx,
+
+    // GPIO接口
+    input  wire [GPIO_IN_CH-1:0]              gpio_in,
+    output wire [GPIO_OUT_CH-1:0]             gpio_out,
+    inout  wire [GPIO_IO_CH-1:0]              gpio_io,
+
+    // SPI接口
+    output wire                               spi_cs_n,
+    output wire                               spi_clk,
+    output wire                               spi_mosi,
+    input  wire                               spi_miso
+);
+    localparam int slave_timer_index   = START_SLAVE + 0;
+    localparam int slave_gpio_index    = START_SLAVE + 1;
+    localparam int slave_uart_index    = START_SLAVE + 2;
+    localparam int slave_spi_index     = START_SLAVE + 3;
+
+    /********** TIMER **********/
+    generate
+        if (IMPLEMENT_TIMER) begin : timer_gen
+            assign slave_addr_mask[slave_timer_index] = `TIMER0_ADDR_MASK;
+            assign slave_addr_base[slave_timer_index] = `TIMER0_ADDR_BASE;
+            timer_top u_timer (
+                .clk             (clk),
+                .rst_n           (rst_n),
+
+                .cs_n_i          (slave_req[slave_timer_index]),
+                // .as_n_i          (slave_be[slave_timer_index]),
+                .rw_i            (slave_we[slave_timer_index]),
+                .addr_i          (slave_addr[slave_timer_index][`TimerAddrLoc]),
+                .wr_data_i       (slave_wdata[slave_timer_index]),
+                .rd_data_o       (slave_rdata[slave_timer_index]),
+                .rdy_n_o         (slave_rvalid[slave_timer_index]),
+
+                .irq_o           (irq_timer)
+             );
+        end else begin
+            assign slave_rdata[slave_timer_index]    = `WORD_DATA_W'h0;
+            assign slave_rvalid[slave_timer_index]   = `DISABLE_N;
+            assign irq_timer                         = `DISABLE;
+        end
+        assign slave_gnt[slave_timer_index] = slave_rvalid[slave_timer_index];
+    endgenerate
+
+    /********** UART **********/
+    generate
+        if (IMPLEMENT_UART) begin : uart_gen
+            assign slave_addr_mask[slave_uart_index] = `UART0_ADDR_MASK;
+            assign slave_addr_base[slave_uart_index] = `UART0_ADDR_BASE;
+            uart_top u_uart (
+                .clk               (clk),
+                .rst_n             (rst_n),
+
+                .cs_n_i            (slave_req[slave_uart_index]),
+                // .as_n_i            (slave_be[slave_uart_index]),
+                .rw_i              (slave_we[slave_uart_index]),
+                .addr_i            (slave_addr[slave_uart_index][`UartAddrLoc]),
+                .wr_data_i         (slave_wdata[slave_uart_index]),
+                .rd_data_o         (slave_rdata[slave_uart_index]),
+                .rdy_n_o           (slave_rvalid[slave_uart_index]),
+
+                .irq_rx_o          (irq_uart_rx),
+                .irq_tx_o          (irq_uart_tx),
+
+                .rx_i              (uart_rx),
+                .tx_o              (uart_tx)
+            );
+        end else begin
+            assign slave_rdata[slave_uart_index]   = `WORD_DATA_W'h0;
+            assign slave_rvalid[slave_uart_index]  = `DISABLE_N;
+            assign irq_uart_rx                     = `DISABLE;
+            assign irq_uart_tx                     = `DISABLE;
+            assign uart_tx                         = `LOW;
+        end
+        assign slave_gnt[slave_uart_index] = slave_rvalid[slave_uart_index];
+    endgenerate
+
+    /********** GPIO **********/
+    generate
+        if (IMPLEMENT_GPIO) begin : gpio_gen
+            assign slave_addr_mask[slave_gpio_index] = `GPIO_ADDR_MASK;
+            assign slave_addr_base[slave_gpio_index] = `GPIO_ADDR_BASE;
+            gpio_top #(
+                .GPIO_IN_CH      (GPIO_IN_CH),
+                .GPIO_OUT_CH     (GPIO_OUT_CH),
+                .GPIO_IO_CH      (GPIO_IO_CH)
+            ) u_gpio (
+                .clk             (clk),
+                .rst_n           (rst_n),
+
+                .cs_n_i          (slave_req[slave_gpio_index]),
+                // .as_n_i          (slave_be[slave_gpio_index]),
+                .rw_i            (slave_we[slave_gpio_index]),
+                .addr_i          (slave_addr[slave_gpio_index][`GpioAddrLoc]),
+                .wr_data_i       (slave_wdata[slave_gpio_index]),
+                .rd_data_o       (slave_rdata[slave_gpio_index]),
+                .rdy_n_o         (slave_rvalid[slave_gpio_index]),
+
+                // 根据参数条件连接GPIO端口
+                .gpio_in         (gpio_in),
+                .gpio_out        (gpio_out),
+                .gpio_io         (gpio_io)
+            );
+        end else begin
+            assign slave_rdata[slave_gpio_index]      = `WORD_DATA_W'h0;
+            assign slave_rvalid[slave_gpio_index]     = `DISABLE_N;
+        end
+        assign slave_gnt[slave_gpio_index] = slave_rvalid[slave_gpio_index];
+    endgenerate
+
+    /********** SPI **********/
+    generate
+        if (IMPLEMENT_SPI) begin : spi_gen
+            assign slave_addr_mask[slave_spi_index] = `SPI0_ADDR_MASK;
+            assign slave_addr_base[slave_spi_index] = `SPI0_ADDR_BASE;
+            spi_top #(
+                .DATA_WIDTH    (32),
+                .ADDR_WIDTH    (32),
+                .CS_NUM        (1)
+            ) u_spi (
+                .clk           (clk),
+                .rst_n         (rst_n == `RESET_DISABLE ? 1'b1 : 1'b0),
+
+                .req_i         (slave_req[slave_spi_index]),
+                .we_i          (slave_we[slave_spi_index]),
+                .addr_i        (slave_addr[slave_spi_index]),
+                .data_in_i     (slave_wdata[slave_spi_index]),
+                .data_out_o    (slave_rdata[slave_spi_index]),
+                .ack_o         (slave_rvalid[slave_spi_index]),
+
+                .spi_cs_n_o    (spi_cs_n),
+                .spi_clk_o     (spi_clk),
+                .spi_mosi_o    (spi_mosi),
+                .spi_miso_i    (spi_miso)
+            );
+        end else begin
+            /* 暂未使用 */
+            assign slave_rdata[slave_spi_index]      = `WORD_DATA_W'h0;
+            assign slave_rvalid[slave_spi_index]     = `DISABLE_N;
+            assign spi_cs_n                          = 1'b1;
+            assign spi_clk                           = 1'b0;
+            assign spi_mosi                          = 1'b0;
+        end
+        assign slave_gnt[slave_spi_index] = slave_rvalid[slave_spi_index];
+    endgenerate
+
+endmodule

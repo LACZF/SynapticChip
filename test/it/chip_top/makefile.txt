@@ -75,42 +75,6 @@ TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/ram.sv
 # rom
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
 
-# rvic
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_core.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_reg_pkg.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_reg_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_top.sv
-
-# SPI
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_core.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_master.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_reg_pkg.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_reg_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_transmit_byte.sv
-
-# timer
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_core.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_reg_pkg.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_reg_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer.hjson
-
-# uart
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_core.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_reg_pkg.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_reg_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_rx.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_tx.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart.hjson
-
-# xip
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/spi_master_transmit.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_core.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_top.sv
-# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_w25q64_ctrl.sv
-
 # sys_bus
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect_master_sel.sv
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect_slave_sel.sv
@@ -140,7 +104,15 @@ TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 
-TEST_SRC += $(TOP_DIR)/rtl/IO/io_module.v
+# IO
+TEST_SRC += $(TOP_DIR)/rtl/io/spi/spi_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/gpio/gpio_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/timer/timer_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_ctrl.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_top.v
+TEST_SRC += $(TOP_DIR)/rtl/io/io_top.v
 
 TEST_SRC += $(TOP_DIR)/rtl/top/chip_top.v
 

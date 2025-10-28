@@ -65,8 +65,8 @@ module pe_top #(
                      0) : 0;
 
     // Write handling
-    always @(posedge clk or `RESET_EDGE reset) begin
-        if (reset == `RESET_ENABLE) begin
+    always @(posedge clk or negedge reset) begin
+        if (reset == 0) begin
             pe_enable_reg       <= {NUM_PES{1'b0}};
             pe_reset_reg        <= {NUM_PES{1'b0}};
             pe_inst_reg         <= 0;
