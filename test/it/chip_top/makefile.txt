@@ -140,6 +140,8 @@ TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 
+TEST_SRC += $(TOP_DIR)/rtl/IO/io_module.v
+
 TEST_SRC += $(TOP_DIR)/rtl/top/chip_top.v
 
 TEST_SRC += $(CUR_DIR)/chip_top_test.v

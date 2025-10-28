@@ -1,4 +1,3 @@
-
 `include "stddef.v"
 `include "global_config.v"
 
@@ -55,20 +54,6 @@ module chip_top #(
     localparam int Rom          = 0;
     localparam int Ram          = 1;
     localparam int JtagDevice   = 2;
-    localparam int Timer0       = 3;
-    localparam int Gpio         = 4;
-    localparam int Uart0        = 5;
-    localparam int Rvic         = 6;
-    localparam int I2c0         = 7;
-    localparam int Spi0         = 8;
-    localparam int Pinmux       = 9;
-    localparam int Uart1        = 10;
-    localparam int Uart2        = 11;
-    localparam int I2c1         = 12;
-    localparam int Timer1       = 13;
-    localparam int Timer2       = 14;
-    localparam int Xip          = 15;
-    localparam int Bootrom      = 16;
 
     wire           master_req       [MASTERS];
     wire           master_gnt       [MASTERS];
@@ -96,20 +81,18 @@ module chip_top #(
     wire debug_req;
     wire core_halted;
 
-    reg[31:0] irq_src;
-    wire int_req;
-    wire[7:0] int_id;
+    wire[3:0]         flash_spi_dq_in;
+    wire[3:0]         flash_spi_dq_oe;
+    wire[3:0]         flash_spi_dq_out;
+    wire              flash_spi_clk_pin;
+    wire              flash_spi_ss_pin;
 
+    // 中断相关信号
     wire timer0_irq;
-    wire timer1_irq;
-    wire timer2_irq;
     wire uart0_irq;
-    wire uart1_irq;
-    wire uart2_irq;
     wire gpio0_irq;
     wire gpio1_irq;
     wire i2c0_irq;
-    wire i2c1_irq;
     wire spi0_irq;
     wire gpio2_4_irq;
     wire gpio5_7_irq;
@@ -117,66 +100,11 @@ module chip_top #(
     wire gpio9_irq;
     wire gpio10_12_irq;
     wire gpio13_15_irq;
+    reg [31:0] irq_src;
+    wire int_req;
+    wire[7:0] int_id;
 
-    wire[GPIO_NUM-1:0] gpio_data_in;
-    wire[GPIO_NUM-1:0] gpio_oe;
-    wire[GPIO_NUM-1:0] gpio_data_out;
-
-    wire[GPIO_NUM-1:0] io_data_in;
-    wire[GPIO_NUM-1:0] io_oe;
-    wire[GPIO_NUM-1:0] io_data_out;
-
-    wire[I2C_NUM-1:0] i2c_scl_in;
-    wire[I2C_NUM-1:0] i2c_scl_oe;
-    wire[I2C_NUM-1:0] i2c_scl_out;
-    wire[I2C_NUM-1:0] i2c_sda_in;
-    wire[I2C_NUM-1:0] i2c_sda_oe;
-    wire[I2C_NUM-1:0] i2c_sda_out;
-
-`ifdef SUPPORT_IO_MODULE
-    wire[UART_NUM-1:0] uart_tx;
-    wire[UART_NUM-1:0] uart_rx;
-`endif
-
-    wire[SPI_NUM-1:0] spi_clk_in;
-    wire[SPI_NUM-1:0] spi_clk_oe;
-    wire[SPI_NUM-1:0] spi_clk_out;
-    wire[SPI_NUM-1:0] spi_ss_in;
-    wire[SPI_NUM-1:0] spi_ss_oe;
-    wire[SPI_NUM-1:0] spi_ss_out;
-    wire[3:0]         spi_dq_in[SPI_NUM-1:0];
-    wire[3:0]         spi_dq_oe[SPI_NUM-1:0];
-    wire[3:0]         spi_dq_out[SPI_NUM-1:0];
-
-    wire[31:0]        core_instr_addr;
-    wire[31:0]        core_data_addr;
-
-    wire[3:0]         flash_spi_dq_in;
-    wire[3:0]         flash_spi_dq_oe;
-    wire[3:0]         flash_spi_dq_out;
-
-    // 中断源
-    always @ (*) begin
-        irq_src     = 32'h0;
-        irq_src[ 0] = timer0_irq;
-        irq_src[ 1] = uart0_irq;
-        irq_src[ 2] = gpio0_irq;
-        irq_src[ 3] = gpio1_irq;
-        irq_src[ 4] = i2c0_irq;
-        irq_src[ 5] = spi0_irq;
-        irq_src[ 6] = gpio2_4_irq;
-        irq_src[ 7] = gpio5_7_irq;
-        irq_src[ 8] = gpio8_irq;
-        irq_src[ 9] = gpio9_irq;
-        irq_src[10] = gpio10_12_irq;
-        irq_src[11] = gpio13_15_irq;
-        irq_src[12] = uart1_irq;
-        irq_src[13] = uart2_irq;
-        irq_src[14] = i2c1_irq;
-        irq_src[15] = timer1_irq;
-        irq_src[16] = timer2_irq;
-    end
-
+    // CPU实例化
     generate
         genvar i;
         for (i = 0; i < CPU_NUM; i = i + 1) begin : cpu_gen
@@ -231,7 +159,7 @@ module chip_top #(
 `ifdef SUPPORT_ROM
     assign slave_addr_mask[Rom] = `ROM_ADDR_MASK;
     assign slave_addr_base[Rom] = `ROM_ADDR_BASE;
-    // 1.指令存储器
+    // 指令存储器
     rom #(
         .DP(`ROM_DEPTH)
     ) u_rom (
@@ -256,7 +184,7 @@ module chip_top #(
     assign slave_addr_base[Ram] = `ALL_ADDR_BASE;
 `endif
 
-    // 2.数据存储器
+    // 数据存储器
     ram #(
         .DP(`RAM_DEPTH)
     ) u_ram (
@@ -272,355 +200,95 @@ module chip_top #(
         .data_o     (slave_rdata[Ram])
     );
 
-`ifdef SUPPORT_IO_MODULE
-    assign slave_addr_mask[Timer0] = `TIMER0_ADDR_MASK;
-    assign slave_addr_base[Timer0] = `TIMER0_ADDR_BASE;
-    // 3.定时器0模块
-    timer_top timer0(
-        .clk_i   (clk),
-        .rst_ni  (ndmreset_n),
-        .irq_o   (timer0_irq),
-        .req_i   (slave_req[Timer0]),
-        .we_i    (slave_we[Timer0]),
-        .be_i    (slave_be[Timer0]),
-        .addr_i  (slave_addr[Timer0]),
-        .data_i  (slave_wdata[Timer0]),
-        .gnt_o   (slave_gnt[Timer0]),
-        .rvalid_o(slave_rvalid[Timer0]),
-        .data_o  (slave_rdata[Timer0])
-    );
-
-    assign slave_addr_mask[Timer1] = `TIMER1_ADDR_MASK;
-    assign slave_addr_base[Timer1] = `TIMER1_ADDR_BASE;
-    // 4.定时器1模块
-    timer_top timer1(
-        .clk_i   (clk),
-        .rst_ni  (ndmreset_n),
-        .irq_o   (timer1_irq),
-        .req_i   (slave_req[Timer1]),
-        .we_i    (slave_we[Timer1]),
-        .be_i    (slave_be[Timer1]),
-        .addr_i  (slave_addr[Timer1]),
-        .data_i  (slave_wdata[Timer1]),
-        .gnt_o   (slave_gnt[Timer1]),
-        .rvalid_o(slave_rvalid[Timer1]),
-        .data_o  (slave_rdata[Timer1])
-    );
-
-    assign slave_addr_mask[Timer2] = `TIMER2_ADDR_MASK;
-    assign slave_addr_base[Timer2] = `TIMER2_ADDR_BASE;
-    // 5.定时器2模块
-    timer_top timer2(
-        .clk_i   (clk),
-        .rst_ni  (ndmreset_n),
-        .irq_o   (timer2_irq),
-        .req_i   (slave_req[Timer2]),
-        .we_i    (slave_we[Timer2]),
-        .be_i    (slave_be[Timer2]),
-        .addr_i  (slave_addr[Timer2]),
-        .data_i  (slave_wdata[Timer2]),
-        .gnt_o   (slave_gnt[Timer2]),
-        .rvalid_o(slave_rvalid[Timer2]),
-        .data_o  (slave_rdata[Timer2])
-    );
-
-    assign slave_addr_mask[Gpio] = `GPIO_ADDR_MASK;
-    assign slave_addr_base[Gpio] = `GPIO_ADDR_BASE;
-    // 6.GPIO模块
-    gpio_top #(
-        .GPIO_NUM(GPIO_NUM)
-    ) u_gpio (
-        .clk_i          (clk),
-        .rst_ni         (ndmreset_n),
-        .gpio_oe_o      (gpio_oe),
-        .gpio_data_o    (gpio_data_out),
-        .gpio_data_i    (gpio_data_in),
-        .irq_gpio0_o    (gpio0_irq),
-        .irq_gpio1_o    (gpio1_irq),
-        .irq_gpio2_4_o  (gpio2_4_irq),
-        .irq_gpio5_7_o  (gpio5_7_irq),
-        .irq_gpio8_o    (gpio8_irq),
-        .irq_gpio9_o    (gpio9_irq),
-        .irq_gpio10_12_o(gpio10_12_irq),
-        .irq_gpio13_15_o(gpio13_15_irq),
-        .req_i          (slave_req[Gpio]),
-        .we_i           (slave_we[Gpio]),
-        .be_i           (slave_be[Gpio]),
-        .addr_i         (slave_addr[Gpio]),
-        .data_i         (slave_wdata[Gpio]),
-        .gnt_o          (slave_gnt[Gpio]),
-        .rvalid_o       (slave_rvalid[Gpio]),
-        .data_o         (slave_rdata[Gpio])
-    );
-
-    assign slave_addr_mask[Uart0] = `UART0_ADDR_MASK;
-    assign slave_addr_base[Uart0] = `UART0_ADDR_BASE;
-    // 7.串口0模块
-    uart_top uart0 (
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .rx_i       (uart_rx[0]),
-        .tx_o       (uart_tx[0]),
-        .irq_o      (uart0_irq),
-        .req_i      (slave_req[Uart0]),
-        .we_i       (slave_we[Uart0]),
-        .be_i       (slave_be[Uart0]),
-        .addr_i     (slave_addr[Uart0]),
-        .data_i     (slave_wdata[Uart0]),
-        .gnt_o      (slave_gnt[Uart0]),
-        .rvalid_o   (slave_rvalid[Uart0]),
-        .data_o     (slave_rdata[Uart0])
-    );
-
-    assign slave_addr_mask[Uart1] = `UART1_ADDR_MASK;
-    assign slave_addr_base[Uart1] = `UART1_ADDR_BASE;
-    // 8.串口1模块
-    uart_top uart1 (
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .rx_i       (uart_rx[1]),
-        .tx_o       (uart_tx[1]),
-        .irq_o      (uart1_irq),
-        .req_i      (slave_req[Uart1]),
-        .we_i       (slave_we[Uart1]),
-        .be_i       (slave_be[Uart1]),
-        .addr_i     (slave_addr[Uart1]),
-        .data_i     (slave_wdata[Uart1]),
-        .gnt_o      (slave_gnt[Uart1]),
-        .rvalid_o   (slave_rvalid[Uart1]),
-        .data_o     (slave_rdata[Uart1])
-    );
-
-    assign slave_addr_mask[Uart2] = `UART2_ADDR_MASK;
-    assign slave_addr_base[Uart2] = `UART2_ADDR_BASE;
-    // 9.串口2模块
-    uart_top uart2 (
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .rx_i       (uart_rx[2]),
-        .tx_o       (uart_tx[2]),
-        .irq_o      (uart2_irq),
-        .req_i      (slave_req[Uart2]),
-        .we_i       (slave_we[Uart2]),
-        .be_i       (slave_be[Uart2]),
-        .addr_i     (slave_addr[Uart2]),
-        .data_i     (slave_wdata[Uart2]),
-        .gnt_o      (slave_gnt[Uart2]),
-        .rvalid_o   (slave_rvalid[Uart2]),
-        .data_o     (slave_rdata[Uart2])
-    );
-
-    assign slave_addr_mask[Rvic] = `RVIC_ADDR_MASK;
-    assign slave_addr_base[Rvic] = `RVIC_ADDR_BASE;
-    // 10.中断控制器模块
-    rvic_top u_rvic(
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .src_i      (irq_src),
-        .irq_o      (int_req),
-        .irq_id_o   (int_id),
-        .req_i      (slave_req[Rvic]),
-        .we_i       (slave_we[Rvic]),
-        .be_i       (slave_be[Rvic]),
-        .addr_i     (slave_addr[Rvic]),
-        .data_i     (slave_wdata[Rvic]),
-        .gnt_o      (slave_gnt[Rvic]),
-        .rvalid_o   (slave_rvalid[Rvic]),
-        .data_o     (slave_rdata[Rvic])
-    );
-
-    assign slave_addr_mask[I2c0] = `I2C0_ADDR_MASK;
-    assign slave_addr_base[I2c0] = `I2C0_ADDR_BASE;
-    // 11.I2C0模块
-    i2c_top i2c0(
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .scl_o      (i2c_scl_out[0]),
-        .scl_oe_o   (i2c_scl_oe[0]),
-        .scl_i      (i2c_scl_in[0]),
-        .sda_o      (i2c_sda_out[0]),
-        .sda_oe_o   (i2c_sda_oe[0]),
-        .sda_i      (i2c_sda_in[0]),
-        .irq_o      (i2c0_irq),
-        .req_i      (slave_req[I2c0]),
-        .we_i       (slave_we[I2c0]),
-        .be_i       (slave_be[I2c0]),
-        .addr_i     (slave_addr[I2c0]),
-        .data_i     (slave_wdata[I2c0]),
-        .gnt_o      (slave_gnt[I2c0]),
-        .rvalid_o   (slave_rvalid[I2c0]),
-        .data_o     (slave_rdata[I2c0])
-    );
-
-    assign slave_addr_mask[I2c1] = `I2C1_ADDR_MASK;
-    assign slave_addr_base[I2c1] = `I2C1_ADDR_BASE;
-    // 12.I2C1模块
-    i2c_top i2c1(
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .scl_o      (i2c_scl_out[1]),
-        .scl_oe_o   (i2c_scl_oe[1]),
-        .scl_i      (i2c_scl_in[1]),
-        .sda_o      (i2c_sda_out[1]),
-        .sda_oe_o   (i2c_sda_oe[1]),
-        .sda_i      (i2c_sda_in[1]),
-        .irq_o      (i2c1_irq),
-        .req_i      (slave_req[I2c1]),
-        .we_i       (slave_we[I2c1]),
-        .be_i       (slave_be[I2c1]),
-        .addr_i     (slave_addr[I2c1]),
-        .data_i     (slave_wdata[I2c1]),
-        .gnt_o      (slave_gnt[I2c1]),
-        .rvalid_o   (slave_rvalid[I2c1]),
-        .data_o     (slave_rdata[I2c1])
-    );
-
-    assign slave_addr_mask[Spi0] = `SPI0_ADDR_MASK;
-    assign slave_addr_base[Spi0] = `SPI0_ADDR_BASE;
-    // 13.SPI0模块
-    spi_top spi0(
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .spi_clk_i  (spi_clk_in[0]),
-        .spi_clk_o  (spi_clk_out[0]),
-        .spi_clk_oe_o(spi_clk_oe[0]),
-        .spi_ss_i   (spi_ss_in[0]),
-        .spi_ss_o   (spi_ss_out[0]),
-        .spi_ss_oe_o(spi_ss_oe[0]),
-        .spi_dq0_i  (spi_dq_in[0][0]),
-        .spi_dq0_o  (spi_dq_out[0][0]),
-        .spi_dq0_oe_o(spi_dq_oe[0][0]),
-        .spi_dq1_i  (spi_dq_in[0][1]),
-        .spi_dq1_o  (spi_dq_out[0][1]),
-        .spi_dq1_oe_o(spi_dq_oe[0][1]),
-        .spi_dq2_i  (spi_dq_in[0][2]),
-        .spi_dq2_o  (spi_dq_out[0][2]),
-        .spi_dq2_oe_o(spi_dq_oe[0][2]),
-        .spi_dq3_i  (spi_dq_in[0][3]),
-        .spi_dq3_o  (spi_dq_out[0][3]),
-        .spi_dq3_oe_o(spi_dq_oe[0][3]),
-        .irq_o      (spi0_irq),
-        .req_i      (slave_req[Spi0]),
-        .we_i       (slave_we[Spi0]),
-        .be_i       (slave_be[Spi0]),
-        .addr_i     (slave_addr[Spi0]),
-        .data_i     (slave_wdata[Spi0]),
-        .gnt_o      (slave_gnt[Spi0]),
-        .rvalid_o   (slave_rvalid[Spi0]),
-        .data_o     (slave_rdata[Spi0])
-    );
-
-    for (genvar i = 0; i < GPIO_NUM; i = i + 1) begin : g_io_data
-        assign io_pins[i] = io_oe[i] ? io_data_out[i] : 1'bz;
-        assign io_data_in[i] = io_pins[i];
-    end
-
-    assign slave_addr_mask[Pinmux] = `PINMUX_ADDR_MASK;
-    assign slave_addr_base[Pinmux] = `PINMUX_ADDR_BASE;
-    // 14.PINMUX模块
-    pinmux_top #(
+    io_module #(
         .GPIO_NUM(GPIO_NUM),
+        .IMPLEMENT_JTAG(IMPLEMENT_JTAG),
+        .IMPLEMENT_UART(IMPLEMENT_UART),
+        .IMPLEMENT_GPIO(IMPLEMENT_GPIO),
+        .IMPLEMENT_SPI(IMPLEMENT_SPI),
+        .IMPLEMENT_TIMER(IMPLEMENT_TIMER),
+        .IMPLEMENT_I2C(IMPLEMENT_I2C),
         .I2C_NUM(I2C_NUM),
         .UART_NUM(UART_NUM),
         .SPI_NUM(SPI_NUM)
-    ) u_pinmux (
-        .clk_i          (clk),
-        .rst_ni         (ndmreset_n),
-        .gpio_oe_i      (gpio_oe),
-        .gpio_val_i     (gpio_data_out),
-        .gpio_val_o     (gpio_data_in),
-        .i2c_sda_oe_i   (i2c_sda_oe),
-        .i2c_sda_val_i  (i2c_sda_out),
-        .i2c_sda_val_o  (i2c_sda_in),
-        .i2c_scl_oe_i   (i2c_scl_oe),
-        .i2c_scl_val_i  (i2c_scl_out),
-        .i2c_scl_val_o  (i2c_scl_in),
-        .uart_tx_oe_i   ({UART_NUM{1'b1}}),
-        .uart_tx_val_i  (uart_tx),
-        .uart_tx_val_o  (),
-        .uart_rx_oe_i   ({UART_NUM{1'b0}}),
-        .uart_rx_val_i  (),
-        .uart_rx_val_o  (uart_rx),
-        .spi_clk_oe_i   (spi_clk_oe),
-        .spi_clk_val_i  (spi_clk_out),
-        .spi_clk_val_o  (spi_clk_in),
-        .spi_ss_oe_i    (spi_ss_oe),
-        .spi_ss_val_i   (spi_ss_out),
-        .spi_ss_val_o   (spi_ss_in),
-        .spi_dq_oe_i    (spi_dq_oe),
-        .spi_dq_val_i   (spi_dq_out),
-        .spi_dq_val_o   (spi_dq_in),
-        .io_val_i       (io_data_in),
-        .io_val_o       (io_data_out),
-        .io_oe_o        (io_oe),
-        .req_i          (slave_req[Pinmux]),
-        .we_i           (slave_we[Pinmux]),
-        .be_i           (slave_be[Pinmux]),
-        .addr_i         (slave_addr[Pinmux]),
-        .data_i         (slave_wdata[Pinmux]),
-        .gnt_o          (slave_gnt[Pinmux]),
-        .rvalid_o       (slave_rvalid[Pinmux]),
-        .data_o         (slave_rdata[Pinmux])
+    ) u_io_module (
+        .clk                (clk),
+        .rst_ni             (ndmreset_n),
+
+        // 中断源信号
+        .timer0_irq         (timer0_irq),
+        .uart0_irq          (uart0_irq),
+        .gpio0_irq          (gpio0_irq),
+        .gpio1_irq          (gpio1_irq),
+        .i2c0_irq           (i2c0_irq),
+        .spi0_irq           (spi0_irq),
+        .gpio2_4_irq        (gpio2_4_irq),
+        .gpio5_7_irq        (gpio5_7_irq),
+        .gpio8_irq          (gpio8_irq),
+        .gpio9_irq          (gpio9_irq),
+        .gpio10_12_irq      (gpio10_12_irq),
+        .gpio13_15_irq      (gpio13_15_irq),
+
+        // GPIO相关信号
+        .gpio_pins          (gpio_io),
+
+        // UART相关信号
+        .uart_rx_int        (uart_rx),
+        .uart_tx_int        (uart_tx),
+
+        // SPI相关信号
+        .spi_clk_in_int     (spi_clk),
+        .spi_clk_out_int    (spi_clk),
+        .spi_clk_oe_int     (),
+        .spi_ss_in_int      (spi_cs_n),
+        .spi_ss_out_int     (spi_cs_n),
+        .spi_ss_oe_int      (),
+        .spi_dq_in_int      ({3'b0, spi_miso}),
+        .spi_dq_out_int     (),
+        .spi_dq_oe_int      (),
+
+        // I2C相关信号
+        .i2c_scl_in_int     (),
+        .i2c_scl_out_int    (),
+        .i2c_scl_oe_int     (),
+        .i2c_sda_in_int     (),
+        .i2c_sda_out_int    (),
+        .i2c_sda_oe_int     (),
+
+        // XIP相关信号
+        .flash_spi_clk_pin  (flash_spi_clk_pin),
+        .flash_spi_ss_pin   (flash_spi_ss_pin),
+        .flash_spi_dq_in    (flash_spi_dq_in),
+        .flash_spi_dq_out   (flash_spi_dq_out),
+        .flash_spi_dq_oe    (flash_spi_dq_oe),
+
+        // 将所有slave信号传递给IO模块
+        .slave_req          (slave_req),
+        .slave_gnt          (slave_gnt),
+        .slave_rvalid       (slave_rvalid),
+        .slave_addr         (slave_addr),
+        .slave_we           (slave_we),
+        .slave_be           (slave_be),
+        .slave_wdata        (slave_wdata),
+        .slave_rdata        (slave_rdata)
     );
 
-    for (genvar j = 0; j < 4; j = j + 1) begin : g_spi_pin_data
-        assign flash_spi_dq_pin[j] = flash_spi_dq_oe[j] ? flash_spi_dq_out[j] : 1'bz;
-`ifdef VERILATOR
-        // 调试用，固定输入
-        assign flash_spi_dq_in[j] = (j) & 1'b1;
-`else
-        assign flash_spi_dq_in[j] = flash_spi_dq_pin[j];
-`endif
+    // 中断源
+    always @ (*) begin
+        irq_src     = 32'h0;
+        irq_src[ 0] = timer0_irq;
+        irq_src[ 1] = uart0_irq;
+        irq_src[ 2] = gpio0_irq;
+        irq_src[ 3] = gpio1_irq;
+        irq_src[ 4] = i2c0_irq;
+        irq_src[ 5] = spi0_irq;
+        irq_src[ 6] = gpio2_4_irq;
+        irq_src[ 7] = gpio5_7_irq;
+        irq_src[ 8] = gpio8_irq;
+        irq_src[ 9] = gpio9_irq;
+        irq_src[10] = gpio10_12_irq;
+        irq_src[11] = gpio13_15_irq;
     end
-
-    assign slave_addr_mask[Xip] = `XIP_ADDR_MASK;
-    assign slave_addr_base[Xip] = `XIP_ADDR_BASE;
-    // 15.xip模块
-    xip_top xip (
-        .clk_i          (clk),
-        .rst_ni         (ndmreset_n),
-        .spi_clk_o      (flash_spi_clk_pin),
-        .spi_clk_oe_o   (),
-        .spi_ss_o       (flash_spi_ss_pin),
-        .spi_ss_oe_o    (),
-        .spi_dq0_i      (flash_spi_dq_in[0]),
-        .spi_dq0_o      (flash_spi_dq_out[0]),
-        .spi_dq0_oe_o   (flash_spi_dq_oe[0]),
-        .spi_dq1_i      (flash_spi_dq_in[1]),
-        .spi_dq1_o      (flash_spi_dq_out[1]),
-        .spi_dq1_oe_o   (flash_spi_dq_oe[1]),
-        .spi_dq2_i      (flash_spi_dq_in[2]),
-        .spi_dq2_o      (flash_spi_dq_out[2]),
-        .spi_dq2_oe_o   (flash_spi_dq_oe[2]),
-        .spi_dq3_i      (flash_spi_dq_in[3]),
-        .spi_dq3_o      (flash_spi_dq_out[3]),
-        .spi_dq3_oe_o   (flash_spi_dq_oe[3]),
-        .req_i          (slave_req[Xip]),
-        .we_i           (slave_we[Xip]),
-        .be_i           (slave_be[Xip]),
-        .addr_i         (slave_addr[Xip]),
-        .data_i         (slave_wdata[Xip]),
-        .gnt_o          (slave_gnt[Xip]),
-        .rvalid_o       (slave_rvalid[Xip]),
-        .data_o         (slave_rdata[Xip])
-    );
-
-    assign slave_addr_mask[Bootrom] = `BOOTROM_ADDR_MASK;
-    assign slave_addr_base[Bootrom] = `BOOTROM_ADDR_BASE;
-    // 16.bootrom模块
-    bootrom_top bootrom(
-        .clk_i   (clk),
-        .rst_ni  (ndmreset_n),
-        .req_i   (slave_req[Bootrom]),
-        .we_i    (slave_we[Bootrom]),
-        .be_i    (slave_be[Bootrom]),
-        .addr_i  (slave_addr[Bootrom]),
-        .data_i  (slave_wdata[Bootrom]),
-        .gnt_o   (slave_gnt[Bootrom]),
-        .rvalid_o(slave_rvalid[Bootrom]),
-        .data_o  (slave_rdata[Bootrom])
-    );
-`endif
 
     // 内部总线
     obi_interconnect #(
@@ -658,7 +326,7 @@ module chip_top #(
         .rst_no (ndmreset_n)
     );
 
-`ifdef SUPPORT_IO_MODULE
+`ifdef IMPLEMENT_JTAG
     assign slave_addr_mask[JtagDevice] = `DEBUG_ADDR_MASK;
     assign slave_addr_base[JtagDevice] = `DEBUG_ADDR_BASE;
     // JTAG模块
