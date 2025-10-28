@@ -4,14 +4,10 @@
 `include "stddef.v"
 `include "global_config.v"
 
-`include "bus.v"
-`include "cpu.v"
-`include "gpio.v"
-
 module chip_top_test;
     /********** 输入/输出信号 **********/
     reg                       clk;
-    reg                       reset;
+    reg                       rst_n;
 
     localparam CPU_NUM        = 1;
     localparam GPIO_NUM       = 32;
@@ -22,7 +18,7 @@ module chip_top_test;
 
     // 通用输入/输出端口
     wire [GPIO_NUM-1:0]    gpio_in = {GPIO_NUM{1'b0}}; // 输入端口
-    wire [GPIO_NUM-1:0]   gpio_out;                      // 输出端口
+    wire [GPIO_NUM-1:0]    gpio_out;                   // 输出端口
     wire [GPIO_NUM-1:0]    gpio_io = {GPIO_NUM{1'bz}}; // 输入输出端口
 
     /********** UART模型 **********/
@@ -35,6 +31,7 @@ module chip_top_test;
 
     /********** 实例化chip_top **********/
     chip_top #(
+        .TRACE_ENABLE(1),
         .CPU_NUM(CPU_NUM),
         .IMPLEMENT_ROM(1),
         .IMPLEMENT_JTAG(1),
@@ -49,7 +46,7 @@ module chip_top_test;
         .SPI_NUM(1)
     ) u_chip_top (
         .clk         (clk),
-        .reset       (reset),
+        .rst_n       (rst_n),
 
         /********** UART **********/
         .uart_rx     (uart_rx),
@@ -79,7 +76,7 @@ module chip_top_test;
     /********** UART模型 **********/
     uart_rx u_uart_model (
         .clk        (clk),
-        .reset      (reset),
+        .rst_n      (rst_n),
         /********** 控制信号 **********/
         .rx_busy_o  (rx_busy),
         .rx_end_o   (rx_end),
@@ -100,11 +97,13 @@ module chip_top_test;
     initial begin
         $readmemh(`ROM_PRG, u_chip_top.u_rom.u_gen_ram.ram);
         $readmemh(`SPM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
-        clk   <= `LOW;
-        reset <= `RESET_ENABLE;
+        clk   <= 0;
+        rst_n <= 0;
 
         @(posedge clk);
-        reset <= `RESET_DISABLE;
+        rst_n <= 1;
+        @(posedge clk);
+        rst_n <= 0;
 
         # `SIM_CYCLE $finish;
     end

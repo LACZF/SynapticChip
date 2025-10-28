@@ -6,6 +6,7 @@
 `include "jtag_def.sv"
 
 module chip_top #(
+    parameter TRACE_ENABLE              = 0,
     parameter CPU_NUM                   = 1,
     parameter IMPLEMENT_ROM             = 1,
     parameter IMPLEMENT_JTAG            = 0,
@@ -132,8 +133,10 @@ module chip_top #(
     wire[I2C_NUM-1:0] i2c_sda_oe;
     wire[I2C_NUM-1:0] i2c_sda_out;
 
+`ifdef SUPPORT_IO_MODULE
     wire[UART_NUM-1:0] uart_tx;
     wire[UART_NUM-1:0] uart_rx;
+`endif
 
     wire[SPI_NUM-1:0] spi_clk_in;
     wire[SPI_NUM-1:0] spi_clk_oe;
@@ -213,12 +216,15 @@ module chip_top #(
         end
 
         // 将未使用的总线主控信号接地
-        for (i = CPU_NUM * 2; i < MASTER_NUM; i = i + 1) begin : unused_master_gen
-            assign m_req_n[i] = `ENABLE_N;
-            assign m_addr[i] = {`WORD_ADDR_W{`LOW}};
-            assign m_as_n[i] = `ENABLE_N;
-            assign m_rw[i] = `READ;
-            assign m_wr_data[i] = {`WORD_DATA_W{`LOW}};
+        for (i = CPU_NUM * 2 + 1; i < MASTERS; i = i + 1) begin : unused_master_gen
+            assign master_req[i]    = 0;
+            assign master_gnt[i]    = 0;
+            assign master_rvalid[i] = 0;
+            assign master_addr[i]   = 0;
+            assign master_we[i]     = 0;
+            assign master_be[i]     = 0;
+            assign master_rdata[i]  = 0;
+            assign master_wdata[i]  = 0;
         end
     endgenerate
 
@@ -258,6 +264,7 @@ module chip_top #(
         .data_o     (slave_rdata[Ram])
     );
 
+`ifdef SUPPORT_IO_MODULE
     assign slave_addr_mask[Timer0] = `TIMER0_ADDR_MASK;
     assign slave_addr_base[Timer0] = `TIMER0_ADDR_BASE;
     // 3.定时器0模块
@@ -605,6 +612,7 @@ module chip_top #(
         .rvalid_o(slave_rvalid[Bootrom]),
         .data_o  (slave_rdata[Bootrom])
     );
+`endif
 
     // 内部总线
     obi_interconnect #(
@@ -642,6 +650,7 @@ module chip_top #(
         .rst_no (ndmreset_n)
     );
 
+`ifdef SUPPORT_IO_MODULE
     assign slave_addr_mask[JtagDevice] = `DEBUG_ADDR_MASK;
     assign slave_addr_base[JtagDevice] = `DEBUG_ADDR_BASE;
     // JTAG模块
@@ -676,5 +685,6 @@ module chip_top #(
         .slave_rvalid_o     (slave_rvalid[JtagDevice]),
         .slave_rdata_o      (slave_rdata[JtagDevice])
     );
+`endif
 
 endmodule

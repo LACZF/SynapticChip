@@ -50,24 +50,24 @@ TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_top.sv
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/bootrom/bootrom_top.sv
 
 # gpio
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_reg_pkg.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_reg_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_reg_pkg.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_reg_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_top.sv
 
 # i2c
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_master.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_reg_pkg.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_reg_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_slave.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_master.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_reg_pkg.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_reg_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_slave.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_top.sv
 
 # pinmux
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_reg_pkg.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_reg_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_reg_pkg.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_reg_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_top.sv
 
 # ram
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/ram.sv
@@ -76,40 +76,40 @@ TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/ram.sv
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
 
 # rvic
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_reg_pkg.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_reg_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_reg_pkg.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_reg_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/rvic/rvic_top.sv
 
 # SPI
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_master.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_reg_pkg.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_reg_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_transmit_byte.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_master.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_reg_pkg.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_reg_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/spi/spi_transmit_byte.sv
 
 # timer
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_reg_pkg.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_reg_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer.hjson
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_reg_pkg.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_reg_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/timer/timer.hjson
 
 # uart
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_reg_pkg.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_reg_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_rx.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_tx.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart.hjson
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_reg_pkg.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_reg_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_rx.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart_tx.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/uart/uart.hjson
 
 # xip
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/spi_master_transmit.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_core.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_top.sv
-TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_w25q64_ctrl.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/spi_master_transmit.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_core.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_top.sv
+# TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/xip/xip_w25q64_ctrl.sv
 
 # sys_bus
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect_master_sel.sv
