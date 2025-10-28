@@ -45,3 +45,74 @@ index 1dd06f5..0bc3e41 100644
  
      divider u_divider(
          .clk(clk),
+diff --git a/rtl/core/tracer.sv b/rtl/core/tracer.sv
+index 2a51e6c..4a10d6c 100644
+--- a/rtl/core/tracer.sv
++++ b/rtl/core/tracer.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2021 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ module tracer(
+@@ -370,7 +370,7 @@ module tracer(
+     endfunction
+ 
+     function automatic void decode_j_insn(input string mnemonic);
+-        decoded_str = $sformatf("%s x%0d,%0x", mnemonic, rd_addr, 
++        decoded_str = $sformatf("%s x%0d,%0x", mnemonic, rd_addr,
+             {{12{inst_i[31]}}, inst_i[19:12], inst_i[20], inst_i[30:21], 1'b0});
+     endfunction
+ 
+@@ -499,7 +499,8 @@ module tracer(
+     endfunction
+ 
+ 
+-    always_comb begin
++    // 使用always代替always_comb来避免非整数类型的综合警告
++    always @(*) begin
+         decoded_str = "";
+ 
+         unique casez (inst_i)
+@@ -576,8 +577,8 @@ module tracer(
+ 
+ 
+     initial begin
+-        string file_name_base = "trace_core";
+-        $sformat(file_name, "%s.log", file_name_base);
++        // 直接在$sformat中使用字符串，避免静态变量初始化警告
++        $sformat(file_name, "trace_core.log");
+ 
+         $display("Writing execution trace to %s", file_name);
+         file_handle = $fopen(file_name, "w");
+@@ -610,4 +611,4 @@ module tracer(
+         end
+     end
+ 
+-endmodule
++endmodule
+\ No newline at end of file
