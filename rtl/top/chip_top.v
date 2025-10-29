@@ -44,11 +44,11 @@ module chip_top #(
     output wire                         jtag_tdo_pin
 );
     /* (instruction + data) * CPU_NUM + jtag */
-    localparam int MASTERS      = CPU_NUM * 2 + 1;
-    localparam int SLAVES       = 18; // Number of slave ports
+    localparam int MASTERS                  = CPU_NUM * 2 + 1;
+    localparam int SLAVES                   = 18; // Number of slave ports
 
     // masters
-    localparam int master_jtag_index     = 0;
+    localparam int master_jtag_index        = CPU_NUM * 2;
 
     // slaves
     localparam int slave_rom_index          = 0;
