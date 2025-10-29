@@ -22,6 +22,7 @@ module chip_top #(
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
     parameter IMPLEMENT_SPI             = 0,
+    parameter IMPLEMENT_FLASH           = 1,
     parameter IMPLEMENT_TIMER           = 1,
     parameter IMPLEMENT_I2C             = 1,
     parameter GPIO_NUM                  = 16,
@@ -46,6 +47,13 @@ module chip_top #(
     output wire                         spi_clk,
     output wire                         spi_mosi,
     input  wire                         spi_miso,
+
+    /********** FLASH **********/
+    input  wire[3:0]                    flash_spi_dq_in,
+    output wire[3:0]                    flash_spi_dq_oe,
+    output wire[3:0]                    flash_spi_dq_out,
+    output wire                         flash_spi_clk_pin,
+    output wire                         flash_spi_ss_pin,
 
     /********** JTAG **********/
     input  wire                         jtag_tck_pin,
@@ -92,12 +100,6 @@ module chip_top #(
     wire ndmreset_n;
     wire debug_req;
     wire core_halted;
-
-    wire[3:0]         flash_spi_dq_in;
-    wire[3:0]         flash_spi_dq_oe;
-    wire[3:0]         flash_spi_dq_out;
-    wire              flash_spi_clk_pin;
-    wire              flash_spi_ss_pin;
 
     // 中断相关信号
     wire timer0_irq;
@@ -237,6 +239,7 @@ module chip_top #(
         .IMPLEMENT_GPIO         (IMPLEMENT_GPIO),
         .IMPLEMENT_SPI          (IMPLEMENT_SPI),
         .IMPLEMENT_TIMER        (IMPLEMENT_TIMER),
+        .IMPLEMENT_FLASH        (IMPLEMENT_FLASH),
         .GPIO_IN_CH             (GPIO_NUM),
         .GPIO_OUT_CH            (GPIO_NUM),
         .GPIO_IO_CH             (GPIO_NUM)
@@ -275,7 +278,14 @@ module chip_top #(
         .spi_cs_n      (spi_cs_n),
         .spi_clk       (spi_clk),
         .spi_mosi      (spi_mosi),
-        .spi_miso      (spi_miso)
+        .spi_miso      (spi_miso),
+
+        // Flash接口
+        .flash_spi_clk    (flash_spi_clk_pin),
+        .flash_spi_ss     (flash_spi_ss_pin),
+        .flash_spi_dq_out (flash_spi_dq_out),
+        .flash_spi_dq_oe  (flash_spi_dq_oe),
+        .flash_spi_dq_in  (flash_spi_dq_in)
     );
 
     // 中断源

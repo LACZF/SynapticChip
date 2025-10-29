@@ -51,6 +51,7 @@ module chip_top_test;
         .IMPLEMENT_UART(0),
         .IMPLEMENT_GPIO(0),
         .IMPLEMENT_SPI(0),
+        .IMPLEMENT_FLASH(0),
         .IMPLEMENT_TIMER(0),
         .IMPLEMENT_I2C(0),
         .GPIO_NUM(GPIO_NUM),
