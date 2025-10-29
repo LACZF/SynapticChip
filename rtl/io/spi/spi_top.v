@@ -8,13 +8,14 @@ module spi_top #(
     input wire                       clk,
     input wire                       rst_n,
 
-    // Control interface
+    // Control interface - OBI protocol
     input  wire                      req_i,
     input  wire                      we_i,
     input  wire [ADDR_WIDTH-1:0]     addr_i,
     input  wire [DATA_WIDTH-1:0]     data_in_i,
     output reg  [DATA_WIDTH-1:0]     data_out_o,
-    output reg                       ack_o,
+    output reg                       gnt_o,
+    output reg                       rvalid_o,
 
     // SPI physical interface
     output reg  [CS_NUM-1:0]         spi_cs_n_o,
@@ -31,6 +32,7 @@ module spi_top #(
     reg [DATA_WIDTH-1:0] clk_div_reg;
     reg [DATA_WIDTH-1:0] config_reg;
     reg [DATA_WIDTH-1:0] cs_sel_reg;  // Chip select register
+    reg                  req_accepted;  // OBI handshake register
 
     // SPI state machine variables
     reg [2:0]               state;
@@ -80,6 +82,28 @@ module spi_top #(
                         (clk_divider == clk_div && !clk_gen) :
                         (clk_divider == clk_div && clk_gen);
 
+    // OBI handshake logic
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            req_accepted <= 1'b0;
+            gnt_o        <= 1'b0;
+            rvalid_o     <= 1'b0;
+        end else begin
+            // Grant logic
+            if (req_i && !req_accepted) begin
+                gnt_o        <= 1'b1;
+                req_accepted <= 1'b1;
+            end else if (!req_i) begin
+                req_accepted <= 1'b0;
+            end else if (rvalid_o) begin
+                gnt_o        <= 1'b0;
+                req_accepted <= 1'b0;
+            end else begin
+                gnt_o <= 1'b0;
+            end
+        end
+    end
+
     // Register read/write logic
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -90,30 +114,30 @@ module spi_top #(
             cmd_reg     <= 32'h0;
             clk_div_reg <= 32'h00000007; // Default clock divider
             config_reg  <= 32'h0; // Default SPI mode 0
-            ack_o       <= 1'b0;
             data_out_o  <= 32'h0;
+            rvalid_o    <= 1'b0;
         end else begin
-            ack_o <= 1'b0;
+            rvalid_o <= 1'b0;
 
-            if (req_i && !ack_o) begin
+            if (req_accepted) begin
                 if (we_i) begin
                     // Write operation
                     case (addr_i[7:0])
                         `SPI_REG_CONTROL: begin
                             control_reg <= data_in_i;
-                            ack_o       <= 1'b1;
+                            rvalid_o    <= 1'b1;
                         end
                         `SPI_REG_DATA: begin
-                            data_reg <= data_in_i;
-                            ack_o    <= 1'b1;
+                            data_reg  <= data_in_i;
+                            rvalid_o  <= 1'b1;
                         end
                         `SPI_REG_ADDR: begin
-                            addr_reg <= data_in_i;
-                            ack_o    <= 1'b1;
+                            addr_reg  <= data_in_i;
+                            rvalid_o  <= 1'b1;
                         end
                         `SPI_REG_CMD: begin
-                            cmd_reg <= data_in_i;
-                            ack_o   <= 1'b1;
+                            cmd_reg   <= data_in_i;
+                            rvalid_o  <= 1'b1;
                             // Start SPI operation
                             if (spi_en) begin
                                 current_cmd  <= data_in_i[7:0];
@@ -135,15 +159,15 @@ module spi_top #(
                         end
                         `SPI_REG_CLK_DIV: begin
                             clk_div_reg <= data_in_i;
-                            ack_o       <= 1'b1;
+                            rvalid_o    <= 1'b1;
                         end
                         `SPI_REG_CONFIG: begin
                             config_reg <= data_in_i;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                         `SPI_REG_CS_SEL: begin  // Chip select register
                             cs_sel_reg <= data_in_i;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                     endcase
                 end else begin
@@ -151,36 +175,36 @@ module spi_top #(
                     case (addr_i[7:0])
                         `SPI_REG_CONTROL: begin
                             data_out_o <= control_reg;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                         `SPI_REG_STATUS: begin
                             data_out_o <= status_reg;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                         `SPI_REG_DATA: begin
                             data_out_o                       <= rx_data;
-                            ack_o                            <= 1'b1;
+                            rvalid_o                         <= 1'b1;
                             status_reg[`SPI_STATUS_RX_READY] <= 1'b0;
                         end
                         `SPI_REG_ADDR: begin
                             data_out_o <= addr_reg;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                         `SPI_REG_CMD: begin
                             data_out_o <= cmd_reg;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                         `SPI_REG_CLK_DIV: begin
                             data_out_o <= clk_div_reg;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                         `SPI_REG_CONFIG: begin
                             data_out_o <= config_reg;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                         `SPI_REG_CS_SEL: begin  // Chip select register
                             data_out_o <= cs_sel_reg;
-                            ack_o      <= 1'b1;
+                            rvalid_o   <= 1'b1;
                         end
                     endcase
                 end
