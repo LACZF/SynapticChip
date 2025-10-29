@@ -492,7 +492,7 @@ index 79e0390..b0f486e 100644
      );
  
 diff --git a/rtl/core/idu.sv b/rtl/core/idu.sv
-index 2390993..dc27e9a 100644
+index 2390993..dbebc44 100644
 --- a/rtl/core/idu.sv
 +++ b/rtl/core/idu.sv
 @@ -1,17 +1,17 @@
@@ -611,6 +611,15 @@ index 2390993..dc27e9a 100644
      wire op_bjp = inst_jal | inst_jalr | inst_type_branch;
      wire op_muldiv = inst_type_muldiv;
      wire op_csr = inst_csrrw | inst_csrrwi | inst_csrrs | inst_csrrsi | inst_csrrc | inst_csrrci;
+@@ -303,7 +318,7 @@ module idu(
+     assign rs2_raddr_o = access_rs2? rs2: 5'h0;
+ 
+     // 是否需要访问rd寄存器
+-    wire access_rd = inst_lui | inst_auipc | inst_jal | inst_jalr | inst_type_load | opcode_0010011 | opcode_0110011 | op_csr;
++    wire access_rd = inst_lui | inst_auipc | inst_jal | inst_jalr | inst_type_load | opcode_0010011 | opcode_0110011 | opcode_0011011 | op_csr;
+ 
+     assign rd_waddr_o = access_rd? rd: 5'h0;
+     assign rd_we_o = access_rd;
 @@ -313,4 +328,4 @@ module idu(
      //assign illegal_inst_o = ~(|dec_info_bus_o);
      assign illegal_inst_o = 1'b0;
