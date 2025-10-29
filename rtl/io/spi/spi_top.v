@@ -3,7 +3,7 @@
 module spi_top #(
     parameter DATA_WIDTH             = 64,
     parameter ADDR_WIDTH             = 64,
-    parameter CS_NUM                 = 1
+    parameter SPI_NUM                = 1
 ) (
     input wire                       clk,
     input wire                       rst_n,
@@ -18,7 +18,7 @@ module spi_top #(
     output reg                       rvalid_o,
 
     // SPI physical interface
-    output reg  [CS_NUM-1:0]         spi_cs_n_o,
+    output reg  [SPI_NUM-1:0]        spi_cs_n_o,
     output reg                       spi_clk_o,
     output reg                       spi_mosi_o,
     input  wire                      spi_miso_i
@@ -146,9 +146,9 @@ module spi_top #(
                                 state        <= `SPI_STATE_CMD;
                                 bit_counter  <= 8'h0;
                                 byte_counter <= 8'h0;
-                                if (CS_NUM > 1) begin
+                                if (SPI_NUM > 1) begin
                                     // Multi-chip select mode: only pull down selected CS
-                                    spi_cs_n_o <= ~(1 << cs_sel_reg[$clog2(CS_NUM)-1:0]);
+                                    spi_cs_n_o <= ~(1 << cs_sel_reg[$clog2(SPI_NUM)-1:0]);
                                 end else begin
                                     // Single-chip select mode: compatible with previous behavior
                                     spi_cs_n_o <= 1'b0;
@@ -326,9 +326,9 @@ module spi_top #(
 
                 `SPI_STATE_DONE:
                     begin
-                        if (CS_NUM > 1) begin
+                        if (SPI_NUM > 1) begin
                             // Multi-chip select mode: pull up all CS signals
-                            spi_cs_n_o <= {CS_NUM{1'b1}};
+                            spi_cs_n_o <= {SPI_NUM{1'b1}};
                         end else begin
                             // Single-chip select mode: compatible with previous behavior
                             spi_cs_n_o <= 1'b1;
@@ -346,9 +346,9 @@ module spi_top #(
             endcase
         end else begin
             state <= `SPI_STATE_IDLE;
-            if (CS_NUM > 1) begin
+            if (SPI_NUM > 1) begin
                 // Multi-chip select mode: pull up all CS signals
-                spi_cs_n_o <= {CS_NUM{1'b1}};
+                spi_cs_n_o <= {SPI_NUM{1'b1}};
             end else begin
                 // Single-chip select mode: compatible with previous behavior
                 spi_cs_n_o <= 1'b1;

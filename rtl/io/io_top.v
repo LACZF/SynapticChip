@@ -8,6 +8,8 @@
 `include "spi.v"
 
 module io_top #(
+    parameter ADDR_WIDTH           = 32,
+    parameter DATA_WIDTH           = 32,
     parameter SLAVES               = 8,
     parameter START_SLAVE          = 2,
     parameter IMPLEMENT_UART       = 1,
@@ -15,6 +17,7 @@ module io_top #(
     parameter IMPLEMENT_SPI        = 0,
     parameter IMPLEMENT_TIMER      = 1,
     parameter IMPLEMENT_FLASH      = 1,
+    parameter SPI_NUM              = 1,
     parameter GPIO_IN_CH           = 1,
     parameter GPIO_OUT_CH          = 1,
     parameter GPIO_IO_CH           = 1
@@ -50,7 +53,7 @@ module io_top #(
     inout  wire [GPIO_IO_CH-1:0]              gpio_io,
 
     // SPI接口
-    output wire                               spi_cs_n,
+    output wire [SPI_NUM-1:0]                 spi_cs_n,
     output wire                               spi_clk,
     output wire                               spi_mosi,
     input  wire                               spi_miso,
@@ -168,9 +171,9 @@ module io_top #(
             assign slave_addr_mask[slave_spi_index] = `SPI0_ADDR_MASK;
             assign slave_addr_base[slave_spi_index] = `SPI0_ADDR_BASE;
             spi_top #(
-                .DATA_WIDTH    (32),
-                .ADDR_WIDTH    (32),
-                .CS_NUM        (1)
+                .ADDR_WIDTH    (ADDR_WIDTH),
+                .DATA_WIDTH    (DATA_WIDTH),
+                .SPI_NUM       (SPI_NUM)
             ) u_spi (
                 .clk           (clk),
                 .rst_n         (rst_n == `RESET_DISABLE ? 1'b1 : 1'b0),

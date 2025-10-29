@@ -57,7 +57,7 @@ module chip_top_test;
         .GPIO_NUM(GPIO_NUM),
         .I2C_NUM(1),
         .UART_NUM(1),
-        .SPI_NUM(1)
+        .SPI_NUM(2)
     ) u_chip_top (
         .clk         (clk),
         .rst_n       (rst_n),

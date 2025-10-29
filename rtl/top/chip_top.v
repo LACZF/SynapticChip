@@ -43,7 +43,7 @@ module chip_top #(
     inout  wire [GPIO_NUM-1:0]          gpio_io,
 
     /********** SPI **********/
-    output wire                         spi_cs_n,
+    output wire [SPI_NUM-1:0]           spi_cs_n,
     output wire                         spi_clk,
     output wire                         spi_mosi,
     input  wire                         spi_miso,
@@ -233,6 +233,8 @@ module chip_top #(
     );
 
     io_top #(
+        .ADDR_WIDTH             (ADDR_WIDTH),
+        .DATA_WIDTH             (DATA_WIDTH),
         .SLAVES                 (SLAVES),
         .START_SLAVE            (slave_io_start_index),
         .IMPLEMENT_UART         (IMPLEMENT_UART),
@@ -240,6 +242,7 @@ module chip_top #(
         .IMPLEMENT_SPI          (IMPLEMENT_SPI),
         .IMPLEMENT_TIMER        (IMPLEMENT_TIMER),
         .IMPLEMENT_FLASH        (IMPLEMENT_FLASH),
+        .SPI_NUM                (SPI_NUM),
         .GPIO_IN_CH             (GPIO_NUM),
         .GPIO_OUT_CH            (GPIO_NUM),
         .GPIO_IO_CH             (GPIO_NUM)
