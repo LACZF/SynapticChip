@@ -406,7 +406,7 @@ index 1dd06f5..0bc3e41 100644
      divider u_divider(
          .clk(clk),
 diff --git a/rtl/core/idu.sv b/rtl/core/idu.sv
-index 2390993..3a163f0 100644
+index 2390993..0e10e1c 100644
 --- a/rtl/core/idu.sv
 +++ b/rtl/core/idu.sv
 @@ -1,17 +1,17 @@
@@ -439,7 +439,15 @@ index 2390993..3a163f0 100644
   */
  
  `include "defines.sv"
-@@ -106,6 +106,10 @@ module idu(
+@@ -86,6 +86,7 @@ module idu(
+     wire opcode_0110011 = (opcode == 7'b0110011);
+     wire opcode_0001111 = (opcode == 7'b0001111);
+     wire opcode_1110011 = (opcode == 7'b1110011);
++    wire opcode_0011011 = (opcode == 7'b0011011); // RV64I ADDIW指令的opcode
+ 
+     // 指令funct3域的取值
+     wire funct3_000 = (funct3 == 3'b000);
+@@ -106,6 +107,10 @@ module idu(
      wire type_i_imm_000000000000 = (type_i_imm_11_0 == 12'b000000000000);
      wire type_i_imm_000000000001 = (type_i_imm_11_0 == 12'b000000000001);
  
@@ -450,7 +458,7 @@ index 2390993..3a163f0 100644
      // 译码出具体指令
      wire inst_lui = opcode_0110111;
      wire inst_auipc = opcode_0010111;
-@@ -125,6 +129,11 @@ module idu(
+@@ -125,6 +130,11 @@ module idu(
      wire inst_sb = opcode_0100011 & funct3_000;
      wire inst_sh = opcode_0100011 & funct3_001;
      wire inst_sw = opcode_0100011 & funct3_010;
@@ -462,7 +470,24 @@ index 2390993..3a163f0 100644
      wire inst_addi = opcode_0010011 & funct3_000;
      wire inst_slti = opcode_0010011 & funct3_010;
      wire inst_sltiu = opcode_0010011 & funct3_011;
-@@ -230,6 +239,10 @@ module idu(
+@@ -134,6 +144,7 @@ module idu(
+     wire inst_slli = opcode_0010011 & funct3_001 & funct7_0000000;
+     wire inst_srli = opcode_0010011 & funct3_101 & funct7_0000000;
+     wire inst_srai = opcode_0010011 & funct3_101 & funct7_0100000;
++    wire inst_addiw = opcode_0011011 & funct3_000; // RV64I ADDIW指令
+     wire inst_add = opcode_0110011 & funct3_000 & funct7_0000000;
+     wire inst_sub = opcode_0110011 & funct3_000 & funct7_0100000;
+     wire inst_sll = opcode_0110011 & funct3_001 & funct7_0000000;
+@@ -177,7 +188,7 @@ module idu(
+     assign dec_alu_info_bus[`DECINFO_GRP_BUS] = `DECINFO_GRP_ALU;
+     assign dec_alu_info_bus[`DECINFO_ALU_LUI] = inst_lui;
+     assign dec_alu_info_bus[`DECINFO_ALU_AUIPC] = inst_auipc;
+-    assign dec_alu_info_bus[`DECINFO_ALU_ADD] = inst_add | inst_addi;
++    assign dec_alu_info_bus[`DECINFO_ALU_ADD] = inst_add | inst_addi | inst_addiw;
+     assign dec_alu_info_bus[`DECINFO_ALU_SUB] = inst_sub;
+     assign dec_alu_info_bus[`DECINFO_ALU_SLL] = inst_sll | inst_slli;
+     assign dec_alu_info_bus[`DECINFO_ALU_SLT] = inst_slt | inst_slti;
+@@ -230,6 +241,10 @@ module idu(
      assign dec_mem_info_bus[`DECINFO_MEM_SB] = inst_sb;
      assign dec_mem_info_bus[`DECINFO_MEM_SH] = inst_sh;
      assign dec_mem_info_bus[`DECINFO_MEM_SW] = inst_sw;
@@ -473,16 +498,25 @@ index 2390993..3a163f0 100644
  
      wire[`DECINFO_SYS_BUS_WIDTH-1:0] dec_sys_info_bus;
      assign dec_sys_info_bus[`DECINFO_GRP_BUS] = `DECINFO_GRP_SYS;
-@@ -253,7 +266,7 @@ module idu(
+@@ -253,7 +268,7 @@ module idu(
      wire inst_sel_j_imm = inst_jal;
      wire inst_sel_b_imm = inst_type_branch;
      wire inst_sel_s_imm = inst_type_store;
 -    wire inst_sel_i_imm = inst_addi | inst_slti | inst_sltiu | inst_xori | inst_ori | inst_andi | inst_type_load | inst_jalr;
-+    wire inst_sel_i_imm = inst_addi | inst_slti | inst_sltiu | inst_xori | inst_ori | inst_andi | inst_type_load | inst_jalr | inst_lwu | inst_ld;
++    wire inst_sel_i_imm = inst_addi | inst_slti | inst_sltiu | inst_xori | inst_ori | inst_andi | inst_type_load | inst_jalr | inst_lwu | inst_ld | inst_addiw;
      wire inst_sel_csr_imm = inst_csrrwi | inst_csrrsi | inst_csrrci;
      wire inst_sel_shift_imm = inst_slli | inst_srli | inst_srai;
  
-@@ -313,4 +326,4 @@ module idu(
+@@ -265,7 +280,7 @@ module idu(
+                        ({32{inst_sel_csr_imm}} & inst_csr_type_imm) |
+                        ({32{inst_sel_shift_imm}} & inst_shift_type_imm);
+ 
+-    wire op_alu = inst_lui | inst_auipc | opcode_0010011 | (opcode_0110011 & (~inst_type_muldiv));
++    wire op_alu = inst_lui | inst_auipc | opcode_0010011 | opcode_0011011 | (opcode_0110011 & (~inst_type_muldiv));
+     wire op_bjp = inst_jal | inst_jalr | inst_type_branch;
+     wire op_muldiv = inst_type_muldiv;
+     wire op_csr = inst_csrrw | inst_csrrwi | inst_csrrs | inst_csrrsi | inst_csrrc | inst_csrrci;
+@@ -313,4 +328,4 @@ module idu(
      //assign illegal_inst_o = ~(|dec_info_bus_o);
      assign illegal_inst_o = 1'b0;
  
@@ -490,7 +524,7 @@ index 2390993..3a163f0 100644
 +endmodule
 \ No newline at end of file
 diff --git a/rtl/core/tracer.sv b/rtl/core/tracer.sv
-index 2a51e6c..471eb80 100644
+index 2a51e6c..a7711d6 100644
 --- a/rtl/core/tracer.sv
 +++ b/rtl/core/tracer.sv
 @@ -1,17 +1,17 @@
@@ -523,7 +557,48 @@ index 2a51e6c..471eb80 100644
   */
  
  module tracer(
-@@ -110,7 +110,7 @@ module tracer(
+@@ -65,6 +65,12 @@ module tracer(
+     parameter logic [31:0] INSN_SRLI    = { 7'b0000000, 10'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+     parameter logic [31:0] INSN_SRAI    = { 7'b0100000, 10'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+ 
++    // RV64I OPIMM-32
++    parameter logic [31:0] INSN_ADDIW   = { 17'h?,             3'b000, 5'h?, 7'h1b };
++    parameter logic [31:0] INSN_SLLIW   = { 7'b0000000, 10'h?, 3'b001, 5'h?, 7'h1b };
++    parameter logic [31:0] INSN_SRLIW   = { 7'b0000000, 10'h?, 3'b101, 5'h?, 7'h1b };
++    parameter logic [31:0] INSN_SRAIW   = { 7'b0100000, 10'h?, 3'b101, 5'h?, 7'h1b };
++
+     // OP
+     parameter logic [31:0] INSN_ADD     = { 7'b0000000, 10'h?, 3'b000, 5'h?, {OPCODE_OP} };
+     parameter logic [31:0] INSN_SUB     = { 7'b0100000, 10'h?, 3'b000, 5'h?, {OPCODE_OP} };
+@@ -77,6 +83,13 @@ module tracer(
+     parameter logic [31:0] INSN_OR      = { 7'b0000000, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+     parameter logic [31:0] INSN_AND     = { 7'b0000000, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
+ 
++    // RV64I OP-32
++    parameter logic [31:0] INSN_ADDW    = { 7'b0000000, 10'h?, 3'b000, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SUBW    = { 7'b0100000, 10'h?, 3'b000, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SLLW    = { 7'b0000000, 10'h?, 3'b001, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SRLW    = { 7'b0000000, 10'h?, 3'b101, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SRAW    = { 7'b0100000, 10'h?, 3'b101, 5'h?, 7'h3b };
++
+     // SYSTEM
+     parameter logic [31:0] INSN_CSRRW   = { 17'h?,             3'b001, 5'h?, {OPCODE_SYSTEM} };
+     parameter logic [31:0] INSN_CSRRS   = { 17'h?,             3'b010, 5'h?, {OPCODE_SYSTEM} };
+@@ -100,6 +113,13 @@ module tracer(
+     parameter logic [31:0] INSN_REM     = { 7'b0000001, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+     parameter logic [31:0] INSN_REMU    = { 7'b0000001, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
+ 
++    // RV64M
++    parameter logic [31:0] INSN_MULW    = { 7'b0000001, 10'h?, 3'b000, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_DIVW    = { 7'b0000001, 10'h?, 3'b100, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_DIVUW   = { 7'b0000001, 10'h?, 3'b101, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_REMW    = { 7'b0000001, 10'h?, 3'b110, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_REMUW   = { 7'b0000001, 10'h?, 3'b111, 5'h?, 7'h3b };
++
+     // LOAD & STORE
+     parameter logic [31:0] INSN_LOAD    = {25'h?,                            {OPCODE_LOAD } };
+     parameter logic [31:0] INSN_STORE   = {25'h?,                            {OPCODE_STORE} };
+@@ -110,7 +130,7 @@ module tracer(
  
      // Get a CSR name for a CSR address.
      function automatic string get_csr_name(input logic [11:0] csr_addr);
@@ -532,7 +607,7 @@ index 2a51e6c..471eb80 100644
              12'd0: return "ustatus";
              12'd4: return "uie";
              12'd5: return "utvec";
-@@ -370,7 +370,7 @@ module tracer(
+@@ -370,7 +390,7 @@ module tracer(
      endfunction
  
      function automatic void decode_j_insn(input string mnemonic);
@@ -541,7 +616,7 @@ index 2a51e6c..471eb80 100644
              {{12{inst_i[31]}}, inst_i[19:12], inst_i[20], inst_i[30:21], 1'b0});
      endfunction
  
-@@ -499,10 +499,11 @@ module tracer(
+@@ -499,10 +519,11 @@ module tracer(
      endfunction
  
  
@@ -555,9 +630,49 @@ index 2a51e6c..471eb80 100644
              INSN_LUI:        decode_u_insn("lui");
              INSN_AUIPC:      decode_u_insn("auipc");
              INSN_JAL:        decode_j_insn("jal");
-@@ -576,8 +577,8 @@ module tracer(
+@@ -530,6 +551,11 @@ module tracer(
+             INSN_SLLI:       decode_i_shift_insn("slli");
+             INSN_SRLI:       decode_i_shift_insn("srli");
+             INSN_SRAI:       decode_i_shift_insn("srai");
++            // RV64I OPIMM-32
++            INSN_ADDIW:      decode_i_insn("addiw");
++            INSN_SLLIW:      decode_i_shift_insn("slliw");
++            INSN_SRLIW:      decode_i_shift_insn("srliw");
++            INSN_SRAIW:      decode_i_shift_insn("sraiw");
+             // OP
+             INSN_ADD:        decode_r_insn("add");
+             INSN_SUB:        decode_r_insn("sub");
+@@ -541,6 +567,12 @@ module tracer(
+             INSN_SRA:        decode_r_insn("sra");
+             INSN_OR:         decode_r_insn("or");
+             INSN_AND:        decode_r_insn("and");
++            // RV64I OP-32
++            INSN_ADDW:       decode_r_insn("addw");
++            INSN_SUBW:       decode_r_insn("subw");
++            INSN_SLLW:       decode_r_insn("sllw");
++            INSN_SRLW:       decode_r_insn("srlw");
++            INSN_SRAW:       decode_r_insn("sraw");
+             // SYSTEM (CSR manipulation)
+             INSN_CSRRW:      decode_csr_insn("csrrw");
+             INSN_CSRRS:      decode_csr_insn("csrrs");
+@@ -563,6 +595,12 @@ module tracer(
+             INSN_DIVU:       decode_r_insn("divu");
+             INSN_REM:        decode_r_insn("rem");
+             INSN_REMU:       decode_r_insn("remu");
++            // RV64M
++            INSN_MULW:       decode_r_insn("mulw");
++            INSN_DIVW:       decode_r_insn("divw");
++            INSN_DIVUW:      decode_r_insn("divuw");
++            INSN_REMW:       decode_r_insn("remw");
++            INSN_REMUW:      decode_r_insn("remuw");
+             // LOAD & STORE
+             INSN_LOAD:       decode_load_insn();
+             INSN_STORE:      decode_store_insn();
+@@ -574,10 +612,9 @@ module tracer(
+     end
  
  
+-
      initial begin
 -        string file_name_base = "trace_core";
 -        $sformat(file_name, "%s.log", file_name_base);
@@ -566,7 +681,7 @@ index 2a51e6c..471eb80 100644
  
          $display("Writing execution trace to %s", file_name);
          file_handle = $fopen(file_name, "w");
-@@ -610,4 +611,4 @@ module tracer(
+@@ -610,4 +647,4 @@ module tracer(
          end
      end
  
