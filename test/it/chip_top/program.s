@@ -14,6 +14,31 @@
 .equ UART_MSR,       UART_BASE + 0x1c  # Modem状态寄存器
 .equ UART_SCR,       UART_BASE + 0x20  # Scratch寄存器
 
+# GPIO模块地址定义
+.equ GPIO_BASE,      0x03000000
+.equ GPIO_IN_DATA,   GPIO_BASE + 0x00  # 输入数据寄存器
+.equ GPIO_OUT_DATA,  GPIO_BASE + 0x04  # 输出数据寄存器
+.equ GPIO_IO_DATA,   GPIO_BASE + 0x08  # IO数据寄存器
+.equ GPIO_IO_DIR,    GPIO_BASE + 0x0C  # IO方向寄存器
+
+# Timer模块地址定义
+.equ TIMER_BASE,     0x04000000
+.equ TIMER_CTRL,     TIMER_BASE + 0x00  # 控制寄存器
+.equ TIMER_INTR,     TIMER_BASE + 0x04  # 中断寄存器
+.equ TIMER_EXPR,     TIMER_BASE + 0x08  # 最大值寄存器
+.equ TIMER_COUNTER,  TIMER_BASE + 0x0C  # 计数器寄存器
+
+# SPI模块地址定义
+.equ SPI_BASE,       0x07000000
+.equ SPI_CONTROL,    SPI_BASE + 0x00  # 控制寄存器
+.equ SPI_STATUS,     SPI_BASE + 0x04  # 状态寄存器
+.equ SPI_DATA,       SPI_BASE + 0x08  # 数据寄存器
+.equ SPI_ADDR,       SPI_BASE + 0x0C  # 地址寄存器
+.equ SPI_CMD,        SPI_BASE + 0x10  # 命令寄存器
+.equ SPI_CLK_DIV,    SPI_BASE + 0x14  # 时钟分频寄存器
+.equ SPI_CONFIG,     SPI_BASE + 0x18  # 配置寄存器
+.equ SPI_CS_SEL,     SPI_BASE + 0x1C  # 片选寄存器
+
 # PE模块地址定义
 .equ PE_TOP_BASE,    0x10000000
 .equ PE_CTRL_ADDR,   PE_TOP_BASE + 0x00  # 控制寄存器
@@ -113,6 +138,24 @@ process_command:
     sw s1, 4(sp)
 
     mv s0, a0             # 保存接收到的字节
+
+    # 检查是否为GPIO模块相关命令
+    li s1, 'g'
+    beq s0, s1, gpio_test_command
+    li s1, 'G'
+    beq s0, s1, gpio_test_command
+
+    # 检查是否为SPI模块相关命令
+    li s1, 's'
+    beq s0, s1, spi_test_command
+    li s1, 'S'
+    beq s0, s1, spi_test_command
+
+    # 检查是否为Timer模块相关命令
+    li s1, 't'
+    beq s0, s1, timer_test_command
+    li s1, 'T'
+    beq s0, s1, timer_test_command
 
     # 检查是否为PE模块相关命令
     li s1, 'p'
@@ -980,6 +1023,762 @@ delay_loop:
 
     lw ra, 0(sp)
     addi sp, sp, 4
+    ret
+
+# GPIO模块测试命令处理
+gpio_test_command:
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    # 执行GPIO模块测试
+    call test_gpio_module
+
+    j process_end
+
+# GPIO模块测试函数
+test_gpio_module:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw s0, 8(sp)
+    sw s1, 4(sp)
+    sw s2, 0(sp)
+
+    # 打印测试标题
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    call print_newline
+
+    # 1. 测试GPIO输出配置
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'F'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 设置GPIO输出方向 (假设测试第0位)
+    li s0, GPIO_IO_DIR
+    li s1, 0x00000001  # 设置第0位为输出
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 2. 测试GPIO输出数据
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 设置GPIO输出数据
+    li s0, GPIO_IO_DATA
+    li s1, 0x00000001  # 设置第0位为高电平
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 3. 读取GPIO输入数据
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 读取GPIO输入数据
+    li s0, GPIO_IN_DATA
+    lw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 4. 测试完成
+    li a0, '\n'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    call print_newline
+
+    lw ra, 12(sp)
+    lw s0, 8(sp)
+    lw s1, 4(sp)
+    lw s2, 0(sp)
+    addi sp, sp, 16
+    ret
+
+# SPI模块测试命令处理
+spi_test_command:
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    # 执行SPI模块测试
+    call test_spi_module
+
+    j process_end
+
+# SPI模块测试函数
+test_spi_module:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw s0, 8(sp)
+    sw s1, 4(sp)
+    sw s2, 0(sp)
+
+    # 打印测试标题
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    call print_newline
+
+    # 1. 配置SPI时钟分频
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'K'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'V'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 设置SPI时钟分频值
+    li s0, SPI_CLK_DIV
+    li s1, 0x00000008  # 假设分频值为8
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 2. 配置SPI控制寄存器
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 设置SPI控制寄存器 (使能SPI)
+    li s0, SPI_CONTROL
+    li s1, 0x00000001  # 使能SPI
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 3. 配置SPI片选
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 设置SPI片选
+    li s0, SPI_CS_SEL
+    li s1, 0x00000001  # 选择第一个片选
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 4. 写入SPI数据测试
+    li a0, 'W'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 写入测试数据
+    li s0, SPI_DATA
+    li s1, 0x12345678  # 测试数据
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 5. 读取SPI状态
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 读取SPI状态寄存器
+    li s0, SPI_STATUS
+    lw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 6. 测试完成
+    li a0, '\n'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    call print_newline
+
+    lw ra, 12(sp)
+    lw s0, 8(sp)
+    lw s1, 4(sp)
+    lw s2, 0(sp)
+    addi sp, sp, 16
+    ret
+
+# Timer模块测试命令处理
+timer_test_command:
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    # 执行Timer模块测试
+    call test_timer_module
+
+    j process_end
+
+# Timer模块测试函数
+test_timer_module:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw s0, 8(sp)
+    sw s1, 4(sp)
+    sw s2, 0(sp)
+
+    # 打印测试标题
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    call print_newline
+
+    # 1. 复位Timer
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 复位Timer (清除控制寄存器)
+    li s0, TIMER_CTRL
+    li s1, 0x00000000  # 清除控制寄存器
+    sw s1, 0(s0)
+
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    call print_newline
+
+    # 2. 设置Timer最大值
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'X'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 设置Timer最大值
+    li s0, TIMER_EXPR
+    li s1, 0x0000FFFF  # 设置最大值
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 3. 启动Timer
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 启动Timer (设置控制寄存器)
+    li s0, TIMER_CTRL
+    li s1, 0x00000003  # 启动Timer + 周期模式
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 4. 读取Timer计数器
+    call delay
+    call delay
+
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 读取Timer计数器
+    li s0, TIMER_COUNTER
+    lw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 5. 再次读取Timer计数器 (验证计数增加)
+    call delay
+    call delay
+
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'W'
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 读取Timer计数器
+    lw s2, 0(s0)
+
+    mv a0, s2
+    call print_hex
+    call print_newline
+
+    # 6. 验证计数是否增加
+    bgt s2, s1, timer_count_ok
+
+    # 计数失败
+    li a0, 'F'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    call print_newline
+    j timer_test_end
+
+    timer_count_ok:
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'K'
+    call uart_write_byte
+    call print_newline
+
+    timer_test_end:
+
+    # 7. 停止Timer
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 停止Timer
+    li s0, TIMER_CTRL
+    li s1, 0x00000000  # 停止Timer
+    sw s1, 0(s0)
+
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    call print_newline
+
+    # 8. 测试完成
+    li a0, '\n'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    call print_newline
+
+    lw ra, 12(sp)
+    lw s0, 8(sp)
+    lw s1, 4(sp)
+    lw s2, 0(sp)
+    addi sp, sp, 16
     ret
 
 .section .data
