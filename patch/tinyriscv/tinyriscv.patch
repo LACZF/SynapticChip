@@ -60,7 +60,7 @@ index 70e62e8..f81cbf4 100644
 +`define CSR_SCONTEXT    12'h7AA
 \ No newline at end of file
 diff --git a/rtl/core/exu.sv b/rtl/core/exu.sv
-index 355eaeb..b6fa22a 100644
+index 355eaeb..9ddc48f 100644
 --- a/rtl/core/exu.sv
 +++ b/rtl/core/exu.sv
 @@ -1,17 +1,17 @@
@@ -93,7 +93,16 @@ index 355eaeb..b6fa22a 100644
   */
  
  `include "defines.sv"
-@@ -142,6 +142,10 @@ module exu #(
+@@ -62,6 +62,8 @@ module exu #(
+ 
+     //
+     output wire inst_valid_o,               // 指令有效
++    output wire[31:0] pc_o,
++    output wire[31:0] inst_o,
+     output wire inst_executed_o,            // 指令已经执行完毕
+ 
+     // from idu_exu
+@@ -142,6 +144,10 @@ module exu #(
      wire mem_op_sb_o;
      wire mem_op_sh_o;
      wire mem_op_sw_o;
@@ -104,7 +113,7 @@ index 355eaeb..b6fa22a 100644
      // dispatch to SYS
      wire sys_op_nop_o;
      wire sys_op_mret_o;
-@@ -221,6 +225,9 @@ module exu #(
+@@ -221,6 +227,9 @@ module exu #(
          .mem_op_sb_o(mem_op_sb_o),
          .mem_op_sh_o(mem_op_sh_o),
          .mem_op_sw_o(mem_op_sw_o),
@@ -114,7 +123,7 @@ index 355eaeb..b6fa22a 100644
          // dispatch to SYS
          .sys_op_nop_o(sys_op_nop_o),
          .sys_op_mret_o(sys_op_mret_o),
-@@ -310,6 +317,9 @@ module exu #(
+@@ -310,6 +319,9 @@ module exu #(
          .mem_op_sb_i(mem_op_sb_o),
          .mem_op_sh_i(mem_op_sh_o),
          .mem_op_sw_i(mem_op_sw_o),
@@ -124,7 +133,16 @@ index 355eaeb..b6fa22a 100644
          .mem_access_misaligned_o(mem_access_misaligned_o),
          .mem_stall_o(mem_stall_o),
          .mem_addr_o(mem_addr_o),
-@@ -425,4 +435,4 @@ module exu #(
+@@ -407,6 +419,8 @@ module exu #(
+     assign mem_wdata_o = mem_wdata;
+ 
+     assign inst_valid_o = hold_flag_o? 1'b0: inst_valid_i;
++    assign pc_o         = dec_pc_i;
++    assign inst_o       = inst_i;
+ 
+     reg inst_executed_q;
+ 
+@@ -425,4 +439,4 @@ module exu #(
  
      assign inst_executed_o = inst_executed_q;
  
@@ -405,6 +423,74 @@ index 1dd06f5..0bc3e41 100644
  
      divider u_divider(
          .clk(clk),
+diff --git a/rtl/core/gpr_reg.sv b/rtl/core/gpr_reg.sv
+index 79e0390..b0f486e 100644
+--- a/rtl/core/gpr_reg.sv
++++ b/rtl/core/gpr_reg.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -19,18 +19,24 @@
+ // 通用寄存器模块
+ module gpr_reg(
+ 
+-    input wire clk,
+-    input wire rst_n,
++    input  wire clk,
++    input  wire rst_n,
+ 
+-    input wire we_i,                        // 写寄存器使能
+-    input wire[4:0] waddr_i,                // 写寄存器地址
+-    input wire[31:0] wdata_i,               // 写寄存器数据
++    input  wire we_i,                          // 写寄存器使能
++    input  wire        ex_valid_i,
++    input  wire[31:0]  ex_pc_i,
++    input  wire[31:0]  ex_inst_i,
++    input  wire[4:0]   waddr_i,                 // 写寄存器地址
++    input  wire[31:0]  wdata_i,                 // 写寄存器数据
+ 
+-    input wire[4:0] raddr1_i,               // 读寄存器1地址
+-    output wire[31:0] rdata1_o,             // 读寄存器1数据
++    input  wire        id_valid_i,
++    input  wire[31:0]  id_pc_i,
++    input  wire[31:0]  id_inst_i,
++    input  wire[4:0]   raddr1_i,               // 读寄存器1地址
++    output wire[31:0]  rdata1_o,               // 读寄存器1数据
+ 
+-    input wire[4:0] raddr2_i,               // 读寄存器2地址
+-    output wire[31:0] rdata2_o              // 读寄存器2数据
++    input  wire[4:0]   raddr2_i,               // 读寄存器2地址
++    output wire[31:0]  rdata2_o                // 读寄存器2数据
+ 
+     );
+ 
 diff --git a/rtl/core/idu.sv b/rtl/core/idu.sv
 index 2390993..0e10e1c 100644
 --- a/rtl/core/idu.sv
@@ -523,6 +609,73 @@ index 2390993..0e10e1c 100644
 -endmodule
 +endmodule
 \ No newline at end of file
+diff --git a/rtl/core/tinyriscv_core.sv b/rtl/core/tinyriscv_core.sv
+index ff7eac3..35f908f 100644
+--- a/rtl/core/tinyriscv_core.sv
++++ b/rtl/core/tinyriscv_core.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -112,6 +112,8 @@ module tinyriscv_core #(
+     wire ex_csr_we_o;
+     wire[31:0] ex_csr_waddr_o;
+     wire[31:0] ex_csr_raddr_o;
++    wire[31:0] ex_pc_o;
++    wire[31:0] ex_inst_o;
+     wire ex_inst_ecall_o;
+     wire ex_inst_ebreak_o;
+     wire ex_inst_mret_o;
+@@ -186,8 +188,14 @@ module tinyriscv_core #(
+         .clk(clk),
+         .rst_n(rst_n),
+         .we_i(ex_reg_we_o),
++        .ex_valid_i(ex_inst_valid_o),
++        .ex_pc_i(ex_pc_o),
++        .ex_inst_i(ex_inst_o),
+         .waddr_i(ex_reg_waddr_o),
+         .wdata_i(ex_reg_wdata_o),
++        .id_valid_i(id_inst_valid_o),
++        .id_pc_i(id_dec_pc_o),
++        .id_inst_i(id_inst_o),
+         .raddr1_i(id_rs1_raddr_o),
+         .rdata1_o(regs_rdata1_o),
+         .raddr2_i(id_rs2_raddr_o),
+@@ -313,6 +321,8 @@ module tinyriscv_core #(
+         .csr_waddr_o(ex_csr_waddr_o),
+         .inst_valid_o(ex_inst_valid_o),
+         .inst_valid_i(ie_inst_valid_o),
++        .pc_o(ex_pc_o),
++        .inst_o(ex_inst_o),
+         .inst_executed_o(ex_inst_executed_o),
+         .inst_i(ie_inst_o),
+         .dec_info_bus_i(ie_dec_info_bus_o),
 diff --git a/rtl/core/tracer.sv b/rtl/core/tracer.sv
 index 2a51e6c..a7711d6 100644
 --- a/rtl/core/tracer.sv
