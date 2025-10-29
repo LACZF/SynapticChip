@@ -3,12 +3,20 @@
 
 `include "defines.sv"
 `include "jtag_def.sv"
+`include "pe_addr.v"
 
 module chip_top #(
     parameter TRACE_ENABLE              = 0,
     parameter CPU_NUM                   = 1,
     parameter ROM_DEPTH                 = 1024,
     parameter RAM_DEPTH                 = 1024,
+    parameter ADDR_WIDTH                = 32,
+    parameter DATA_WIDTH                = 32,
+    parameter NUM_PES                   = 4,
+    parameter INST_WIDTH                = 32,
+    parameter PE_ID_WIDTH               = 4,
+    parameter PE_ARRAY_ROWS             = 2,
+    parameter PE_ARRAY_COLS             = 2,
     parameter IMPLEMENT_ROM             = 1,
     parameter IMPLEMENT_JTAG            = 0,
     parameter IMPLEMENT_UART            = 1,
@@ -56,6 +64,8 @@ module chip_top #(
     localparam int slave_rom_index          = 0;
     localparam int slave_ram_index          = 1;
     localparam int slave_jtag_index         = 2;
+    localparam int slave_pe_top_index       = 3;
+    localparam int slave_io_start_index     = slave_pe_top_index + 1;
 
     wire           master_req       [MASTERS];
     wire           master_gnt       [MASTERS];
@@ -179,6 +189,10 @@ module chip_top #(
     assign slave_addr_mask[slave_ram_index] = `RAM_ADDR_MASK;
     assign slave_addr_base[slave_ram_index] = `RAM_ADDR_BASE;
 
+    // PE_TOP地址映射
+    assign slave_addr_mask[slave_pe_top_index] = 32'hFFFF0000; // PE_TOP地址掩码
+    assign slave_addr_base[slave_pe_top_index] = 32'h10000000; // PE_TOP基地址
+
     // 数据存储器
     ram #(
         .DP(RAM_DEPTH)
@@ -195,9 +209,30 @@ module chip_top #(
         .data_o     (slave_rdata[slave_ram_index])
     );
 
+    // PE_TOP实例化（已修改为支持OBI接口）
+    pe_top #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .NUM_PES(NUM_PES),
+        .INST_WIDTH(INST_WIDTH),
+        .PE_ID_WIDTH(PE_ID_WIDTH),
+        .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
+        .PE_ARRAY_COLS(PE_ARRAY_COLS)
+    ) u_pe_top (
+        .clk        (clk),
+        .reset      (~ndmreset_n),
+        .req_i      (slave_req[slave_pe_top_index]),
+        .we_i       (slave_we[slave_pe_top_index]),
+        .addr_i     (slave_addr[slave_pe_top_index]),
+        .wr_data_i  (slave_wdata[slave_pe_top_index]),
+        .rd_data_o  (slave_rdata[slave_pe_top_index]),
+        .gnt_o      (slave_gnt[slave_pe_top_index]),
+        .rvalid_o   (slave_rvalid[slave_pe_top_index])
+    );
+
     io_top #(
         .SLAVES                 (SLAVES),
-        .START_SLAVE            (slave_jtag_index + 1),
+        .START_SLAVE            (slave_io_start_index),
         .IMPLEMENT_UART         (IMPLEMENT_UART),
         .IMPLEMENT_GPIO         (IMPLEMENT_GPIO),
         .IMPLEMENT_SPI          (IMPLEMENT_SPI),

@@ -31,11 +31,18 @@ module chip_top_test;
 
     /********** 实例化chip_top **********/
     chip_top #(
-        .TRACE_ENABLE(1),
-        .CPU_NUM(CPU_NUM),
+        .TRACE_ENABLE(0),
+        .CPU_NUM(1),
         .ROM_DEPTH(8192),
         .RAM_DEPTH(8192),
-        .IMPLEMENT_ROM(0),
+        .ADDR_WIDTH(32),
+        .DATA_WIDTH(32),
+        .NUM_PES(4),
+        .INST_WIDTH(32),
+        .PE_ID_WIDTH(4),
+        .PE_ARRAY_ROWS(2),
+        .PE_ARRAY_COLS(2),
+        .IMPLEMENT_ROM(1),
         .IMPLEMENT_JTAG(0),
         .IMPLEMENT_UART(0),
         .IMPLEMENT_GPIO(0),

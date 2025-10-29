@@ -10,21 +10,20 @@ module pe_top #(
     parameter NUM_PES = 4,
     parameter INST_WIDTH = 32,
     parameter PE_ID_WIDTH = 4,
-    parameter NUM_RINGS = 2,
     parameter PE_ARRAY_ROWS = 2,
     parameter PE_ARRAY_COLS = 2
 ) (
     input                              clk,
     input                              reset,
 
-    // Bus interface
-    input                              cs_n_i,
-    input                              as_n_i,
-    input                              rw_i,
+    // OBI Bus interface
+    input                              req_i,
+    input                              we_i,
     input  [ADDR_WIDTH-1:0]            addr_i,
     input  [DATA_WIDTH-1:0]            wr_data_i,
     output [DATA_WIDTH-1:0]            rd_data_o,
-    output                             rdy_n_o
+    output                             gnt_o,
+    output                             rvalid_o
 );
 
     // Internal control signals (previously between pe_ctrl and pe_top)
@@ -53,10 +52,10 @@ module pe_top #(
 
     // Register selection
     wire [7:0]                         reg_offset = addr_i[7:0];
-    wire                               cs_valid = ~cs_n_i & ~as_n_i;
+    wire                               cs_valid = req_i; // OBI req_i replaces cs_n_i & ~as_n_i
 
     // Read data mux
-    assign rd_data_o = (cs_valid && rw_i == `READ) ?
+    assign rd_data_o = (cs_valid && !we_i) ?
                     (reg_offset == `PE_CTRL_ADDR ? {{(DATA_WIDTH-2){1'b0}}, pe_enable_reg, pe_reset_reg} :
                      reg_offset == `PE_STATUS_ADDR ? pe_status[DATA_WIDTH-1:0] :
                      reg_offset == `PE_INST_ADDR ? pe_inst_reg[DATA_WIDTH-1:0] :
@@ -78,7 +77,7 @@ module pe_top #(
             pe_inst_valid_reg <= 1'b0;
             route_cfg_valid_reg <= 1'b0;
 
-            if (cs_valid && rw_i == `WRITE) begin
+            if (cs_valid && we_i) begin
                 case (reg_offset)
                     `PE_CTRL_ADDR: begin
                         pe_enable_reg <= wr_data_i[0+:NUM_PES];
@@ -97,8 +96,20 @@ module pe_top #(
         end
     end
 
-    // Ready signal
-    assign rdy_n_o = cs_valid ? `ENABLE_N : `DISABLE_N;
+    // OBI protocol signals
+    assign gnt_o = req_i; // Always grant immediately
+
+    // rvalid_o generation
+    reg rvalid_d;
+    always @(posedge clk or negedge reset) begin
+        if (reset == 0) begin
+            rvalid_d <= 1'b0;
+        end else begin
+            rvalid_d <= req_i;
+        end
+    end
+
+    assign rvalid_o = rvalid_d;
 
     // Output assignments (internal connections)
     assign pe_enable       = pe_enable_reg;

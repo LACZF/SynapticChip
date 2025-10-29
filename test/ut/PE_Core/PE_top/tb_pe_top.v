@@ -31,7 +31,6 @@ module tb_pe_top;
 		.NUM_PES(4),
 		.INST_WIDTH(32),
 		.PE_ID_WIDTH(4),
-		.NUM_RINGS(2),
 		.PE_ARRAY_ROWS(2),
 		.PE_ARRAY_COLS(2)
 	) pe (
