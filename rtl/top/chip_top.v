@@ -66,14 +66,14 @@ module chip_top #(
     localparam int SLAVES                   = 18; // Number of slave ports
 
     // masters
-    localparam int master_jtag_index        = CPU_NUM * 2;
+    localparam int MASTER_JTAG_INDEX        = CPU_NUM * 2;
 
     // slaves
-    localparam int slave_rom_index          = 0;
-    localparam int slave_ram_index          = 1;
-    localparam int slave_jtag_index         = 2;
-    localparam int slave_pe_top_index       = 3;
-    localparam int slave_io_start_index     = slave_pe_top_index + 1;
+    localparam int SLAVE_ROM_INDEX          = 0;
+    localparam int SLAVE_RAM_INDEX          = 1;
+    localparam int SLAVE_JTAG_INDEX         = 2;
+    localparam int SLAVE_PE_TOP_INDEX       = 3;
+    localparam int SLAVE_IO_START_INDEX     = SLAVE_PE_TOP_INDEX + 1;
 
     wire           master_req       [MASTERS];
     wire           master_gnt       [MASTERS];
@@ -158,48 +158,46 @@ module chip_top #(
         end
     endgenerate
 
-    assign slave_addr_mask[slave_rom_index] = `ROM_ADDR_MASK;
-    assign slave_addr_base[slave_rom_index] = `ROM_ADDR_BASE;
+    assign slave_addr_mask[SLAVE_ROM_INDEX] = `ROM_ADDR_MASK;
+    assign slave_addr_base[SLAVE_ROM_INDEX] = `ROM_ADDR_BASE;
     // 指令存储器
     rom #(
         .DP(ROM_DEPTH)
     ) u_rom (
         .clk_i      (clk),
         .rst_ni     (ndmreset_n),
-        .req_i      (slave_req[slave_rom_index]),
-        .addr_i     (slave_addr[slave_rom_index]),
-        .data_i     (slave_wdata[slave_rom_index]),
-        .be_i       (slave_be[slave_rom_index]),
-        .we_i       (slave_we[slave_rom_index]),
-        .gnt_o      (slave_gnt[slave_rom_index]),
-        .rvalid_o   (slave_rvalid[slave_rom_index]),
-        .data_o     (slave_rdata[slave_rom_index])
+        .req_i      (slave_req[SLAVE_ROM_INDEX]),
+        .addr_i     (slave_addr[SLAVE_ROM_INDEX]),
+        .data_i     (slave_wdata[SLAVE_ROM_INDEX]),
+        .be_i       (slave_be[SLAVE_ROM_INDEX]),
+        .we_i       (slave_we[SLAVE_ROM_INDEX]),
+        .gnt_o      (slave_gnt[SLAVE_ROM_INDEX]),
+        .rvalid_o   (slave_rvalid[SLAVE_ROM_INDEX]),
+        .data_o     (slave_rdata[SLAVE_ROM_INDEX])
     );
 
-    assign slave_addr_mask[slave_ram_index] = `RAM_ADDR_MASK;
-    assign slave_addr_base[slave_ram_index] = `RAM_ADDR_BASE;
-
-    // PE_TOP地址映射
-    assign slave_addr_mask[slave_pe_top_index] = 32'hFFFF0000; // PE_TOP地址掩码
-    assign slave_addr_base[slave_pe_top_index] = 32'h10000000; // PE_TOP基地址
-
+    assign slave_addr_mask[SLAVE_RAM_INDEX] = `RAM_ADDR_MASK;
+    assign slave_addr_base[SLAVE_RAM_INDEX] = `RAM_ADDR_BASE;
     // 数据存储器
     ram #(
         .DP(RAM_DEPTH)
     ) u_ram (
         .clk_i      (clk),
         .rst_ni     (ndmreset_n),
-        .req_i      (slave_req[slave_ram_index]),
-        .addr_i     (slave_addr[slave_ram_index]),
-        .data_i     (slave_wdata[slave_ram_index]),
-        .be_i       (slave_be[slave_ram_index]),
-        .we_i       (slave_we[slave_ram_index]),
-        .gnt_o      (slave_gnt[slave_ram_index]),
-        .rvalid_o   (slave_rvalid[slave_ram_index]),
-        .data_o     (slave_rdata[slave_ram_index])
+        .req_i      (slave_req[SLAVE_RAM_INDEX]),
+        .addr_i     (slave_addr[SLAVE_RAM_INDEX]),
+        .data_i     (slave_wdata[SLAVE_RAM_INDEX]),
+        .be_i       (slave_be[SLAVE_RAM_INDEX]),
+        .we_i       (slave_we[SLAVE_RAM_INDEX]),
+        .gnt_o      (slave_gnt[SLAVE_RAM_INDEX]),
+        .rvalid_o   (slave_rvalid[SLAVE_RAM_INDEX]),
+        .data_o     (slave_rdata[SLAVE_RAM_INDEX])
     );
 
-    // PE_TOP实例化（已修改为支持OBI接口）
+
+    assign slave_addr_mask[SLAVE_PE_TOP_INDEX] = 32'hFFFF0000; // PE_TOP地址掩码
+    assign slave_addr_base[SLAVE_PE_TOP_INDEX] = 32'h10000000; // PE_TOP基地址
+    // PE_TOP实例化
     pe_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -211,20 +209,20 @@ module chip_top #(
     ) u_pe_top (
         .clk        (clk),
         .reset      (~ndmreset_n),
-        .req_i      (slave_req[slave_pe_top_index]),
-        .we_i       (slave_we[slave_pe_top_index]),
-        .addr_i     (slave_addr[slave_pe_top_index]),
-        .wr_data_i  (slave_wdata[slave_pe_top_index]),
-        .rd_data_o  (slave_rdata[slave_pe_top_index]),
-        .gnt_o      (slave_gnt[slave_pe_top_index]),
-        .rvalid_o   (slave_rvalid[slave_pe_top_index])
+        .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
+        .we_i       (slave_we[SLAVE_PE_TOP_INDEX]),
+        .addr_i     (slave_addr[SLAVE_PE_TOP_INDEX]),
+        .wr_data_i  (slave_wdata[SLAVE_PE_TOP_INDEX]),
+        .rd_data_o  (slave_rdata[SLAVE_PE_TOP_INDEX]),
+        .gnt_o      (slave_gnt[SLAVE_PE_TOP_INDEX]),
+        .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX])
     );
 
     io_top #(
         .ADDR_WIDTH             (ADDR_WIDTH),
         .DATA_WIDTH             (DATA_WIDTH),
         .SLAVES                 (SLAVES),
-        .START_SLAVE            (slave_io_start_index),
+        .START_SLAVE            (SLAVE_IO_START_INDEX),
         .IMPLEMENT_UART         (IMPLEMENT_UART),
         .IMPLEMENT_GPIO         (IMPLEMENT_GPIO),
         .IMPLEMENT_SPI          (IMPLEMENT_SPI),
@@ -326,8 +324,8 @@ module chip_top #(
     );
 
 `ifdef IMPLEMENT_JTAG
-    assign slave_addr_mask[slave_jtag_index] = `DEBUG_ADDR_MASK;
-    assign slave_addr_base[slave_jtag_index] = `DEBUG_ADDR_BASE;
+    assign slave_addr_mask[SLAVE_JTAG_INDEX] = `DEBUG_ADDR_MASK;
+    assign slave_addr_base[SLAVE_JTAG_INDEX] = `DEBUG_ADDR_BASE;
     // JTAG模块
     jtag_top #(
 
@@ -342,23 +340,23 @@ module chip_top #(
         .jtag_tms_i         (jtag_TMS_pin),
         .jtag_trst_ni       (rst_n),
         .jtag_tdo_o         (jtag_TDO_pin),
-        .master_req_o       (master_req[master_jtag_index]),
-        .master_gnt_i       (master_gnt[master_jtag_index]),
-        .master_rvalid_i    (master_rvalid[master_jtag_index]),
-        .master_we_o        (master_we[master_jtag_index]),
-        .master_be_o        (master_be[master_jtag_index]),
-        .master_addr_o      (master_addr[master_jtag_index]),
-        .master_wdata_o     (master_wdata[master_jtag_index]),
-        .master_rdata_i     (master_rdata[master_jtag_index]),
+        .master_req_o       (master_req[MASTER_JTAG_INDEX]),
+        .master_gnt_i       (master_gnt[MASTER_JTAG_INDEX]),
+        .master_rvalid_i    (master_rvalid[MASTER_JTAG_INDEX]),
+        .master_we_o        (master_we[MASTER_JTAG_INDEX]),
+        .master_be_o        (master_be[MASTER_JTAG_INDEX]),
+        .master_addr_o      (master_addr[MASTER_JTAG_INDEX]),
+        .master_wdata_o     (master_wdata[MASTER_JTAG_INDEX]),
+        .master_rdata_i     (master_rdata[MASTER_JTAG_INDEX]),
         .master_err_i       (1'b0),
-        .slave_req_i        (slave_req[slave_jtag_index]),
-        .slave_we_i         (slave_we[slave_jtag_index]),
-        .slave_addr_i       (slave_addr[slave_jtag_index]),
-        .slave_be_i         (slave_be[slave_jtag_index]),
-        .slave_wdata_i      (slave_wdata[slave_jtag_index]),
-        .slave_gnt_o        (slave_gnt[slave_jtag_index]),
-        .slave_rvalid_o     (slave_rvalid[slave_jtag_index]),
-        .slave_rdata_o      (slave_rdata[slave_jtag_index])
+        .slave_req_i        (slave_req[SLAVE_JTAG_INDEX]),
+        .slave_we_i         (slave_we[SLAVE_JTAG_INDEX]),
+        .slave_addr_i       (slave_addr[SLAVE_JTAG_INDEX]),
+        .slave_be_i         (slave_be[SLAVE_JTAG_INDEX]),
+        .slave_wdata_i      (slave_wdata[SLAVE_JTAG_INDEX]),
+        .slave_gnt_o        (slave_gnt[SLAVE_JTAG_INDEX]),
+        .slave_rvalid_o     (slave_rvalid[SLAVE_JTAG_INDEX]),
+        .slave_rdata_o      (slave_rdata[SLAVE_JTAG_INDEX])
     );
 `endif
 
