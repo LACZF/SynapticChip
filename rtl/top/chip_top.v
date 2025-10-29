@@ -156,7 +156,6 @@ module chip_top #(
         end
     endgenerate
 
-`ifdef SUPPORT_ROM
     assign slave_addr_mask[slave_rom_index] = `ROM_ADDR_MASK;
     assign slave_addr_base[slave_rom_index] = `ROM_ADDR_BASE;
     // 指令存储器
@@ -177,12 +176,6 @@ module chip_top #(
 
     assign slave_addr_mask[slave_ram_index] = `RAM_ADDR_MASK;
     assign slave_addr_base[slave_ram_index] = `RAM_ADDR_BASE;
-`else
-    `define ALL_ADDR_MASK       ~32'hFFFFFFFF
-    `define ALL_ADDR_BASE       32'h00000000
-    assign slave_addr_mask[slave_ram_index] = `ALL_ADDR_MASK;
-    assign slave_addr_base[slave_ram_index] = `ALL_ADDR_BASE;
-`endif
 
     // 数据存储器
     ram #(

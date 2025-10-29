@@ -2,20 +2,20 @@
 .global _start
 
 # 内存映射地址定义
-.equ UART_BASE,      0x18000000
-.equ UART_RBR,       0x18000000  # 接收缓冲区寄存器
-.equ UART_THR,       0x18000000  # 发送保持寄存器
-.equ UART_IER,       0x18000001  # 中断使能寄存器
-.equ UART_IIR,       0x18000002  # 中断标识寄存器
-.equ UART_FCR,       0x18000002  # FIFO控制寄存器
-.equ UART_LCR,       0x18000003  # 线控制寄存器
-.equ UART_MCR,       0x18000004  # Modem控制寄存器
-.equ UART_LSR,       0x18000005  # 线状态寄存器
-.equ UART_MSR,       0x18000006  # Modem状态寄存器
-.equ UART_SCR,       0x18000007  # Scratch寄存器
+.equ UART_BASE,      0x20000000 + 0x2000
+.equ UART_RBR,       UART_BASE + 0x00  # 接收缓冲区寄存器
+.equ UART_THR,       UART_BASE + 0x00  # 发送保持寄存器
+.equ UART_IER,       UART_BASE + 0x04  # 中断使能寄存器
+.equ UART_IIR,       UART_BASE + 0x08  # 中断标识寄存器
+.equ UART_FCR,       UART_BASE + 0x0c  # FIFO控制寄存器
+.equ UART_LCR,       UART_BASE + 0x10  # 线控制寄存器
+.equ UART_MCR,       UART_BASE + 0x14  # Modem控制寄存器
+.equ UART_LSR,       UART_BASE + 0x18  # 线状态寄存器
+.equ UART_MSR,       UART_BASE + 0x1c  # Modem状态寄存器
+.equ UART_SCR,       UART_BASE + 0x20  # Scratch寄存器
 
 # 栈指针初始地址
-.equ STACK_TOP,      0x1000
+.equ STACK_TOP,      0x20000000 + 0x1000
 
 _start:
     # 初始化栈指针

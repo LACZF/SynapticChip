@@ -82,4 +82,3 @@ function build_program() {
 }
 
 build_program program.s program.elf program.dis program.hex
-build_program base_instructions.s base_instructions.elf base_instructions.dis base_instructions.hex
