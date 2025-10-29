@@ -7,6 +7,8 @@
 module chip_top #(
     parameter TRACE_ENABLE              = 0,
     parameter CPU_NUM                   = 1,
+    parameter ROM_DEPTH                 = 1024,
+    parameter RAM_DEPTH                 = 1024,
     parameter IMPLEMENT_ROM             = 1,
     parameter IMPLEMENT_JTAG            = 0,
     parameter IMPLEMENT_UART            = 1,
@@ -160,7 +162,7 @@ module chip_top #(
     assign slave_addr_base[slave_rom_index] = `ROM_ADDR_BASE;
     // 指令存储器
     rom #(
-        .DP(`ROM_DEPTH)
+        .DP(ROM_DEPTH)
     ) u_rom (
         .clk_i      (clk),
         .rst_ni     (ndmreset_n),
@@ -179,7 +181,7 @@ module chip_top #(
 
     // 数据存储器
     ram #(
-        .DP(`RAM_DEPTH)
+        .DP(RAM_DEPTH)
     ) u_ram (
         .clk_i      (clk),
         .rst_ni     (ndmreset_n),

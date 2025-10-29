@@ -33,6 +33,8 @@ module chip_top_test;
     chip_top #(
         .TRACE_ENABLE(1),
         .CPU_NUM(CPU_NUM),
+        .ROM_DEPTH(8192),
+        .RAM_DEPTH(8192),
         .IMPLEMENT_ROM(0),
         .IMPLEMENT_JTAG(0),
         .IMPLEMENT_UART(0),
