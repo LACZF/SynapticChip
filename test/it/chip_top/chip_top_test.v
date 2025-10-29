@@ -3,6 +3,7 @@
 
 `include "stddef.v"
 `include "global_config.v"
+`include "uart.v"
 
 module chip_top_test;
     /********** 输入/输出信号 **********/
@@ -11,9 +12,12 @@ module chip_top_test;
 
     localparam CPU_NUM        = 1;
     localparam GPIO_NUM       = 32;
+    localparam BAUD_RATE      = 115200;
+    localparam CLK_FREQ       = 50000000;
+    localparam UART_DIV_RATE  = CLK_FREQ / BAUD_RATE;
 
     // UART
-    wire                      uart_rx;       // UART接收信号
+    reg                       uart_rx;       // UART接收信号
     wire                      uart_tx;       // UART发送信号
 
     // 通用输入/输出端口
@@ -78,12 +82,14 @@ module chip_top_test;
         $display($time, " gpio_io changed  : %b", gpio_io);
     end
 
-`ifdef SUPPORT_UART_TEST
-    /********** 接收信号 **********/
-    assign uart_rx = `HIGH;        // 空闲
+    /********** UART发送相关信号 **********/
+    reg                       tx_start;     // 发送开始信号
+    reg  [7:0]                tx_data;      // 发送数据
+    wire                      tx_busy;      // 发送中标志
+    wire                      tx_end;       // 发送完成标志
 
-    /********** UART模型 **********/
-    uart_rx u_uart_model (
+    /********** UART接收模型 **********/
+    uart_rx u_uart_rx (
         .clk        (clk),
         .rst_n      (rst_n),
         /********** 控制信号 **********/
@@ -94,27 +100,167 @@ module chip_top_test;
         .rx_i       (uart_tx)
     );
 
-    /********** 发送信号的监测 **********/
+    /********** UART发送模型 **********/
+    uart_tx u_uart_tx (
+        .clk        (clk),
+        .rst_n      (rst_n),
+        /********** 控制信号 **********/
+        .tx_start_i (tx_start),
+        .tx_data_i  (tx_data),
+        .tx_busy_o  (tx_busy),
+        .tx_end_o   (tx_end),
+        /********** UART发送信号 **********/
+        .tx_o       (uart_rx)
+    );
+
+    /********** 接收信号的监测 **********/
     always @(posedge clk) begin
         if (rx_end == `ENABLE) begin // 输出接收到的文字
             $write("%c", rx_data);
         end
     end
-`endif
 
     /********** 测试用例 **********/
     initial begin
         $readmemh(`ROM_PRG, u_chip_top.u_rom.u_gen_ram.ram);
         $readmemh(`SPM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
-        clk   <= 0;
-        rst_n <= 0;
+        clk      <= 0;
+        rst_n    <= 0;
+        tx_start <= `DISABLE;
+        tx_data  <= 8'h00;
 
         @(posedge clk);
         rst_n <= 0;
         @(posedge clk);
         rst_n <= 1;
 
-        # `SIM_CYCLE $finish;
+        // 等待系统初始化完成
+        #1000;
+
+        // 发送测试命令
+        $display("\n----- Starting Module Tests -----");
+
+        // 发送PE模块测试命令
+        $display($time, " Sending command: p");
+        // 等待发送空闲
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h70; // 'p'
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        // 等待发送完成
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        // 发送CR和LF
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0d; // CR
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0a; // LF
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+
+        #5000;
+
+        // 发送GPIO模块测试命令
+        $display($time, " Sending command: g");
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h67; // 'g'
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0d;
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0a;
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+
+        #5000;
+
+        // 发送SPI模块测试命令
+        $display($time, " Sending command: s");
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h73; // 's'
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0d;
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0a;
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+
+        #5000;
+
+        // 发送Timer模块测试命令
+        $display($time, " Sending command: t");
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h74; // 't'
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0d;
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+        wait(tx_busy == `DISABLE);
+        @(posedge clk);
+        tx_data  <= 8'h0a;
+        tx_start <= `ENABLE;
+        @(posedge clk);
+        tx_start <= `DISABLE;
+        wait(tx_end == `ENABLE);
+        @(posedge clk);
+
+        #5000;
+        $display("\n----- All Tests Completed -----");
+
+        $finish;
     end
 
     /********** 输出波形 **********/
