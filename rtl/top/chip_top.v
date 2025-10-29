@@ -102,21 +102,9 @@ module chip_top #(
     wire core_halted;
 
     // 中断相关信号
-    wire timer0_irq;
-    wire uart0_irq;
-    wire gpio0_irq;
-    wire gpio1_irq;
-    wire i2c0_irq;
-    wire spi0_irq;
-    wire gpio2_4_irq;
-    wire gpio5_7_irq;
-    wire gpio8_irq;
-    wire gpio9_irq;
-    wire gpio10_12_irq;
-    wire gpio13_15_irq;
-    reg [31:0] irq_src;
     wire int_req;
     wire[7:0] int_id;
+    reg [31:0] irq_src;
 
     // CPU实例化
     generate
@@ -294,18 +282,11 @@ module chip_top #(
     // 中断源
     always @ (*) begin
         irq_src     = 32'h0;
-        irq_src[ 0] = timer0_irq;
-        irq_src[ 1] = uart0_irq;
-        irq_src[ 2] = gpio0_irq;
-        irq_src[ 3] = gpio1_irq;
-        irq_src[ 4] = i2c0_irq;
-        irq_src[ 5] = spi0_irq;
-        irq_src[ 6] = gpio2_4_irq;
-        irq_src[ 7] = gpio5_7_irq;
-        irq_src[ 8] = gpio8_irq;
-        irq_src[ 9] = gpio9_irq;
-        irq_src[10] = gpio10_12_irq;
-        irq_src[11] = gpio13_15_irq;
+        // 从io_top获取的中断信号
+        irq_src[ 0] = irq_timer;     // 定时器中断
+        irq_src[ 1] = irq_uart_rx;   // UART接收中断
+        irq_src[ 2] = irq_uart_tx;   // UART发送中断
+        // 其他未实现的中断信号保持为0
     end
 
     // 内部总线
