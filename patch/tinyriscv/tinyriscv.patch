@@ -492,7 +492,7 @@ index 79e0390..b0f486e 100644
      );
  
 diff --git a/rtl/core/idu.sv b/rtl/core/idu.sv
-index 2390993..0e10e1c 100644
+index 2390993..dc27e9a 100644
 --- a/rtl/core/idu.sv
 +++ b/rtl/core/idu.sv
 @@ -1,17 +1,17 @@
@@ -573,6 +573,15 @@ index 2390993..0e10e1c 100644
      assign dec_alu_info_bus[`DECINFO_ALU_SUB] = inst_sub;
      assign dec_alu_info_bus[`DECINFO_ALU_SLL] = inst_sll | inst_slli;
      assign dec_alu_info_bus[`DECINFO_ALU_SLT] = inst_slt | inst_slti;
+@@ -187,7 +198,7 @@ module idu(
+     assign dec_alu_info_bus[`DECINFO_ALU_SRA] = inst_sra | inst_srai;
+     assign dec_alu_info_bus[`DECINFO_ALU_OR] = inst_or | inst_ori;
+     assign dec_alu_info_bus[`DECINFO_ALU_AND] = inst_and | inst_andi;
+-    assign dec_alu_info_bus[`DECINFO_ALU_OP2IMM] = opcode_0010011 | inst_lui | inst_auipc;
++    assign dec_alu_info_bus[`DECINFO_ALU_OP2IMM] = opcode_0010011 | inst_lui | inst_auipc | inst_addiw;
+     assign dec_alu_info_bus[`DECINFO_ALU_OP1PC] = inst_auipc;
+ 
+     wire[`DECINFO_BJP_BUS_WIDTH-1:0] dec_bjp_info_bus;
 @@ -230,6 +241,10 @@ module idu(
      assign dec_mem_info_bus[`DECINFO_MEM_SB] = inst_sb;
      assign dec_mem_info_bus[`DECINFO_MEM_SH] = inst_sh;
