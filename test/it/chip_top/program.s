@@ -1,8 +1,12 @@
 .section .text
 .global _start
 
+.equ IO_BASE,        0x40000000
+.equ RAM_BASE,       0x20000000
+
 # 内存映射地址定义
-.equ UART_BASE,      0x20000000 + 0x2000
+# .equ UART_BASE,      IO_BASE   + 0x00020000
+.equ UART_BASE,      RAM_BASE  + 0x2000
 .equ UART_RBR,       UART_BASE + 0x00  # 接收缓冲区寄存器
 .equ UART_THR,       UART_BASE + 0x00  # 发送保持寄存器
 .equ UART_IER,       UART_BASE + 0x04  # 中断使能寄存器
@@ -15,21 +19,21 @@
 .equ UART_SCR,       UART_BASE + 0x20  # Scratch寄存器
 
 # GPIO模块地址定义
-.equ GPIO_BASE,      0x03000000
+.equ GPIO_BASE,      IO_BASE   + 0x00030000
 .equ GPIO_IN_DATA,   GPIO_BASE + 0x00  # 输入数据寄存器
 .equ GPIO_OUT_DATA,  GPIO_BASE + 0x04  # 输出数据寄存器
 .equ GPIO_IO_DATA,   GPIO_BASE + 0x08  # IO数据寄存器
 .equ GPIO_IO_DIR,    GPIO_BASE + 0x0C  # IO方向寄存器
 
 # Timer模块地址定义
-.equ TIMER_BASE,     0x04000000
+.equ TIMER_BASE,     IO_BASE    + 0x00010000
 .equ TIMER_CTRL,     TIMER_BASE + 0x00  # 控制寄存器
 .equ TIMER_INTR,     TIMER_BASE + 0x04  # 中断寄存器
 .equ TIMER_EXPR,     TIMER_BASE + 0x08  # 最大值寄存器
 .equ TIMER_COUNTER,  TIMER_BASE + 0x0C  # 计数器寄存器
 
 # SPI模块地址定义
-.equ SPI_BASE,       0x07000000
+.equ SPI_BASE,       IO_BASE  + 0x00040000
 .equ SPI_CONTROL,    SPI_BASE + 0x00  # 控制寄存器
 .equ SPI_STATUS,     SPI_BASE + 0x04  # 状态寄存器
 .equ SPI_DATA,       SPI_BASE + 0x08  # 数据寄存器
@@ -40,7 +44,7 @@
 .equ SPI_CS_SEL,     SPI_BASE + 0x1C  # 片选寄存器
 
 # PE模块地址定义
-.equ PE_TOP_BASE,    0x10000000
+.equ PE_TOP_BASE,    0x30000000
 .equ PE_CTRL_ADDR,   PE_TOP_BASE + 0x00  # 控制寄存器
 .equ PE_STATUS_ADDR, PE_TOP_BASE + 0x04  # 状态寄存器
 .equ PE_INST_ADDR,   PE_TOP_BASE + 0x08  # 指令寄存器
@@ -52,7 +56,7 @@
 .equ PE_RESET_BIT,   1                   # 复位位
 
 # 栈指针初始地址
-.equ STACK_TOP,      0x20000000 + 0x1000
+.equ STACK_TOP,      RAM_BASE + 0x1000
 
 _start:
     # 初始化栈指针

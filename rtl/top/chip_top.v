@@ -75,6 +75,21 @@ module chip_top #(
     localparam int SLAVE_PE_TOP_INDEX       = 3;
     localparam int SLAVE_IO_START_INDEX     = SLAVE_PE_TOP_INDEX + 1;
 
+    localparam ROM_ADDR_BASE                = 32'h00000000;
+    localparam ROM_ADDR_MASK                = `CALC_ADDR_MASK_BY_LENGTH(ROM_ADDR_BASE, ROM_DEPTH * 4);
+
+    localparam DEBUG_ADDR_BASE              = 32'h10000000;
+    localparam DEBUG_ADDR_MASK              = `CALC_ADDR_MASK_BY_LENGTH(DEBUG_ADDR_BASE, 8*1024);
+
+    localparam RAM_ADDR_BASE                = 32'h20000000;
+    localparam RAM_ADDR_MASK                = `CALC_ADDR_MASK_BY_LENGTH(RAM_ADDR_BASE, RAM_DEPTH * 4);
+
+    localparam PE_ADDR_BASE                 = 32'h30000000;
+    localparam PE_ADDR_MASK                 = `CALC_ADDR_MASK_BY_LENGTH(PE_ADDR_BASE, 1 * 1024 * 1024);
+
+    localparam IO_ADDR_BASE                 = 32'h40000000;
+    localparam IO_ADDR_MASK                 = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
+
     wire           master_req       [MASTERS];
     wire           master_gnt       [MASTERS];
     wire           master_rvalid    [MASTERS];
@@ -113,8 +128,8 @@ module chip_top #(
             assign master_we[2*i + 1] = '0;
             assign master_be[2*i + 1] = '0;
             tinyriscv_core #(
-                .DEBUG_HALT_ADDR(`DEBUG_ADDR_BASE + `HaltAddress),
-                .DEBUG_EXCEPTION_ADDR(`DEBUG_ADDR_BASE + `ExceptionAddress),
+                .DEBUG_HALT_ADDR(DEBUG_ADDR_BASE + `HaltAddress),
+                .DEBUG_EXCEPTION_ADDR(DEBUG_ADDR_BASE + `ExceptionAddress),
                 .BranchPredictor(1'b1),
                 .TRACE_ENABLE(TRACE_ENABLE)
             ) u_tinyriscv_core (
@@ -158,8 +173,8 @@ module chip_top #(
         end
     endgenerate
 
-    assign slave_addr_mask[SLAVE_ROM_INDEX] = `ROM_ADDR_MASK;
-    assign slave_addr_base[SLAVE_ROM_INDEX] = `ROM_ADDR_BASE;
+    assign slave_addr_mask[SLAVE_ROM_INDEX] = ROM_ADDR_MASK;
+    assign slave_addr_base[SLAVE_ROM_INDEX] = ROM_ADDR_BASE;
     // 指令存储器
     rom #(
         .DP(ROM_DEPTH)
@@ -176,8 +191,8 @@ module chip_top #(
         .data_o     (slave_rdata[SLAVE_ROM_INDEX])
     );
 
-    assign slave_addr_mask[SLAVE_RAM_INDEX] = `RAM_ADDR_MASK;
-    assign slave_addr_base[SLAVE_RAM_INDEX] = `RAM_ADDR_BASE;
+    assign slave_addr_mask[SLAVE_RAM_INDEX] = RAM_ADDR_MASK;
+    assign slave_addr_base[SLAVE_RAM_INDEX] = RAM_ADDR_BASE;
     // 数据存储器
     ram #(
         .DP(RAM_DEPTH)
@@ -195,8 +210,8 @@ module chip_top #(
     );
 
 
-    assign slave_addr_mask[SLAVE_PE_TOP_INDEX] = 32'hFFFF0000; // PE_TOP地址掩码
-    assign slave_addr_base[SLAVE_PE_TOP_INDEX] = 32'h10000000; // PE_TOP基地址
+    assign slave_addr_mask[SLAVE_PE_TOP_INDEX] = PE_ADDR_MASK;
+    assign slave_addr_base[SLAVE_PE_TOP_INDEX] = PE_ADDR_BASE;
     // PE_TOP实例化
     pe_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
@@ -324,8 +339,8 @@ module chip_top #(
     );
 
 `ifdef IMPLEMENT_JTAG
-    assign slave_addr_mask[SLAVE_JTAG_INDEX] = `DEBUG_ADDR_MASK;
-    assign slave_addr_base[SLAVE_JTAG_INDEX] = `DEBUG_ADDR_BASE;
+    assign slave_addr_mask[SLAVE_JTAG_INDEX] = DEBUG_ADDR_MASK;
+    assign slave_addr_base[SLAVE_JTAG_INDEX] = DEBUG_ADDR_BASE;
     // JTAG模块
     jtag_top #(
 
