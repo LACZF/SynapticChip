@@ -149,7 +149,7 @@ module io_top #(
         if (IMPLEMENT_GPIO) begin : gpio_gen
             assign slave_addr_mask[SLAVE_GPIO_INDEX] = GPIO_ADDR_MASK;
             assign slave_addr_base[SLAVE_GPIO_INDEX] = GPIO_ADDR_BASE;
-            gpio #(
+            gpio_top #(
                 .GPIO_IN_CH    (GPIO_IN_CH),
                 .GPIO_OUT_CH   (GPIO_OUT_CH),
                 .GPIO_IO_CH    (GPIO_IO_CH)

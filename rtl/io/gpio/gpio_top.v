@@ -1,6 +1,6 @@
 `include "stddef.v"
 
-module gpio #(
+module gpio_top #(
     parameter GPIO_IN_CH   = 1,
     parameter GPIO_OUT_CH  = 1,
     parameter GPIO_IO_CH   = 1

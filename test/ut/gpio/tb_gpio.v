@@ -33,7 +33,7 @@ module tb_gpio;
     assign gpio_io = gpio_io_dir ? gpio_io_test : {4{1'bz}};
 
     // 实例化GPIO模块
-    gpio #(
+    gpio_top #(
         .GPIO_IN_CH    (4),
         .GPIO_OUT_CH   (4),
         .GPIO_IO_CH    (4)
