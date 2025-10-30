@@ -60,7 +60,7 @@ module chip_top #(
     output wire                         jtag_tdo_pin
 );
     /* (instruction + data) * CPU_NUM + jtag */
-    localparam int MASTERS                  = CPU_NUM * 2 + 1;
+    localparam int MASTERS                  = (IMPLEMENT_JTAG ? (CPU_NUM * 2 + 1) : (CPU_NUM * 2));
     localparam int SLAVES                   = 18; // Number of slave ports
 
     // masters
@@ -338,41 +338,48 @@ module chip_top #(
         .rst_no (ndmreset_n)
     );
 
-`ifdef IMPLEMENT_JTAG
-    assign slave_addr_mask[SLAVE_JTAG_INDEX] = DEBUG_ADDR_MASK;
-    assign slave_addr_base[SLAVE_JTAG_INDEX] = DEBUG_ADDR_BASE;
-    // JTAG模块
-    jtag_top #(
+    generate
+        if (IMPLEMENT_JTAG) begin : jtag_gen
+            assign slave_addr_mask[SLAVE_JTAG_INDEX] = DEBUG_ADDR_MASK;
+            assign slave_addr_base[SLAVE_JTAG_INDEX] = DEBUG_ADDR_BASE;
+            // JTAG模块
+            jtag_top #(
 
-    ) u_jtag (
-        .clk_i              (clk),
-        .rst_ni             (rst_n),
-        .debug_req_o        (debug_req),
-        .ndmreset_o         (ndmreset),
-        .halted_o           (core_halted),
-        .jtag_tck_i         (jtag_TCK_pin),
-        .jtag_tdi_i         (jtag_TDI_pin),
-        .jtag_tms_i         (jtag_TMS_pin),
-        .jtag_trst_ni       (rst_n),
-        .jtag_tdo_o         (jtag_TDO_pin),
-        .master_req_o       (master_req[MASTER_JTAG_INDEX]),
-        .master_gnt_i       (master_gnt[MASTER_JTAG_INDEX]),
-        .master_rvalid_i    (master_rvalid[MASTER_JTAG_INDEX]),
-        .master_we_o        (master_we[MASTER_JTAG_INDEX]),
-        .master_be_o        (master_be[MASTER_JTAG_INDEX]),
-        .master_addr_o      (master_addr[MASTER_JTAG_INDEX]),
-        .master_wdata_o     (master_wdata[MASTER_JTAG_INDEX]),
-        .master_rdata_i     (master_rdata[MASTER_JTAG_INDEX]),
-        .master_err_i       (1'b0),
-        .slave_req_i        (slave_req[SLAVE_JTAG_INDEX]),
-        .slave_we_i         (slave_we[SLAVE_JTAG_INDEX]),
-        .slave_addr_i       (slave_addr[SLAVE_JTAG_INDEX]),
-        .slave_be_i         (slave_be[SLAVE_JTAG_INDEX]),
-        .slave_wdata_i      (slave_wdata[SLAVE_JTAG_INDEX]),
-        .slave_gnt_o        (slave_gnt[SLAVE_JTAG_INDEX]),
-        .slave_rvalid_o     (slave_rvalid[SLAVE_JTAG_INDEX]),
-        .slave_rdata_o      (slave_rdata[SLAVE_JTAG_INDEX])
-    );
-`endif
+            ) u_jtag (
+                .clk_i              (clk),
+                .rst_ni             (rst_n),
+                .debug_req_o        (debug_req),
+                .ndmreset_o         (ndmreset),
+                .halted_o           (core_halted),
+                .jtag_tck_i         (jtag_TCK_pin),
+                .jtag_tdi_i         (jtag_TDI_pin),
+                .jtag_tms_i         (jtag_TMS_pin),
+                .jtag_trst_ni       (rst_n),
+                .jtag_tdo_o         (jtag_TDO_pin),
+                .master_req_o       (master_req[MASTER_JTAG_INDEX]),
+                .master_gnt_i       (master_gnt[MASTER_JTAG_INDEX]),
+                .master_rvalid_i    (master_rvalid[MASTER_JTAG_INDEX]),
+                .master_we_o        (master_we[MASTER_JTAG_INDEX]),
+                .master_be_o        (master_be[MASTER_JTAG_INDEX]),
+                .master_addr_o      (master_addr[MASTER_JTAG_INDEX]),
+                .master_wdata_o     (master_wdata[MASTER_JTAG_INDEX]),
+                .master_rdata_i     (master_rdata[MASTER_JTAG_INDEX]),
+                .master_err_i       (1'b0),
+                .slave_req_i        (slave_req[SLAVE_JTAG_INDEX]),
+                .slave_we_i         (slave_we[SLAVE_JTAG_INDEX]),
+                .slave_addr_i       (slave_addr[SLAVE_JTAG_INDEX]),
+                .slave_be_i         (slave_be[SLAVE_JTAG_INDEX]),
+                .slave_wdata_i      (slave_wdata[SLAVE_JTAG_INDEX]),
+                .slave_gnt_o        (slave_gnt[SLAVE_JTAG_INDEX]),
+                .slave_rvalid_o     (slave_rvalid[SLAVE_JTAG_INDEX]),
+                .slave_rdata_o      (slave_rdata[SLAVE_JTAG_INDEX])
+            );
+        end else begin
+            /* 暂未使用 */
+            assign slave_rdata[SLAVE_JTAG_INDEX]      = 32'h0;
+            assign slave_rvalid[SLAVE_JTAG_INDEX]     = 1'b0;
+            assign slave_gnt[SLAVE_JTAG_INDEX]        = 1'b0;
+        end
+    endgenerate
 
 endmodule
