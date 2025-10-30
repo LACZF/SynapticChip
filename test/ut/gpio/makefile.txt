@@ -1,0 +1,8 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+TEST_TARGET := tb_gpio
+TEST_ARGS ?= -g2005-sv
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/io
+
+TEST_SRC += $(TOP_DIR)/rtl/io/gpio/gpio_top.v
+TEST_SRC += $(CUR_DIR)/tb_gpio.v

@@ -2,7 +2,6 @@
 `include "global_config.v"
 
 `include "timer.v"
-`include "gpio.v"
 `include "spi_addr.v"
 `include "spi.v"
 
@@ -150,31 +149,32 @@ module io_top #(
         if (IMPLEMENT_GPIO) begin : gpio_gen
             assign slave_addr_mask[SLAVE_GPIO_INDEX] = GPIO_ADDR_MASK;
             assign slave_addr_base[SLAVE_GPIO_INDEX] = GPIO_ADDR_BASE;
-            gpio_top #(
-                .GPIO_IN_CH      (GPIO_IN_CH),
-                .GPIO_OUT_CH     (GPIO_OUT_CH),
-                .GPIO_IO_CH      (GPIO_IO_CH)
+            gpio #(
+                .GPIO_IN_CH    (GPIO_IN_CH),
+                .GPIO_OUT_CH   (GPIO_OUT_CH),
+                .GPIO_IO_CH    (GPIO_IO_CH)
             ) u_gpio (
                 .clk             (clk),
                 .rst_n           (rst_n),
 
                 .req_i           (slave_req[SLAVE_GPIO_INDEX]),
                 .we_i            (slave_we[SLAVE_GPIO_INDEX]),
-                .addr_i          (slave_addr[SLAVE_GPIO_INDEX][`GpioAddrLoc]),
+                .addr_i          (slave_addr[SLAVE_GPIO_INDEX]),
                 .wr_data_i       (slave_wdata[SLAVE_GPIO_INDEX]),
                 .data_out_o      (slave_rdata[SLAVE_GPIO_INDEX]),
                 .gnt_o           (slave_gnt[SLAVE_GPIO_INDEX]),
                 .rvalid_o        (slave_rvalid[SLAVE_GPIO_INDEX]),
 
-                // 根据参数条件连接GPIO端口
                 .gpio_in         (gpio_in),
                 .gpio_out        (gpio_out),
                 .gpio_io         (gpio_io)
-            );
+             );
         end else begin
-            assign slave_rdata[SLAVE_GPIO_INDEX]      = `WORD_DATA_W'h0;
-            assign slave_rvalid[SLAVE_GPIO_INDEX]     = `DISABLE_N;
-            assign slave_gnt[SLAVE_GPIO_INDEX]        = `DISABLE_N;
+            assign slave_rdata[SLAVE_GPIO_INDEX]     = `WORD_DATA_W'h0;
+            assign slave_rvalid[SLAVE_GPIO_INDEX]    = `DISABLE_N;
+            assign slave_gnt[SLAVE_GPIO_INDEX]       = `DISABLE_N;
+            assign gpio_out                          = {GPIO_OUT_CH{1'b0}};
+            // GPIO_IO需要保持三态，不做赋值
         end
     endgenerate
 

@@ -1,120 +1,148 @@
-
 `include "stddef.v"
-`include "global_config.v"
 
-`include "gpio.v"
-
-module gpio_top #(
-    parameter GPIO_IN_CH           = 1,
-    parameter GPIO_OUT_CH          = 1,
-    parameter GPIO_IO_CH           = 1
+module gpio #(
+    parameter GPIO_IN_CH   = 1,
+    parameter GPIO_OUT_CH  = 1,
+    parameter GPIO_IO_CH   = 1
 ) (
+    // 时钟和复位信号
     input  wire                        clk,
     input  wire                        rst_n,
 
-    /********** OBI总线接口 **********/
-    input  wire                        req_i,     // 请求信号
-    input  wire                        we_i,      // 写使能
-    input  wire [`GpioAddrBus]         addr_i,    // 地址
-    input  wire [`WordDataBus]         wr_data_i, // 写入的数据
-    output reg  [`WordDataBus]         data_out_o, // 读取的数据
-    output reg                         gnt_o,     // 授权信号
-    output reg                         rvalid_o,  // 读有效信号
-    /********** 通用输入输出接口 **********/
-    input wire [GPIO_IN_CH-1:0]        gpio_in,   // 输入端口（控制寄存器0）
-    output reg [GPIO_OUT_CH-1:0]       gpio_out,  // 输出端口（控制寄存器1）
-    inout wire [GPIO_IO_CH-1:0]        gpio_io    // I/O端口（控制寄存器2）
+    // OBI总线接口
+    input  wire                        req_i,
+    input  wire                        we_i,
+    input  wire [31:0]                 addr_i,
+    input  wire [31:0]                 wr_data_i,
+    output wire [31:0]                 data_out_o,
+    output wire                        gnt_o,
+    output wire                        rvalid_o,
+
+    // GPIO接口
+    input  wire [GPIO_IN_CH-1:0]       gpio_in,
+    output wire [GPIO_OUT_CH-1:0]      gpio_out,
+    inout  wire [GPIO_IO_CH-1:0]       gpio_io
 );
 
-    /********** 输入输出信号 **********/
-    wire    [GPIO_IO_CH-1:0]            io_in;      // 输入的数据
-    reg     [GPIO_IO_CH-1:0]            io_out;     // 输出的数据
-    reg     [GPIO_IO_CH-1:0]            io_dir;     // 输入输出方向（控制寄存器3）
-    reg     [GPIO_IO_CH-1:0]            io;         // 输入输出
-    integer                              i;          // 迭代器
-    reg                                 req_accepted; // 请求已接受
+    // 寄存器地址定义
+    localparam GPIO_IN_REG_ADDR    = 32'h00;  // 输入寄存器 (只读)
+    localparam GPIO_OUT_REG_ADDR   = 32'h04;  // 输出寄存器
+    localparam GPIO_DIR_REG_ADDR   = 32'h08;  // 方向寄存器
+    localparam GPIO_IO_REG_ADDR    = 32'h0C;  // IO数据寄存器
 
-    /********** 输入输出信号的连续赋值 **********/
-    assign io_in         = gpio_io;             // 输入的数据
-    assign gpio_io       = io;                  // 输入输出
+    // 内部寄存器定义
+    reg [GPIO_OUT_CH-1:0]  out_reg;           // 输出数据寄存器
+    reg [GPIO_IO_CH-1:0]   dir_reg;           // 方向寄存器 (0:输入, 1:输出)
+    reg [GPIO_IO_CH-1:0]   io_data_reg;       // IO数据寄存器
 
-    /********** 输入输出方向的控制 **********/
-    always @(*) begin
-        for (i = 0; i < GPIO_IO_CH; i = i + 1) begin : IO_DIR
-            io[i] = (io_dir[i] == `GPIO_DIR_IN) ? 1'bz : io_out[i];
+    // OBI总线信号
+    reg                    gnt_o_reg;         // 授予信号寄存器
+    reg                    rvalid_o_reg;      // 读有效信号寄存器
+    reg [31:0]             data_out_o_reg;    // 数据输出寄存器
+
+    // 双向IO控制
+    reg [GPIO_IO_CH-1:0]   io_out;            // IO输出数据
+
+    // 双向IO引脚连接
+    generate
+        genvar i;
+        for (i = 0; i < GPIO_IO_CH; i = i + 1) begin : io_bidir_gen
+            assign gpio_io[i] = dir_reg[i] ? io_out[i] : 1'bz;
         end
-    end
+    endgenerate
 
-    /********** OBI握手逻辑 **********/
+    // 输出寄存器连接到输出引脚
+    assign gpio_out = out_reg;
+
+    // OBI总线输出信号
+    assign gnt_o = gnt_o_reg;
+    assign rvalid_o = rvalid_o_reg;
+    assign data_out_o = data_out_o_reg;
+
+    // OBI总线接口处理
     always @(posedge clk or negedge rst_n) begin
-        if (rst_n == 0) begin
-            gnt_o <= 1'b0;
-            rvalid_o <= 1'b0;
-            req_accepted <= 1'b0;
+        if (!rst_n) begin
+            // 复位状态
+            out_reg        <= {GPIO_OUT_CH{1'b0}};
+            dir_reg        <= {GPIO_IO_CH{1'b0}}; // 默认输入
+            io_data_reg    <= {GPIO_IO_CH{1'b0}};
+            gnt_o_reg      <= `DISABLE;
+            rvalid_o_reg   <= `DISABLE;
+            data_out_o_reg <= `WORD_DATA_W'h0;
+            io_out         <= {GPIO_IO_CH{1'b0}};
         end else begin
-            // 授权信号：当没有挂起的请求时立即授权
-            if (req_i && !req_accepted) begin
-                gnt_o <= 1'b1;
-                req_accepted <= 1'b1;
-            end else begin
-                gnt_o <= 1'b0;
-            end
+            // 处理总线请求
+            if (req_i && !gnt_o_reg) begin
+                // 授予请求
+                gnt_o_reg <= `ENABLE;
 
-            // 读有效信号：在请求被接受后的下一个周期置位
-            if (req_accepted && !we_i) begin
-                rvalid_o <= 1'b1;
-            end else begin
-                rvalid_o <= 1'b0;
-            end
+                // 处理写操作
+                if (we_i) begin
+                    case (addr_i)
+                        GPIO_OUT_REG_ADDR: begin
+                            out_reg <= wr_data_i[GPIO_OUT_CH-1:0];
+                        end
+                        GPIO_DIR_REG_ADDR: begin
+                            dir_reg <= wr_data_i[GPIO_IO_CH-1:0];
+                        end
+                        GPIO_IO_REG_ADDR: begin
+                            io_data_reg <= wr_data_i[GPIO_IO_CH-1:0];
+                            io_out <= wr_data_i[GPIO_IO_CH-1:0];
+                        end
+                    endcase
 
-            // 清除请求接受标志
-            if (req_accepted) begin
-                req_accepted <= 1'b0;
-            end
-        end
-    end
+                    // 写操作的rvalid_o信号
+                    rvalid_o_reg <= `ENABLE;
+                end else if (gnt_o_reg) begin
+                    // 确保rvalid_o_reg在操作完成后被重置
+                    rvalid_o_reg <= `DISABLE;
+                    gnt_o_reg <= `DISABLE;
+                end else begin
+                    // 处理读操作
+                    case (addr_i)
+                        GPIO_IN_REG_ADDR: begin
+                            data_out_o_reg[GPIO_IN_CH-1:0] <= gpio_in;
+                            if (GPIO_IN_CH < 32) begin
+                                data_out_o_reg[31:GPIO_IN_CH] <= {(32-GPIO_IN_CH){1'b0}};
+                            end
+                        end
+                        GPIO_OUT_REG_ADDR: begin
+                            data_out_o_reg[GPIO_OUT_CH-1:0] <= out_reg;
+                            if (GPIO_OUT_CH < 32) begin
+                                data_out_o_reg[31:GPIO_OUT_CH] <= {(32-GPIO_OUT_CH){1'b0}};
+                            end
+                        end
+                        GPIO_DIR_REG_ADDR: begin
+                            data_out_o_reg[GPIO_IO_CH-1:0] <= dir_reg;
+                            if (GPIO_IO_CH < 32) begin
+                                data_out_o_reg[31:GPIO_IO_CH] <= {(32-GPIO_IO_CH){1'b0}};
+                            end
+                        end
+                        GPIO_IO_REG_ADDR: begin
+                            // 读取IO寄存器时，根据方向读取相应的值
+                            data_out_o_reg[GPIO_IO_CH-1:0] <= dir_reg ? io_data_reg : gpio_io;
+                            if (GPIO_IO_CH < 32) begin
+                                data_out_o_reg[31:GPIO_IO_CH] <= {(32-GPIO_IO_CH){1'b0}};
+                            end
+                        end
+                        default: begin
+                            data_out_o_reg <= `WORD_DATA_W'h0;
+                        end
+                    endcase
 
-    /********** GPIO的控制 **********/
-    always @(posedge clk or negedge rst_n) begin
-        if (rst_n == 0) begin
-            /* 异步复位 */
-            data_out_o     <= `WORD_DATA_W'h0;
-            gpio_out <= {GPIO_OUT_CH{`LOW}};
-            io_out     <= {GPIO_IO_CH{`LOW}};
-            io_dir     <= {GPIO_IO_CH{`GPIO_DIR_IN}};
-        end else begin
-            /* 读取访问 */
-            if (req_accepted && !we_i) begin
-                case (addr_i)
-                    `GPIO_ADDR_IN_DATA    : begin // 控制寄存器 0
-                        data_out_o     <= {{`WORD_DATA_W-GPIO_IN_CH{1'b0}}, gpio_in};
-                    end
-                    `GPIO_ADDR_OUT_DATA : begin // 控制寄存器 1
-                        data_out_o     <= {{`WORD_DATA_W-GPIO_OUT_CH{1'b0}}, gpio_out};
-                    end
-                    `GPIO_ADDR_IO_DATA    : begin // 控制寄存器 2
-                        data_out_o     <= {{`WORD_DATA_W-GPIO_IO_CH{1'b0}}, io_in};
-                     end
-                    `GPIO_ADDR_IO_DIR    : begin // 控制寄存器 3
-                        data_out_o     <= {{`WORD_DATA_W-GPIO_IO_CH{1'b0}}, io_dir};
-                    end
-                endcase
+                    // 读操作的rvalid_o信号
+                    rvalid_o_reg <= `ENABLE;
+                end
             end else begin
-                data_out_o     <= `WORD_DATA_W'h0;
-            end
-            /* 写入访问 */
-            if (req_accepted && we_i) begin
-                case (addr_i)
-                    `GPIO_ADDR_OUT_DATA : begin // 控制寄存器 1
-                        gpio_out <= wr_data_i[GPIO_OUT_CH-1:0];
-                    end
-                    `GPIO_ADDR_IO_DATA    : begin // 控制寄存器 2
-                        io_out <= wr_data_i[GPIO_IO_CH-1:0];
-                     end
-                    `GPIO_ADDR_IO_DIR    : begin // 控制寄存器 3
-                        io_dir <= wr_data_i[GPIO_IO_CH-1:0];
-                    end
-                endcase
+                // 清除rvalid_o信号
+                if (rvalid_o_reg) begin
+                    rvalid_o_reg <= `DISABLE;
+                end
+
+                // 清除gnt_o信号
+                if (gnt_o_reg && !req_i) begin
+                    gnt_o_reg <= `DISABLE;
+                end
             end
         end
     end
