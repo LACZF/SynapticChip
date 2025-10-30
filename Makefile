@@ -30,7 +30,7 @@ TEST_SRC += $(ABS_M)
 TEST_INCLUDE_DIR += -I$(shell dirname $(ABS_M))
 endif
 endif
-TEST_BUILD_DIR := $(TOP_DIR)/build/$(M).build
+TEST_BUILD_DIR := $(TOP_DIR)/build/$(patsubst %/,%,$(M)).build
 COMPLETE_TEST_TARGET := $(TEST_BUILD_DIR)/$(TEST_TARGET)
 endif
 endif
