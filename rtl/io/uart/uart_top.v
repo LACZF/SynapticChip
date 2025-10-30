@@ -38,8 +38,7 @@ module uart_top (
     reg  [31:0]                     data_out;        // 输出数据寄存器
 
     // 状态控制信号
-    reg                             gnt;             // 授权信号寄存器
-    reg                             rvalid;          // 读有效信号寄存器
+    reg                             rvalid_q;        // 读有效信号寄存器
     wire                            baud_clk;        // 波特率时钟
 
     //--------------------------------------------------------------------
@@ -85,28 +84,17 @@ module uart_top (
 
     assign data_out_o = data_out;
 
-    //--------------------------------------------------------------------
-    // OBI握手信号处理
-    //--------------------------------------------------------------------
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            gnt <= `DISABLE;
-        end else begin
-            gnt <= req_i && ~gnt;
-        end
-    end
-
-    assign gnt_o = gnt;
+    assign gnt_o = req_i;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            rvalid <= `DISABLE;
+            rvalid_q <= 1'b0;
         end else begin
-            rvalid <= gnt && ~we_i;
+            rvalid_q <= req_i;
         end
     end
 
-    assign rvalid_o = rvalid;
+    assign rvalid_o = rvalid_q;
 
     //--------------------------------------------------------------------
     // 16550 UART 实例化
