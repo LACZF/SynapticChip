@@ -1,9 +1,3 @@
-`include "stddef.v"
-`include "global_config.v"
-
-`include "timer.v"
-`include "spi_addr.v"
-`include "spi.v"
 
 module io_top #(
     parameter ADDR_WIDTH           = 32,
@@ -97,7 +91,7 @@ module io_top #(
 
                 .req_i           (slave_req[SLAVE_TIMER_INDEX]),
                 .we_i            (slave_we[SLAVE_TIMER_INDEX]),
-                .addr_i          (slave_addr[SLAVE_TIMER_INDEX][`TimerAddrLoc]),
+                .addr_i          (slave_addr[SLAVE_TIMER_INDEX]),
                 .wr_data_i       (slave_wdata[SLAVE_TIMER_INDEX]),
                 .data_out_o      (slave_rdata[SLAVE_TIMER_INDEX]),
                 .gnt_o           (slave_gnt[SLAVE_TIMER_INDEX]),
@@ -106,10 +100,10 @@ module io_top #(
                 .irq_o           (irq_timer)
              );
         end else begin
-            assign slave_rdata[SLAVE_TIMER_INDEX]    = `WORD_DATA_W'h0;
-            assign slave_rvalid[SLAVE_TIMER_INDEX]   = `DISABLE_N;
-            assign slave_gnt[SLAVE_TIMER_INDEX]      = `DISABLE_N;
-            assign irq_timer                         = `DISABLE;
+            assign slave_rdata[SLAVE_TIMER_INDEX]    = 32'h0;
+            assign slave_rvalid[SLAVE_TIMER_INDEX]   = 1'b0;
+            assign slave_gnt[SLAVE_TIMER_INDEX]      = 1'b0;
+            assign irq_timer                         = 1'b0;
         end
     endgenerate
 
@@ -136,11 +130,11 @@ module io_top #(
                 .irq_o           (irq_uart_rx)
              );
         end else begin
-            assign slave_rdata[SLAVE_UART_INDEX]    = `WORD_DATA_W'h0;
-            assign slave_rvalid[SLAVE_UART_INDEX]   = `DISABLE_N;
-            assign slave_gnt[SLAVE_UART_INDEX]      = `DISABLE_N;
-            assign irq_uart_rx                      = `DISABLE;
-            assign irq_uart_tx                      = `DISABLE;
+            assign slave_rdata[SLAVE_UART_INDEX]    = 32'h0;
+            assign slave_rvalid[SLAVE_UART_INDEX]   = 1'b0;
+            assign slave_gnt[SLAVE_UART_INDEX]      = 1'b0;
+            assign irq_uart_rx                      = 1'b0;
+            assign irq_uart_tx                      = 1'b0;
         end
     endgenerate
 
@@ -170,9 +164,9 @@ module io_top #(
                 .gpio_io         (gpio_io)
              );
         end else begin
-            assign slave_rdata[SLAVE_GPIO_INDEX]     = `WORD_DATA_W'h0;
-            assign slave_rvalid[SLAVE_GPIO_INDEX]    = `DISABLE_N;
-            assign slave_gnt[SLAVE_GPIO_INDEX]       = `DISABLE_N;
+            assign slave_rdata[SLAVE_GPIO_INDEX]     = 32'h0;
+            assign slave_rvalid[SLAVE_GPIO_INDEX]    = 1'b0;
+            assign slave_gnt[SLAVE_GPIO_INDEX]       = 1'b0;
             assign gpio_out                          = {GPIO_OUT_CH{1'b0}};
             // GPIO_IO需要保持三态，不做赋值
         end
@@ -189,7 +183,7 @@ module io_top #(
                 .SPI_NUM       (SPI_NUM)
             ) u_spi (
                 .clk           (clk),
-                .rst_n         (rst_n == `RESET_DISABLE ? 1'b1 : 1'b0),
+                .rst_n         (rst_n),
 
                 .req_i         (slave_req[SLAVE_SPI_INDEX]),
                 .we_i          (slave_we[SLAVE_SPI_INDEX]),
@@ -207,9 +201,9 @@ module io_top #(
             // SPI已更新为完整OBI接口，gnt_o和rvalid_o由spi_top内部逻辑控制
         end else begin
             /* 暂未使用 */
-            assign slave_rdata[SLAVE_SPI_INDEX]      = `WORD_DATA_W'h0;
-            assign slave_rvalid[SLAVE_SPI_INDEX]     = `DISABLE_N;
-            assign slave_gnt[SLAVE_SPI_INDEX]        = `DISABLE_N;
+            assign slave_rdata[SLAVE_SPI_INDEX]      = 32'h0;
+            assign slave_rvalid[SLAVE_SPI_INDEX]     = 1'b0;
+            assign slave_gnt[SLAVE_SPI_INDEX]        = 1'b0;
             assign spi_cs_n                          = 1'b1;
             assign spi_clk                           = 1'b0;
             assign spi_mosi                          = 1'b0;
@@ -251,9 +245,9 @@ module io_top #(
                 .spi_dq3_oe_o   (flash_spi_dq_oe[3])
             );
         end else begin
-            assign slave_rdata[SLAVE_FLASH_INDEX]      = `WORD_DATA_W'h0;
-            assign slave_rvalid[SLAVE_FLASH_INDEX]     = `DISABLE_N;
-            assign slave_gnt[SLAVE_FLASH_INDEX]        = `DISABLE_N;
+            assign slave_rdata[SLAVE_FLASH_INDEX]      = 32'h0;
+            assign slave_rvalid[SLAVE_FLASH_INDEX]     = 1'b0;
+            assign slave_gnt[SLAVE_FLASH_INDEX]        = 1'b0;
             assign flash_spi_clk                       = 1'b0;
             assign flash_spi_ss                        = 1'b1;
             assign flash_spi_dq_out                    = 4'b0000;

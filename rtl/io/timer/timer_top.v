@@ -9,15 +9,15 @@ module timer_top(
     input  wire                    rst_n,
 
     /********** OBI总线接口 **********/
-    input  wire                    req_i,     // 请求信号
-    input  wire                    we_i,      // 写使能
-    input  wire [`TimerAddrBus]    addr_i,    // 地址
-    input  wire [`WordDataBus]     wr_data_i, // 写入的数据
-    output reg  [`WordDataBus]     data_out_o, // 读取的数据
-    output reg                     gnt_o,     // 授权信号
-    output reg                     rvalid_o,  // 读有效信号
+    input  wire                    req_i,      // 请求信号
+    input  wire                    we_i,       // 写使能
+    input  wire [31:0]             addr_i,     // 地址
+    input  wire [31:0]             wr_data_i,  // 写入的数据
+    output reg  [31:0]             data_out_o, // 读取的数据
+    output reg                     gnt_o,      // 授权信号
+    output reg                     rvalid_o,   // 读有效信号
     /********** 中断信号 **********/
-    output reg                     irq_o      // 中断信号
+    output reg                     irq_o       // 中断信号
 );
 
     /********** 控制寄存器 **********/
@@ -30,6 +30,8 @@ module timer_top(
     reg [`WordDataBus]             counter;    // 计数器
     // OBI协议控制信号
     reg                            req_accepted; // 请求已接受
+
+    wire addr                      = addr_i[`TimerAddrBus];
 
     /********** 计时完成标志位 **********/
     wire expr_flag = ((start == `ENABLE) && (counter == expr_val)) ? `ENABLE : `DISABLE;
@@ -76,7 +78,7 @@ module timer_top(
         end else begin
             /* 读取访问 */
             if (req_accepted && !we_i) begin
-                case (addr_i)
+                case (addr)
                     `TIMER_ADDR_CTRL    : begin // 控制寄存器 0
                         data_out_o     <= {{`WORD_DATA_W-2{1'b0}}, mode, start};
                     end
@@ -95,7 +97,7 @@ module timer_top(
             end
             /* 写入访问 */
             // 控制寄存器 0
-            if (req_accepted && we_i && (addr_i == `TIMER_ADDR_CTRL)) begin
+            if (req_accepted && we_i && (addr == `TIMER_ADDR_CTRL)) begin
                 start     <= wr_data_i[`TimerStartLoc];
                 mode      <= wr_data_i[`TimerModeLoc];
             end else if ((expr_flag == `ENABLE) && (mode == `TIMER_MODE_ONE_SHOT)) begin
@@ -104,15 +106,15 @@ module timer_top(
             // 控制寄存器 1
             if (expr_flag == `ENABLE) begin
                 irq_o         <= `ENABLE;
-            end else if (req_accepted && we_i && (addr_i == `TIMER_ADDR_INTR)) begin
+            end else if (req_accepted && we_i && (addr == `TIMER_ADDR_INTR)) begin
                 irq_o         <= wr_data_i[`TimerIrqLoc];
             end
             // 控制寄存器 2
-            if (req_accepted && we_i && (addr_i == `TIMER_ADDR_EXPR)) begin
+            if (req_accepted && we_i && (addr == `TIMER_ADDR_EXPR)) begin
                 expr_val <= wr_data_i;
             end
             // 控制寄存器 3
-            if (req_accepted && we_i && (addr_i == `TIMER_ADDR_COUNTER)) begin
+            if (req_accepted && we_i && (addr == `TIMER_ADDR_COUNTER)) begin
                 counter     <= wr_data_i;
             end else if (expr_flag == `ENABLE) begin
                 counter     <= `WORD_DATA_W'h0;
