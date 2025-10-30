@@ -1,5 +1,3 @@
-`include "stddef.v"
-
 module gpio_top #(
     parameter GPIO_IN_CH   = 1,
     parameter GPIO_OUT_CH  = 1,
@@ -66,15 +64,18 @@ module gpio_top #(
             out_reg        <= {GPIO_OUT_CH{1'b0}};
             dir_reg        <= {GPIO_IO_CH{1'b0}}; // 默认输入
             io_data_reg    <= {GPIO_IO_CH{1'b0}};
-            gnt_o_reg      <= `DISABLE;
-            rvalid_o_reg   <= `DISABLE;
-            data_out_o_reg <= `WORD_DATA_W'h0;
+            gnt_o_reg      <= 1'b0;
+            rvalid_o_reg   <= 1'b0;
+            data_out_o_reg <= 32'h00000000;
             io_out         <= {GPIO_IO_CH{1'b0}};
         end else begin
+            // 默认情况下清除rvalid_o信号
+            rvalid_o_reg <= 1'b0;
+
             // 处理总线请求
-            if (req_i && !gnt_o_reg) begin
+            if (req_i) begin
                 // 授予请求
-                gnt_o_reg <= `ENABLE;
+                gnt_o_reg <= 1'b1;
 
                 // 处理写操作
                 if (we_i) begin
@@ -92,11 +93,7 @@ module gpio_top #(
                     endcase
 
                     // 写操作的rvalid_o信号
-                    rvalid_o_reg <= `ENABLE;
-                end else if (gnt_o_reg) begin
-                    // 确保rvalid_o_reg在操作完成后被重置
-                    rvalid_o_reg <= `DISABLE;
-                    gnt_o_reg <= `DISABLE;
+                    rvalid_o_reg <= 1'b1;
                 end else begin
                     // 处理读操作
                     case (addr_i)
@@ -126,23 +123,16 @@ module gpio_top #(
                             end
                         end
                         default: begin
-                            data_out_o_reg <= `WORD_DATA_W'h0;
+                            data_out_o_reg <= 32'h00000000;
                         end
                     endcase
 
                     // 读操作的rvalid_o信号
-                    rvalid_o_reg <= `ENABLE;
+                    rvalid_o_reg <= 1'b1;
                 end
             end else begin
-                // 清除rvalid_o信号
-                if (rvalid_o_reg) begin
-                    rvalid_o_reg <= `DISABLE;
-                end
-
-                // 清除gnt_o信号
-                if (gnt_o_reg && !req_i) begin
-                    gnt_o_reg <= `DISABLE;
-                end
+                rvalid_o_reg <= 1'b0;
+                gnt_o_reg    <= 1'b0;
             end
         end
     end
