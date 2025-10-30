@@ -1,5 +1,3 @@
-`include "global_config.v"
-`include "stddef.v"
 
 module uart_top (
     // 时钟和复位信号
@@ -75,7 +73,7 @@ module uart_top (
     // 输出数据处理
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            data_out <= `WORD_DATA_W'h0;
+            data_out <= 32'h0;
         end else if (!cs_n && !rd_n) begin
             // 读操作时，将UART读取的数据扩展为32位
             data_out <= {24'h000000, uart_rd_data};
