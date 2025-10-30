@@ -1,4 +1,3 @@
-`include "pe_addr.v"
 `include "pe.v"
 
 module pe_top #(
@@ -22,6 +21,12 @@ module pe_top #(
     output                             gnt_o,
     output                             rvalid_o
 );
+
+    localparam int PE_CTRL_ADDR        = 32'h0000_0000;
+    localparam int PE_STATUS_ADDR      = 32'h0000_0004;
+    localparam int PE_INST_ADDR        = 32'h0000_0008;
+    localparam int PE_DATA_ADDR        = 32'h0000_000C;
+    localparam int PE_ROUTE_ADDR       = 32'h0000_0010;
 
     // Internal control signals (previously between pe_ctrl and pe_top)
     wire [NUM_PES-1:0]                 pe_enable;
@@ -53,11 +58,11 @@ module pe_top #(
 
     // Read data mux
     assign rd_data_o = (cs_valid && !we_i) ?
-                    (reg_offset == `PE_CTRL_ADDR ? {{(DATA_WIDTH-2){1'b0}}, pe_enable_reg, pe_reset_reg} :
-                     reg_offset == `PE_STATUS_ADDR ? pe_status[DATA_WIDTH-1:0] :
-                     reg_offset == `PE_INST_ADDR ? pe_inst_reg[DATA_WIDTH-1:0] :
-                     reg_offset == `PE_DATA_ADDR ? pe_outputs[DATA_WIDTH-1:0] :
-                     reg_offset == `PE_ROUTE_ADDR ? route_config_reg[DATA_WIDTH-1:0] :
+                    (reg_offset == PE_CTRL_ADDR ? {{(DATA_WIDTH-2){1'b0}}, pe_enable_reg, pe_reset_reg} :
+                     reg_offset == PE_STATUS_ADDR ? pe_status[DATA_WIDTH-1:0] :
+                     reg_offset == PE_INST_ADDR ? pe_inst_reg[DATA_WIDTH-1:0] :
+                     reg_offset == PE_DATA_ADDR ? pe_outputs[DATA_WIDTH-1:0] :
+                     reg_offset == PE_ROUTE_ADDR ? route_config_reg[DATA_WIDTH-1:0] :
                      0) : 0;
 
     // Write handling
@@ -76,15 +81,15 @@ module pe_top #(
 
             if (cs_valid && we_i) begin
                 case (reg_offset)
-                    `PE_CTRL_ADDR: begin
+                    PE_CTRL_ADDR: begin
                         pe_enable_reg <= wr_data_i[0+:NUM_PES];
                         pe_reset_reg  <= wr_data_i[NUM_PES+:NUM_PES];
                     end
-                    `PE_INST_ADDR: begin
+                    PE_INST_ADDR: begin
                         pe_inst_reg       <= wr_data_i;
                         pe_inst_valid_reg <= 1'b1;
                     end
-                    `PE_ROUTE_ADDR: begin
+                    PE_ROUTE_ADDR: begin
                         route_config_reg    <= wr_data_i;
                         route_cfg_valid_reg <= 1'b1;
                     end
