@@ -1,6 +1,5 @@
 // UART16550 Test Bench
 
-`include "stddef.v"
 `timescale 1ns/1ps
 
 module tb_uart16550;

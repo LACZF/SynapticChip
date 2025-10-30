@@ -1,10 +1,6 @@
 
 `timescale 1ns/1ps
 
-`include "stddef.v"
-`include "global_config.v"
-`include "uart.v"
-
 module chip_top_test;
     /********** 输入/输出信号 **********/
     reg                       clk;
@@ -28,7 +24,7 @@ module chip_top_test;
     /********** UART模型 **********/
     wire                      rx_busy;          // 接收中标志
     wire                      rx_end;           // 接收完成标志
-    wire [`ByteDataBus]       rx_data;          // 接收的数据
+    wire [7:0]                rx_data;          // 接收的数据
 
     /********** 时钟生成 **********/
     always #5 clk = ~clk;
@@ -116,7 +112,7 @@ module chip_top_test;
 
     /********** 接收信号的监测 **********/
     always @(posedge clk) begin
-        if (rx_end == `ENABLE) begin // 输出接收到的文字
+        if (rx_end == 1'b1) begin // 输出接收到的文字
             $write("%c", rx_data);
         end
     end
@@ -127,7 +123,7 @@ module chip_top_test;
         $readmemh(`SPM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;
-        tx_start <= `DISABLE;
+        tx_start <= 1'b0;
         tx_data  <= 8'h00;
 
         @(posedge clk);
@@ -144,118 +140,118 @@ module chip_top_test;
         // 发送PE模块测试命令
         $display($time, " Sending command: p");
         // 等待发送空闲
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h70; // 'p'
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
+        tx_start <= 1'b0;
         // 等待发送完成
-        wait(tx_end == `ENABLE);
+        wait(tx_end == 1'b1);
         @(posedge clk);
         // 发送CR和LF
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0d; // CR
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0a; // LF
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
 
         #5000;
 
         // 发送GPIO模块测试命令
         $display($time, " Sending command: g");
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h67; // 'g'
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0d;
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0a;
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
 
         #5000;
 
         // 发送SPI模块测试命令
         $display($time, " Sending command: s");
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h73; // 's'
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0d;
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0a;
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
 
         #5000;
 
         // 发送Timer模块测试命令
         $display($time, " Sending command: t");
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h74; // 't'
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0d;
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
-        wait(tx_busy == `DISABLE);
+        wait(tx_busy == 1'b0);
         @(posedge clk);
         tx_data  <= 8'h0a;
-        tx_start <= `ENABLE;
+        tx_start <= 1'b1;
         @(posedge clk);
-        tx_start <= `DISABLE;
-        wait(tx_end == `ENABLE);
+        tx_start <= 1'b0;
+        wait(tx_end == 1'b1);
         @(posedge clk);
 
         #5000;

@@ -1,4 +1,3 @@
-`include "stddef.v"
 
 module tb_gpio;
     // 时钟周期定义
@@ -66,8 +65,8 @@ module tb_gpio;
         input [31:0] data;
         begin
             @(posedge clk);
-            req_i = `ENABLE;
-            we_i = `WRITE;
+            req_i = 1'b1;
+            we_i = 1'b1;
             addr_i = addr;
             wr_data_i = data;
 
@@ -75,7 +74,7 @@ module tb_gpio;
             while (!gnt_o) @(posedge clk);
 
             @(posedge clk);
-            req_i = `DISABLE;
+            req_i = 1'b0;
 
             // 等待rvalid_o
             while (!rvalid_o) @(posedge clk);
@@ -89,15 +88,15 @@ module tb_gpio;
         output [31:0] data;
         begin
             @(posedge clk);
-            req_i = `ENABLE;
-            we_i = `READ;
+            req_i = 1'b1;
+            we_i = 1'b0;
             addr_i = addr;
 
             // 等待gnt_o
             while (!gnt_o) @(posedge clk);
 
             @(posedge clk);
-            req_i = `DISABLE;
+            req_i = 1'b0;
 
             // 等待rvalid_o并读取数据
             while (!rvalid_o) @(posedge clk);
@@ -140,15 +139,15 @@ module tb_gpio;
 
             // 验证输出值
             @(posedge clk);
-            if (gpio_out !== 4'ha5) begin
-                $display("ERROR: GPIO output does not match expected value. Expected: %h, Actual: %h", 4'ha5, gpio_out);
+            if (gpio_out !== 4'ha) begin
+                $display("ERROR: GPIO output does not match expected value. Expected: %h, Actual: %h", 4'ha, gpio_out);
                 error_count = error_count + 1;
             end
 
             // 读取输出寄存器验证
             read_register(32'h04, data);
-            if (data[3:0] !== 4'ha5) begin
-                $display("ERROR: GPIO output register does not match expected value. Expected: %h, Actual: %h", 4'ha5, data[3:0]);
+            if (data[3:0] !== 4'ha) begin
+                $display("ERROR: GPIO output register does not match expected value. Expected: %h, Actual: %h", 4'ha, data[3:0]);
                 error_count = error_count + 1;
             end
 
@@ -163,20 +162,20 @@ module tb_gpio;
             $display("Test 3: GPIO Input Function Test");
 
             // 设置输入值
-            gpio_in = 4'h5A;
+            gpio_in = 4'h5;
 
             // 读取输入寄存器
             read_register(32'h00, data);
-            if (data[3:0] !== 4'h5A) begin
-                $display("ERROR: GPIO input register does not match expected value. Expected: %h, Actual: %h", 4'h5A, data[3:0]);
+            if (data[3:0] !== 4'h5) begin
+                $display("ERROR: GPIO input register does not match expected value. Expected: %h, Actual: %h", 4'h5, data[3:0]);
                 error_count = error_count + 1;
             end
 
             // 更改输入值并再次读取
-            gpio_in = 4'hFF;
+            gpio_in = 4'hF;
             read_register(32'h00, data);
-            if (data[3:0] !== 4'hFF) begin
-                $display("ERROR: GPIO input register does not update correctly. Expected: %h, Actual: %h", 4'hFF, data[3:0]);
+            if (data[3:0] !== 4'hF) begin
+                $display("ERROR: GPIO input register does not update correctly. Expected: %h, Actual: %h", 4'hF, data[3:0]);
                 error_count = error_count + 1;
             end
 
@@ -195,13 +194,13 @@ module tb_gpio;
             gpio_io_dir = 4'h0; // 测试端也设置为输入
 
             // 模拟外部输入
-            gpio_io_test = 4'h33;
+            gpio_io_test = 4'h3;
             gpio_io_dir = 4'hF; // 测试端设置为输出
 
             // 读取IO值
             read_register(32'h0C, data);
-            if (data[3:0] !== 4'h33) begin
-                $display("ERROR: GPIO IO input does not match expected value. Expected: %h, Actual: %h", 4'h33, data[3:0]);
+            if (data[3:0] !== 4'h3) begin
+                $display("ERROR: GPIO IO input does not match expected value. Expected: %h, Actual: %h", 4'h3, data[3:0]);
                 error_count = error_count + 1;
             end
 
@@ -211,8 +210,8 @@ module tb_gpio;
 
             // 验证IO输出
             @(posedge clk);
-            if (gpio_io !== 4'hCC) begin
-                $display("ERROR: GPIO IO output does not match expected value. Expected: %h, Actual: %h", 4'hCC, gpio_io);
+            if (gpio_io !== 4'hC) begin
+                $display("ERROR: GPIO IO output does not match expected value. Expected: %h, Actual: %h", 4'hC, gpio_io);
                 error_count = error_count + 1;
             end
 
@@ -222,12 +221,12 @@ module tb_gpio;
 
             // 模拟外部输入到输入IO
             gpio_io_dir = 4'hA; // 测试端将IO1和IO3设置为输出
-            gpio_io_test = 4'h55;
+            gpio_io_test = 4'h5;
 
             // 读取IO值
             read_register(32'h0C, data);
-            if (data[3:0] !== 4'h5A) begin
-                $display("ERROR: GPIO mixed IO does not work correctly. Expected: %h, Actual: %h", 4'h5A, data[3:0]);
+            if (data[3:0] !== 4'h5) begin
+                $display("ERROR: GPIO mixed IO does not work correctly. Expected: %h, Actual: %h", 4'h5, data[3:0]);
                 error_count = error_count + 1;
             end
 
@@ -238,8 +237,8 @@ module tb_gpio;
     // 主测试流程
     initial begin
         // 初始化信号
-        req_i = `DISABLE;
-        we_i = `READ;
+        req_i = 1'b0;
+        we_i = 1'b0;
         addr_i = 32'h0;
         wr_data_i = 32'h0;
         gpio_in = 4'h0;
@@ -247,9 +246,9 @@ module tb_gpio;
         gpio_io_dir = 4'h0;
 
         // 复位
-        rst_n = `LOW;
+        rst_n = 1'b0;
         #(10 * CLK_PERIOD);
-        rst_n = `HIGH;
+        rst_n = 1'b1;
 
         $display("Starting GPIO Test...");
 

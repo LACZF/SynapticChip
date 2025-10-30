@@ -1,6 +1,3 @@
-`include "stddef.v"
-`include "global_config.v"
-
 `include "pe_addr.v"
 `include "pe.v"
 
@@ -14,7 +11,7 @@ module pe_top #(
     parameter PE_ARRAY_COLS = 2
 ) (
     input                              clk,
-    input                              reset,
+    input                              rst_n,
 
     // OBI Bus interface
     input                              req_i,
@@ -31,12 +28,12 @@ module pe_top #(
     wire [NUM_PES-1:0]                 pe_reset;
     wire [(NUM_PES*INST_WIDTH)-1:0]    pe_instructions;
     wire                               pe_inst_valid;
-    wire [(NUM_PES*`DATA_WIDTH)-1:0]   pe_status;
-    wire [(NUM_PES*`DATA_WIDTH)-1:0]   pe_outputs;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]    pe_status;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]    pe_outputs;
     wire [NUM_PES-1:0]                 pe_busy;
     wire [(NUM_PES*4*PE_ID_WIDTH)-1:0] route_config;
     wire                               route_cfg_valid;
-    wire [`DATA_WIDTH-1:0]             fabric_status;
+    wire [DATA_WIDTH-1:0]              fabric_status;
 
     // --------------------------
     // Control Logic (from pe_ctrl)
@@ -64,8 +61,8 @@ module pe_top #(
                      0) : 0;
 
     // Write handling
-    always @(posedge clk or negedge reset) begin
-        if (reset == 0) begin
+    always @(posedge clk or negedge rst_n) begin
+        if (rst_n == 0) begin
             pe_enable_reg       <= {NUM_PES{1'b0}};
             pe_reset_reg        <= {NUM_PES{1'b0}};
             pe_inst_reg         <= 0;
@@ -101,8 +98,8 @@ module pe_top #(
 
     // rvalid_o generation
     reg rvalid_d;
-    always @(posedge clk or negedge reset) begin
-        if (reset == 0) begin
+    always @(posedge clk or negedge rst_n) begin
+        if (rst_n == 0) begin
             rvalid_d <= 1'b0;
         end else begin
             rvalid_d <= req_i;
@@ -125,19 +122,19 @@ module pe_top #(
 
     // PE interconnection signals
     wire [NUM_PES-1:0]               pe_north_valid;
-    wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_north_data;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]  pe_north_data;
     wire [NUM_PES-1:0]               pe_north_ready;
 
     wire [NUM_PES-1:0]               pe_south_valid;
-    wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_south_data;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]  pe_south_data;
     wire [NUM_PES-1:0]               pe_south_ready;
 
     wire [NUM_PES-1:0]               pe_east_valid;
-    wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_east_data;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]  pe_east_data;
     wire [NUM_PES-1:0]               pe_east_ready;
 
     wire [NUM_PES-1:0]               pe_west_valid;
-    wire [(NUM_PES*`DATA_WIDTH)-1:0] pe_west_data;
+    wire [(NUM_PES*DATA_WIDTH)-1:0]  pe_west_data;
     wire [NUM_PES-1:0]               pe_west_ready;
 
     // Instantiate PE array
@@ -148,7 +145,7 @@ module pe_top #(
                 localparam pe_idx = i * PE_ARRAY_COLS + j;
                 pe_node #(
                     .ADDR_WIDTH(ADDR_WIDTH),
-                    .DATA_WIDTH(`DATA_WIDTH),
+                    .DATA_WIDTH(DATA_WIDTH),
                     .NUM_PES(NUM_PES),
                     .INST_WIDTH(INST_WIDTH),
                     .PE_ID_WIDTH(PE_ID_WIDTH),
@@ -156,26 +153,26 @@ module pe_top #(
                     .PE_ARRAY_COLS(PE_ARRAY_COLS)
                 ) pe (
                     .clk(clk),
-                    .rst_n(reset == `RESET_DISABLE ? 1'b1 : 1'b0 & !pe_reset[pe_idx]),
+                    .rst_n(rst_n | !pe_reset[pe_idx]),
                     .enable_i(pe_enable[pe_idx]),
                     .instruction_i(pe_instructions[pe_idx*INST_WIDTH +: INST_WIDTH]),
                     .inst_valid_i(pe_inst_valid),
                     .north_valid_i(pe_north_valid[pe_idx]),
-                    .north_data_i(pe_north_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
+                    .north_data_i(pe_north_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
                     .north_ready_o(pe_north_ready[pe_idx]),
                     .south_valid_i(pe_south_valid[pe_idx]),
-                    .south_data_i(pe_south_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
+                    .south_data_i(pe_south_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
                     .south_ready_o(pe_south_ready[pe_idx]),
                     .east_valid_i(pe_east_valid[pe_idx]),
-                    .east_data_i(pe_east_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
+                    .east_data_i(pe_east_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
                     .east_ready_o(pe_east_ready[pe_idx]),
                     .west_valid_i(pe_west_valid[pe_idx]),
-                    .west_data_i(pe_west_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
+                    .west_data_i(pe_west_data[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
                     .west_ready_o(pe_west_ready[pe_idx]),
-                    .out_data_o(pe_outputs[pe_idx*`DATA_WIDTH +: `DATA_WIDTH]),
+                    .out_data_o(pe_outputs[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
                     .out_valid_o(),
                     .busy_o(pe_busy[pe_idx]),
-                    .status_o(pe_status[pe_idx*`DATA_WIDTH +: `DATA_WIDTH])
+                    .status_o(pe_status[pe_idx*DATA_WIDTH +: DATA_WIDTH])
                 );
             end
         end
@@ -192,7 +189,7 @@ module pe_top #(
         .PE_ID_WIDTH(PE_ID_WIDTH)
     ) route_cfg (
         .clk(clk),
-        .rst_n(reset == `RESET_DISABLE ? 1'b1 : 1'b0),
+        .rst_n(rst_n),
         .cfg_valid_i(route_cfg_valid),
         .cfg_data_i(route_config),
         .north_routes_o(north_routes),
@@ -210,45 +207,45 @@ module pe_top #(
                 // North connection
                 if (i > 0) begin
                     assign pe_north_valid[pe_idx] = pe_south_valid[(i-1)*PE_ARRAY_COLS+j];
-                    assign pe_north_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] =
-                        pe_south_data[((i-1)*PE_ARRAY_COLS+j)*`DATA_WIDTH +: `DATA_WIDTH];
+                    assign pe_north_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
+                        pe_south_data[((i-1)*PE_ARRAY_COLS+j)*DATA_WIDTH +: DATA_WIDTH];
                     assign pe_south_ready[(i-1)*PE_ARRAY_COLS+j] = pe_north_ready[pe_idx];
                 end else begin
                     assign pe_north_valid[pe_idx] = 1'b0;
-                    assign pe_north_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] = 0;
+                    assign pe_north_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] = 0;
                 end
 
                 // South connection
                 if (i < PE_ARRAY_ROWS-1) begin
                     assign pe_south_valid[pe_idx] = pe_north_valid[(i+1)*PE_ARRAY_COLS+j];
-                    assign pe_south_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] =
-                        pe_north_data[((i+1)*PE_ARRAY_COLS+j)*`DATA_WIDTH +: `DATA_WIDTH];
+                    assign pe_south_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
+                        pe_north_data[((i+1)*PE_ARRAY_COLS+j)*DATA_WIDTH +: DATA_WIDTH];
                     assign pe_north_ready[(i+1)*PE_ARRAY_COLS+j] = pe_south_ready[pe_idx];
                 end else begin
                     assign pe_south_valid[pe_idx] = 1'b0;
-                    assign pe_south_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] = 0;
+                    assign pe_south_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] = 0;
                 end
 
                 // East connection
                 if (j < PE_ARRAY_COLS-1) begin
                     assign pe_east_valid[pe_idx] = pe_west_valid[i*PE_ARRAY_COLS+(j+1)];
-                    assign pe_east_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] =
-                        pe_west_data[(i*PE_ARRAY_COLS+(j+1))*`DATA_WIDTH +: `DATA_WIDTH];
+                    assign pe_east_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
+                        pe_west_data[(i*PE_ARRAY_COLS+(j+1))*DATA_WIDTH +: DATA_WIDTH];
                     assign pe_west_ready[i*PE_ARRAY_COLS+(j+1)] = pe_east_ready[pe_idx];
                 end else begin
                     assign pe_east_valid[pe_idx] = 1'b0;
-                    assign pe_east_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] = 0;
+                    assign pe_east_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] = 0;
                 end
 
                 // West connection
                 if (j > 0) begin
                     assign pe_west_valid[pe_idx] = pe_east_valid[i*PE_ARRAY_COLS+(j-1)];
-                    assign pe_west_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] =
-                        pe_east_data[(i*PE_ARRAY_COLS+(j-1))*`DATA_WIDTH +: `DATA_WIDTH];
+                    assign pe_west_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] =
+                        pe_east_data[(i*PE_ARRAY_COLS+(j-1))*DATA_WIDTH +: DATA_WIDTH];
                     assign pe_east_ready[i*PE_ARRAY_COLS+(j-1)] = pe_west_ready[pe_idx];
                 end else begin
                     assign pe_west_valid[pe_idx] = 1'b0;
-                    assign pe_west_data[pe_idx*`DATA_WIDTH +: `DATA_WIDTH] = 0;
+                    assign pe_west_data[pe_idx*DATA_WIDTH +: DATA_WIDTH] = 0;
                 end
             end
         end

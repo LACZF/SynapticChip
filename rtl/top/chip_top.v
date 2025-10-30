@@ -1,9 +1,7 @@
-`include "stddef.v"
-`include "global_config.v"
+
+`include "common.v"
 
 `include "defines.sv"
-`include "jtag_def.sv"
-`include "pe_addr.v"
 
 module chip_top #(
     parameter TRACE_ENABLE              = 0,
@@ -223,7 +221,7 @@ module chip_top #(
         .PE_ARRAY_COLS(PE_ARRAY_COLS)
     ) u_pe_top (
         .clk        (clk),
-        .reset      (~ndmreset_n),
+        .rst_n      (rst_n),
         .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
         .we_i       (slave_we[SLAVE_PE_TOP_INDEX]),
         .addr_i     (slave_addr[SLAVE_PE_TOP_INDEX]),

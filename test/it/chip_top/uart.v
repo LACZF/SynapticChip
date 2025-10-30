@@ -1,7 +1,5 @@
 // UART RX/TX modules for chip_top_test
 
-`include "stddef.v"
-
 // UART Receiver Module
 module test_uart_rx (
     input  wire        clk,
@@ -47,20 +45,20 @@ module test_uart_rx (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= IDLE;
-            rx_busy_o <= `DISABLE;
-            rx_end_o <= `DISABLE;
+            rx_busy_o <= 1'b0;
+            rx_end_o <= 1'b0;
             rx_data_o <= 8'h00;
             rx_data <= 8'h00;
             bit_cnt <= 4'd0;
         end else begin
-            rx_end_o <= `DISABLE;
+            rx_end_o <= 1'b0;
 
             case (state)
                 IDLE: begin
-                    rx_busy_o <= `DISABLE;
+                    rx_busy_o <= 1'b0;
                     if (rx_i == 1'b0) begin // Start bit detected
                         state <= START_BIT;
-                        rx_busy_o <= `ENABLE;
+                        rx_busy_o <= 1'b1;
                         baud_cnt <= 16'd0;
                     end
                 end
@@ -91,7 +89,7 @@ module test_uart_rx (
                     if (baud_tick && bit_cnt >= 4'd1) begin
                         state <= IDLE;
                         rx_data_o <= rx_data;
-                        rx_end_o <= `ENABLE;
+                        rx_end_o <= 1'b1;
                     end else if (baud_tick) begin
                         bit_cnt <= bit_cnt + 1;
                     end
@@ -147,20 +145,20 @@ module test_uart_tx (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= IDLE;
-            tx_busy_o <= `DISABLE;
-            tx_end_o <= `DISABLE;
+            tx_busy_o <= 1'b0;
+            tx_end_o <= 1'b0;
             tx_o <= 1'b1;
             tx_data <= 8'h00;
             bit_cnt <= 4'd0;
         end else begin
-            tx_end_o <= `DISABLE;
+            tx_end_o <= 1'b0;
 
             case (state)
                 IDLE: begin
                     tx_o <= 1'b1; // Idle state is high
                     if (tx_start_i && !tx_busy_o) begin
                         state <= START_BIT;
-                        tx_busy_o <= `ENABLE;
+                        tx_busy_o <= 1'b1;
                         tx_data <= tx_data_i;
                         bit_cnt <= 4'd0;
                     end
@@ -189,8 +187,8 @@ module test_uart_tx (
                     if (baud_tick) begin
                         tx_o <= 1'b1;
                         state <= IDLE;
-                        tx_busy_o <= `DISABLE;
-                        tx_end_o <= `ENABLE;
+                        tx_busy_o <= 1'b0;
+                        tx_end_o <= 1'b1;
                     end
                 end
             endcase

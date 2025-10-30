@@ -1,6 +1,3 @@
-`include "global_config.v"
-`include "stddef.v"
-
 module uart16550 (
     input  wire        clk,                // 时钟信号
     input  wire        rst_n,              // 复位信号，低电平有效
@@ -216,11 +213,11 @@ module uart16550 (
     // 发送控制逻辑
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            tx_start <= `DISABLE;
+            tx_start <= 1'b0;
         end else if (thr_sel) begin
-            tx_start <= `ENABLE;
+            tx_start <= 1'b1;
         end else if (tx_busy) begin
-            tx_start <= `DISABLE;
+            tx_start <= 1'b0;
         end
     end
 
@@ -241,20 +238,20 @@ module uart16550 (
     // 接收数据处理
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            rx_available <= `DISABLE;
+            rx_available <= 1'b0;
             rx_buffer <= 8'h00;
-            rx_int <= `DISABLE;
+            rx_int <= 1'b0;
         end else begin
             if (rx_ready) begin
                 rx_buffer <= rx_data;
-                rx_available <= `ENABLE;
+                rx_available <= 1'b1;
                 // 设置接收中断
                 if (ier[0]) begin
-                    rx_int <= `ENABLE;
+                    rx_int <= 1'b1;
                 end
             end else if (rbr_sel) begin
-                rx_available <= `DISABLE;
-                rx_int <= `DISABLE;
+                rx_available <= 1'b0;
+                rx_int <= 1'b0;
             end
         end
     end
@@ -264,7 +261,7 @@ module uart16550 (
     //--------------------------------------------------------------------
     assign lsr = {
         1'b0,                 // bit 7: 保留
-        tx_busy ? `DISABLE : `ENABLE,  // bit 6: THR空
+        tx_busy ? 1'b0 : 1'b1,  // bit 6: THR空
         1'b0,                 // bit 5: TX holding register空 (未使用)
         1'b0,                 // bit 4: 帧错误 (未使用)
         1'b0,                 // bit 3: 奇偶校验错误 (未使用)
@@ -288,8 +285,8 @@ module uart16550 (
 
     // 调制解调器状态寄存器 (MSR) - 简化实现
     assign msr = 8'h00;
-    assign modem_int = `DISABLE;
-    assign fifo_int = `DISABLE;
+    assign modem_int = 1'b0;
+    assign fifo_int = 1'b0;
 
     // 中断输出
     assign irq = (rx_int || tx_int || modem_int || fifo_int) && !cs_n;
@@ -324,11 +321,11 @@ module uart_tx (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= IDLE;
-            busy <= `DISABLE;
+            busy <= 1'b0;
             tx <= 1'b1;
             tx_buffer <= 8'h00;
             bit_count <= 3'd0;
-            baud_clk_prev <= `LOW;
+            baud_clk_prev <= 1'b0;
         end else begin
             baud_clk_prev <= baud_clk;
 
@@ -337,10 +334,10 @@ module uart_tx (
                 case (state)
                     IDLE: begin
                         tx <= 1'b1;  // 空闲状态为高电平
-                        busy <= `DISABLE;
+                        busy <= 1'b0;
                         if (start) begin
                             state <= START_BIT;
-                            busy <= `ENABLE;
+                            busy <= 1'b1;
                             tx_buffer <= data_in;
                         end
                     end
@@ -401,13 +398,13 @@ module uart_rx (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= IDLE;
-            ready <= `DISABLE;
-            error <= `DISABLE;
+            ready <= 1'b0;
+            error <= 1'b0;
             data_out <= 8'h00;
             rx_buffer <= 8'h00;
             bit_count <= 3'd0;
             sample_count <= 4'd0;
-            baud_clk_prev <= `LOW;
+            baud_clk_prev <= 1'b0;
             rx_sync1 <= 1'b1;
             rx_sync2 <= 1'b1;
         end else begin
@@ -416,8 +413,8 @@ module uart_rx (
             rx_sync2 <= rx_sync1;
 
             baud_clk_prev <= baud_clk;
-            ready <= `DISABLE;
-            error <= `DISABLE;
+            ready <= 1'b0;
+            error <= 1'b0;
 
             // 仅在波特率时钟上升沿更新状态
             if (baud_clk && !baud_clk_prev) begin
@@ -458,9 +455,9 @@ module uart_rx (
                         sample_count <= sample_count + 4'd1;
                         if (sample_count == 4'd15) begin  // 在停止位中间采样
                             data_out <= rx_buffer;
-                            ready <= `ENABLE;
+                            ready <= 1'b1;
                             if (!rx_sync2) begin
-                                error <= `ENABLE;
+                                error <= 1'b1;
                             end
                             state <= IDLE;
                         end

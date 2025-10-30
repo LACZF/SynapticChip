@@ -1,3 +1,4 @@
+`include "common.v"
 
 module io_top #(
     parameter ADDR_WIDTH           = 32,
