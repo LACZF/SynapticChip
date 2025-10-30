@@ -11,6 +11,7 @@ module uart_top(
     /********** OBI总线接口 **********/
     input  wire                    req_i,
     input  wire                    we_i,
+    input  wire [31:0]             debug_addr_i,  // 地址
     input  wire [`UartAddrBus]     addr_i,
     input  wire [`WordDataBus]     wr_data_i,
     output reg  [`WordDataBus]     data_out_o,
@@ -55,9 +56,9 @@ module uart_top(
 
             // 读有效信号：在请求被接受后的下一个周期置位
             if (req_accepted && !we_i) begin
-                rvalid_o <= 1'b1;
-            end else begin
                 rvalid_o <= 1'b0;
+            end else begin
+                rvalid_o <= 1'b1;
             end
 
             // 清除请求接受标志

@@ -5,8 +5,8 @@
 .equ RAM_BASE,       0x20000000
 
 # 内存映射地址定义
-# .equ UART_BASE,      IO_BASE   + 0x00020000
-.equ UART_BASE,      RAM_BASE  + 0x2000
+.equ UART_BASE,      IO_BASE   + 0x00020000
+# .equ UART_BASE,      RAM_BASE  + 0x2000
 .equ UART_RBR,       UART_BASE + 0x00  # 接收缓冲区寄存器
 .equ UART_THR,       UART_BASE + 0x00  # 发送保持寄存器
 .equ UART_IER,       UART_BASE + 0x04  # 中断使能寄存器

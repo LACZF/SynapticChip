@@ -37,8 +37,8 @@ module io_top #(
     output wire                               slave_rvalid     [SLAVES],
     output wire [31:0]                        slave_rdata      [SLAVES],
 
-    input  wire [31:0]                        slave_addr_mask  [SLAVES],
-    input  wire [31:0]                        slave_addr_base  [SLAVES],
+    output wire [31:0]                        slave_addr_mask  [SLAVES],
+    output wire [31:0]                        slave_addr_base  [SLAVES],
 
     // 中断信号
     output wire                               irq_timer,
@@ -73,20 +73,20 @@ module io_top #(
     localparam int SLAVE_SPI_INDEX     = START_SLAVE + 3;
     localparam int SLAVE_FLASH_INDEX   = START_SLAVE + 4;
 
-    localparam TIMER_ADDR_BASE         = IO_ADDR_BASE + 32'h00010000;
-    localparam TIMER_ADDR_MASK         = `CALC_ADDR_MASK_BY_LENGTH(TIMER_ADDR_BASE, 4096);
+    localparam int TIMER_ADDR_BASE     = IO_ADDR_BASE + 32'h00010000;
+    localparam int TIMER_ADDR_MASK     = `CALC_ADDR_MASK_BY_LENGTH(TIMER_ADDR_BASE, 4096);
 
-    localparam UART_ADDR_BASE          = IO_ADDR_BASE + 32'h00020000;
-    localparam UART_ADDR_MASK          = `CALC_ADDR_MASK_BY_LENGTH(UART_ADDR_BASE, 4096);
+    localparam int UART_ADDR_BASE      = IO_ADDR_BASE + 32'h00020000;
+    localparam int UART_ADDR_MASK      = `CALC_ADDR_MASK_BY_LENGTH(UART_ADDR_BASE, 4096);
 
-    localparam GPIO_ADDR_BASE          = IO_ADDR_BASE + 32'h00030000;
-    localparam GPIO_ADDR_MASK          = `CALC_ADDR_MASK_BY_LENGTH(GPIO_ADDR_BASE, 4096);
+    localparam int GPIO_ADDR_BASE      = IO_ADDR_BASE + 32'h00030000;
+    localparam int GPIO_ADDR_MASK      = `CALC_ADDR_MASK_BY_LENGTH(GPIO_ADDR_BASE, 4096);
 
-    localparam SPI_ADDR_BASE           = IO_ADDR_BASE + 32'h00040000;
-    localparam SPI_ADDR_MASK           = `CALC_ADDR_MASK_BY_LENGTH(SPI_ADDR_BASE, 4096);
+    localparam int SPI_ADDR_BASE       = IO_ADDR_BASE + 32'h00040000;
+    localparam int SPI_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(SPI_ADDR_BASE, 4096);
 
-    localparam XIP_ADDR_BASE           = IO_ADDR_BASE + 32'h00050000;
-    localparam XIP_ADDR_MASK           = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 4096);
+    localparam int XIP_ADDR_BASE       = IO_ADDR_BASE + 32'h00050000;
+    localparam int XIP_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 4096);
 
     /********** TIMER **********/
     generate
@@ -126,6 +126,7 @@ module io_top #(
 
                 .req_i             (slave_req[SLAVE_UART_INDEX]),
                 .we_i              (slave_we[SLAVE_UART_INDEX]),
+                .debug_addr_i      (slave_addr[SLAVE_UART_INDEX]),
                 .addr_i            (slave_addr[SLAVE_UART_INDEX][`UartAddrLoc]),
                 .wr_data_i         (slave_wdata[SLAVE_UART_INDEX]),
                 .data_out_o        (slave_rdata[SLAVE_UART_INDEX]),

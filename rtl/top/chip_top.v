@@ -22,7 +22,7 @@ module chip_top #(
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
     parameter IMPLEMENT_SPI             = 0,
-    parameter IMPLEMENT_FLASH           = 1,
+    parameter IMPLEMENT_FLASH           = 0,
     parameter IMPLEMENT_TIMER           = 1,
     parameter IMPLEMENT_I2C             = 1,
     parameter GPIO_NUM                  = 16,
@@ -75,20 +75,20 @@ module chip_top #(
     localparam int SLAVE_PE_TOP_INDEX       = 3;
     localparam int SLAVE_IO_START_INDEX     = SLAVE_PE_TOP_INDEX + 1;
 
-    localparam ROM_ADDR_BASE                = 32'h00000000;
-    localparam ROM_ADDR_MASK                = `CALC_ADDR_MASK_BY_LENGTH(ROM_ADDR_BASE, ROM_DEPTH * 4);
+    localparam int ROM_ADDR_BASE            = 32'h00000000;
+    localparam int ROM_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(ROM_ADDR_BASE, ROM_DEPTH * 4);
 
-    localparam DEBUG_ADDR_BASE              = 32'h10000000;
-    localparam DEBUG_ADDR_MASK              = `CALC_ADDR_MASK_BY_LENGTH(DEBUG_ADDR_BASE, 8*1024);
+    localparam int DEBUG_ADDR_BASE          = 32'h10000000;
+    localparam int DEBUG_ADDR_MASK          = `CALC_ADDR_MASK_BY_LENGTH(DEBUG_ADDR_BASE, 8*1024);
 
-    localparam RAM_ADDR_BASE                = 32'h20000000;
-    localparam RAM_ADDR_MASK                = `CALC_ADDR_MASK_BY_LENGTH(RAM_ADDR_BASE, RAM_DEPTH * 4);
+    localparam int RAM_ADDR_BASE            = 32'h20000000;
+    localparam int RAM_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(RAM_ADDR_BASE, RAM_DEPTH * 4);
 
-    localparam PE_ADDR_BASE                 = 32'h30000000;
-    localparam PE_ADDR_MASK                 = `CALC_ADDR_MASK_BY_LENGTH(PE_ADDR_BASE, 1 * 1024 * 1024);
+    localparam int PE_ADDR_BASE             = 32'h30000000;
+    localparam int PE_ADDR_MASK             = `CALC_ADDR_MASK_BY_LENGTH(PE_ADDR_BASE, 1 * 1024 * 1024);
 
-    localparam IO_ADDR_BASE                 = 32'h40000000;
-    localparam IO_ADDR_MASK                 = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
+    localparam int IO_ADDR_BASE             = 32'h40000000;
+    localparam int IO_ADDR_MASK             = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
 
     wire           master_req       [MASTERS];
     wire           master_gnt       [MASTERS];
@@ -238,6 +238,8 @@ module chip_top #(
         .DATA_WIDTH             (DATA_WIDTH),
         .SLAVES                 (SLAVES),
         .START_SLAVE            (SLAVE_IO_START_INDEX),
+        .IO_ADDR_BASE           (IO_ADDR_BASE),
+        .IO_ADDR_MASK           (IO_ADDR_MASK),
         .IMPLEMENT_UART         (IMPLEMENT_UART),
         .IMPLEMENT_GPIO         (IMPLEMENT_GPIO),
         .IMPLEMENT_SPI          (IMPLEMENT_SPI),
