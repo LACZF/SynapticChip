@@ -90,7 +90,7 @@ module chip_top_test;
     wire                      tx_end;       // 发送完成标志
 
     /********** UART接收模型 **********/
-    uart_rx u_uart_rx (
+    test_uart_rx u_uart_rx (
         .clk        (clk),
         .rst_n      (rst_n),
         /********** 控制信号 **********/
@@ -102,7 +102,7 @@ module chip_top_test;
     );
 
     /********** UART发送模型 **********/
-    uart_tx u_uart_tx (
+    test_uart_tx u_uart_tx (
         .clk        (clk),
         .rst_n      (rst_n),
         /********** 控制信号 **********/

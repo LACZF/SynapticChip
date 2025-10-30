@@ -114,9 +114,7 @@ TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 TEST_SRC += $(TOP_DIR)/rtl/io/spi/spi_top.v
 TEST_SRC += $(TOP_DIR)/rtl/io/gpio/gpio_top.v
 TEST_SRC += $(TOP_DIR)/rtl/io/timer/timer_top.v
-TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_ctrl.v
-TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
-TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart16550.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_top.v
 TEST_SRC += $(TOP_DIR)/rtl/io/io_top.v
 

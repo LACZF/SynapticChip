@@ -2,7 +2,6 @@
 `include "global_config.v"
 
 `include "timer.v"
-`include "uart.v"
 `include "gpio.v"
 `include "spi_addr.v"
 `include "spi.v"
@@ -121,32 +120,28 @@ module io_top #(
             assign slave_addr_mask[SLAVE_UART_INDEX] = UART_ADDR_MASK;
             assign slave_addr_base[SLAVE_UART_INDEX] = UART_ADDR_BASE;
             uart_top u_uart (
-                .clk               (clk),
-                .rst_n             (rst_n),
+                .clk             (clk),
+                .rst_n           (rst_n),
 
-                .req_i             (slave_req[SLAVE_UART_INDEX]),
-                .we_i              (slave_we[SLAVE_UART_INDEX]),
-                .debug_addr_i      (slave_addr[SLAVE_UART_INDEX]),
-                .addr_i            (slave_addr[SLAVE_UART_INDEX][`UartAddrLoc]),
-                .wr_data_i         (slave_wdata[SLAVE_UART_INDEX]),
-                .data_out_o        (slave_rdata[SLAVE_UART_INDEX]),
-                .gnt_o             (slave_gnt[SLAVE_UART_INDEX]),
-                .rvalid_o          (slave_rvalid[SLAVE_UART_INDEX]),
+                .req_i           (slave_req[SLAVE_UART_INDEX]),
+                .we_i            (slave_we[SLAVE_UART_INDEX]),
+                .addr_i          (slave_addr[SLAVE_UART_INDEX]),
+                .wr_data_i       (slave_wdata[SLAVE_UART_INDEX]),
+                .data_out_o      (slave_rdata[SLAVE_UART_INDEX]),
+                .gnt_o           (slave_gnt[SLAVE_UART_INDEX]),
+                .rvalid_o        (slave_rvalid[SLAVE_UART_INDEX]),
 
-                .irq_o             (irq_uart_rx),
+                .uart_rx         (uart_rx),
+                .uart_tx         (uart_tx),
 
-                .uart_rx_i         (uart_rx),
-                .uart_tx_o         (uart_tx)
-            );
-            // 合并RX和TX中断信号
-            assign irq_uart_tx = `DISABLE;
+                .irq_o           (irq_uart_rx)
+             );
         end else begin
-            assign slave_rdata[SLAVE_UART_INDEX]   = `WORD_DATA_W'h0;
-            assign slave_rvalid[SLAVE_UART_INDEX]  = `DISABLE_N;
-            assign slave_gnt[SLAVE_UART_INDEX]     = `DISABLE_N;
-            assign irq_uart_rx                     = `DISABLE;
-            assign irq_uart_tx                     = `DISABLE;
-            assign uart_tx                         = `LOW;
+            assign slave_rdata[SLAVE_UART_INDEX]    = `WORD_DATA_W'h0;
+            assign slave_rvalid[SLAVE_UART_INDEX]   = `DISABLE_N;
+            assign slave_gnt[SLAVE_UART_INDEX]      = `DISABLE_N;
+            assign irq_uart_rx                      = `DISABLE;
+            assign irq_uart_tx                      = `DISABLE;
         end
     endgenerate
 
