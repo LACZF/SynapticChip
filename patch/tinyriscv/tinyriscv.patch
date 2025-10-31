@@ -266,7 +266,7 @@ index 5b6cc8d..c416fce 100644
 +endmodule
 \ No newline at end of file
 diff --git a/rtl/core/exu_mem.sv b/rtl/core/exu_mem.sv
-index eca5b41..1e12183 100644
+index eca5b41..4e0b268 100644
 --- a/rtl/core/exu_mem.sv
 +++ b/rtl/core/exu_mem.sv
 @@ -1,17 +1,17 @@
@@ -299,19 +299,10 @@ index eca5b41..1e12183 100644
   */
  
  `include "defines.sv"
-@@ -28,14 +28,11 @@ module exu_mem(
-     input wire[31:0] mem_rdata_i,
-     input wire mem_gnt_i,
-     input wire mem_rvalid_i,
--    input wire mem_op_lb_i,
--    input wire mem_op_lh_i,
--    input wire mem_op_lw_i,
--    input wire mem_op_lbu_i,
--    input wire mem_op_lhu_i,
--    input wire mem_op_sb_i,
--    input wire mem_op_sh_i,
--    input wire mem_op_sw_i,
-+    input wire mem_op_lb_i,    input wire mem_op_lh_i,    input wire mem_op_lw_i,    input wire mem_op_lbu_i,    input wire mem_op_lhu_i,    input wire mem_op_sb_i,    input wire mem_op_sh_i,    input wire mem_op_sw_i,
+@@ -36,6 +36,10 @@ module exu_mem(
+     input wire mem_op_sb_i,
+     input wire mem_op_sh_i,
+     input wire mem_op_sw_i,
 +    // RV64I 内存指令支持
 +    input wire mem_op_lwu_i,   // 无符号字加载
 +    input wire mem_op_ld_i,    // 双字加载
@@ -319,7 +310,7 @@ index eca5b41..1e12183 100644
  
      output wire mem_access_misaligned_o,
      output wire mem_stall_o,
-@@ -55,10 +52,11 @@ module exu_mem(
+@@ -55,10 +59,11 @@ module exu_mem(
      wire mem_addr_index10 = (mem_addr_index == 2'b10);
      wire mem_addr_index11 = (mem_addr_index == 2'b11);
  
@@ -335,7 +326,7 @@ index eca5b41..1e12183 100644
  
      reg[31:0] sb_res;
  
-@@ -116,18 +114,21 @@ module exu_mem(
+@@ -116,18 +121,21 @@ module exu_mem(
              mem_op_sb_i:  mem_wdata = sb_res;
              mem_op_sh_i:  mem_wdata = sh_res;
              mem_op_sw_i:  mem_wdata = sw_res;
@@ -359,7 +350,7 @@ index eca5b41..1e12183 100644
  
      localparam S_IDLE       = 3'b001;
      localparam S_WAIT_READ  = 3'b010;
-@@ -199,7 +200,8 @@ module exu_mem(
+@@ -199,7 +207,8 @@ module exu_mem(
      // 写内存使能
      assign mem_mem_we_o = mem_mem_we_d;
  
@@ -369,7 +360,7 @@ index eca5b41..1e12183 100644
                                       (mem_op_sh_i | mem_op_lh_i | mem_op_lhu_i)? mem_addr_i[0]:
                                       0;
  
-@@ -211,4 +213,4 @@ module exu_mem(
+@@ -211,4 +220,4 @@ module exu_mem(
          end
      end
  
