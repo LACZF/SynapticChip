@@ -2,6 +2,7 @@
 IVERILOG ?= $(shell which iverilog)
 VVP ?= $(shell which vvp)
 TOP_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 SCRIPT_DIR := $(TOP_DIR)/scripts
 
 ifeq ($(V),1)
@@ -9,6 +10,8 @@ QUITE :=
 else
 QUITE := @
 endif
+
+include $(TOP_DIR)/rtl/filelist.txt
 
 ifneq (,$(filter test,$(MAKECMDGOALS)))
 ifeq ($(M),)
@@ -101,7 +104,8 @@ all_test: all_ut all_it
 
 # YOSYS_ENV ?= OUTPUT_SVG=1
 yosys_synthesis:
-	READ_RTL_ARGS="$(READ_RTL_ARGS) -I$(shell realpath $$(dirname $(M)))" \
+	$(QUITE)READ_RTL_ARGS="$(READ_RTL_ARGS) -I$(shell realpath $$(dirname $(M)))" \
+		RTL_SRC_DIR="$(RTL_SRC_DIR)" MODULE_NAME="$(MODULE_NAME)" RTL_SRC="$(RTL_SRC)" \
 		$(YOSYS_ENV) $(TOP_MODULE_ARG) $(SCRIPT_DIR)/yosys.sh synth $(M)
 
 patch_save:
@@ -128,5 +132,5 @@ all:
 help:
 	@echo "Usage: make [target] [options]"
 	@echo "\t Targets:"
-	@grep -E '^[a-zA-Z_-]+:' $(MAKEFILE_LIST) | \
+	@grep -E '^[a-zA-Z_-]+:' $(THIS_MAKEFILE) | \
 		awk 'BEGIN {FS = ":"}; {printf "\t\t %s\n", $$1}'

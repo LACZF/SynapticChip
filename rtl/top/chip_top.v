@@ -1,6 +1,8 @@
 
 `include "common.v"
 
+`include "jtag_def.sv"
+
 `include "defines.sv"
 
 module chip_top #(

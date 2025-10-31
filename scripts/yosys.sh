@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TOP_DIR="$(dirname $(readlink -f $0))"
-RTL_SRC=""
+TOP_DIR="$(realpath $(dirname $(readlink -f $0))/../)"
+RTL_SRC_DIR=""
 MODULE_NAME=""
 BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
 SRC_DIR=$BUILD_DIR/src
@@ -68,7 +68,7 @@ function env_log() { # do_not_function_help
 	args+="\t export OUTPUT_PS=$OUTPUT_PS\n"
 	args+="\t export NETLIST2SVG=$NETLIST2SVG\n"
 	args+="Parse result:\n"
-	args+="\t RTL_SRC     : $RTL_SRC.\n"
+	args+="\t RTL_SRC_DIR : $RTL_SRC_DIR.\n"
 	args+="\t MODULE_NAME : $MODULE_NAME.\n"
 	args+="\t BUILD_DIR   : $BUILD_DIR.\n"
 	args+="\t SRC_DIR     : $SRC_DIR.\n"
@@ -79,9 +79,20 @@ function env_log() { # do_not_function_help
 
 function parse_rtl_src() { # do_not_function_help
 	local src=$1
-	RTL_SRC="$(realpath $src)"
-	src=$(basename $src)
-	MODULE_NAME="${src%.v*}"
+	if [ "$RTL_SRC"x = ""x ]; then
+		RTL_SRC_DIR="$(realpath $src)"
+		src=$(basename $src)
+		MODULE_NAME="${src%.v*}"
+	fi
+
+	if [ "$MODULE_NAME"x = ""x ]; then
+		if [ "$TOP_MODULE"x = ""x ]; then
+			MODULE_NAME=$(basename $RTL_SRC_DIR)
+		else
+			MODULE_NAME=$TOP_MODULE
+		fi
+	fi
+
 	BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
 	SRC_DIR=$BUILD_DIR/src
 	LOG_DIR=$BUILD_DIR/log
@@ -89,22 +100,29 @@ function parse_rtl_src() { # do_not_function_help
 	env_log
 }
 
-function prepare() { # RTL_SRC
+function prepare() { # RTL_SRC_DIR
 	local src=$1
 	local f=""
 
+	log DEBUG "Parse rtl src start."
+	parse_rtl_src $src
+
+	if [ ! "$RTL_SRC"x = ""x ]; then
+		mkdir -p $SRC_DIR
+		cp -f $RTL_SRC $SRC_DIR
+		echo -e "RTL_SRC : $RTL_SRC" >> $LOG_DIR/filelist.log
+		return
+	fi
+
 	if [ "$src"x = ""x ]; then
-		echo "Input RTL_SRC, please."
+		echo "Input RTL_SRC_DIR, please."
 		help 1
 	fi
 
 	if [ ! -f $src -a ! -d $src ]; then
-		echo "RTL_SRC($src) is not file or dir."
+		echo "RTL_SRC_DIR($src) is not file or dir."
 		help 1
 	fi
-
-	log DEBUG "Parse rtl src start."
-	parse_rtl_src $src
 
 	if [ "$MODULE_NAME"x = ""x ]; then
 		echo "Known MODULE_NAME."
@@ -113,12 +131,12 @@ function prepare() { # RTL_SRC
 
 	mkdir -p $SRC_DIR
 
-	if [ -f $RTL_SRC ]; then
-		cp -f $RTL_SRC $SRC_DIR
+	if [ -f $RTL_SRC_DIR ]; then
+		cp -f $RTL_SRC_DIR $SRC_DIR
 		return
 	fi
 
-	for f in $(find $RTL_SRC/ -name "*.v" -o -name "*.h");
+	for f in $(find $RTL_SRC_DIR/ -name "*.v" -o -name "*.h");
 	do
 		if contain_key $(basename $f) $EXCEPT_LIST; then
 			continue
@@ -210,12 +228,12 @@ EOF
 		echo "show -format ps -prefix $prefix" >> $script
 	fi
 
-	log DEBUG "do_synth_behave for $RTL_SRC start."
+	log DEBUG "do_synth_behave for $RTL_SRC_DIR start."
 	run_cmd $YOSYS $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
 	dot2png "$prefix.dot" "$prefix.png" 2>$LOG_DIR/$sub_prefix.dot2png.err.log 1>$LOG_DIR/$sub_prefix.dot2png.output.log
 	dot2svg "$prefix.dot" "$prefix.svg" 2>$LOG_DIR/$sub_prefix.dot2svg.err.log 1>$LOG_DIR/$sub_prefix.dot2svg.output.log
 	do_netlistsvg $prefix.json -o $prefix.netlist2svg.svg 2>$LOG_DIR/$sub_prefix.netlist2svg.err.log 1>$LOG_DIR/$sub_prefix.netlist2svg.output.log
-	log DEBUG "do_synth_behave for $RTL_SRC done."
+	log DEBUG "do_synth_behave for $RTL_SRC_DIR done."
 }
 
 function do_synth_rtl() {
@@ -251,25 +269,25 @@ EOF
 		echo "show -format ps -prefix $prefix" >> $script
 	fi
 
-	log DEBUG "do_synth_rtl for $RTL_SRC start."
+	log DEBUG "do_synth_rtl for $RTL_SRC_DIR start."
 	run_cmd $YOSYS $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
 	dot2png "$prefix.dot" "$prefix.png" 2>$LOG_DIR/$sub_prefix.dot2png.err.log 1>$LOG_DIR/$sub_prefix.dot2png.output.log
 	dot2svg "$prefix.dot" "$prefix.svg" 2>$LOG_DIR/$sub_prefix.dot2svg.err.log 1>$LOG_DIR/$sub_prefix.dot2svg.output.log
 	do_netlistsvg $prefix.json -o $prefix.netlist2svg.svg 2>$LOG_DIR/$sub_prefix.netlist2svg.err.log 1>$LOG_DIR/$sub_prefix.netlist2svg.output.log
-	log DEBUG "do_synth_rtl for $RTL_SRC done."
+	log DEBUG "do_synth_rtl for $RTL_SRC_DIR done."
 }
 
-function synth_behave() { # RTL_SRC
+function synth_behave() { # RTL_SRC_DIR
 	prepare $@
 	do_synth_behave
 }
 
-function synth_rtl() { # RTL_SRC
+function synth_rtl() { # RTL_SRC_DIR
 	prepare $@
 	do_synth_rtl
 }
 
-function synth() { # RTL_SRC
+function synth() { # RTL_SRC_DIR
 	prepare $@
 	do_synth_behave
 	do_synth_rtl

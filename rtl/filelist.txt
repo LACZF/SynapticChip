@@ -1,0 +1,126 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+RTL_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
+
+RTL_SRC_DIR      = $(TOP_DIR)/rtl
+RTL_INCLUDE_DIR += -I$(TOP_DIR)/tinyriscv/rtl/core
+RTL_INCLUDE_DIR += -I$(TOP_DIR)/tinyriscv/rtl/debug
+
+RTL_SRC += $(TOP_DIR)/rtl/include/common.v
+RTL_SRC += $(TOP_DIR)/rtl/include/pe_ctrl.v
+RTL_SRC += $(TOP_DIR)/rtl/include/pe_router.v
+RTL_SRC += $(TOP_DIR)/rtl/include/pe.v
+RTL_SRC += $(TOP_DIR)/rtl/include/spi_addr.v
+RTL_SRC += $(TOP_DIR)/rtl/include/spi.v
+RTL_SRC += $(TOP_DIR)/rtl/include/timer.v
+
+# RTL_SRC += $(TOP_DIR)/rtl/common/fifo.v
+# RTL_SRC += $(TOP_DIR)/rtl/common/cache.v
+
+# core
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/bpu.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/csr_reg.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/csr.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/defines.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/divider.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/exception.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/exu_alu_datapath.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/exu_commit.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/exu_dispatch.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/exu_mem.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/exu_muldiv.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/exu.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/gpr_reg.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/idu_exu.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/idu.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/ifu_idu.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/ifu.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/pipe_ctrl.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/rst_gen.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/tinyriscv_core.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/tracer.sv
+
+# debug
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/debug_rom.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_def.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_dm.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_dmi.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_dtm.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_mem.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_sba.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_tap.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_top.sv
+
+# bootrom
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/bootrom/bootrom_top.sv
+
+# gpio
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_core.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_reg_pkg.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_reg_top.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/gpio/gpio_top.sv
+
+# i2c
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_core.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_master.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_reg_pkg.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_reg_top.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_slave.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/i2c/i2c_top.sv
+
+# pinmux
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_core.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_reg_pkg.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_reg_top.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/pinmux/pinmux_top.sv
+
+# ram
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/ram.sv
+
+# rom
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
+
+# sys_bus
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect_master_sel.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect_slave_sel.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect.sv
+
+# utils
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/async_fifo.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/cdc_2phase.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/clk_div.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/edge_detect.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_buf.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_dff.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_ram.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/prim_filter.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/prim_subreg_arb.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/prim_subreg_ext.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/prim_subreg.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/sync_fifo.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/up_counter.sv
+
+# XIP
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/spi_master_transmit.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_core.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_w25q64_ctrl.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_top.sv
+
+# PE
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
+
+# IO
+RTL_SRC += $(TOP_DIR)/rtl/io/spi/spi_top.v
+RTL_SRC += $(TOP_DIR)/rtl/io/gpio/gpio_top.v
+RTL_SRC += $(TOP_DIR)/rtl/io/timer/timer_top.v
+RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart16550.v
+RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart_top.v
+RTL_SRC += $(TOP_DIR)/rtl/io/io_top.v
+
+RTL_SRC += $(TOP_DIR)/rtl/top/chip_top.v
