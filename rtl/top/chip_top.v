@@ -355,7 +355,7 @@ module chip_top #(
                 .jtag_tdi_i         (jtag_tdi_pin),
                 .jtag_tms_i         (jtag_tms_pin),
                 .jtag_trst_ni       (rst_n),
-                .jtag_tdo_o         (jtag_TDO_pin),
+                .jtag_tdo_o         (jtag_tdo_pin),
                 .master_req_o       (master_req[MASTER_JTAG_INDEX]),
                 .master_gnt_i       (master_gnt[MASTER_JTAG_INDEX]),
                 .master_rvalid_i    (master_rvalid[MASTER_JTAG_INDEX]),
