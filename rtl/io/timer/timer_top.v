@@ -49,12 +49,7 @@ module timer_top(
                 gnt_o <= 1'b0;
             end
 
-            // 读有效信号：在请求被接受后的下一个周期置位
-            if (req_accepted && !we_i) begin
-                rvalid_o <= 1'b1;
-            end else begin
-                rvalid_o <= 1'b0;
-            end
+            rvalid_o <= req_i;
 
             // 清除请求接受标志
             if (req_accepted) begin
