@@ -146,6 +146,7 @@ function gen_read_verilog_ys() { # do_not_function_help
 	local f=""
 	rm -f $script
 	local args=""
+	local filelist="$SRC_DIR/filelist.f"
 
 	if [ "$READ_RTL_ARGS"x != ""x ]; then
 		args+=" $READ_RTL_ARGS"
@@ -154,6 +155,7 @@ function gen_read_verilog_ys() { # do_not_function_help
 	args+=" -I$SRC_DIR"
 	for f in $(ls $SRC_DIR/*.v $SRC_DIR/*.sv 2>/dev/null);
 	do
+		echo "$(basename $f)" >> $filelist
 		echo "read_verilog $args $f" >> $script
 	done
 }
