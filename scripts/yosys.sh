@@ -1,7 +1,6 @@
 #!/bin/bash
 
 TOP_DIR="$(realpath $(dirname $(readlink -f $0))/../)"
-RTL_SRC_DIR=""
 MODULE_NAME=""
 BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
 SRC_DIR=$BUILD_DIR/src
@@ -85,12 +84,8 @@ function parse_rtl_src() { # do_not_function_help
 		MODULE_NAME="${src%.v*}"
 	fi
 
-	if [ "$MODULE_NAME"x = ""x ]; then
-		if [ "$TOP_MODULE"x = ""x ]; then
-			MODULE_NAME=$(basename $RTL_SRC_DIR)
-		else
-			MODULE_NAME=$TOP_MODULE
-		fi
+	if [[ -z "${MODULE_NAME}" ]]; then
+		MODULE_NAME=${TOP_MODULE:-$(basename "${RTL_SRC_DIR}")}
 	fi
 
 	BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
