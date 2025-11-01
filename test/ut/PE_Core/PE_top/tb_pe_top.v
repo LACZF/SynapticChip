@@ -26,8 +26,8 @@ module tb_pe_top;
 
     // DUT Instantiation
 	pe_top #(
-		.ADDR_WIDTH(`WORD_ADDR_W),
-		.DATA_WIDTH(`WORD_DATA_W),
+		.ADDR_WIDTH(32),
+		.DATA_WIDTH(32),
 		.NUM_PES(4),
 		.INST_WIDTH(32),
 		.PE_ID_WIDTH(4),
@@ -35,7 +35,7 @@ module tb_pe_top;
 		.PE_ARRAY_COLS(2)
 	) pe (
 		.clk(clk),
-		.reset(reset)
+		.rst_n(rst_n)
 	);
 
     // Clock Generation
