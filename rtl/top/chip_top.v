@@ -86,26 +86,26 @@ module chip_top #(
     localparam int IO_ADDR_BASE             = 32'h40000000;
     localparam int IO_ADDR_MASK             = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
 
-    wire           master_req       [MASTERS];
-    wire           master_gnt       [MASTERS];
-    wire           master_rvalid    [MASTERS];
-    wire [31:0]    master_addr      [MASTERS];
-    wire           master_we        [MASTERS];
-    wire [ 3:0]    master_be        [MASTERS];
-    wire [31:0]    master_rdata     [MASTERS];
-    wire [31:0]    master_wdata     [MASTERS];
+    wire [MASTERS-1:0]                      master_req;
+    wire [MASTERS-1:0]                      master_gnt;
+    wire [MASTERS-1:0]                      master_rvalid;
+    wire [MASTERS-1:0][31:0]                master_addr;
+    wire [MASTERS-1:0]                      master_we;
+    wire [MASTERS-1:0][ 3:0]                master_be;
+    wire [MASTERS-1:0][31:0]                master_rdata;
+    wire [MASTERS-1:0][31:0]                master_wdata;
 
-    wire           slave_req        [SLAVES];
-    wire           slave_gnt        [SLAVES];
-    wire           slave_rvalid     [SLAVES];
-    wire [31:0]    slave_addr       [SLAVES];
-    wire           slave_we         [SLAVES];
-    wire [ 3:0]    slave_be         [SLAVES];
-    wire [31:0]    slave_rdata      [SLAVES];
-    wire [31:0]    slave_wdata      [SLAVES];
+    wire [SLAVES-1:0]                       slave_req;
+    wire [SLAVES-1:0]                       slave_gnt;
+    wire [SLAVES-1:0]                       slave_rvalid;
+    wire [SLAVES-1:0][31:0]                 slave_addr;
+    wire [SLAVES-1:0]                       slave_we;
+    wire [SLAVES-1:0][ 3:0]                 slave_be;
+    wire [SLAVES-1:0][31:0]                 slave_rdata;
+    wire [SLAVES-1:0][31:0]                 slave_wdata;
 
-    wire [31:0]    slave_addr_mask  [SLAVES];
-    wire [31:0]    slave_addr_base  [SLAVES];
+    wire [SLAVES-1:0][31:0]                 slave_addr_mask;
+    wire [SLAVES-1:0][31:0]                 slave_addr_base;
 
     wire ndmreset;
     wire ndmreset_n;

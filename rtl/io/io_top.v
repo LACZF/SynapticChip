@@ -21,17 +21,17 @@ module io_top #(
     input  wire                               rst_n,
 
     // 总线接口
-    input  wire                               slave_req        [SLAVES],
-    input  wire [31:0]                        slave_addr       [SLAVES],
-    input  wire                               slave_we         [SLAVES],
-    input  wire [ 3:0]                        slave_be         [SLAVES],
-    input  wire [31:0]                        slave_wdata      [SLAVES],
-    output wire                               slave_gnt        [SLAVES],
-    output wire                               slave_rvalid     [SLAVES],
-    output wire [31:0]                        slave_rdata      [SLAVES],
+    input  wire [SLAVES-1:0]                  slave_req,
+    input  wire [SLAVES-1:0][31:0]            slave_addr,
+    input  wire [SLAVES-1:0]                  slave_we,
+    input  wire [SLAVES-1:0][ 3:0]            slave_be,
+    input  wire [SLAVES-1:0][31:0]            slave_wdata,
+    output wire [SLAVES-1:0]                  slave_gnt,
+    output wire [SLAVES-1:0]                  slave_rvalid,
+    output wire [SLAVES-1:0][31:0]            slave_rdata,
 
-    output wire [31:0]                        slave_addr_mask  [SLAVES],
-    output wire [31:0]                        slave_addr_base  [SLAVES],
+    output wire [SLAVES-1:0][31:0]            slave_addr_mask,
+    output wire [SLAVES-1:0][31:0]            slave_addr_base,
 
     // 中断信号
     output wire                               irq_timer,
