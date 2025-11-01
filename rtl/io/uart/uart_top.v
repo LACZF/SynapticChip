@@ -28,7 +28,7 @@ module uart_top (
     wire                            cs_n;            // 片选信号，低电平有效
     wire                            rd_n;            // 读信号，低电平有效
     wire                            wr_n;            // 写信号，低电平有效
-    wire [2:0]                      reg_addr;        // 寄存器地址
+    wire [7:0]                      reg_addr;        // 寄存器地址
 
     // 数据信号
     wire [7:0]                      uart_wr_data;    // UART写入数据
@@ -62,7 +62,7 @@ module uart_top (
     // OBI总线接口转换
     //--------------------------------------------------------------------
     // 地址和数据信号转换
-    assign reg_addr = addr_i[4:2];  // 假设寄存器地址在地址总线的[4:2]位
+    assign reg_addr = addr_i[7:0];  // 假设寄存器地址在地址总线的[4:2]位
     assign uart_wr_data = wr_data_i[7:0];  // 只使用低8位数据
 
     // 控制信号转换
@@ -100,19 +100,19 @@ module uart_top (
     uart16550 u_uart16550 (
         .clk        (clk),
         .rst_n      (rst_n),
-        .baud_clk   (baud_clk),
+        .baud_clk_i (baud_clk),
 
-        .cs_n       (cs_n),
-        .rd_n       (rd_n),
-        .wr_n       (wr_n),
-        .addr       (reg_addr),
-        .wr_data    (uart_wr_data),
-        .rd_data    (uart_rd_data),
+        .cs_n_i     (cs_n),
+        .rd_n_i     (rd_n),
+        .wr_n_i     (wr_n),
+        .addr_i     (reg_addr),
+        .wr_data_i  (uart_wr_data),
+        .rd_data_o  (uart_rd_data),
 
         .uart_rx    (uart_rx),
         .uart_tx    (uart_tx),
 
-        .irq        (irq_o)
+        .irq_o      (irq_o)
     );
 
 endmodule

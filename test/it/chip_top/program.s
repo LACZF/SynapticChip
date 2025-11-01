@@ -65,6 +65,10 @@ _start:
     # 初始化UART
     call uart_init
 
+    # 发送字符'O'
+    li a0, 'O'
+    call uart_write_byte
+
     # 主循环
 main_loop:
     # 检查是否有数据可读
