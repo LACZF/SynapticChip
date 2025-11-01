@@ -131,9 +131,10 @@ function prepare() { # RTL_SRC_DIR
 		return
 	fi
 
-	for f in $(find $RTL_SRC_DIR/ -name "*.v" -o -name "*.h");
+	for f in $(find $RTL_SRC_DIR/ -name "*.v" -o -name "*.sv" -o -name "*.h");
 	do
-		if contain_key $(basename $f) $EXCEPT_LIST; then
+		if contain_key $(basename $f) $EXCEPT_LIST;
+		then
 			continue
 		fi
 		cp -f $f $SRC_DIR
@@ -151,7 +152,7 @@ function gen_read_verilog_ys() { # do_not_function_help
 	fi
 
 	args+=" -I$SRC_DIR"
-	for f in $(ls $SRC_DIR/*.v);
+	for f in $(ls $SRC_DIR/*.v $SRC_DIR/*.sv 2>/dev/null);
 	do
 		echo "read_verilog $args $f" >> $script
 	done
