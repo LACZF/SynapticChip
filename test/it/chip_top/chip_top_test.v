@@ -43,6 +43,7 @@ module chip_top_test;
         .PE_ARRAY_ROWS(2),
         .PE_ARRAY_COLS(2),
         .IMPLEMENT_ROM(1),
+        .IMPLEMENT_JTAG(1),
         .IMPLEMENT_UART(1),
         .IMPLEMENT_GPIO(1),
         .IMPLEMENT_SPI(1),
