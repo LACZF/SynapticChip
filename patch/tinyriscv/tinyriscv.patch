@@ -619,7 +619,7 @@ index 2390993..dbebc44 100644
 +endmodule
 \ No newline at end of file
 diff --git a/rtl/core/tinyriscv_core.sv b/rtl/core/tinyriscv_core.sv
-index ff7eac3..35f908f 100644
+index ff7eac3..2e30496 100644
 --- a/rtl/core/tinyriscv_core.sv
 +++ b/rtl/core/tinyriscv_core.sv
 @@ -1,17 +1,17 @@
@@ -685,6 +685,21 @@ index ff7eac3..35f908f 100644
          .inst_executed_o(ex_inst_executed_o),
          .inst_i(ie_inst_o),
          .dec_info_bus_i(ie_dec_info_bus_o),
+@@ -353,6 +363,7 @@ module tinyriscv_core #(
+         .int_assert_o(excep_int_assert_o)
+     );
+ 
++`ifdef SUPPORT_TRACE_FOR_CORE
+     if (TRACE_ENABLE) begin: instr_trace
+         tracer u_tracer(
+             .clk(clk),
+@@ -362,5 +373,6 @@ module tinyriscv_core #(
+             .inst_valid_i(ex_inst_valid_o)
+         );
+     end
++`endif
+ 
+ endmodule
 diff --git a/rtl/core/tracer.sv b/rtl/core/tracer.sv
 index 2a51e6c..a7711d6 100644
 --- a/rtl/core/tracer.sv

@@ -211,6 +211,7 @@ module io_top #(
         end
     endgenerate
 
+`ifdef SUPPORT_XIP_FOR_CHIP
     /********** FLASH/XIP **********/
     generate
         if (IMPLEMENT_FLASH) begin : flash_gen
@@ -255,5 +256,6 @@ module io_top #(
             assign flash_spi_dq_oe                     = 4'b0000;
         end
     endgenerate
+`endif
 
 endmodule
