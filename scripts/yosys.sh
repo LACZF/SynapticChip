@@ -141,23 +141,87 @@ function prepare() { # RTL_SRC_DIR
 	done
 }
 
-function gen_read_verilog_ys() { # do_not_function_help
+function process_rtl_all_file() {
+	local rtl_all=$1
+	if [ -f $rtl_all ]; then
+		local temp_non_module="$SRC_DIR/../temp_non_module.sv"
+		local temp_module="$SRC_DIR/../temp_module.sv"
+		local temp_rtl_all="$SRC_DIR/../temp_rtl_all.sv"
+		> $temp_non_module
+		> $temp_module
+		> $temp_rtl_all
+		local in_module=0
+		local block_comment=0
+		while IFS= read -r line || [ -n "$line" ]; do
+			if [[ -z "$line" ]]; then
+				continue
+			fi
+			if [ $block_comment -eq 1 ]; then
+				if [[ $line == *"*/"* ]]; then
+					block_comment=0
+					line=${line#*"*/"}
+				else
+					continue
+				fi
+			fi
+			if [[ $line == *"/*"* ]]; then
+				block_comment=1
+				before_comment=${line%%"/*"*}
+				if [[ $line == *"*/"* ]]; then
+					block_comment=0
+					after_comment=${line#*"*/"}
+					line="$before_comment$after_comment"
+				else
+					line="$before_comment"
+				fi
+			fi
+			if [[ $line == *"//"* ]]; then
+				line=${line%%"//"*}
+			fi
+			if [[ -z "$line" ]]; then
+				continue
+			fi
+			if [[ $line == *"module"* && $line != *"endmodule"* ]]; then
+				in_module=1
+				echo "$line" >> $temp_module
+			elif [[ $line == *"endmodule"* ]]; then
+				echo "$line" >> $temp_module
+				in_module=0
+			else
+				if [ $in_module -eq 0 ]; then
+					echo "$line" >> $temp_non_module
+				else
+					echo "$line" >> $temp_module
+				fi
+			fi
+		done < $rtl_all
+		cat $temp_non_module >> $temp_rtl_all
+		cat $temp_module >> $temp_rtl_all
+		mv $temp_rtl_all $rtl_all
+		rm -f $temp_non_module $temp_module
+	fi
+}
+
+function gen_read_verilog_ys() {
 	local script=$1
 	local f=""
 	rm -f $script
 	local args=""
 	local filelist="$SRC_DIR/filelist.f"
-
+	local rtl_all="$SRC_DIR/../rtl_all.sv"
 	if [ "$READ_RTL_ARGS"x != ""x ]; then
 		args+=" $READ_RTL_ARGS"
 	fi
-
+	> $filelist
+	> $rtl_all
 	args+=" -I$SRC_DIR"
 	for f in $(ls $SRC_DIR/*.v $SRC_DIR/*.sv 2>/dev/null);
 	do
+		grep -v "include" $f >> $rtl_all
 		echo "$(basename $f)" >> $filelist
 		echo "read_verilog $args $f" >> $script
 	done
+	process_rtl_all_file $rtl_all
 }
 
 function dot2png() { # do_not_function_help

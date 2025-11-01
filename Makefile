@@ -11,9 +11,8 @@ else
 QUITE := @
 endif
 
-include $(TOP_DIR)/rtl/filelist.txt
-
 ifneq (,$(filter test,$(MAKECMDGOALS)))
+include $(TOP_DIR)/rtl/filelist.txt
 ifeq ($(M),)
 $(error "M is not set.")
 else
@@ -41,6 +40,7 @@ endif
 ifneq (,$(filter yosys_synthesis,$(MAKECMDGOALS)))
 ifeq ($(M),)
 M=$(TOP_DIR)/rtl
+include $(TOP_DIR)/rtl/filelist.txt
 TOP_MODULE_ARG := TOP_MODULE=chip_top
 $(warning "M is not set, synth for $(M).")
 else ifeq ($(TOP_MODULE),)
