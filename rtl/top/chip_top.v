@@ -86,6 +86,27 @@ module chip_top #(
     localparam int IO_ADDR_BASE             = 32'h40000000;
     localparam int IO_ADDR_MASK             = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
 
+    localparam int SLAVE_TIMER_INDEX        = SLAVE_IO_START_INDEX + 0;
+    localparam int SLAVE_GPIO_INDEX         = SLAVE_IO_START_INDEX + 1;
+    localparam int SLAVE_UART_INDEX         = SLAVE_IO_START_INDEX + 2;
+    localparam int SLAVE_SPI_INDEX          = SLAVE_IO_START_INDEX + 3;
+    localparam int SLAVE_FLASH_INDEX        = SLAVE_IO_START_INDEX + 4;
+
+    localparam int TIMER_ADDR_BASE          = IO_ADDR_BASE + 32'h00010000;
+    localparam int TIMER_ADDR_MASK          = `CALC_ADDR_MASK_BY_LENGTH(TIMER_ADDR_BASE, 4096);
+
+    localparam int UART_ADDR_BASE           = IO_ADDR_BASE + 32'h00020000;
+    localparam int UART_ADDR_MASK           = `CALC_ADDR_MASK_BY_LENGTH(UART_ADDR_BASE, 4096);
+
+    localparam int GPIO_ADDR_BASE           = IO_ADDR_BASE + 32'h00030000;
+    localparam int GPIO_ADDR_MASK           = `CALC_ADDR_MASK_BY_LENGTH(GPIO_ADDR_BASE, 4096);
+
+    localparam int SPI_ADDR_BASE            = IO_ADDR_BASE + 32'h00040000;
+    localparam int SPI_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(SPI_ADDR_BASE, 4096);
+
+    localparam int XIP_ADDR_BASE            = IO_ADDR_BASE + 32'h00050000;
+    localparam int XIP_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 4096);
+
     wire [MASTERS-1:0]                      master_req;
     wire [MASTERS-1:0]                      master_gnt;
     wire [MASTERS-1:0]                      master_rvalid;
@@ -216,6 +237,29 @@ module chip_top #(
         .gnt_o      (slave_gnt[SLAVE_PE_TOP_INDEX]),
         .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX])
     );
+
+    generate
+        if (IMPLEMENT_TIMER) begin
+            assign slave_addr_base[SLAVE_TIMER_INDEX] = TIMER_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_TIMER_INDEX] = TIMER_ADDR_MASK;
+        end
+        if (IMPLEMENT_UART) begin
+            assign slave_addr_base[SLAVE_UART_INDEX]  = UART_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_UART_INDEX]  = UART_ADDR_MASK;
+        end
+        if (IMPLEMENT_GPIO) begin
+            assign slave_addr_base[SLAVE_GPIO_INDEX]  = GPIO_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_GPIO_INDEX]  = GPIO_ADDR_MASK;
+        end
+        if (IMPLEMENT_SPI) begin
+            assign slave_addr_base[SLAVE_SPI_INDEX]   = SPI_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_SPI_INDEX]   = SPI_ADDR_MASK;
+        end
+        if (IMPLEMENT_FLASH) begin
+            assign slave_addr_base[SLAVE_FLASH_INDEX]  = XIP_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_FLASH_INDEX]  = XIP_ADDR_MASK;
+        end
+    endgenerate
 
     io_top #(
         .ADDR_WIDTH             (ADDR_WIDTH),

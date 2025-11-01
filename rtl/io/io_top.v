@@ -30,8 +30,9 @@ module io_top #(
     output wire [SLAVES-1:0]                  slave_rvalid,
     output wire [SLAVES-1:0][31:0]            slave_rdata,
 
-    output wire [SLAVES-1:0][31:0]            slave_addr_mask,
-    output wire [SLAVES-1:0][31:0]            slave_addr_base,
+    /* TODO */
+    input  wire [SLAVES-1:0][31:0]            slave_addr_mask,
+    input  wire [SLAVES-1:0][31:0]            slave_addr_base,
 
     // 中断信号
     output wire                               irq_timer,
@@ -84,8 +85,6 @@ module io_top #(
     /********** TIMER **********/
     generate
         if (IMPLEMENT_TIMER) begin : timer_gen
-            assign slave_addr_mask[SLAVE_TIMER_INDEX] = TIMER_ADDR_MASK;
-            assign slave_addr_base[SLAVE_TIMER_INDEX] = TIMER_ADDR_BASE;
             timer_top u_timer (
                 .clk             (clk),
                 .rst_n           (rst_n),
@@ -111,8 +110,6 @@ module io_top #(
     /********** UART **********/
     generate
         if (IMPLEMENT_UART) begin : uart_gen
-            assign slave_addr_mask[SLAVE_UART_INDEX] = UART_ADDR_MASK;
-            assign slave_addr_base[SLAVE_UART_INDEX] = UART_ADDR_BASE;
             uart_top u_uart (
                 .clk             (clk),
                 .rst_n           (rst_n),
@@ -142,8 +139,6 @@ module io_top #(
     /********** GPIO **********/
     generate
         if (IMPLEMENT_GPIO) begin : gpio_gen
-            assign slave_addr_mask[SLAVE_GPIO_INDEX] = GPIO_ADDR_MASK;
-            assign slave_addr_base[SLAVE_GPIO_INDEX] = GPIO_ADDR_BASE;
             gpio_top #(
                 .GPIO_IN_CH    (GPIO_IN_CH),
                 .GPIO_OUT_CH   (GPIO_OUT_CH),
@@ -176,8 +171,6 @@ module io_top #(
     /********** SPI **********/
     generate
         if (IMPLEMENT_SPI) begin : spi_gen
-            assign slave_addr_mask[SLAVE_SPI_INDEX] = SPI_ADDR_MASK;
-            assign slave_addr_base[SLAVE_SPI_INDEX] = SPI_ADDR_BASE;
             spi_top #(
                 .ADDR_WIDTH    (ADDR_WIDTH),
                 .DATA_WIDTH    (DATA_WIDTH),
@@ -215,8 +208,6 @@ module io_top #(
     /********** FLASH/XIP **********/
     generate
         if (IMPLEMENT_FLASH) begin : flash_gen
-            assign slave_addr_mask[SLAVE_FLASH_INDEX] = XIP_ADDR_MASK;
-            assign slave_addr_base[SLAVE_FLASH_INDEX] = XIP_ADDR_BASE;
             xip_top u_flash (
                 .clk_i          (clk),
                 .rst_ni         (rst_n),
