@@ -63,7 +63,7 @@ module chip_top #(
 );
     /* (instruction + data) * CPU_NUM + jtag */
     localparam int MASTERS                  = (IMPLEMENT_JTAG ? (CPU_NUM * 2 + 1) : (CPU_NUM * 2));
-    localparam int SLAVES                   = 18; // Number of slave ports
+    localparam int SLAVES                   = 16; // Number of slave ports
 
     // masters
     localparam int MASTER_JTAG_INDEX        = CPU_NUM * 2;
@@ -73,7 +73,9 @@ module chip_top #(
     localparam int SLAVE_RAM_INDEX          = 1;
     localparam int SLAVE_JTAG_INDEX         = 2;
     localparam int SLAVE_PE_TOP_INDEX       = 3;
-    localparam int SLAVE_IO_START_INDEX     = SLAVE_PE_TOP_INDEX + 1;
+    localparam int IO_SLAVES                = 8;
+    localparam int SLAVE_IO_START_INDEX     = 8;
+    localparam int SLAVE_IO_END_INDEX       = SLAVE_IO_START_INDEX + IO_SLAVES - 1;
 
     localparam int ROM_ADDR_BASE            = 32'h00000000;
     localparam int ROM_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(ROM_ADDR_BASE, ROM_DEPTH * 4);
@@ -89,27 +91,6 @@ module chip_top #(
 
     localparam int IO_ADDR_BASE             = 32'h40000000;
     localparam int IO_ADDR_MASK             = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
-
-    localparam int SLAVE_TIMER_INDEX        = SLAVE_IO_START_INDEX + 0;
-    localparam int SLAVE_GPIO_INDEX         = SLAVE_IO_START_INDEX + 1;
-    localparam int SLAVE_UART_INDEX         = SLAVE_IO_START_INDEX + 2;
-    localparam int SLAVE_SPI_INDEX          = SLAVE_IO_START_INDEX + 3;
-    localparam int SLAVE_FLASH_INDEX        = SLAVE_IO_START_INDEX + 4;
-
-    localparam int TIMER_ADDR_BASE          = IO_ADDR_BASE + 32'h00010000;
-    localparam int TIMER_ADDR_MASK          = `CALC_ADDR_MASK_BY_LENGTH(TIMER_ADDR_BASE, 4096);
-
-    localparam int UART_ADDR_BASE           = IO_ADDR_BASE + 32'h00020000;
-    localparam int UART_ADDR_MASK           = `CALC_ADDR_MASK_BY_LENGTH(UART_ADDR_BASE, 4096);
-
-    localparam int GPIO_ADDR_BASE           = IO_ADDR_BASE + 32'h00030000;
-    localparam int GPIO_ADDR_MASK           = `CALC_ADDR_MASK_BY_LENGTH(GPIO_ADDR_BASE, 4096);
-
-    localparam int SPI_ADDR_BASE            = IO_ADDR_BASE + 32'h00040000;
-    localparam int SPI_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(SPI_ADDR_BASE, 4096);
-
-    localparam int XIP_ADDR_BASE            = IO_ADDR_BASE + 32'h00050000;
-    localparam int XIP_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 4096);
 
     wire [MASTERS-1:0]                      master_req;
     wire [MASTERS-1:0]                      master_gnt;
@@ -131,6 +112,18 @@ module chip_top #(
 
     wire [SLAVES-1:0][31:0]                 slave_addr_mask;
     wire [SLAVES-1:0][31:0]                 slave_addr_base;
+
+    // 修复信号位选择顺序，避免信号反转
+    wire [IO_SLAVES-1:0]                    io_slave_req;
+    wire [IO_SLAVES-1:0]                    io_slave_gnt;
+    wire [IO_SLAVES-1:0]                    io_slave_rvalid;
+    wire [IO_SLAVES-1:0][31:0]              io_slave_addr;
+    wire [IO_SLAVES-1:0]                    io_slave_we;
+    wire [IO_SLAVES-1:0][ 3:0]              io_slave_be;
+    wire [IO_SLAVES-1:0][31:0]              io_slave_rdata;
+    wire [IO_SLAVES-1:0][31:0]              io_slave_wdata;
+    wire [IO_SLAVES-1:0][31:0]              io_slave_addr_mask;
+    wire [IO_SLAVES-1:0][31:0]              io_slave_addr_base;
 
     wire ndmreset;
     wire ndmreset_n;
@@ -243,33 +236,28 @@ module chip_top #(
     );
 
     generate
-        if (IMPLEMENT_TIMER) begin
-            assign slave_addr_base[SLAVE_TIMER_INDEX] = TIMER_ADDR_BASE;
-            assign slave_addr_mask[SLAVE_TIMER_INDEX] = TIMER_ADDR_MASK;
-        end
-        if (IMPLEMENT_UART) begin
-            assign slave_addr_base[SLAVE_UART_INDEX]  = UART_ADDR_BASE;
-            assign slave_addr_mask[SLAVE_UART_INDEX]  = UART_ADDR_MASK;
-        end
-        if (IMPLEMENT_GPIO) begin
-            assign slave_addr_base[SLAVE_GPIO_INDEX]  = GPIO_ADDR_BASE;
-            assign slave_addr_mask[SLAVE_GPIO_INDEX]  = GPIO_ADDR_MASK;
-        end
-        if (IMPLEMENT_SPI) begin
-            assign slave_addr_base[SLAVE_SPI_INDEX]   = SPI_ADDR_BASE;
-            assign slave_addr_mask[SLAVE_SPI_INDEX]   = SPI_ADDR_MASK;
-        end
-        if (IMPLEMENT_FLASH) begin
-            assign slave_addr_base[SLAVE_FLASH_INDEX]  = XIP_ADDR_BASE;
-            assign slave_addr_mask[SLAVE_FLASH_INDEX]  = XIP_ADDR_MASK;
+        genvar j;
+        for (j = 0; j < IO_SLAVES; j = j + 1) begin : io_slave_conn
+            // 从交叉开关到IO模块的信号（输入到IO模块）
+            assign io_slave_req[j]                            = slave_req[SLAVE_IO_START_INDEX + j];
+            assign io_slave_addr[j]                           = slave_addr[SLAVE_IO_START_INDEX + j];
+            assign io_slave_we[j]                             = slave_we[SLAVE_IO_START_INDEX + j];
+            assign io_slave_be[j]                             = slave_be[SLAVE_IO_START_INDEX + j];
+            assign io_slave_wdata[j]                          = slave_wdata[SLAVE_IO_START_INDEX + j];
+
+            // 从IO模块到交叉开关的信号（输出从IO模块）
+            assign slave_gnt[SLAVE_IO_START_INDEX + j]        = io_slave_gnt[j];
+            assign slave_rvalid[SLAVE_IO_START_INDEX + j]     = io_slave_rvalid[j];
+            assign slave_rdata[SLAVE_IO_START_INDEX + j]      = io_slave_rdata[j];
+            assign slave_addr_mask[SLAVE_IO_START_INDEX + j]  = io_slave_addr_mask[j];
+            assign slave_addr_base[SLAVE_IO_START_INDEX + j]  = io_slave_addr_base[j];
         end
     endgenerate
 
     io_top #(
         .ADDR_WIDTH             (ADDR_WIDTH),
         .DATA_WIDTH             (DATA_WIDTH),
-        .SLAVES                 (SLAVES),
-        .START_SLAVE            (SLAVE_IO_START_INDEX),
+        .IO_SLAVES              (IO_SLAVES),
         .IO_ADDR_BASE           (IO_ADDR_BASE),
         .IO_ADDR_MASK           (IO_ADDR_MASK),
         .IMPLEMENT_UART         (IMPLEMENT_UART),
@@ -286,17 +274,17 @@ module chip_top #(
         .rst_n         (rst_n),
 
         // 总线接口
-        .slave_req       (slave_req),
-        .slave_gnt       (slave_gnt),
-        .slave_rvalid    (slave_rvalid),
-        .slave_addr      (slave_addr),
-        .slave_we        (slave_we),
-        .slave_be        (slave_be),
-        .slave_rdata     (slave_rdata),
-        .slave_wdata     (slave_wdata),
+        .slave_req       (io_slave_req),
+        .slave_gnt       (io_slave_gnt),
+        .slave_rvalid    (io_slave_rvalid),
+        .slave_addr      (io_slave_addr),
+        .slave_we        (io_slave_we),
+        .slave_be        (io_slave_be),
+        .slave_rdata     (io_slave_rdata),
+        .slave_wdata     (io_slave_wdata),
 
-        .slave_addr_mask (slave_addr_mask),
-        .slave_addr_base (slave_addr_base),
+        .slave_addr_mask (io_slave_addr_mask),
+        .slave_addr_base (io_slave_addr_base),
 
         // 中断信号
         .irq_timer     (irq_timer),
