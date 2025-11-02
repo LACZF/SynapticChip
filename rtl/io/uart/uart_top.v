@@ -1,4 +1,32 @@
 
+module uart_clk_gen(
+    input  wire                     clk,
+    input  wire                     rst_n,
+
+    output wire                     baud_clk_o
+);
+
+    //--------------------------------------------------------------------
+    // 波特率时钟生成
+    //--------------------------------------------------------------------
+    // 这里使用简化的波特率时钟生成，实际应用中应根据系统时钟和期望波特率调整
+    parameter BAUD_DIV = 2;  // 假设系统时钟为100MHz，生成1MHz的波特率时钟
+    reg [6:0] baud_div_cnt;    // 波特率分频计数器
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            baud_div_cnt <= 7'h00;
+        end else if (baud_div_cnt == BAUD_DIV - 1) begin
+            baud_div_cnt <= 7'h00;
+        end else begin
+            baud_div_cnt <= baud_div_cnt + 7'h01;
+        end
+    end
+
+    assign baud_clk_o = (baud_div_cnt == 7'h00);  // 在计数器归零时产生时钟脉冲)
+
+endmodule
+
 module uart_top (
     // 时钟和复位信号
     input  wire                     clk,             // 系统时钟
@@ -39,24 +67,11 @@ module uart_top (
     reg                             rvalid_q;        // 读有效信号寄存器
     wire                            baud_clk;        // 波特率时钟
 
-    //--------------------------------------------------------------------
-    // 波特率时钟生成
-    //--------------------------------------------------------------------
-    // 这里使用简化的波特率时钟生成，实际应用中应根据系统时钟和期望波特率调整
-    parameter BAUD_DIV = 100;  // 假设系统时钟为100MHz，生成1MHz的波特率时钟
-    reg [6:0] baud_div_cnt;    // 波特率分频计数器
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            baud_div_cnt <= 7'h00;
-        end else if (baud_div_cnt == BAUD_DIV - 1) begin
-            baud_div_cnt <= 7'h00;
-        end else begin
-            baud_div_cnt <= baud_div_cnt + 7'h01;
-        end
-    end
-
-    assign baud_clk = (baud_div_cnt == 7'h00);  // 在计数器归零时产生时钟脉冲
+    uart_clk_gen u_uart_clk_gen(
+        .clk        (clk),
+        .rst_n      (rst_n),
+        .baud_clk_o (baud_clk)
+    );
 
     //--------------------------------------------------------------------
     // OBI总线接口转换

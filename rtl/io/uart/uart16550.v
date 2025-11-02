@@ -305,6 +305,7 @@ module uart_tx (
     input  wire        start_i,      // 开始发送信号
     output reg         busy_o,       // 发送忙信号
     output reg         tx_o,         // UART发送信号
+    output reg         tx_end_o,     // UART发送信号
     input  wire [3:0]  data_bits_i   // 数据位数量 (5-8)
 );
 
@@ -323,6 +324,7 @@ module uart_tx (
         if (!rst_n) begin
             state <= IDLE;
             busy_o <= 1'b0;
+            tx_end_o <= 1'b0;
             tx_o <= 1'b1;
             tx_buffer <= 8'h00;
             bit_count <= 3'd0;
@@ -336,6 +338,7 @@ module uart_tx (
                     IDLE: begin
                         tx_o <= 1'b1;  // 空闲状态为高电平
                         busy_o <= 1'b0;
+                        tx_end_o <= 1'b0;
                         if (start_i) begin
                             state <= START_BIT;
                             busy_o <= 1'b1;
@@ -360,6 +363,7 @@ module uart_tx (
 
                     STOP_BIT: begin
                         tx_o <= 1'b1;  // 停止位为高电平
+                        tx_end_o <= 1'b1;
                         state <= IDLE;
                     end
                 endcase
@@ -378,6 +382,7 @@ module uart_rx (
     input  wire        baud_clk_i,   // 波特率时钟
     input  wire        rx_i,         // UART接收信号
     output reg [7:0]   data_o,       // 输出数据
+    output reg         busy_o,      // 接收准备好信号
     output reg         ready_o,      // 接收准备好信号
     output reg         error_o,      // 接收错误信号
     input  wire [3:0]  data_bits_i   // 数据位数量 (5-8)
@@ -421,6 +426,7 @@ module uart_rx (
             if (baud_clk_i && !baud_clk_prev) begin
                 case (state)
                     IDLE: begin
+                        busy_o <= 1'b0;
                         if (!rx_sync2) begin  // 检测到起始位
                             state <= START_BIT;
                             sample_count <= 4'd1;
@@ -428,6 +434,7 @@ module uart_rx (
                     end
 
                     START_BIT: begin
+                        busy_o <= 1'b1;
                         sample_count <= sample_count + 4'd1;
                         if (sample_count == 4'd7) begin  // 在起始位中间采样
                             if (rx_sync2) begin  // 如果仍然是低电平
@@ -457,6 +464,7 @@ module uart_rx (
                         if (sample_count == 4'd15) begin  // 在停止位中间采样
                             data_o <= rx_buffer;
                             ready_o <= 1'b1;
+                            busy_o <= 1'b0;
                             if (!rx_sync2) begin
                                 error_o <= 1'b1;
                             end
