@@ -152,6 +152,7 @@ module chip_top_test;
         // 发送CR和LF
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`ifdef TEST_SEND_CR
         tx_data  <= 8'h0d; // CR
         tx_start <= 1'b1;
         @(posedge clk);
@@ -160,12 +161,15 @@ module chip_top_test;
         @(posedge clk);
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`endif
+`ifdef TEST_SEND_LF
         tx_data  <= 8'h0a; // LF
         tx_start <= 1'b1;
         @(posedge clk);
         tx_start <= 1'b0;
         wait(tx_end == 1'b1);
         @(posedge clk);
+`endif
 
         #5000;
 
@@ -181,6 +185,7 @@ module chip_top_test;
         @(posedge clk);
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`ifdef TEST_SEND_CR
         tx_data  <= 8'h0d;
         tx_start <= 1'b1;
         @(posedge clk);
@@ -189,13 +194,15 @@ module chip_top_test;
         @(posedge clk);
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`endif
+`ifdef TEST_SEND_LF
         tx_data  <= 8'h0a;
         tx_start <= 1'b1;
         @(posedge clk);
         tx_start <= 1'b0;
         wait(tx_end == 1'b1);
         @(posedge clk);
-
+`endif
         #5000;
 
         // 发送SPI模块测试命令
@@ -210,6 +217,7 @@ module chip_top_test;
         @(posedge clk);
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`ifdef TEST_SEND_CR
         tx_data  <= 8'h0d;
         tx_start <= 1'b1;
         @(posedge clk);
@@ -218,12 +226,15 @@ module chip_top_test;
         @(posedge clk);
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`endif
+`ifdef TEST_SEND_LF
         tx_data  <= 8'h0a;
         tx_start <= 1'b1;
         @(posedge clk);
         tx_start <= 1'b0;
         wait(tx_end == 1'b1);
         @(posedge clk);
+`endif
 
         #5000;
 
@@ -239,6 +250,7 @@ module chip_top_test;
         @(posedge clk);
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`ifdef TEST_SEND_CR
         tx_data  <= 8'h0d;
         tx_start <= 1'b1;
         @(posedge clk);
@@ -247,12 +259,15 @@ module chip_top_test;
         @(posedge clk);
         wait(tx_busy == 1'b0);
         @(posedge clk);
+`endif
+`ifdef TEST_SEND_LF
         tx_data  <= 8'h0a;
         tx_start <= 1'b1;
         @(posedge clk);
         tx_start <= 1'b0;
         wait(tx_end == 1'b1);
         @(posedge clk);
+`endif
 
         #`SIM_CYCLE;
 
