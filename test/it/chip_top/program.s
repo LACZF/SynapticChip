@@ -17,6 +17,9 @@
 .equ UART_LSR,       UART_BASE + 0x18  # 线状态寄存器
 .equ UART_MSR,       UART_BASE + 0x1c  # Modem状态寄存器
 .equ UART_SCR,       UART_BASE + 0x20  # Scratch寄存器
+.equ UART_SMPR,      UART_BASE + 0x24  # 采样率寄存器
+.equ UART_BDV_L,     UART_BASE + 0x28  # 分频系数低字节
+.equ UART_BDV_H,     UART_BASE + 0x2C  # 分频系数高字节
 
 # GPIO模块地址定义
 .equ GPIO_BASE,      IO_BASE   + 0x00030000
@@ -93,6 +96,18 @@ uart_init:
 
     li a0, UART_LSR
     li a1, 0x60           # 使能FIFO，清除接收/发送FIFO
+    sb a1, 0(a0)
+
+    li a0, UART_SMPR
+    li a1, 0x10           # 配置采样率为16倍
+    sb a1, 0(a0)
+
+    li a0, UART_BDV_L
+    li a1, 0x2           # 仿真场景下速率较慢，设置为2分频
+    sb a1, 0(a0)
+
+    li a0, UART_BDV_H
+    li a1, 0x0
     sb a1, 0(a0)
 
     lw ra, 4(sp)

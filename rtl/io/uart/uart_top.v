@@ -1,7 +1,5 @@
 
-module uart_top #(
-    parameter SAMPLE_CYCLES = 16            // 每个位周期的采样次数
-)(
+module uart_top (
     // 时钟和复位信号
     input  wire                     clk,             // 系统时钟
     input  wire                     rst_n,           // 复位信号，低电平有效
@@ -79,9 +77,7 @@ module uart_top #(
     //--------------------------------------------------------------------
     // 16550 UART 实例化
     //--------------------------------------------------------------------
-    uart16550 #(
-        .SAMPLE_CYCLES (SAMPLE_CYCLES)  // 配置每个位周期的采样次数
-    ) u_uart16550 (
+    uart16550 u_uart16550 (
         .clk        (clk),
         .rst_n      (rst_n),
 

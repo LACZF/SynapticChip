@@ -1,6 +1,8 @@
 
 module uart16550 #(
-    parameter SAMPLE_CYCLES = 16            // 每个位周期的采样次数
+    parameter SYS_CLK_FREQ   = 100_000_000,
+    parameter BAUD_RATE      = 115_200,
+    parameter SAMPLE_CYCLES  = 16            // 每个位周期的采样次数
 )(
     input  wire        clk,                // 时钟信号
     input  wire        rst_n,              // 复位信号，低电平有效
@@ -48,6 +50,10 @@ module uart16550 #(
     wire [7:0] msr;
     // 暂存寄存器 (0x07, 只读)
     reg [7:0]  scr;
+    // 采样周期寄存器 (0x24, 可读写)
+    reg [7:0]  sample_cycles_reg;
+    // 波特率分频寄存器 (0x28, 可读写)
+    reg [15:0] baud_div_reg;
 
     //--------------------------------------------------------------------
     // 内部信号定义
@@ -66,6 +72,8 @@ module uart16550 #(
     wire       lsr_sel;           // 线路状态寄存器选择
     wire       msr_sel;           // 调制解调器状态寄存器选择
     wire       scr_sel;           // 暂存寄存器选择
+    wire       sample_cycles_sel; // 采样周期寄存器选择
+    wire       baud_div_sel;      // 波特率分频寄存器选择
 
     // 接收部分信号
     wire       rx_ready;          // 接收准备好
@@ -107,6 +115,10 @@ module uart16550 #(
     assign lsr_sel = (addr_i == 8'h18) && !cs_n_i && !rd_n_i;
     assign msr_sel = (addr_i == 8'h1C) && !cs_n_i && !rd_n_i;
     assign scr_sel = (addr_i == 8'h20) && !cs_n_i;
+    // 采样周期寄存器选择 (地址0x24)
+    assign sample_cycles_sel = (addr_i == 8'h24) && !cs_n_i;
+    // 波特率分频寄存器选择 (地址0x28 - 低字节, 0x2C - 高字节)
+    assign baud_div_sel = ((addr_i == 8'h28) || (addr_i == 8'h2C)) && !cs_n_i;
 
     // 读取数据选择
     assign rd_data_o = rbr_sel ? rx_buffer :
@@ -117,6 +129,9 @@ module uart16550 #(
                      lcr_sel && !rd_n_i ? lcr :
                      mcr_sel && !rd_n_i ? {3'b000, mcr} :
                      scr_sel && !rd_n_i ? scr :
+                     sample_cycles_sel && !rd_n_i ? sample_cycles_reg :
+                     baud_div_sel && !rd_n_i && (addr_i == 8'h28) ? baud_div_reg[7:0] :
+                     baud_div_sel && !rd_n_i && (addr_i == 8'h2C) ? baud_div_reg[15:8] :
                      8'h00;
 
     //--------------------------------------------------------------------
@@ -191,12 +206,39 @@ module uart16550 #(
         end
     end
 
-    uart_clk_gen #(
-        .SAMPLE_CYCLES (SAMPLE_CYCLES)
-    ) u_uart_clk_gen(
-        .clk        (clk),
-        .rst_n      (rst_n),
-        .baud_clk_o (baud_clk)
+    //--------------------------------------------------------------------
+    // 采样周期寄存器 (SAMPLE_CYCLES_REG)
+    //--------------------------------------------------------------------
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            sample_cycles_reg <= SAMPLE_CYCLES;
+        end else if (sample_cycles_sel && !wr_n_i) begin
+            sample_cycles_reg <= wr_data_i;
+        end
+    end
+
+    //--------------------------------------------------------------------
+    // 波特率分频寄存器 (BAUD_DIV_REG)
+    //--------------------------------------------------------------------
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            baud_div_reg <= (SYS_CLK_FREQ / BAUD_RATE / SAMPLE_CYCLES);  // 默认值根据参数的系统时钟和波特率确定
+        end else begin
+            if (baud_div_sel && !wr_n_i && (addr_i == 8'h28)) begin
+                baud_div_reg[7:0] <= wr_data_i;
+            end
+            if (baud_div_sel && !wr_n_i && (addr_i == 8'h2C)) begin
+                baud_div_reg[15:8] <= wr_data_i;
+            end
+        end
+    end
+
+    uart_clk_gen u_uart_clk_gen(
+        .clk            (clk),
+        .rst_n          (rst_n),
+        .sample_cycles_i(sample_cycles_reg),
+        .baud_div_i     (baud_div_reg),
+        .baud_clk_o     (baud_clk)
     );
 
     //--------------------------------------------------------------------

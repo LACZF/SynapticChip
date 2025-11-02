@@ -11,13 +11,16 @@ module test_uart_rx (
 
     input  wire        rx_i
 );
-
+    reg [7:0]          sample_cycles_reg = 16;
+    reg [15:0]         baud_div_reg      = 2;
     wire               baud_clk;        // 波特率时钟
 
     uart_clk_gen u_uart_clk_gen(
-        .clk        (clk),
-        .rst_n      (rst_n),
-        .baud_clk_o (baud_clk)
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .sample_cycles_i  (sample_cycles_reg),
+        .baud_div_i       (baud_div_reg),
+        .baud_clk_o       (baud_clk)
     );
 
     uart_rx rx_module (
@@ -45,12 +48,16 @@ module test_uart_tx (
 
     output reg         tx_o
 );
+    reg [7:0]          sample_cycles_reg = 16;
+    reg [15:0]         baud_div_reg      = 2;
     wire               baud_clk;        // 波特率时钟
 
     uart_clk_gen u_uart_clk_gen(
-        .clk        (clk),
-        .rst_n      (rst_n),
-        .baud_clk_o (baud_clk)
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .sample_cycles_i  (sample_cycles_reg),
+        .baud_div_i       (baud_div_reg),
+        .baud_clk_o       (baud_clk)
     );
 
     uart_tx tx_module (
