@@ -1,5 +1,7 @@
 
-module uart16550 (
+module uart16550 #(
+    parameter SAMPLE_CYCLES = 16            // 每个位周期的采样次数
+)(
     input  wire        clk,                // 时钟信号
     input  wire        rst_n,              // 复位信号，低电平有效
     input  wire        baud_clk_i,         // 波特率时钟
@@ -191,15 +193,18 @@ module uart16550 (
     //--------------------------------------------------------------------
     // 发送部分
     //--------------------------------------------------------------------
-    uart_tx tx_module (
+    uart_tx #(
+        .SAMPLE_CYCLES (SAMPLE_CYCLES)  // 配置每个位周期的采样次数
+    ) tx_module (
         .clk        (clk),
         .rst_n      (rst_n),
-        .baud_clk_i   (baud_clk_i),
-        .data_i    (thr),
-        .start_i      (tx_start),
-        .busy_o       (tx_busy),
-        .tx_o         (uart_tx),
-        .data_bits_i  (data_bits_config)  // 5-8 data bits (3-bit port)
+        .baud_clk_i (baud_clk_i),
+        .data_i     (thr),
+        .start_i    (tx_start),
+        .busy_o     (tx_busy),
+        .tx_o       (uart_tx),
+        .tx_end_o   (),  // 未使用的输出端口
+        .data_bits_i(data_bits_config)  // 5-8 data bits (3-bit port)
     );
 
     // 发送保持寄存器
@@ -225,15 +230,18 @@ module uart16550 (
     //--------------------------------------------------------------------
     // 接收部分
     //--------------------------------------------------------------------
-    uart_rx rx_module (
+    uart_rx #(
+        .SAMPLE_CYCLES (SAMPLE_CYCLES)  // 配置每个位周期的采样次数
+    ) rx_module (
         .clk        (clk),
         .rst_n      (rst_n),
-        .baud_clk_i   (baud_clk_i),
-        .rx_i         (uart_rx),
-        .data_o   (rx_data),
-        .ready_o      (rx_ready),
-        .error_o      (rx_error),
-        .data_bits_i  (data_bits_config)  // 5-8 data bits (3-bit port)
+        .baud_clk_i (baud_clk_i),
+        .rx_i       (uart_rx),
+        .data_o     (rx_data),
+        .ready_o    (rx_ready),
+        .error_o    (rx_error),
+        .busy_o     (),  // 未使用的输出端口
+        .data_bits_i(data_bits_config)  // 5-8 data bits (3-bit port)
     );
 
     // 接收数据处理
@@ -297,7 +305,9 @@ endmodule
 //======================================================================
 // UART发送模块
 //======================================================================
-module uart_tx (
+module uart_tx #(
+    parameter SAMPLE_CYCLES = 16      // 每个位周期的采样次数
+)(
     input  wire        clk,          // 系统时钟
     input  wire        rst_n,        // 复位信号
     input  wire        baud_clk_i,   // 波特率时钟
@@ -315,9 +325,17 @@ module uart_tx (
     localparam DATA_BITS = 2'b10;
     localparam STOP_BIT = 2'b11;
 
+    // 计算采样计数器位宽
+    localparam SAMPLE_CNT_WIDTH = $clog2(SAMPLE_CYCLES);
+    // 定义中间采样位置
+    localparam MIDDLE_SAMPLE = (SAMPLE_CYCLES / 2) - 1;
+    // 定义结束采样位置
+    localparam END_SAMPLE = SAMPLE_CYCLES - 1;
+
     reg [1:0] state;
     reg [7:0] tx_buffer;
     reg [2:0] bit_count;
+    reg [SAMPLE_CNT_WIDTH-1:0] sample_count;  // 采样计数器
     reg       baud_clk_prev;
 
     always @(posedge clk or negedge rst_n) begin
@@ -328,9 +346,11 @@ module uart_tx (
             tx_o <= 1'b1;
             tx_buffer <= 8'h00;
             bit_count <= 3'd0;
+            sample_count <= 0;
             baud_clk_prev <= 1'b0;
         end else begin
             baud_clk_prev <= baud_clk_i;
+            tx_end_o <= 1'b0;
 
             // 仅在波特率时钟上升沿更新状态
             if (baud_clk_i && !baud_clk_prev) begin
@@ -338,7 +358,7 @@ module uart_tx (
                     IDLE: begin
                         tx_o <= 1'b1;  // 空闲状态为高电平
                         busy_o <= 1'b0;
-                        tx_end_o <= 1'b0;
+                        sample_count <= 0;
                         if (start_i) begin
                             state <= START_BIT;
                             busy_o <= 1'b1;
@@ -347,24 +367,41 @@ module uart_tx (
                     end
 
                     START_BIT: begin
-                        tx_o <= 1'b0;  // 起始位为低电平
-                        state <= DATA_BITS;
-                        bit_count <= 3'd0;
+                        sample_count <= sample_count + 1;
+                        if (sample_count == 0) begin
+                            tx_o <= 1'b0;  // 起始位为低电平
+                        end
+                        if (sample_count == END_SAMPLE) begin
+                            state <= DATA_BITS;
+                            bit_count <= 3'd0;
+                            sample_count <= 0;
+                        end
                     end
 
                     DATA_BITS: begin
-                        tx_o <= tx_buffer[0];
-                        tx_buffer <= {1'b0, tx_buffer[7:1]};
-                        bit_count <= bit_count + 3'd1;
-                        if (bit_count == data_bits_i - 3'd1) begin
-                            state <= STOP_BIT;
+                        sample_count <= sample_count + 1;
+                        if (sample_count == 0) begin
+                            tx_o <= tx_buffer[0];
+                        end
+                        if (sample_count == END_SAMPLE) begin
+                            tx_buffer <= {1'b0, tx_buffer[7:1]};
+                            bit_count <= bit_count + 3'd1;
+                            sample_count <= 0;
+                            if (bit_count == data_bits_i - 3'd1) begin
+                                state <= STOP_BIT;
+                            end
                         end
                     end
 
                     STOP_BIT: begin
-                        tx_o <= 1'b1;  // 停止位为高电平
-                        tx_end_o <= 1'b1;
-                        state <= IDLE;
+                        sample_count <= sample_count + 1;
+                        if (sample_count == 0) begin
+                            tx_o <= 1'b1;  // 停止位为高电平
+                        end
+                        if (sample_count == END_SAMPLE) begin
+                            tx_end_o <= 1'b1;
+                            state <= IDLE;
+                        end
                     end
                 endcase
             end
@@ -376,13 +413,15 @@ endmodule
 //======================================================================
 // UART接收模块
 //======================================================================
-module uart_rx (
+module uart_rx #(
+    parameter SAMPLE_CYCLES = 16      // 每个位周期的采样次数
+)(
     input  wire        clk,          // 系统时钟
     input  wire        rst_n,        // 复位信号
     input  wire        baud_clk_i,   // 波特率时钟
     input  wire        rx_i,         // UART接收信号
     output reg [7:0]   data_o,       // 输出数据
-    output reg         busy_o,      // 接收准备好信号
+    output reg         busy_o,       // 接收准备好信号
     output reg         ready_o,      // 接收准备好信号
     output reg         error_o,      // 接收错误信号
     input  wire [3:0]  data_bits_i   // 数据位数量 (5-8)
@@ -394,10 +433,17 @@ module uart_rx (
     localparam DATA_BITS = 3'b010;
     localparam STOP_BIT = 3'b011;
 
+    // 计算采样计数器位宽
+    localparam SAMPLE_CNT_WIDTH = $clog2(SAMPLE_CYCLES);
+    // 定义中间采样位置
+    localparam MIDDLE_SAMPLE = (SAMPLE_CYCLES / 2) - 1;
+    // 定义结束采样位置
+    localparam END_SAMPLE = SAMPLE_CYCLES - 1;
+
     reg [2:0] state;
     reg [7:0] rx_buffer;
     reg [2:0] bit_count;
-    reg [3:0] sample_count;
+    reg [SAMPLE_CNT_WIDTH-1:0] sample_count;  // 采样计数器
     reg       baud_clk_prev;
     reg       rx_sync1, rx_sync2;
 
@@ -409,7 +455,7 @@ module uart_rx (
             data_o <= 8'h00;
             rx_buffer <= 8'h00;
             bit_count <= 3'd0;
-            sample_count <= 4'd0;
+            sample_count <= 0;
             baud_clk_prev <= 1'b0;
             rx_sync1 <= 1'b1;
             rx_sync2 <= 1'b1;
@@ -429,18 +475,18 @@ module uart_rx (
                         busy_o <= 1'b0;
                         if (!rx_sync2) begin  // 检测到起始位
                             state <= START_BIT;
-                            sample_count <= 4'd1;
+                            sample_count <= 1;
                         end
                     end
 
                     START_BIT: begin
                         busy_o <= 1'b1;
-                        sample_count <= sample_count + 4'd1;
-                        if (sample_count == 4'd7) begin  // 在起始位中间采样
-                            if (rx_sync2) begin  // 如果仍然是低电平
+                        sample_count <= sample_count + 1;
+                        if (sample_count == MIDDLE_SAMPLE) begin  // 在起始位中间采样
+                            if (!rx_sync2) begin  // 如果仍然是低电平
                                 state <= DATA_BITS;
                                 bit_count <= 3'd0;
-                                sample_count <= 4'd0;
+                                sample_count <= 0;
                             end else begin
                                 state <= IDLE;  // 假起始位
                             end
@@ -448,11 +494,11 @@ module uart_rx (
                     end
 
                     DATA_BITS: begin
-                        sample_count <= sample_count + 4'd1;
-                        if (sample_count == 4'd15) begin  // 在数据位中间采样
+                        sample_count <= sample_count + 1;
+                        if (sample_count == END_SAMPLE) begin  // 在数据位中间采样
                             rx_buffer <= {rx_sync2, rx_buffer[7:1]};
                             bit_count <= bit_count + 3'd1;
-                            sample_count <= 4'd0;
+                            sample_count <= 0;
                             if (bit_count == data_bits_i - 3'd1) begin
                                 state <= STOP_BIT;
                             end
@@ -460,8 +506,8 @@ module uart_rx (
                     end
 
                     STOP_BIT: begin
-                        sample_count <= sample_count + 4'd1;
-                        if (sample_count == 4'd15) begin  // 在停止位中间采样
+                        sample_count <= sample_count + 1;
+                        if (sample_count == END_SAMPLE) begin  // 在停止位中间采样
                             data_o <= rx_buffer;
                             ready_o <= 1'b1;
                             busy_o <= 1'b0;

@@ -27,7 +27,7 @@ module chip_top_test;
     wire [7:0]                rx_data;          // 接收的数据
 
     /********** 时钟生成 **********/
-    always #5 clk = ~clk;
+    always #2 clk = ~clk;
 
     /********** 实例化chip_top **********/
     chip_top #(
@@ -113,7 +113,7 @@ module chip_top_test;
     /********** 接收信号的监测 **********/
     always @(posedge clk) begin
         if (rx_end == 1'b1) begin // 输出接收到的文字
-            $write("%c", rx_data);
+            $display($time, " uart recv  : %h(%c)", rx_data, rx_data);
         end
     end
 
@@ -254,7 +254,8 @@ module chip_top_test;
         wait(tx_end == 1'b1);
         @(posedge clk);
 
-        #5000;
+        #`SIM_CYCLE;
+
         $display("\n----- All Tests Completed -----");
 
         $finish;
