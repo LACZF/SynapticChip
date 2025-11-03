@@ -249,24 +249,6 @@ module uart16550 #(
         .baud_clk_o     (baud_clk)
     );
 
-    sync_fifo #(
-        .DATA_WIDTH(8),
-        .DEPTH(RX_FIFO_DEPTH)
-    ) u_tx_fifo (
-        .clk_i      (clk),
-        .rst_ni     (rst_n),
-        .flush_i    (1'b0),
-        .testmode_i (1'b0),
-        .full_o     (rx_fifo_full),
-        .empty_o    (rx_fifo_empty),
-        // .usage_o    (tx_fifo_usage),
-        .data_i     (rx_data),
-        .push_i     (rx_fifo_wr_en),
-        .data_o     (rx_buffer),
-        .pop_i      (rx_fifo_rd_en)
-    );
-
-/*
     fifo #(
         .DATA_WIDTH  (8),
         .FIFO_DEPTH  (RX_FIFO_DEPTH)
@@ -281,15 +263,6 @@ module uart16550 #(
         .full_o      (rx_fifo_full),
         .empty_o     (rx_fifo_empty)
     );
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            rx_buffer <= 8'h00;
-        end else if (rx_fifo_rd_en) begin
-            rx_buffer <= rx_fifo_data_out;
-        end
-    end
-*/
 
     // FIFO写使能逻辑：当接收数据准备好且FIFO未满时写入FIFO
     assign rx_fifo_wr_en = rx_ready && !rx_fifo_full;
