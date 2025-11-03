@@ -1,6 +1,10 @@
 
 `timescale 1ns/1ps
 
+`define PE_TEST_FOR_CHIP_TOP
+`define GPIO_TEST_FOR_CHIP_TOP
+`define TIMER_TEST_FOR_CHIP_TOP
+`define SPI_TEST_FOR_CHIP_TOP
 module chip_top_test;
     /********** 输入/输出信号 **********/
     reg                       clk;
@@ -120,7 +124,7 @@ module chip_top_test;
     /********** 测试用例 **********/
     initial begin
         $readmemh(`ROM_PRG, u_chip_top.u_rom.u_gen_ram.ram);
-        $readmemh(`SPM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
+        $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;
         tx_start <= 1'b0;
@@ -137,6 +141,7 @@ module chip_top_test;
         // 发送测试命令
         $display("\n----- Starting Module Tests -----");
 
+`ifdef PE_TEST_FOR_CHIP_TOP
         // 发送PE模块测试命令
         $display($time, " Sending command: p");
         // 等待发送空闲
@@ -172,7 +177,9 @@ module chip_top_test;
 `endif
 
         #5000;
+`endif
 
+`ifdef GPIO_TEST_FOR_CHIP_TOP
         // 发送GPIO模块测试命令
         $display($time, " Sending command: g");
         wait(tx_busy == 1'b0);
@@ -204,7 +211,9 @@ module chip_top_test;
         @(posedge clk);
 `endif
         #5000;
+`endif
 
+`ifdef SPI_TEST_FOR_CHIP_TOP
         // 发送SPI模块测试命令
         $display($time, " Sending command: s");
         wait(tx_busy == 1'b0);
@@ -237,7 +246,9 @@ module chip_top_test;
 `endif
 
         #5000;
+`endif
 
+`ifdef TIMER_TEST_FOR_CHIP_TOP
         // 发送Timer模块测试命令
         $display($time, " Sending command: t");
         wait(tx_busy == 1'b0);
@@ -268,7 +279,7 @@ module chip_top_test;
         wait(tx_end == 1'b1);
         @(posedge clk);
 `endif
-
+`endif
         #`SIM_CYCLE;
 
         $display("\n----- All Tests Completed -----");

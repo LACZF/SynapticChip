@@ -1,8 +1,12 @@
 
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
+SIM_CYCLE ?= 1000000
+ROM_PRG   ?= program.hex
+RAM_PRG   ?= program.hex
+
 TEST_TARGET := top_system
-TEST_ARGS ?= -g2005-sv -DROM_PRG=\"program.hex\" -DSPM_PRG=\"program.hex\" -DSIM_CYCLE=1000000
+TEST_ARGS ?= -g2005-sv -DROM_PRG=\"$(ROM_PRG)\" -DRAM_PRG=\"$(RAM_PRG)\" -DSIM_CYCLE=$(SIM_CYCLE)
 
 TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
