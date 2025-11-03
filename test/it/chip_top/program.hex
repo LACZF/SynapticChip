@@ -930,7 +930,7 @@ b28ff0ef  // [00000d74]: jal	9c <uart_write_byte>
 03d00513  // [00000d78]: li	a0,61
 b20ff0ef  // [00000d7c]: jal	9c <uart_write_byte>
 40030437  // [00000d80]: lui	s0,0x40030
-00c4041b  // [00000d84]: addiw	s0,s0,12 # 4003000c <GPIO_IO_DIR>
+0084041b  // [00000d84]: addiw	s0,s0,8 # 40030008 <GPIO_IO_DIR>
 00100493  // [00000d88]: li	s1,1
 00942023  // [00000d8c]: sw	s1,0(s0)
 00048513  // [00000d90]: mv	a0,s1
@@ -953,7 +953,7 @@ accff0ef  // [00000dd0]: jal	9c <uart_write_byte>
 03d00513  // [00000dd4]: li	a0,61
 ac4ff0ef  // [00000dd8]: jal	9c <uart_write_byte>
 40030437  // [00000ddc]: lui	s0,0x40030
-0084041b  // [00000de0]: addiw	s0,s0,8 # 40030008 <GPIO_IO_DATA>
+00c4041b  // [00000de0]: addiw	s0,s0,12 # 4003000c <GPIO_IO_DATA>
 00100493  // [00000de4]: li	s1,1
 00942023  // [00000de8]: sw	s1,0(s0)
 00048513  // [00000dec]: mv	a0,s1

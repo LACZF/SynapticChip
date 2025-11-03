@@ -25,8 +25,8 @@
 .equ GPIO_BASE,      IO_BASE   + 0x00030000
 .equ GPIO_IN_DATA,   GPIO_BASE + 0x00  # 输入数据寄存器
 .equ GPIO_OUT_DATA,  GPIO_BASE + 0x04  # 输出数据寄存器
-.equ GPIO_IO_DATA,   GPIO_BASE + 0x08  # IO数据寄存器
-.equ GPIO_IO_DIR,    GPIO_BASE + 0x0C  # IO方向寄存器
+.equ GPIO_IO_DIR,    GPIO_BASE + 0x08  # IO方向寄存器
+.equ GPIO_IO_DATA,   GPIO_BASE + 0x0C  # IO数据寄存器
 
 # Timer模块地址定义
 .equ TIMER_BASE,     IO_BASE    + 0x00010000
