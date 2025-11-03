@@ -14,8 +14,8 @@ RTL_SRC += $(TOP_DIR)/rtl/include/spi_addr.v
 RTL_SRC += $(TOP_DIR)/rtl/include/spi.v
 RTL_SRC += $(TOP_DIR)/rtl/include/timer.v
 
-# RTL_SRC += $(TOP_DIR)/rtl/common/fifo.v
-# RTL_SRC += $(TOP_DIR)/rtl/common/cache.v
+RTL_SRC += $(TOP_DIR)/rtl/common/fifo.v
+RTL_SRC += $(TOP_DIR)/rtl/common/cache.v
 
 # core
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/bpu.sv
@@ -97,7 +97,7 @@ RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_ram.sv
 # RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/prim_subreg_arb.sv
 # RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/prim_subreg_ext.sv
 # RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/prim_subreg.sv
-# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/sync_fifo.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/sync_fifo.sv
 # RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/up_counter.sv
 
 # XIP

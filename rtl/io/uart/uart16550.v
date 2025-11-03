@@ -2,6 +2,7 @@
 module uart16550 #(
     parameter SYS_CLK_FREQ   = 100_000_000,
     parameter BAUD_RATE      = 115_200,
+    parameter RX_FIFO_DEPTH  = 16,           // 接收FIFO深度
     parameter SAMPLE_CYCLES  = 16            // 每个位周期的采样次数
 )(
     input  wire        clk,                // 时钟信号
@@ -79,8 +80,15 @@ module uart16550 #(
     wire       rx_ready;          // 接收准备好
     wire [7:0] rx_data;           // 接收数据
     wire       rx_error;          // 接收错误
+
+    // FIFO相关信号
+    wire       rx_fifo_wr_en;     // FIFO写使能
+    wire       rx_fifo_rd_en;     // FIFO读使能
+    wire       rx_fifo_full;      // FIFO满
+    wire       rx_fifo_empty;     // FIFO空
+    wire [7:0] rx_fifo_data_out;  // FIFO输出数据
+    reg  [7:0] rx_buffer;         // 接收数据缓存寄存器，用于解决FIFO读数据延迟问题
     reg        rx_available;      // 接收数据可用
-    reg [7:0]  rx_buffer;         // 接收缓冲区
 
     // 发送部分信号
     wire       tx_busy;           // 发送忙
@@ -241,6 +249,57 @@ module uart16550 #(
         .baud_clk_o     (baud_clk)
     );
 
+    sync_fifo #(
+        .DATA_WIDTH(8),
+        .DEPTH(RX_FIFO_DEPTH)
+    ) u_tx_fifo (
+        .clk_i      (clk),
+        .rst_ni     (rst_n),
+        .flush_i    (1'b0),
+        .testmode_i (1'b0),
+        .full_o     (rx_fifo_full),
+        .empty_o    (rx_fifo_empty),
+        // .usage_o    (tx_fifo_usage),
+        .data_i     (rx_data),
+        .push_i     (rx_fifo_wr_en),
+        .data_o     (rx_buffer),
+        .pop_i      (rx_fifo_rd_en)
+    );
+
+/*
+    fifo #(
+        .DATA_WIDTH  (8),
+        .FIFO_DEPTH  (RX_FIFO_DEPTH)
+    ) u_rx_fifo (
+        .clk         (clk),
+        .rst_n       (rst_n),
+        .wr_en_i     (rx_fifo_wr_en),
+        .data_in_i   (rx_data),
+        .rd_en_i     (rx_fifo_rd_en),
+        .rd_done_o   (),           // 未使用
+        .data_out_o  (rx_buffer),
+        .full_o      (rx_fifo_full),
+        .empty_o     (rx_fifo_empty)
+    );
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            rx_buffer <= 8'h00;
+        end else if (rx_fifo_rd_en) begin
+            rx_buffer <= rx_fifo_data_out;
+        end
+    end
+*/
+
+    // FIFO写使能逻辑：当接收数据准备好且FIFO未满时写入FIFO
+    assign rx_fifo_wr_en = rx_ready && !rx_fifo_full;
+
+    // FIFO读使能逻辑：当CPU读取接收缓冲区且FIFO非空时读取FIFO
+    assign rx_fifo_rd_en = rbr_sel && !rx_fifo_empty;
+
+    // 更新rx_available信号，反映FIFO中是否有数据
+    assign rx_available  = !rx_fifo_empty;
+
     //--------------------------------------------------------------------
     // 发送部分
     //--------------------------------------------------------------------
@@ -295,39 +354,32 @@ module uart16550 #(
         .data_bits_i(data_bits_config)  // 5-8 data bits (3-bit port)
     );
 
-    // 接收数据处理
+    // 接收中断处理
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            rx_available <= 1'b0;
-            rx_buffer <= 8'h00;
             rx_int <= 1'b0;
         end else begin
-            if (rx_ready) begin
-                rx_buffer <= rx_data;
-                rx_available <= 1'b1;
-                // 设置接收中断
-                if (ier[0]) begin
-                    rx_int <= 1'b1;
-                end
-            end else if (rbr_sel) begin
-                rx_available <= 1'b0;
-                rx_int <= 1'b0;
-            end
+            // 当FIFO中有数据且IER[0]置位时设置接收中断
+            rx_int <= !rx_fifo_empty && ier[0];
         end
     end
 
     //--------------------------------------------------------------------
     // 线路状态寄存器 (LSR)
     //--------------------------------------------------------------------
+    // 覆盖错误检测：当FIFO已满且尝试写入新数据时
+    wire overrun_error;
+    assign overrun_error = rx_ready && rx_fifo_full;
+
     assign lsr = {
         1'b0,                   // bit 7: 保留
         1'b0,                   // bit 6: THR空
         tx_busy ? 1'b0 : 1'b1,  // bit 5: TX holding register空 (未使用)
         1'b0,                   // bit 4: 帧错误 (未使用)
         1'b0,                   // bit 3: 奇偶校验错误 (未使用)
-        1'b0,                   // bit 2: 覆盖错误 (未使用)
+        overrun_error,          // bit 2: 覆盖错误 (FIFO满时尝试写入)
         rx_error,               // bit 1: 接收数据错误
-        rx_available            // bit 0: 接收数据准备好
+        rx_available            // bit 0: 接收数据准备好 (FIFO非空)
     };
 
     //--------------------------------------------------------------------
