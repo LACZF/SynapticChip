@@ -1,3 +1,4 @@
+`define GPIO_REG_ADDR_LEN 8
 module gpio_top #(
     parameter GPIO_IN_CH   = 1,
     parameter GPIO_OUT_CH  = 1,
@@ -23,10 +24,13 @@ module gpio_top #(
 );
 
     // 寄存器地址定义
-    localparam GPIO_IN_REG_ADDR    = 32'h00;  // 输入寄存器 (只读)
-    localparam GPIO_OUT_REG_ADDR   = 32'h04;  // 输出寄存器
-    localparam GPIO_DIR_REG_ADDR   = 32'h08;  // 方向寄存器
-    localparam GPIO_IO_REG_ADDR    = 32'h0C;  // IO数据寄存器
+    localparam GPIO_IN_REG_ADDR            = `GPIO_REG_ADDR_LEN'h00;  // 输入寄存器 (只读)
+    localparam GPIO_OUT_REG_ADDR           = `GPIO_REG_ADDR_LEN'h04;  // 输出寄存器
+    localparam GPIO_DIR_REG_ADDR           = `GPIO_REG_ADDR_LEN'h08;  // 方向寄存器
+    localparam GPIO_IO_REG_ADDR            = `GPIO_REG_ADDR_LEN'h0C;  // IO数据寄存器
+
+    wire [`GPIO_REG_ADDR_LEN-1:0] reg_addr;
+    assign reg_addr = addr_i[`GPIO_REG_ADDR_LEN-1:0];
 
     // 内部寄存器定义
     reg [GPIO_OUT_CH-1:0]  out_reg;           // 输出数据寄存器
@@ -79,7 +83,7 @@ module gpio_top #(
 
                 // 处理写操作
                 if (we_i) begin
-                    case (addr_i)
+                    case (reg_addr)
                         GPIO_OUT_REG_ADDR: begin
                             out_reg <= wr_data_i[GPIO_OUT_CH-1:0];
                         end
@@ -88,7 +92,7 @@ module gpio_top #(
                         end
                         GPIO_IO_REG_ADDR: begin
                             io_data_reg <= wr_data_i[GPIO_IO_CH-1:0];
-                            io_out <= wr_data_i[GPIO_IO_CH-1:0];
+                            io_out      <= wr_data_i[GPIO_IO_CH-1:0];
                         end
                     endcase
 
@@ -96,7 +100,7 @@ module gpio_top #(
                     rvalid_o_reg <= 1'b1;
                 end else begin
                     // 处理读操作
-                    case (addr_i)
+                    case (reg_addr)
                         GPIO_IN_REG_ADDR: begin
                             data_out_o_reg[GPIO_IN_CH-1:0] <= gpio_in;
                             if (GPIO_IN_CH < 32) begin

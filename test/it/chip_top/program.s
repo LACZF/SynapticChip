@@ -1155,6 +1155,14 @@ test_gpio_module:
     call print_hex
     call print_newline
 
+    li s0, GPIO_OUT_DATA
+    li s1, 0x00000010  # 设置第4位为高电平
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
     # 3. 读取GPIO输入数据
     li a0, 'I'
     call uart_write_byte

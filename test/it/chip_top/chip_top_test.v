@@ -21,9 +21,9 @@ module chip_top_test;
     wire                      uart_tx;       // UART发送信号
 
     // 通用输入/输出端口
-    wire [GPIO_NUM-1:0]    gpio_in = {GPIO_NUM{1'b0}}; // 输入端口
-    wire [GPIO_NUM-1:0]    gpio_out;                   // 输出端口
-    wire [GPIO_NUM-1:0]    gpio_io = {GPIO_NUM{1'bz}}; // 输入输出端口
+    wire [GPIO_NUM-1:0]       gpio_in = {GPIO_NUM{1'b1}}; // 输入端口
+    wire [GPIO_NUM-1:0]       gpio_out;                   // 输出端口
+    wire [GPIO_NUM-1:0]       gpio_io = {GPIO_NUM{1'bz}}; // 输入输出端口
 
     /********** UART模型 **********/
     wire                      rx_busy;          // 接收中标志
