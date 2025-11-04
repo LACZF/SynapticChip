@@ -78,17 +78,6 @@ module chip_top_test;
         .gpio_io     (gpio_io)
     );
 
-    /********** GPIO的监测 **********/
-    always @(gpio_in) begin     // gpio_in值变化后打印输出
-        $display($time, " gpio_in changed  : %b", gpio_in);
-    end
-    always @(gpio_out) begin    // gpio_out值变化后打印输出
-        $display($time, " gpio_out changed : %b", gpio_out);
-    end
-    always @(gpio_io) begin     // gpio_io值变化后打印输出
-        $display($time, " gpio_io changed  : %b", gpio_io);
-    end
-
     /********** UART发送相关信号 **********/
     reg                       tx_start;     // 发送开始信号
     reg  [7:0]                tx_data;      // 发送数据
@@ -157,6 +146,7 @@ module chip_top_test;
     always @(posedge clk) begin
         if (rx_end == 1'b1) begin // 输出接收到的文字
             $write("%c", rx_data);
+            $fflush(); // 强制刷新输出缓冲区，实现实时显示
         end
     end
 
@@ -180,6 +170,10 @@ module chip_top_test;
         // 发送测试命令
         $display("\n----- Starting Module Tests -----");
 
+        // 等待初始化完成
+        wait(rx_data == TEST_CMD_END);
+        # 500;
+
 `ifdef PE_TEST_FOR_CHIP_TOP
         // 发送PE模块测试命令
         send_test(TEST_CMD_PE);
@@ -188,6 +182,9 @@ module chip_top_test;
 `ifdef GPIO_TEST_FOR_CHIP_TOP
         // 发送GPIO模块测试命令
         send_test(TEST_CMD_GPIO);
+        $display($time, " gpio_in  : %b", gpio_in);
+        $display($time, " gpio_out : %b", gpio_out);
+        $display($time, " gpio_io  : %b", gpio_io);
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP

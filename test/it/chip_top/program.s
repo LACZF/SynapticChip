@@ -68,10 +68,6 @@ _start:
     # 初始化UART
     call uart_init
 
-    # 发送字符'O'
-    li a0, 'O'
-    call uart_write_byte
-
     # 主循环
 main_loop:
     # 检查是否有数据可读
@@ -109,6 +105,26 @@ uart_init:
     li a0, UART_BDV_H
     li a1, 0x0
     sb a1, 0(a0)
+
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, 'i'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'K'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    li a0, 0x04
+    call uart_write_byte
+    call print_newline
 
     lw ra, 4(sp)
     addi sp, sp, 8
@@ -379,8 +395,7 @@ test_pe_module:
     call print_newline
 
     # 4. 指令测试 - 算术运算测试
-    # li a0, '\n'
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
     li a0, 'A'
     call uart_write_byte
@@ -514,8 +529,7 @@ test_pe_module:
     call print_newline
 
     # 5. 指令测试 - 逻辑运算测试
-    # li a0, '\n'
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
     li a0, 'L'
     call uart_write_byte
@@ -641,8 +655,7 @@ test_pe_module:
     call print_newline
 
     # 6. 数据寄存器读写测试
-    # li a0, '\n'
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
     li a0, 'D'
     call uart_write_byte
@@ -738,8 +751,7 @@ test_pe_module:
     data_test_end:
 
     # 7. 路由配置模块测试
-    # li a0, '\n'
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
     li a0, 'R'
     call uart_write_byte
@@ -913,8 +925,7 @@ test_pe_module:
     call print_newline
 
     # 9. 测试完成
-    # li a0, '\n'
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
@@ -1014,15 +1025,10 @@ print_newline:
     addi sp, sp, -8
     sw ra, 4(sp)
 
-    li a0, '!'
+    li a0, '\r'
     call uart_write_byte
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
-
-    # li a0, '\r'
-    # call uart_write_byte
-    # li a0, '\n'
-    # call uart_write_byte
 
     lw ra, 4(sp)
     addi sp, sp, 8
@@ -1188,8 +1194,7 @@ test_gpio_module:
     call print_newline
 
     # 4. 测试完成
-    # li a0, '\n'
-    li a0, '!' # 使用感叹号标志结束测试
+    li a0, '\n'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
@@ -1408,8 +1413,7 @@ test_spi_module:
     call print_newline
 
     # 6. 测试完成
-    # li a0, '\n'
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
@@ -1701,8 +1705,7 @@ test_timer_module:
     call print_newline
 
     # 8. 测试完成
-    # li a0, '\n'
-    li a0, '!'
+    li a0, '\n'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
