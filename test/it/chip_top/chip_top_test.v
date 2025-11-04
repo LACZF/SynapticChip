@@ -114,6 +114,42 @@ module chip_top_test;
         .tx_o       (uart_rx)
     );
 
+    /********** UART发送字符任务 **********/
+    task send_char;
+        input [7:0] char;
+        input       display;
+        begin
+            if (display) begin
+                $display($time, " Sending character: %c", char);
+            end
+            // 等待发送空闲
+            wait(tx_busy == 1'b0);
+            @(posedge clk);
+            tx_data  <= char;
+            tx_start <= 1'b1;
+            @(posedge clk);
+            tx_start <= 1'b0;
+            // 等待发送完成
+            wait(tx_end == 1'b1);
+            @(posedge clk);
+        end
+    endtask;
+
+    /********** UART发送CR和LF任务 **********/
+    task send_cr_lf;
+        begin
+            // 发送CR
+        `ifdef TEST_SEND_CR
+            send_char(8'h0d, 1'b0); // CR
+        `endif
+
+            // 发送LF
+        `ifdef TEST_SEND_LF
+            send_char(8'h0a, 1'b0); // LF
+        `endif
+        end
+    endtask;
+
     /********** 接收信号的监测 **********/
     always @(posedge clk) begin
         if (rx_end == 1'b1) begin // 输出接收到的文字
@@ -143,142 +179,35 @@ module chip_top_test;
 
 `ifdef PE_TEST_FOR_CHIP_TOP
         // 发送PE模块测试命令
-        $display($time, " Sending command: p");
-        // 等待发送空闲
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-        tx_data  <= 8'h70; // 'p'
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        // 等待发送完成
-        wait(tx_end == 1'b1);
-        @(posedge clk);
+        send_char(8'h70, 1'b1); // 'p'
         // 发送CR和LF
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`ifdef TEST_SEND_CR
-        tx_data  <= 8'h0d; // CR
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`endif
-`ifdef TEST_SEND_LF
-        tx_data  <= 8'h0a; // LF
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-`endif
+        send_cr_lf;
 
         #5000;
 `endif
 
 `ifdef GPIO_TEST_FOR_CHIP_TOP
         // 发送GPIO模块测试命令
-        $display($time, " Sending command: g");
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-        tx_data  <= 8'h67; // 'g'
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`ifdef TEST_SEND_CR
-        tx_data  <= 8'h0d;
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`endif
-`ifdef TEST_SEND_LF
-        tx_data  <= 8'h0a;
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-`endif
+        send_char(8'h67, 1'b1); // 'g'
+        // 发送CR和LF
+        send_cr_lf;
         #5000;
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP
         // 发送SPI模块测试命令
-        $display($time, " Sending command: s");
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-        tx_data  <= 8'h73; // 's'
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`ifdef TEST_SEND_CR
-        tx_data  <= 8'h0d;
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`endif
-`ifdef TEST_SEND_LF
-        tx_data  <= 8'h0a;
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-`endif
+        send_char(8'h73, 1'b1); // 's'
+        // 发送CR和LF
+        send_cr_lf;
 
         #5000;
 `endif
 
 `ifdef TIMER_TEST_FOR_CHIP_TOP
         // 发送Timer模块测试命令
-        $display($time, " Sending command: t");
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-        tx_data  <= 8'h74; // 't'
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`ifdef TEST_SEND_CR
-        tx_data  <= 8'h0d;
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-        wait(tx_busy == 1'b0);
-        @(posedge clk);
-`endif
-`ifdef TEST_SEND_LF
-        tx_data  <= 8'h0a;
-        tx_start <= 1'b1;
-        @(posedge clk);
-        tx_start <= 1'b0;
-        wait(tx_end == 1'b1);
-        @(posedge clk);
-`endif
+        send_char(8'h74, 1'b1); // 't'
+        // 发送CR和LF
+        send_cr_lf;
 `endif
         #`SIM_CYCLE;
 
