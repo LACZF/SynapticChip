@@ -57,11 +57,11 @@ module uart_tx #(
                 start_i_pulse <= 1'b0;
             end
 
-            baud_clk_prev <= baud_clk_i;
             tx_end_o <= 1'b0;
 
             // 仅在波特率时钟上升沿更新状态
             if (baud_clk_i && !baud_clk_prev) begin
+                baud_clk_prev <= baud_clk_i;
                 case (state)
                     IDLE: begin
                         tx_o <= 1'b1;  // 空闲状态为高电平
@@ -112,6 +112,8 @@ module uart_tx #(
                         end
                     end
                 endcase
+            end else begin
+                baud_clk_prev <= baud_clk_i;
             end
         end
     end
