@@ -192,7 +192,7 @@ ff010113  // [00000240]: addi	sp,sp,-16
 00812423  // [00000248]: sw	s0,8(sp)
 00912223  // [0000024c]: sw	s1,4(sp)
 01212023  // [00000250]: sw	s2,0(sp)
-03d00513  // [00000254]: li	a0,61
+02d00513  // [00000254]: li	a0,45
 e89ff0ef  // [00000258]: jal	e0 <uart_write_byte>
 02000513  // [0000025c]: li	a0,32
 e81ff0ef  // [00000260]: jal	e0 <uart_write_byte>
@@ -212,7 +212,7 @@ e51ff0ef  // [00000290]: jal	e0 <uart_write_byte>
 e49ff0ef  // [00000298]: jal	e0 <uart_write_byte>
 02000513  // [0000029c]: li	a0,32
 e41ff0ef  // [000002a0]: jal	e0 <uart_write_byte>
-03d00513  // [000002a4]: li	a0,61
+02d00513  // [000002a4]: li	a0,45
 e39ff0ef  // [000002a8]: jal	e0 <uart_write_byte>
 1d5000ef  // [000002ac]: jal	c80 <print_newline>
 30000437  // [000002b0]: lui	s0,0x30000
@@ -771,7 +771,7 @@ da0ff0ef  // [00000b40]: jal	e0 <uart_write_byte>
 13c000ef  // [00000b44]: jal	c80 <print_newline>
 00a00513  // [00000b48]: li	a0,10
 d94ff0ef  // [00000b4c]: jal	e0 <uart_write_byte>
-03d00513  // [00000b50]: li	a0,61
+02d00513  // [00000b50]: li	a0,45
 d8cff0ef  // [00000b54]: jal	e0 <uart_write_byte>
 02000513  // [00000b58]: li	a0,32
 d84ff0ef  // [00000b5c]: jal	e0 <uart_write_byte>
@@ -811,7 +811,7 @@ d04ff0ef  // [00000bdc]: jal	e0 <uart_write_byte>
 cfcff0ef  // [00000be4]: jal	e0 <uart_write_byte>
 02000513  // [00000be8]: li	a0,32
 cf4ff0ef  // [00000bec]: jal	e0 <uart_write_byte>
-03d00513  // [00000bf0]: li	a0,61
+02d00513  // [00000bf0]: li	a0,45
 cecff0ef  // [00000bf4]: jal	e0 <uart_write_byte>
 088000ef  // [00000bf8]: jal	c80 <print_newline>
 00c12083  // [00000bfc]: lw	ra,12(sp)
@@ -899,7 +899,7 @@ ff010113  // [00000cf4]: addi	sp,sp,-16
 00812423  // [00000cfc]: sw	s0,8(sp)
 00912223  // [00000d00]: sw	s1,4(sp)
 01212023  // [00000d04]: sw	s2,0(sp)
-03d00513  // [00000d08]: li	a0,61
+02d00513  // [00000d08]: li	a0,45
 bd4ff0ef  // [00000d0c]: jal	e0 <uart_write_byte>
 02000513  // [00000d10]: li	a0,32
 bccff0ef  // [00000d14]: jal	e0 <uart_write_byte>
@@ -921,7 +921,7 @@ b94ff0ef  // [00000d4c]: jal	e0 <uart_write_byte>
 b8cff0ef  // [00000d54]: jal	e0 <uart_write_byte>
 02000513  // [00000d58]: li	a0,32
 b84ff0ef  // [00000d5c]: jal	e0 <uart_write_byte>
-03d00513  // [00000d60]: li	a0,61
+02d00513  // [00000d60]: li	a0,45
 b7cff0ef  // [00000d64]: jal	e0 <uart_write_byte>
 f19ff0ef  // [00000d68]: jal	c80 <print_newline>
 04300513  // [00000d6c]: li	a0,67
@@ -1004,7 +1004,7 @@ d79ff0ef  // [00000e9c]: jal	c14 <print_hex>
 de1ff0ef  // [00000ea0]: jal	c80 <print_newline>
 00a00513  // [00000ea4]: li	a0,10
 a38ff0ef  // [00000ea8]: jal	e0 <uart_write_byte>
-03d00513  // [00000eac]: li	a0,61
+02d00513  // [00000eac]: li	a0,45
 a30ff0ef  // [00000eb0]: jal	e0 <uart_write_byte>
 02000513  // [00000eb4]: li	a0,32
 a28ff0ef  // [00000eb8]: jal	e0 <uart_write_byte>
@@ -1046,7 +1046,7 @@ a00ff0ef  // [00000ee0]: jal	e0 <uart_write_byte>
 998ff0ef  // [00000f48]: jal	e0 <uart_write_byte>
 02000513  // [00000f4c]: li	a0,32
 990ff0ef  // [00000f50]: jal	e0 <uart_write_byte>
-03d00513  // [00000f54]: li	a0,61
+02d00513  // [00000f54]: li	a0,45
 988ff0ef  // [00000f58]: jal	e0 <uart_write_byte>
 d25ff0ef  // [00000f5c]: jal	c80 <print_newline>
 00c12083  // [00000f60]: lw	ra,12(sp)
@@ -1076,7 +1076,7 @@ ff010113  // [00000fa8]: addi	sp,sp,-16
 00812423  // [00000fb0]: sw	s0,8(sp)
 00912223  // [00000fb4]: sw	s1,4(sp)
 01212023  // [00000fb8]: sw	s2,0(sp)
-03d00513  // [00000fbc]: li	a0,61
+02d00513  // [00000fbc]: li	a0,45
 920ff0ef  // [00000fc0]: jal	e0 <uart_write_byte>
 02000513  // [00000fc4]: li	a0,32
 918ff0ef  // [00000fc8]: jal	e0 <uart_write_byte>
@@ -1098,7 +1098,7 @@ ff010113  // [00000fa8]: addi	sp,sp,-16
 8d8ff0ef  // [00001008]: jal	e0 <uart_write_byte>
 02000513  // [0000100c]: li	a0,32
 8d0ff0ef  // [00001010]: jal	e0 <uart_write_byte>
-03d00513  // [00001014]: li	a0,61
+02d00513  // [00001014]: li	a0,45
 8c8ff0ef  // [00001018]: jal	e0 <uart_write_byte>
 c65ff0ef  // [0000101c]: jal	c80 <print_newline>
 04300513  // [00001020]: li	a0,67
@@ -1193,7 +1193,7 @@ a95ff0ef  // [00001180]: jal	c14 <print_hex>
 afdff0ef  // [00001184]: jal	c80 <print_newline>
 00a00513  // [00001188]: li	a0,10
 f55fe0ef  // [0000118c]: jal	e0 <uart_write_byte>
-03d00513  // [00001190]: li	a0,61
+02d00513  // [00001190]: li	a0,45
 f4dfe0ef  // [00001194]: jal	e0 <uart_write_byte>
 02000513  // [00001198]: li	a0,32
 f45fe0ef  // [0000119c]: jal	e0 <uart_write_byte>
@@ -1235,7 +1235,7 @@ ebdfe0ef  // [00001224]: jal	e0 <uart_write_byte>
 eb5fe0ef  // [0000122c]: jal	e0 <uart_write_byte>
 02000513  // [00001230]: li	a0,32
 eadfe0ef  // [00001234]: jal	e0 <uart_write_byte>
-03d00513  // [00001238]: li	a0,61
+02d00513  // [00001238]: li	a0,45
 ea5fe0ef  // [0000123c]: jal	e0 <uart_write_byte>
 a41ff0ef  // [00001240]: jal	c80 <print_newline>
 00c12083  // [00001244]: lw	ra,12(sp)
@@ -1269,7 +1269,7 @@ ff010113  // [0000129c]: addi	sp,sp,-16
 00812423  // [000012a4]: sw	s0,8(sp)
 00912223  // [000012a8]: sw	s1,4(sp)
 01212023  // [000012ac]: sw	s2,0(sp)
-03d00513  // [000012b0]: li	a0,61
+02d00513  // [000012b0]: li	a0,45
 e2dfe0ef  // [000012b4]: jal	e0 <uart_write_byte>
 02000513  // [000012b8]: li	a0,32
 e25fe0ef  // [000012bc]: jal	e0 <uart_write_byte>
@@ -1295,7 +1295,7 @@ dddfe0ef  // [00001304]: jal	e0 <uart_write_byte>
 dd5fe0ef  // [0000130c]: jal	e0 <uart_write_byte>
 02000513  // [00001310]: li	a0,32
 dcdfe0ef  // [00001314]: jal	e0 <uart_write_byte>
-03d00513  // [00001318]: li	a0,61
+02d00513  // [00001318]: li	a0,45
 dc5fe0ef  // [0000131c]: jal	e0 <uart_write_byte>
 961ff0ef  // [00001320]: jal	c80 <print_newline>
 05200513  // [00001324]: li	a0,82
@@ -1442,7 +1442,7 @@ b9dfe0ef  // [00001544]: jal	e0 <uart_write_byte>
 f38ff0ef  // [00001548]: jal	c80 <print_newline>
 00a00513  // [0000154c]: li	a0,10
 b91fe0ef  // [00001550]: jal	e0 <uart_write_byte>
-03d00513  // [00001554]: li	a0,61
+02d00513  // [00001554]: li	a0,45
 b89fe0ef  // [00001558]: jal	e0 <uart_write_byte>
 02000513  // [0000155c]: li	a0,32
 b81fe0ef  // [00001560]: jal	e0 <uart_write_byte>
@@ -1488,7 +1488,7 @@ ae9fe0ef  // [000015f8]: jal	e0 <uart_write_byte>
 ae1fe0ef  // [00001600]: jal	e0 <uart_write_byte>
 02000513  // [00001604]: li	a0,32
 ad9fe0ef  // [00001608]: jal	e0 <uart_write_byte>
-03d00513  // [0000160c]: li	a0,61
+02d00513  // [0000160c]: li	a0,45
 ad1fe0ef  // [00001610]: jal	e0 <uart_write_byte>
 e6cff0ef  // [00001614]: jal	c80 <print_newline>
 00c12083  // [00001618]: lw	ra,12(sp)

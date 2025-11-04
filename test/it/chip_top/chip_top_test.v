@@ -165,14 +165,11 @@ module chip_top_test;
         rst_n <= 1;
 
         // 等待系统初始化完成
-        #1000;
+        wait(rx_data == TEST_CMD_END);
+        # 500;
 
         // 发送测试命令
         $display("\n----- Starting Module Tests -----");
-
-        // 等待初始化完成
-        wait(rx_data == TEST_CMD_END);
-        # 500;
 
 `ifdef PE_TEST_FOR_CHIP_TOP
         // 发送PE模块测试命令

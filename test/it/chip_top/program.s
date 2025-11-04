@@ -293,7 +293,7 @@ test_pe_module:
     sw s2, 0(sp)
 
     # 打印测试标题
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -313,7 +313,7 @@ test_pe_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -927,7 +927,7 @@ test_pe_module:
     # 9. 测试完成
     li a0, '\n'
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -967,7 +967,7 @@ test_pe_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -1075,7 +1075,7 @@ test_gpio_module:
     sw s2, 0(sp)
 
     # 打印测试标题
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -1097,7 +1097,7 @@ test_gpio_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -1196,7 +1196,7 @@ test_gpio_module:
     # 4. 测试完成
     li a0, '\n'
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -1238,7 +1238,7 @@ test_gpio_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -1276,7 +1276,7 @@ test_spi_module:
     sw s2, 0(sp)
 
     # 打印测试标题
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -1298,7 +1298,7 @@ test_spi_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -1415,7 +1415,7 @@ test_spi_module:
     # 6. 测试完成
     li a0, '\n'
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -1457,7 +1457,7 @@ test_spi_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -1499,7 +1499,7 @@ test_timer_module:
     sw s2, 0(sp)
 
     # 打印测试标题
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -1525,7 +1525,7 @@ test_timer_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -1707,7 +1707,7 @@ test_timer_module:
     # 8. 测试完成
     li a0, '\n'
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -1753,7 +1753,7 @@ test_timer_module:
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, '='
+    li a0, '-'
     call uart_write_byte
     call print_newline
 
