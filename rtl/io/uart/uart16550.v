@@ -3,6 +3,7 @@ module uart16550 #(
     parameter SYS_CLK_FREQ   = 100_000_000,
     parameter BAUD_RATE      = 115_200,
     parameter RX_FIFO_DEPTH  = 16,           // 接收FIFO深度
+    parameter TX_FIFO_DEPTH  = 16,           // 发送FIFO深度
     parameter SAMPLE_CYCLES  = 16            // 每个位周期的采样次数
 )(
     input  wire        clk,                // 时钟信号
@@ -81,18 +82,26 @@ module uart16550 #(
     wire [7:0] rx_data;           // 接收数据
     wire       rx_error;          // 接收错误
 
-    // FIFO相关信号
-    wire       rx_fifo_wr_en;     // FIFO写使能
-    wire       rx_fifo_rd_en;     // FIFO读使能
-    wire       rx_fifo_full;      // FIFO满
-    wire       rx_fifo_empty;     // FIFO空
-    wire [7:0] rx_fifo_data_out;  // FIFO输出数据
-    reg  [7:0] rx_buffer;         // 接收数据缓存寄存器，用于解决FIFO读数据延迟问题
-    reg        rx_available;      // 接收数据可用
+    // RX FIFO相关信号
+    wire       rx_fifo_wr_en;     // RX FIFO写使能
+    wire       rx_fifo_rd_en;     // RX FIFO读使能
+    wire       rx_fifo_full;      // RX FIFO满
+    wire       rx_fifo_empty;     // RX FIFO空
+    wire [7:0] rx_fifo_data_out;  // RX FIFO输出数据
+    reg  [7:0] rx_buffer;         // RX 接收数据缓存寄存器，用于解决FIFO读数据延迟问题
+    reg        rx_available;      // RX 接收数据可用
 
     // 发送部分信号
     wire       tx_busy;           // 发送忙
     reg        tx_start;          // 发送开始
+
+    // TX FIFO相关信号
+    wire       tx_fifo_wr_en;     // TX FIFO写使能
+    wire       tx_fifo_rd_en;     // TX FIFO读使能
+    wire       tx_fifo_full;      // TX FIFO满
+    wire       tx_fifo_empty;     // TX FIFO空
+    wire [7:0] tx_fifo_data_out;  // TX FIFO输出数据
+    reg  [7:0] tx_buffer;         // TX FIFO输出缓冲数据
 
     // 中断相关信号
     reg        rx_int;            // 接收中断
@@ -264,6 +273,21 @@ module uart16550 #(
         .empty_o     (rx_fifo_empty)
     );
 
+    fifo #(
+        .DATA_WIDTH  (8),
+        .FIFO_DEPTH  (TX_FIFO_DEPTH)
+    ) u_tx_fifo (
+        .clk         (clk),
+        .rst_n       (rst_n),
+        .wr_en_i     (tx_fifo_wr_en),
+        .data_in_i   (wr_data_i),
+        .rd_en_i     (tx_fifo_rd_en),
+        .rd_done_o   (),
+        .data_out_o  (tx_fifo_data_out),
+        .full_o      (tx_fifo_full),
+        .empty_o     (tx_fifo_empty)
+    );
+
     // FIFO写使能逻辑：当接收数据准备好且FIFO未满时写入FIFO
     assign rx_fifo_wr_en = rx_ready && !rx_fifo_full;
 
@@ -272,6 +296,12 @@ module uart16550 #(
 
     // 更新rx_available信号，反映FIFO中是否有数据
     assign rx_available  = !rx_fifo_empty;
+
+    // TX FIFO写使能逻辑：当CPU写入THR寄存器时写入FIFO
+    assign tx_fifo_wr_en = thr_sel && !tx_fifo_full;
+
+    // TX FIFO读使能逻辑：当发送器空闲且FIFO非空时读取FIFO
+    assign tx_fifo_rd_en = !tx_busy && !tx_fifo_empty && !tx_start;
 
     //--------------------------------------------------------------------
     // 发送部分
@@ -282,7 +312,7 @@ module uart16550 #(
         .clk        (clk),
         .rst_n      (rst_n),
         .baud_clk_i (baud_clk),
-        .data_i     (thr),
+        .data_i     (tx_buffer),
         .start_i    (tx_start),
         .busy_o     (tx_busy),
         .tx_o       (uart_tx),
@@ -299,12 +329,13 @@ module uart16550 #(
         end
     end
 
-    // 发送控制逻辑
+    // 发送控制逻辑：当发送器空闲且FIFO非空时启动发送
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             tx_start <= 1'b0;
-        end else if (thr_sel) begin
-            tx_start <= 1'b1;
+        end else if (!tx_busy && !tx_fifo_empty && !tx_start) begin
+            tx_buffer <= tx_fifo_data_out;
+            tx_start  <= 1'b1;
         end else if (tx_busy) begin
             tx_start <= 1'b0;
         end
@@ -346,7 +377,7 @@ module uart16550 #(
 
     assign lsr = {
         1'b0,                   // bit 7: 保留
-        1'b0,                   // bit 6: THR空
+        !tx_fifo_full,          // bit 6: 发送FIFO未满
         tx_busy ? 1'b0 : 1'b1,  // bit 5: TX holding register空 (未使用)
         1'b0,                   // bit 4: 帧错误 (未使用)
         1'b0,                   // bit 3: 奇偶校验错误 (未使用)
@@ -354,6 +385,16 @@ module uart16550 #(
         rx_error,               // bit 1: 接收数据错误
         rx_available            // bit 0: 接收数据准备好 (FIFO非空)
     };
+
+    // 发送中断处理
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            tx_int <= 1'b0;
+        end else begin
+            // 当TX FIFO未满且IER[1]置位时设置发送中断
+            tx_int <= !tx_fifo_full && ier[1];
+        end
+    end
 
     //--------------------------------------------------------------------
     // 中断识别寄存器 (IIR)
