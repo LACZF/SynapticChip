@@ -5,11 +5,17 @@
 `define GPIO_TEST_FOR_CHIP_TOP
 `define TIMER_TEST_FOR_CHIP_TOP
 `define SPI_TEST_FOR_CHIP_TOP
+
 module chip_top_test;
     /********** 输入/输出信号 **********/
     reg                       clk;
     reg                       rst_n;
 
+    localparam TEST_CMD_PE    = 8'h70; // 'p'
+    localparam TEST_CMD_GPIO  = 8'h67; // 'g'
+    localparam TEST_CMD_SPI   = 8'h73; // 's'
+    localparam TEST_CMD_TIMER = 8'h74; // 't'
+    localparam TEST_CMD_END   = 8'h04;
     localparam CPU_NUM        = 1;
     localparam GPIO_NUM       = 32;
     localparam BAUD_RATE      = 115200;
@@ -128,32 +134,29 @@ module chip_top_test;
             tx_data  <= char;
             tx_start <= 1'b1;
             @(posedge clk);
-            tx_start <= 1'b0;
             // 等待发送完成
             wait(tx_end == 1'b1);
+            tx_start <= 1'b0;
             @(posedge clk);
         end
     endtask;
 
     /********** UART发送CR和LF任务 **********/
-    task send_cr_lf;
+    task send_test;
+        input [7:0] char;
         begin
-            // 发送CR
-        `ifdef TEST_SEND_CR
-            send_char(8'h0d, 1'b0); // CR
-        `endif
-
-            // 发送LF
-        `ifdef TEST_SEND_LF
-            send_char(8'h0a, 1'b0); // LF
-        `endif
+            send_char(char,  1'b1);
+            # 500;
+            send_char(TEST_CMD_END, 1'b0);
+            wait(rx_data == TEST_CMD_END);
+            # 500;
         end
     endtask;
 
     /********** 接收信号的监测 **********/
     always @(posedge clk) begin
         if (rx_end == 1'b1) begin // 输出接收到的文字
-            $display($time, " uart recv  : %h(%c)", rx_data, rx_data);
+            $write("%c", rx_data);
         end
     end
 
@@ -179,37 +182,24 @@ module chip_top_test;
 
 `ifdef PE_TEST_FOR_CHIP_TOP
         // 发送PE模块测试命令
-        send_char(8'h70, 1'b1); // 'p'
-        // 发送CR和LF
-        send_cr_lf;
-
-        #5000;
+        send_test(TEST_CMD_PE);
 `endif
 
 `ifdef GPIO_TEST_FOR_CHIP_TOP
         // 发送GPIO模块测试命令
-        send_char(8'h67, 1'b1); // 'g'
-        // 发送CR和LF
-        send_cr_lf;
-        #5000;
+        send_test(TEST_CMD_GPIO);
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP
         // 发送SPI模块测试命令
-        send_char(8'h73, 1'b1); // 's'
-        // 发送CR和LF
-        send_cr_lf;
-
-        #5000;
+        send_test(TEST_CMD_SPI);
 `endif
 
 `ifdef TIMER_TEST_FOR_CHIP_TOP
         // 发送Timer模块测试命令
-        send_char(8'h74, 1'b1); // 't'
-        // 发送CR和LF
-        send_cr_lf;
+        send_test(TEST_CMD_TIMER);
 `endif
-        #`SIM_CYCLE;
+        // #`SIM_CYCLE;
 
         $display("\n----- All Tests Completed -----");
 
