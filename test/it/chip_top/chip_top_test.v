@@ -18,7 +18,7 @@ module chip_top_test;
     localparam TEST_CMD_END   = 8'h04;
     localparam CPU_NUM        = 1;
     localparam GPIO_NUM       = 32;
-    localparam SAMPLE_CYCLES  = 16;
+    localparam SAMPLE_CYCLES  = 4;
     localparam UART_DIV_RATE  = 2;
 
     // UART
