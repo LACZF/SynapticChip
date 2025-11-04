@@ -25,15 +25,16 @@ module test_uart_rx # (
     );
 
     uart_rx rx_module (
-        .clk          (clk),
-        .rst_n        (rst_n),
-        .baud_clk_i   (baud_clk),
-        .rx_i         (rx_i),
-        .busy_o       (rx_busy_o),
-        .data_o       (rx_data_o),
-        .ready_o      (rx_end_o),
-        .error_o      (),
-        .data_bits_i  (4'h8)  // 5-8 data bits (3-bit port)
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .baud_clk_i       (baud_clk),
+        .rx_i             (rx_i),
+        .busy_o           (rx_busy_o),
+        .data_o           (rx_data_o),
+        .ready_o          (rx_end_o),
+        .error_o          (),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
     );
 endmodule
 
@@ -63,14 +64,15 @@ module test_uart_tx # (
     );
 
     uart_tx tx_module (
-        .clk          (clk),
-        .rst_n        (rst_n),
-        .baud_clk_i   (baud_clk),
-        .data_i       (tx_data_i),
-        .start_i      (tx_start_i),
-        .busy_o       (tx_busy_o),
-        .tx_o         (tx_o),
-        .tx_end_o     (tx_end_o),
-        .data_bits_i  (4'h8)  // 5-8 data bits (3-bit port)
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .baud_clk_i       (baud_clk),
+        .data_i           (tx_data_i),
+        .start_i          (tx_start_i),
+        .busy_o           (tx_busy_o),
+        .tx_o             (tx_o),
+        .tx_end_o         (tx_end_o),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
     );
 endmodule

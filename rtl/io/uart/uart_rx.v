@@ -2,9 +2,7 @@
 //======================================================================
 // UART接收模块
 //======================================================================
-module uart_rx #(
-    parameter SAMPLE_CYCLES = 16      // 每个位周期的采样次数
-)(
+module uart_rx (
     input  wire        clk,          // 系统时钟
     input  wire        rst_n,        // 复位信号
     input  wire        baud_clk_i,   // 波特率时钟
@@ -13,7 +11,8 @@ module uart_rx #(
     output reg         busy_o,       // 接收准备好信号
     output reg         ready_o,      // 接收准备好信号
     output reg         error_o,      // 接收错误信号
-    input  wire [3:0]  data_bits_i   // 数据位数量 (5-8)
+    input  wire [3:0]  data_bits_i,  // 数据位数量 (5-8)
+    input  wire [7:0]  sample_cycles_i // 每个位周期的采样次数
 );
 
     // 状态定义
@@ -22,12 +21,11 @@ module uart_rx #(
     localparam DATA_BITS = 3'b010;
     localparam STOP_BIT = 3'b011;
 
-    // 计算采样计数器位宽
-    localparam SAMPLE_CNT_WIDTH = $clog2(SAMPLE_CYCLES);
-    // 定义中间采样位置
-    localparam MIDDLE_SAMPLE = (SAMPLE_CYCLES / 2) - 1;
-    // 定义结束采样位置
-    localparam END_SAMPLE = SAMPLE_CYCLES - 1;
+    // 采样计数器位宽固定为8位（足够覆盖常见采样次数）
+    localparam SAMPLE_CNT_WIDTH = 8;
+
+    wire [7:0] MIDDLE_SAMPLE = (sample_cycles_i / 2) - 1;  // 中间采样位置
+    wire [7:0] END_SAMPLE = sample_cycles_i - 1;           // 结束采样位置
 
     reg [2:0] state;
     reg [7:0] rx_buffer;

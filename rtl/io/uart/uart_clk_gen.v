@@ -24,6 +24,6 @@ module uart_clk_gen (
     end
 
     // 在计数器归零时产生时钟脉冲
-    assign baud_clk_o = (baud_div_cnt == {CNT_WIDTH{1'b0}});
+    assign baud_clk_o = (baud_div_i <= 1 ? clk : (baud_div_cnt == {CNT_WIDTH{1'b0}}));
 
 endmodule

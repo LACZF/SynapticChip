@@ -306,18 +306,17 @@ module uart16550 #(
     //--------------------------------------------------------------------
     // 发送部分
     //--------------------------------------------------------------------
-    uart_tx #(
-        .SAMPLE_CYCLES (SAMPLE_CYCLES)  // 配置每个位周期的采样次数
-    ) tx_module (
-        .clk        (clk),
-        .rst_n      (rst_n),
-        .baud_clk_i (baud_clk),
-        .data_i     (tx_buffer),
-        .start_i    (tx_start),
-        .busy_o     (tx_busy),
-        .tx_o       (uart_tx),
-        .tx_end_o   (),  // 未使用的输出端口
-        .data_bits_i(data_bits_config)  // 5-8 data bits (3-bit port)
+    uart_tx tx_module (
+        .clk             (clk),
+        .rst_n           (rst_n),
+        .baud_clk_i      (baud_clk),
+        .data_i          (tx_buffer),
+        .start_i         (tx_start),
+        .busy_o          (tx_busy),
+        .tx_o            (uart_tx),
+        .tx_end_o        (),
+        .data_bits_i     (data_bits_config),  // 5-8 data bits (3-bit port)
+        .sample_cycles_i (sample_cycles_reg)  // 每个位周期的采样次数，显式转换为8位
     );
 
     // 发送保持寄存器
@@ -344,18 +343,17 @@ module uart16550 #(
     //--------------------------------------------------------------------
     // 接收部分
     //--------------------------------------------------------------------
-    uart_rx #(
-        .SAMPLE_CYCLES (SAMPLE_CYCLES)  // 配置每个位周期的采样次数
-    ) rx_module (
-        .clk        (clk),
-        .rst_n      (rst_n),
-        .baud_clk_i (baud_clk),
-        .rx_i       (uart_rx),
-        .data_o     (rx_data),
-        .ready_o    (rx_ready),
-        .error_o    (rx_error),
-        .busy_o     (),  // 未使用的输出端口
-        .data_bits_i(data_bits_config)  // 5-8 data bits (3-bit port)
+    uart_rx rx_module (
+        .clk             (clk),
+        .rst_n           (rst_n),
+        .baud_clk_i      (baud_clk),
+        .rx_i            (uart_rx),
+        .data_o          (rx_data),
+        .ready_o         (rx_ready),
+        .error_o         (rx_error),
+        .busy_o          (),
+        .data_bits_i     (data_bits_config),  // 5-8 data bits (3-bit port)
+        .sample_cycles_i (sample_cycles_reg)  // 每个位周期的采样次数，显式转换为8位
     );
 
     // 接收中断处理
