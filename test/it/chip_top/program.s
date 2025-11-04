@@ -20,6 +20,9 @@
 .equ UART_SMPR,      UART_BASE + 0x24  # 采样率寄存器
 .equ UART_BDV_L,     UART_BASE + 0x28  # 分频系数低字节
 .equ UART_BDV_H,     UART_BASE + 0x2C  # 分频系数高字节
+.equ UART_BDV_VALUE_L,   0x2           # 仿真场景下速率较慢，设置为2分频
+.equ UART_BDV_VALUE_H,   0x0
+.equ UART_SIMPLE_CYCLES, 0x10          # 配置采样率为16倍
 
 # GPIO模块地址定义
 .equ GPIO_BASE,      IO_BASE   + 0x00030000
@@ -95,15 +98,15 @@ uart_init:
     sb a1, 0(a0)
 
     li a0, UART_SMPR
-    li a1, 0x10           # 配置采样率为16倍
+    li a1, UART_SIMPLE_CYCLES
     sb a1, 0(a0)
 
     li a0, UART_BDV_L
-    li a1, 0x2           # 仿真场景下速率较慢，设置为2分频
+    li a1, UART_BDV_VALUE_L
     sb a1, 0(a0)
 
     li a0, UART_BDV_H
-    li a1, 0x0
+    li a1, UART_BDV_VALUE_H
     sb a1, 0(a0)
 
     li a0, 'I'

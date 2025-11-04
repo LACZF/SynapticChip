@@ -1,7 +1,10 @@
 // UART RX/TX modules for chip_top_test
 
 // UART Receiver Module
-module test_uart_rx (
+module test_uart_rx # (
+    parameter SAMPLE_CYCLES  = 16,
+    parameter UART_DIV_RATE  = 2
+) (
     input  wire        clk,
     input  wire        rst_n,
 
@@ -11,15 +14,13 @@ module test_uart_rx (
 
     input  wire        rx_i
 );
-    reg [7:0]          sample_cycles_reg = 16;
-    reg [15:0]         baud_div_reg      = 2;
     wire               baud_clk;        // 波特率时钟
 
     uart_clk_gen u_uart_clk_gen(
         .clk              (clk),
         .rst_n            (rst_n),
-        .sample_cycles_i  (sample_cycles_reg),
-        .baud_div_i       (baud_div_reg),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .baud_div_i       (16'(UART_DIV_RATE)),
         .baud_clk_o       (baud_clk)
     );
 
@@ -37,7 +38,10 @@ module test_uart_rx (
 endmodule
 
 // UART Transmitter Module
-module test_uart_tx (
+module test_uart_tx # (
+    parameter SAMPLE_CYCLES  = 16,
+    parameter UART_DIV_RATE  = 2
+) (
     input  wire        clk,
     input  wire        rst_n,
 
@@ -48,15 +52,13 @@ module test_uart_tx (
 
     output reg         tx_o
 );
-    reg [7:0]          sample_cycles_reg = 16;
-    reg [15:0]         baud_div_reg      = 2;
     wire               baud_clk;        // 波特率时钟
 
     uart_clk_gen u_uart_clk_gen(
         .clk              (clk),
         .rst_n            (rst_n),
-        .sample_cycles_i  (sample_cycles_reg),
-        .baud_div_i       (baud_div_reg),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .baud_div_i       (16'(UART_DIV_RATE)),
         .baud_clk_o       (baud_clk)
     );
 

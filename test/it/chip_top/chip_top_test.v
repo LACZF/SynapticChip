@@ -18,9 +18,8 @@ module chip_top_test;
     localparam TEST_CMD_END   = 8'h04;
     localparam CPU_NUM        = 1;
     localparam GPIO_NUM       = 32;
-    localparam BAUD_RATE      = 115200;
-    localparam CLK_FREQ       = 50000000;
-    localparam UART_DIV_RATE  = CLK_FREQ / BAUD_RATE;
+    localparam SAMPLE_CYCLES  = 16;
+    localparam UART_DIV_RATE  = 2;
 
     // UART
     reg                       uart_rx;       // UART接收信号
@@ -85,7 +84,10 @@ module chip_top_test;
     wire                      tx_end;       // 发送完成标志
 
     /********** UART接收模型 **********/
-    test_uart_rx u_uart_rx (
+    test_uart_rx #(
+        .SAMPLE_CYCLES(SAMPLE_CYCLES),
+        .UART_DIV_RATE(UART_DIV_RATE)
+    ) u_uart_rx (
         .clk        (clk),
         .rst_n      (rst_n),
         /********** 控制信号 **********/
@@ -97,7 +99,10 @@ module chip_top_test;
     );
 
     /********** UART发送模型 **********/
-    test_uart_tx u_uart_tx (
+    test_uart_tx #(
+        .SAMPLE_CYCLES(SAMPLE_CYCLES),
+        .UART_DIV_RATE(UART_DIV_RATE)
+    ) u_uart_tx (
         .clk        (clk),
         .rst_n      (rst_n),
         /********** 控制信号 **********/
