@@ -33,6 +33,8 @@ module uart_tx #(
     reg [2:0] bit_count;
     reg [SAMPLE_CNT_WIDTH-1:0] sample_count;  // 采样计数器
     reg       baud_clk_prev;
+    reg       start_i_d0;      // start_i信号延迟一拍
+    reg       start_i_pulse;   // start_i脉冲信号，用于边沿检测
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -44,7 +46,17 @@ module uart_tx #(
             bit_count <= 3'd0;
             sample_count <= 0;
             baud_clk_prev <= 1'b0;
+            start_i_d0 <= 1'b0;
+            start_i_pulse <= 1'b0;
         end else begin
+            // 对start_i进行边沿检测，确保不会漏掉任何请求
+            start_i_d0 <= start_i;
+            if (start_i && !start_i_d0) begin
+                start_i_pulse <= 1'b1;
+            end else if (baud_clk_i && !baud_clk_prev) begin
+                start_i_pulse <= 1'b0;
+            end
+
             baud_clk_prev <= baud_clk_i;
             tx_end_o <= 1'b0;
 
@@ -55,7 +67,7 @@ module uart_tx #(
                         tx_o <= 1'b1;  // 空闲状态为高电平
                         busy_o <= 1'b0;
                         sample_count <= 0;
-                        if (start_i) begin
+                        if (start_i_pulse) begin
                             state <= START_BIT;
                             busy_o <= 1'b1;
                             tx_buffer <= data_i;

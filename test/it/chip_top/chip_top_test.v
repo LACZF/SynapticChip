@@ -123,9 +123,9 @@ module chip_top_test;
             tx_data  <= char;
             tx_start <= 1'b1;
             @(posedge clk);
+            tx_start <= 1'b0;
             // 等待发送完成
             wait(tx_end == 1'b1);
-            tx_start <= 1'b0;
             @(posedge clk);
         end
     endtask;
