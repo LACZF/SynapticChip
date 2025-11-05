@@ -1434,6 +1434,26 @@ test_spi_module:
     call print_hex
     call print_newline
 
+    # 7. 读取SPI接收的数据并通过UART发送
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'V'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 读取SPI数据寄存器（接收数据）
+    li s0, SPI_DATA
+    lw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
     # 测试第二个SPI从机
     call uart_write_byte
     li a0, 'S'
@@ -1537,6 +1557,26 @@ test_spi_module:
 
     # 读取SPI状态寄存器
     li s0, SPI_STATUS
+    lw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 5. 读取SPI接收的数据并通过UART发送（第二个从机）
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'V'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 读取SPI数据寄存器（接收数据）
+    li s0, SPI_DATA
     lw s1, 0(s0)
 
     mv a0, s1

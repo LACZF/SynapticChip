@@ -41,14 +41,15 @@ module test_spi_slave #(
         end
     end
 
-    // 初始化发送数据（简单的回环测试）
+    // 发送数据逻辑：slave id+1作为基础，结合接收数据进行回传
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            tx_data <= 8'h55;  // 默认发送数据
+            tx_data <= 8'h00 + SLAVE_ID + 1;  // 复位时，使用slave id+1作为发送数据
         end else if (cs_n_falling) begin
-            tx_data <= 8'hAA;  // 每次新的传输开始时，发送一个固定值
-        end else if (bit_count == 3'd0 && clk_falling) begin
-            tx_data <= rx_data;  // 传输完成后，将接收到的数据作为下一次的发送数据
+            tx_data <= 8'h00 + SLAVE_ID + 1;  // 每次新的传输开始时，使用slave id+1作为发送数据
+        end else if (bit_count == 3'd7 && clk_rising) begin
+            // 回传接收到的数据，加上从机ID的标识
+            tx_data <= rx_data + SLAVE_ID + 1;
         end
     end
 
