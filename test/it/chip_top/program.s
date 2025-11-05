@@ -1361,7 +1361,7 @@ test_spi_module:
 
     # 设置SPI片选
     li s0, SPI_CS_SEL
-    li s1, 0x00000001  # 选择第一个片选
+    li s1, 0x00000000  # 选择第一个片选
     sw s1, 0(s0)
 
     mv a0, s1
@@ -1434,7 +1434,116 @@ test_spi_module:
     call print_hex
     call print_newline
 
-    # 6. 测试完成
+    # 测试第二个SPI从机
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'V'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '2'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    call print_newline
+
+    # 1. 选择第二个SPI片选
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 设置第二个片选
+    li s0, SPI_CS_SEL
+    li s1, 0x00000001  # 选择第二个片选
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 2. 写入不同的SPI测试数据
+    li a0, 'W'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 写入第二个从机的测试数据
+    li s0, SPI_DATA
+    li s1, 0x87654321  # 不同的测试数据，用于区分第二个从机
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 3. 写入SPI命令寄存器以启动SPI操作
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 写入SPI命令寄存器
+    li s0, SPI_CMD
+    li s1, 0x00000001  # 写入任意值以触发SPI操作
+    mv a0, s1
+    call print_hex
+    call print_newline
+    call print_newline
+    sw s1, 0(s0)
+
+    # 4. 读取SPI状态
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 读取SPI状态寄存器
+    li s0, SPI_STATUS
+    lw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 5. 第二个从机测试完成
     li a0, '\n'
     call uart_write_byte
     li a0, '-'
@@ -1446,6 +1555,20 @@ test_spi_module:
     li a0, 'P'
     call uart_write_byte
     li a0, 'I'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'V'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '2'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
