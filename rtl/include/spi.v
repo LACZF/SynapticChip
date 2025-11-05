@@ -46,15 +46,17 @@
     `define SPI_CMD_READ_QUAD    8'h6B  // Quad Line Read
     `define SPI_CMD_WRITE_ENABLE 8'h06  // Write Enable
     `define SPI_CMD_WRITE_DATA   8'h02  // Page Program
+    `define SPI_CMD_TRANSFER     8'h04  // Simultaneous Read and Write
 
     // State Machine State Definitions
-    `define SPI_STATE_IDLE   3'b000
-    `define SPI_STATE_CMD    3'b001
-    `define SPI_STATE_ADDR   3'b010
-    `define SPI_STATE_DUMMY  3'b011
-    `define SPI_STATE_READ   3'b100
-    `define SPI_STATE_WRITE  3'b101
-    `define SPI_STATE_DONE   3'b110
+    `define SPI_STATE_IDLE      3'b000
+    `define SPI_STATE_CMD       3'b001
+    `define SPI_STATE_ADDR      3'b010
+    `define SPI_STATE_DUMMY     3'b011
+    `define SPI_STATE_READ      3'b100
+    `define SPI_STATE_WRITE     3'b101
+    `define SPI_STATE_TRANSFER  3'b110
+    `define SPI_STATE_DONE      3'b111
 
     // FIFO Parameters
     `define SPI_FIFO_DEPTH    16    // FIFO Depth

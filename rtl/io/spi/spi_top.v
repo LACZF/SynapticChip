@@ -143,7 +143,9 @@ module spi_top #(
                                 current_cmd  <= data_in_i[7:0];
                                 current_addr <= addr_reg[23:0];
                                 tx_data      <= data_reg;
-                                state        <= `SPI_STATE_CMD;
+                                // TODO : support multi mode.
+                                // state        <= `SPI_STATE_CMD;
+                                state        <= `SPI_STATE_TRANSFER;
                                 bit_counter  <= 8'h0;
                                 byte_counter <= 8'h0;
                                 if (SPI_NUM > 1) begin
@@ -255,6 +257,9 @@ module spi_top #(
                                         // Write enable command doesn't need address
                                         state <= `SPI_STATE_DONE;
                                     end
+                                end else if (current_cmd == `SPI_CMD_TRANSFER) begin
+                                    // Transfer command - simultaneous read and write
+                                    state <= `SPI_STATE_TRANSFER;
                                 end else begin
                                     state <= `SPI_STATE_DONE;
                                 end
@@ -278,6 +283,9 @@ module spi_top #(
                                     state <= `SPI_STATE_DUMMY;
                                 end else if (current_cmd == `SPI_CMD_WRITE_DATA) begin
                                     state <= `SPI_STATE_WRITE;
+                                end else if (current_cmd == `SPI_CMD_TRANSFER) begin
+                                    // For transfer command after address phase
+                                    state <= `SPI_STATE_TRANSFER;
                                 end else begin
                                     state <= `SPI_STATE_READ;
                                 end
@@ -320,6 +328,21 @@ module spi_top #(
 
                             if (bit_counter >= 31) begin  // 32-bit send complete
                                 state <= `SPI_STATE_DONE;
+                            end
+                        end
+                    end
+
+                `SPI_STATE_TRANSFER:
+                    begin
+                        if (spi_clk_edge) begin
+                            // 同时处理TX和RX数据位
+                            rx_data     <= {rx_data[30:0], spi_miso_i};  // RX
+                            spi_mosi_o  <= tx_data[31 - bit_counter[4:0]]; // TX
+                            bit_counter <= bit_counter + 1;
+
+                            if (bit_counter >= 31) begin  // 32-bit transfer complete
+                                state                            <= `SPI_STATE_DONE;
+                                status_reg[`SPI_STATUS_RX_READY] <= 1'b1;
                             end
                         end
                     end

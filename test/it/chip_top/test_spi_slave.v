@@ -1,89 +1,146 @@
 `timescale 1ns/1ps
 
 module test_spi_slave #(
-    parameter SLAVE_ID = 0  // 从机ID，用于区分不同的从机
+    parameter SLAVE_ID = 0   // 从机ID，用于区分不同的从机
 )(
     input  wire        clk,
     input  wire        rst_n,
+    input  wire [1:0]  mode,  // SPI模式选择: 0=CPOL=0/CPHA=0, 1=CPOL=0/CPHA=1, 2=CPOL=1/CPHA=0, 3=CPOL=1/CPHA=1
 
     // SPI接口信号
     input  wire        spi_cs_n,
     input  wire        spi_clk,
     input  wire        spi_mosi,
-    output wire        spi_miso
+    output wire        spi_miso,
+
+    // 状态输出信号
+    output wire        rx_complete, // 32位数据接收完成标志
+    output wire        rx_ready      // 接收数据就绪标志（传输完成后的稳定数据）
 );
 
+    // 根据mode信号确定CPOL和CPHA的值
+    reg cpol;
+    reg cpha;
+    always @(*) begin
+        case(mode)
+            2'b00: begin // SPI模式0
+                cpol = 1'b0;
+                cpha = 1'b0;
+            end
+            2'b01: begin // SPI模式1
+                cpol = 1'b0;
+                cpha = 1'b1;
+            end
+            2'b10: begin // SPI模式2
+                cpol = 1'b1;
+                cpha = 1'b0;
+            end
+            2'b11: begin // SPI模式3
+                cpol = 1'b1;
+                cpha = 1'b1;
+            end
+            default: begin // 默认模式0
+                cpol = 1'b0;
+                cpha = 1'b0;
+            end
+        endcase
+    end
+
     // 内部信号定义
-    reg [7:0] rx_data;      // 接收的数据寄存器
-    reg [7:0] tx_data;      // 发送的数据寄存器
-    reg [2:0] bit_count;    // 位计数器
+    parameter DATA_WIDTH = 32;   // 数据位宽
+
+    reg [DATA_WIDTH-1:0] rx_data; // 接收的数据寄存器
+    reg [DATA_WIDTH-1:0] tx_data; // 发送的数据寄存器
+    reg [4:0] bit_count;    // 位计数器（最大支持32位）
     reg       miso_en;      // MISO输出使能
     reg       last_cs_n;    // 上一个时钟周期的片选信号
     reg       last_clk;     // 上一个时钟周期的时钟信号
 
-    // 检测片选信号的下降沿（开始传输）
-    wire cs_n_falling = (last_cs_n == 1'b1) && (spi_cs_n == 1'b0);
-
-    // 检测时钟信号的上升沿（采样数据）
-    wire clk_rising = (last_clk == 1'b0) && (spi_clk == 1'b1);
-
-    // 检测时钟信号的下降沿（输出数据）
-    wire clk_falling = (last_clk == 1'b1) && (spi_clk == 1'b0);
-
-    // 存储上一个时钟周期的控制信号
+    // 同步SPI时钟到系统时钟域，避免跨时钟域问题
+    reg [1:0] spi_clk_sync;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            last_cs_n <= 1'b1;
-            last_clk <= 1'b0;
+            spi_clk_sync <= 2'b00;
         end else begin
-            last_cs_n <= spi_cs_n;
-            last_clk <= spi_clk;
+            spi_clk_sync <= {spi_clk_sync[0], spi_clk};
         end
     end
+    wire spi_clk_rising = (spi_clk_sync == 2'b01);
+    wire spi_clk_falling = (spi_clk_sync == 2'b10);
+
+    // 检测片选信号的下降沿（开始传输）
+    reg [1:0] spi_cs_n_sync;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            spi_cs_n_sync <= 2'b11;
+        end else begin
+            spi_cs_n_sync <= {spi_cs_n_sync[0], spi_cs_n};
+        end
+    end
+    wire cs_n_falling = (spi_cs_n_sync == 2'b10);
 
     // 发送数据逻辑：slave id+1作为基础，结合接收数据进行回传
+    // 优化：确保在下一次传输开始前准备好正确的发送数据
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            tx_data <= 8'h00 + SLAVE_ID + 1;  // 复位时，使用slave id+1作为发送数据
+            tx_data <= {{(DATA_WIDTH-8){1'b0}}, 8'($unsigned(8'h00 + SLAVE_ID + 1))};  // 复位时，使用slave id+1作为发送数据
         end else if (cs_n_falling) begin
-            tx_data <= 8'h00 + SLAVE_ID + 1;  // 每次新的传输开始时，使用slave id+1作为发送数据
-        end else if (bit_count == 3'd7 && clk_rising) begin
-            // 回传接收到的数据，加上从机ID的标识
-            tx_data <= rx_data + SLAVE_ID + 1;
+            // 每次新的传输开始时，使用固定的slave id+1作为发送数据，不再动态更新
+            // 这样可以确保发送数据的一致性和可预测性
+            tx_data <= {{(DATA_WIDTH-8){1'b0}}, 8'($unsigned(8'h00 + SLAVE_ID + 1))};
         end
     end
 
-    // SPI接收和发送逻辑
+    // 根据SPI模式选择正确的采样和输出时钟沿
+    wire sample_edge;   // 采样数据的时钟沿
+    wire output_edge;   // 更新MISO的时钟沿
+
+    assign sample_edge = (cpol == 1'b0 && cpha == 1'b0) ? spi_clk_rising :
+                         (cpol == 1'b0 && cpha == 1'b1) ? spi_clk_falling :
+                         (cpol == 1'b1 && cpha == 1'b0) ? spi_clk_falling :
+                         (cpol == 1'b1 && cpha == 1'b1) ? spi_clk_rising :
+                         spi_clk_rising; // 默认模式0
+
+    assign output_edge = (cpol == 1'b0 && cpha == 1'b0) ? spi_clk_falling :
+                         (cpol == 1'b0 && cpha == 1'b1) ? spi_clk_rising :
+                         (cpol == 1'b1 && cpha == 1'b0) ? spi_clk_rising :
+                         (cpol == 1'b1 && cpha == 1'b1) ? spi_clk_falling :
+                         spi_clk_falling; // 默认模式0
+
+    // SPI接收逻辑 - 根据SPI协议在正确的时钟沿采样数据
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            rx_data <= 8'h00;
-            bit_count <= 3'd0;
+            rx_data <= {DATA_WIDTH{1'b0}};
+            bit_count <= 5'd0;
             miso_en <= 1'b0;
         end else begin
             if (spi_cs_n) begin
                 // 片选无效，重置状态
-                bit_count <= 3'd0;
+                bit_count <= 5'd0;
                 miso_en <= 1'b0;
             end else begin
                 // 片选有效，进行SPI传输
                 miso_en <= 1'b1;
 
-                if (clk_rising) begin
-                    // 上升沿采样数据（CPHA=0模式）
-                    rx_data <= {rx_data[6:0], spi_mosi};
-                    bit_count <= bit_count + 3'd1;
+                if (sample_edge) begin
+                    // 根据当前SPI模式在正确的时钟沿采样数据
+                    // MSB先发送，所以数据向右移位
+                    rx_data <= {rx_data[DATA_WIDTH-2:0], spi_mosi};
+                    bit_count <= bit_count + 5'd1;
                 end
             end
         end
     end
 
-    // MISO输出（在时钟下降沿更新输出数据）
+    // MISO输出逻辑 - 根据SPI模式在正确的时钟沿更新输出
     reg miso_d; // 延迟的miso信号
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            miso_d <= 1'b0;
-        end else if (clk_falling) begin
-            miso_d <= tx_data[7 - bit_count];
+    always @(negedge clk or posedge spi_cs_n) begin
+        if (spi_cs_n) begin
+            miso_d <= 1'b0;  // 片选无效时保持低电平
+        end else if (output_edge) begin
+            // 根据当前SPI模式在正确的时钟沿更新MISO输出
+            // MSB先发送，所以从最高位开始发送
+            miso_d <= tx_data[DATA_WIDTH-1 - bit_count];
         end
     end
 
@@ -91,10 +148,16 @@ module test_spi_slave #(
     assign spi_miso = miso_en ? miso_d : 1'bz;
 
     // 简单的调试信息输出
-    always @(negedge spi_cs_n) begin
+    always @(posedge spi_cs_n) begin
         if (rst_n) begin
             $display("%t: SPI Slave %d - Transmission completed, Received: 0x%h, Sent: 0x%h", $time, SLAVE_ID, rx_data, tx_data);
         end
     end
+
+    // 提供接收完成标志（32位传输完成）
+    assign rx_complete = (bit_count == (DATA_WIDTH-1)) && sample_edge;
+
+    // 提供接收数据就绪标志（传输完成后的稳定数据）
+    assign rx_ready = spi_cs_n && (last_cs_n == 1'b0);
 
 endmodule

@@ -35,6 +35,19 @@ module chip_top_test;
     // SPI从机MISO信号数组（用于多个从机）
     wire [SPI_NUM-1:0] spi_slave_miso;
 
+    // SPI模式选择信号（每个从机一个）
+    reg [1:0] [SPI_NUM-1:0] spi_slave_mode;
+
+    // 为每个从机分配默认模式（初始为模式0）
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (integer j = 0; j < SPI_NUM; j = j + 1) begin
+                spi_slave_mode[j] <= 2'b00; // 默认模式0
+            end
+        end
+        // 这里可以根据需要动态调整不同从机的SPI模式
+    end
+
     // 通用输入/输出端口
     wire [GPIO_NUM-1:0]       gpio_in = {GPIO_NUM{1'b1}}; // 输入端口
     wire [GPIO_NUM-1:0]       gpio_out;                   // 输出端口
@@ -55,6 +68,7 @@ module chip_top_test;
             ) u_spi_slave (
                 .clk        (clk),
                 .rst_n      (rst_n),
+                .mode       (spi_slave_mode[i]), // 传入SPI模式
                 .spi_cs_n   (spi_cs_n[i]),
                 .spi_clk    (spi_clk),
                 .spi_mosi   (spi_mosi),
