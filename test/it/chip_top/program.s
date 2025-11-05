@@ -1391,7 +1391,26 @@ test_spi_module:
     call print_hex
     call print_newline
 
-    # 5. 读取SPI状态
+    # 5. 写入SPI命令寄存器以启动SPI操作
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 写入SPI命令寄存器
+    li s0, SPI_CMD
+    li s1, 0x00000001  # 写入任意值以触发SPI操作
+    mv a0, s1
+    call print_hex
+    call print_newline
+    call print_newline
+    sw s1, 0(s0)
+
+    # 6. 读取SPI状态
     li a0, 'S'
     call uart_write_byte
     li a0, 'T'
