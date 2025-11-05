@@ -18,12 +18,22 @@ module chip_top_test;
     localparam TEST_CMD_END   = 8'h04;
     localparam CPU_NUM        = 1;
     localparam GPIO_NUM       = 32;
+    localparam SPI_NUM        = 2;
     localparam SAMPLE_CYCLES  = 4;
     localparam UART_DIV_RATE  = 2;
 
     // UART
     reg                       uart_rx;       // UART接收信号
     wire                      uart_tx;       // UART发送信号
+
+    // SPI
+    wire [SPI_NUM-1:0]        spi_cs_n;      // SPI片选信号
+    wire                      spi_clk;       // SPI时钟信号
+    wire                      spi_mosi;      // SPI主机输出从机输入
+    wire                      spi_miso;      // SPI主机输入从机输出
+
+    // SPI从机MISO信号数组（用于多个从机）
+    wire [SPI_NUM-1:0] spi_slave_miso;
 
     // 通用输入/输出端口
     wire [GPIO_NUM-1:0]       gpio_in = {GPIO_NUM{1'b1}}; // 输入端口
@@ -34,6 +44,50 @@ module chip_top_test;
     wire                      rx_busy;          // 接收中标志
     wire                      rx_end;           // 接收完成标志
     wire [7:0]                rx_data;          // 接收的数据
+
+    /********** SPI从机模型 **********/
+    // 使用generate语句根据SPI_NUM动态例化SPI从机
+    generate
+        genvar i;
+        for (i = 0; i < SPI_NUM; i = i + 1) begin : spi_slave_gen
+            test_spi_slave #(
+                .SLAVE_ID(i)  // 设置从机ID
+            ) u_spi_slave (
+                .clk        (clk),
+                .rst_n      (rst_n),
+                .spi_cs_n   (spi_cs_n[i]),
+                .spi_clk    (spi_clk),
+                .spi_mosi   (spi_mosi),
+                .spi_miso   (spi_slave_miso[i])
+            );
+        end
+    endgenerate
+
+    // SPI MISO信号的线或连接
+    generate
+        if (SPI_NUM == 1) begin
+            assign spi_miso = (spi_cs_n[0] == 1'b0) ? spi_slave_miso[0] : 1'bz;
+        end else begin
+            reg [SPI_NUM-1:0] cs_n_active;
+            wire [SPI_NUM-1:0] cs_n_active_vec;
+            wire               any_cs_n_active;
+            integer            active_index;
+
+            always @(*) begin
+                cs_n_active = 0;
+                active_index = SPI_NUM;
+                for (integer j = 0; j < SPI_NUM; j = j + 1) begin
+                    if (spi_cs_n[j] == 1'b0) begin
+                        cs_n_active[j] = 1'b1;
+                        active_index = j;
+                    end
+                end
+            end
+            assign cs_n_active_vec = cs_n_active;
+            assign any_cs_n_active = |cs_n_active_vec;
+            assign spi_miso = any_cs_n_active ? spi_slave_miso[active_index] : 1'bz;
+        end
+    endgenerate
 
     /********** 时钟生成 **********/
     always #2 clk = ~clk;
@@ -62,7 +116,7 @@ module chip_top_test;
         .GPIO_NUM(GPIO_NUM),
         .I2C_NUM(1),
         .UART_NUM(1),
-        .SPI_NUM(2)
+        .SPI_NUM(SPI_NUM)
     ) u_chip_top (
         .clk         (clk),
         .rst_n       (rst_n),
@@ -74,7 +128,13 @@ module chip_top_test;
         /********** 通用输入/输出端口 **********/
         .gpio_in     (gpio_in),
         .gpio_out    (gpio_out),
-        .gpio_io     (gpio_io)
+        .gpio_io     (gpio_io),
+
+        /********** SPI **********/
+        .spi_cs_n    (spi_cs_n),
+        .spi_clk     (spi_clk),
+        .spi_mosi    (spi_mosi),
+        .spi_miso    (spi_miso)
     );
 
     /********** UART发送相关信号 **********/
