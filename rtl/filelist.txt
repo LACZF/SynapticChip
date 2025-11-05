@@ -16,6 +16,7 @@ RTL_SRC += $(TOP_DIR)/rtl/include/timer.v
 
 RTL_SRC += $(TOP_DIR)/rtl/common/fifo.v
 RTL_SRC += $(TOP_DIR)/rtl/common/cache.v
+RTL_SRC += $(TOP_DIR)/rtl/common/clk_gen.v
 
 # core
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/core/bpu.sv
@@ -119,7 +120,6 @@ RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 RTL_SRC += $(TOP_DIR)/rtl/io/spi/spi_top.v
 RTL_SRC += $(TOP_DIR)/rtl/io/gpio/gpio_top.v
 RTL_SRC += $(TOP_DIR)/rtl/io/timer/timer_top.v
-RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart_clk_gen.v
 RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
 RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
 RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart16550.v

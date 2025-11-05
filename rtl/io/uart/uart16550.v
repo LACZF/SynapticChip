@@ -250,12 +250,11 @@ module uart16550 #(
         end
     end
 
-    uart_clk_gen u_uart_clk_gen(
+    clk_gen u_uart_clk_gen(
         .clk            (clk),
         .rst_n          (rst_n),
-        .sample_cycles_i(sample_cycles_reg),
-        .baud_div_i     (baud_div_reg),
-        .baud_clk_o     (baud_clk)
+        .div_i          (baud_div_reg),
+        .clk_o          (baud_clk)
     );
 
     fifo #(
@@ -306,7 +305,7 @@ module uart16550 #(
     //--------------------------------------------------------------------
     // 发送部分
     //--------------------------------------------------------------------
-    uart_tx tx_module (
+    uart_tx u_uart_tx (
         .clk             (clk),
         .rst_n           (rst_n),
         .baud_clk_i      (baud_clk),
@@ -343,7 +342,7 @@ module uart16550 #(
     //--------------------------------------------------------------------
     // 接收部分
     //--------------------------------------------------------------------
-    uart_rx rx_module (
+    uart_rx u_uart_rx (
         .clk             (clk),
         .rst_n           (rst_n),
         .baud_clk_i      (baud_clk),

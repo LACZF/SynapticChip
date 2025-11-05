@@ -143,35 +143,39 @@ module chip_top_test;
     wire                      tx_busy;      // 发送中标志
     wire                      tx_end;       // 发送完成标志
 
-    /********** UART接收模型 **********/
-    test_uart_rx #(
-        .SAMPLE_CYCLES(SAMPLE_CYCLES),
-        .UART_DIV_RATE(UART_DIV_RATE)
-    ) u_uart_rx (
-        .clk        (clk),
-        .rst_n      (rst_n),
-        /********** 控制信号 **********/
-        .rx_busy_o  (rx_busy),
-        .rx_end_o   (rx_end),
-        .rx_data_o  (rx_data),
-        /********** Receive Signal **********/
-        .rx_i       (uart_tx)
+    wire                      baud_clk;        // 波特率时钟
+
+    clk_gen u_uart_clk_gen(
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .div_i            (16'(UART_DIV_RATE)),
+        .clk_o            (baud_clk)
     );
 
-    /********** UART发送模型 **********/
-    test_uart_tx #(
-        .SAMPLE_CYCLES(SAMPLE_CYCLES),
-        .UART_DIV_RATE(UART_DIV_RATE)
-    ) u_uart_tx (
-        .clk        (clk),
-        .rst_n      (rst_n),
-        /********** 控制信号 **********/
-        .tx_start_i (tx_start),
-        .tx_data_i  (tx_data),
-        .tx_busy_o  (tx_busy),
-        .tx_end_o   (tx_end),
-        /********** UART发送信号 **********/
-        .tx_o       (uart_rx)
+    uart_rx u_uart_rx (
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .baud_clk_i       (baud_clk),
+        .rx_i             (uart_tx),
+        .busy_o           (rx_busy),
+        .data_o           (rx_data),
+        .ready_o          (rx_end),
+        .error_o          (),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
+    );
+
+    uart_tx u_uart_tx (
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .baud_clk_i       (baud_clk),
+        .data_i           (tx_data),
+        .start_i          (tx_start),
+        .busy_o           (tx_busy),
+        .tx_o             (uart_rx),
+        .tx_end_o         (tx_end),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
     );
 
     /********** UART发送字符任务 **********/
