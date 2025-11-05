@@ -145,11 +145,12 @@ module tb_uart16550;
     task automatic wait_for_thre;
         reg [7:0] lsr;
         integer timeout = 10000;
+        reg done = 0;
         begin
-            while(timeout > 0) begin
+            while(timeout > 0 && !done) begin
                 read_register(LSR_ADDR, lsr);
                 if(lsr[5]) begin // THRE bit set
-                    break;
+                    done = 1;
                 end
                 timeout = timeout - 1;
                 @(posedge clk);
@@ -165,11 +166,12 @@ module tb_uart16550;
     task automatic wait_for_data_ready;
         reg [7:0] lsr;
         integer timeout = 10000;
+        reg done = 0;
         begin
-            while(timeout > 0) begin
+            while(timeout > 0 && !done) begin
                 read_register(LSR_ADDR, lsr);
                 if(lsr[0]) begin // DR bit set
-                    break;
+                    done = 1;
                 end
                 timeout = timeout - 1;
                 @(posedge clk);
