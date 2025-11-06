@@ -89,7 +89,7 @@ RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect.sv
 # utils
 # RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/async_fifo.sv
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/cdc_2phase.sv
-# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/clk_div.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/clk_div.sv
 # RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/edge_detect.sv
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_buf.sv
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_dff.sv
@@ -102,10 +102,10 @@ RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_ram.sv
 # RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/up_counter.sv
 
 # XIP
-# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/spi_master_transmit.sv
-# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_core.sv
-# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_w25q64_ctrl.sv
-# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_top.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/spi_master_transmit.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_core.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_w25q64_ctrl.sv
+RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_top.sv
 
 # PE
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v

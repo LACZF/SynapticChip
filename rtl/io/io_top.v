@@ -8,7 +8,7 @@ module io_top #(
     parameter IO_ADDR_MASK         = ~32'hFFFFFFF,
     parameter IMPLEMENT_UART       = 1,
     parameter IMPLEMENT_GPIO       = 1,
-    parameter IMPLEMENT_SPI        = 0,
+    parameter IMPLEMENT_SPI        = 1,
     parameter IMPLEMENT_TIMER      = 1,
     parameter IMPLEMENT_FLASH      = 1,
     parameter SPI_NUM              = 1,
@@ -210,7 +210,6 @@ module io_top #(
         end
     endgenerate
 
-`ifdef SUPPORT_XIP_FOR_CHIP
     /********** FLASH/XIP **********/
     generate
         if (IMPLEMENT_FLASH) begin : flash_gen
@@ -255,6 +254,5 @@ module io_top #(
             assign flash_spi_dq_oe                     = 4'b0000;
         end
     endgenerate
-`endif
 
 endmodule
