@@ -234,10 +234,9 @@ module spi_top #(
 
                 `SPI_STATE_CMD:
                     begin
+                        // 首先设置下一位要发送的数据，提前一个cycle准备
                         if (spi_clk_edge) begin
                             if (bit_counter < 8) begin
-                                // Send command byte
-                                spi_mosi_o   <= current_cmd[7 - bit_counter[2:0]];
                                 bit_counter  <= bit_counter + 1;
                             end else begin
                                 bit_counter  <= 8'h0;
@@ -264,15 +263,19 @@ module spi_top #(
                                     state <= `SPI_STATE_DONE;
                                 end
                             end
+                        end else begin
+                            // 提前准备下一位要发送的数据
+                            if (state == `SPI_STATE_CMD && bit_counter < 8) begin
+                                spi_mosi_o <= current_cmd[7 - bit_counter[2:0]];
+                            end
                         end
                     end
 
                 `SPI_STATE_ADDR:
                     begin
+                        // 首先设置下一位要发送的数据，提前一个cycle准备
                         if (spi_clk_edge) begin
                             if (bit_counter < 24) begin  // 24-bit address
-                                // Send address bits
-                                spi_mosi_o  <= current_addr[23 - bit_counter[4:0]];
                                 bit_counter <= bit_counter + 1;
                             end else begin
                                 bit_counter <= 8'h0;
@@ -289,6 +292,11 @@ module spi_top #(
                                 end else begin
                                     state <= `SPI_STATE_READ;
                                 end
+                            end
+                        end else begin
+                            // 提前准备下一位要发送的数据
+                            if (state == `SPI_STATE_ADDR && bit_counter < 24) begin
+                                spi_mosi_o <= current_addr[23 - bit_counter[4:0]];
                             end
                         end
                     end
@@ -321,29 +329,36 @@ module spi_top #(
 
                 `SPI_STATE_WRITE:
                     begin
+                        // 首先设置下一位要发送的数据，提前一个cycle准备
                         if (spi_clk_edge) begin
-                            // Send data bits
-                            spi_mosi_o  <= tx_data[31 - bit_counter[4:0]];
                             bit_counter <= bit_counter + 1;
 
                             if (bit_counter >= 31) begin  // 32-bit send complete
                                 state <= `SPI_STATE_DONE;
+                            end
+                        end else begin
+                            // 提前准备下一位要发送的数据
+                            if (state == `SPI_STATE_WRITE) begin
+                                spi_mosi_o <= tx_data[31 - bit_counter[4:0]];
                             end
                         end
                     end
 
                 `SPI_STATE_TRANSFER:
                     begin
+                        // 首先设置下一位要发送的数据，提前一个cycle准备
                         if (spi_clk_edge) begin
-                            // 同时处理TX和RX数据位
+                            // 接收数据
                             rx_data     <= {rx_data[30:0], spi_miso_i};  // RX
-                            spi_mosi_o  <= tx_data[31 - bit_counter[4:0]]; // TX
                             bit_counter <= bit_counter + 1;
 
                             if (bit_counter >= 31) begin  // 32-bit transfer complete
                                 state                            <= `SPI_STATE_DONE;
                                 status_reg[`SPI_STATUS_RX_READY] <= 1'b1;
                             end
+                        end else begin
+                            // 提前准备下一位要发送的数据
+                            spi_mosi_o <= tx_data[31 - bit_counter[4:0]];
                         end
                     end
 
