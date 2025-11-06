@@ -147,10 +147,45 @@ module test_spi_slave #(
     // 三态输出控制
     assign spi_miso = miso_en ? miso_d : 1'bz;
 
-    // 简单的调试信息输出
-    always @(posedge spi_cs_n) begin
-        if (rst_n) begin
-            $display("%t: SPI Slave %d - Transmission completed, Received: 0x%h, Sent: 0x%h", $time, SLAVE_ID, rx_data, tx_data);
+    // 更可靠的传输完成检测和调试信息输出
+    // 避免仅通过片选信号的上升沿来判断传输完成，确保数据真正传输完成
+    reg tx_complete_flag; // 标记传输是否真正完成
+    reg [4:0] bit_count_at_cs_rise; // 保存片选上升沿时的bit_count值
+    reg cs_edge_detected; // 标记是否检测到片选信号边沿
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            tx_complete_flag <= 1'b0;
+            bit_count_at_cs_rise <= 5'd0;
+            cs_edge_detected <= 1'b0;
+        end else begin
+            // 当片选信号从0变为1时，保存当前的bit_count值
+            if (!spi_cs_n) begin
+                // 片选有效时，记录bit_count的最大值
+                if (bit_count > bit_count_at_cs_rise) begin
+                    bit_count_at_cs_rise <= bit_count;
+                end
+                cs_edge_detected <= 1'b0;
+            end else if (!cs_edge_detected) begin
+                // 片选从0变为1，且尚未处理过这个边沿
+                cs_edge_detected <= 1'b1;
+
+                // 传输完成条件：已经接收了数据位
+                if (bit_count_at_cs_rise > 0) begin
+                    tx_complete_flag <= 1'b1;
+                end else begin
+                    tx_complete_flag <= 1'b0;
+                end
+            end else begin
+                // 处理完片选边沿后，重置标志
+                tx_complete_flag <= 1'b0;
+            end
+
+            // 仅在真正完成一次有效传输时打印详细调试信息
+            if (tx_complete_flag) begin
+                $display("%t: SPI Slave %d - Transmission completed, Received: 0x%h, Sent: 0x%h, Total bits received: %d",
+                         $time, SLAVE_ID, rx_data, tx_data, bit_count_at_cs_rise);
+            end
         end
     end
 
