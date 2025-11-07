@@ -12,6 +12,7 @@ module io_top #(
     parameter IMPLEMENT_TIMER      = 1,
     parameter IMPLEMENT_FLASH      = 1,
     parameter SPI_NUM              = 1,
+    parameter NUM_IRQ_SOURCES      = 32,
     parameter GPIO_IN_CH           = 1,
     parameter GPIO_OUT_CH          = 1,
     parameter GPIO_IO_CH           = 1
@@ -32,10 +33,9 @@ module io_top #(
     output wire [IO_SLAVES-1:0][31:0]         slave_addr_mask,
     output wire [IO_SLAVES-1:0][31:0]         slave_addr_base,
 
-    // 中断信号
-    output wire                               irq_timer,
-    output wire                               irq_uart_rx,
-    output wire                               irq_uart_tx,
+    // 中断信号（新增中断控制器输出）
+    output wire                               int_req_o,        // 中断请求信号
+    output wire [7:0]                         int_id_o,         // 中断号
 
     // UART接口
     input  wire                               uart_rx,
@@ -64,6 +64,20 @@ module io_top #(
     localparam int SLAVE_UART_INDEX    = 2;
     localparam int SLAVE_SPI_INDEX     = 3;
     localparam int SLAVE_FLASH_INDEX   = 4;
+    localparam int SLAVE_IRQ_INDEX     = 5;
+
+    // 中断源定义
+    localparam int IRQ_TIMER_ID        = 0;  // 定时器中断
+    localparam int IRQ_UART_RX_ID      = 1;  // UART接收中断
+    localparam int IRQ_UART_TX_ID      = 2;  // UART发送中断
+    localparam int IRQ_SPI_ID          = 3;  // SPI中断
+    localparam int IRQ_GPIO_ID         = 4;  // GPIO中断
+
+    // 中断源信号
+    wire [NUM_IRQ_SOURCES-1:0]         irq_sources;
+    wire                               irq_timer;
+    wire                               irq_uart_rx;
+    wire                               irq_uart_tx;
 
     localparam int TIMER_ADDR_BASE     = IO_ADDR_BASE + 32'h00010000;
     localparam int TIMER_ADDR_MASK     = `CALC_ADDR_MASK_BY_LENGTH(TIMER_ADDR_BASE, 4096);
@@ -79,6 +93,9 @@ module io_top #(
 
     localparam int XIP_ADDR_BASE       = IO_ADDR_BASE + 32'h00050000;
     localparam int XIP_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 4096);
+
+    localparam int IRQ_CTRL_ADDR_BASE  = IO_ADDR_BASE + 32'h00060000;
+    localparam int IRQ_CTRL_ADDR_MASK  = `CALC_ADDR_MASK_BY_LENGTH(IRQ_CTRL_ADDR_BASE, 4096);
 
     /********** TIMER **********/
     generate
@@ -254,5 +271,46 @@ module io_top #(
             assign flash_spi_dq_oe                     = 4'b0000;
         end
     endgenerate
+
+    genvar i;
+    generate
+        for (i = 0; i < NUM_IRQ_SOURCES; i = i + 1) begin : all_irq_sources
+            if (i == IRQ_TIMER_ID) begin
+                assign irq_sources[i] = irq_timer;
+            end else if (i == IRQ_UART_RX_ID) begin
+                assign irq_sources[i] = irq_uart_rx;
+            end else if (i == IRQ_UART_TX_ID) begin
+                assign irq_sources[i] = irq_uart_tx;
+            end else begin
+                assign irq_sources[i] = 1'b0;
+            end
+        end
+    endgenerate
+
+    // 中断控制器实例化
+    assign slave_addr_base[SLAVE_IRQ_INDEX] = IRQ_CTRL_ADDR_BASE;
+    assign slave_addr_mask[SLAVE_IRQ_INDEX] = IRQ_CTRL_ADDR_MASK;
+    irq_controller #(
+        .NUM_IRQ_SOURCES(NUM_IRQ_SOURCES)
+    ) u_irq_controller (
+        .clk           (clk),
+        .rst_n         (rst_n),
+
+        // 中断源输入
+        .irq_sources_i (irq_sources),
+
+        // CPU中断接口
+        .int_req_o     (int_req_o),
+        .int_id_o      (int_id_o),
+
+        // OBI总线接口
+        .req_i         (slave_req[SLAVE_IRQ_INDEX]),
+        .we_i          (slave_we[SLAVE_IRQ_INDEX]),
+        .addr_i        (slave_addr[SLAVE_IRQ_INDEX]),
+        .wr_data_i     (slave_wdata[SLAVE_IRQ_INDEX]),
+        .data_out_o    (slave_rdata[SLAVE_IRQ_INDEX]),
+        .gnt_o         (slave_gnt[SLAVE_IRQ_INDEX]),
+        .rvalid_o      (slave_rvalid[SLAVE_IRQ_INDEX])
+    );
 
 endmodule

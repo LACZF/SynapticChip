@@ -131,9 +131,8 @@ module chip_top #(
     wire core_halted;
 
     // 中断相关信号
-    wire int_req;
-    wire[7:0] int_id;
-    reg [31:0] irq_src;
+    wire        int_req;
+    wire[7:0]   int_id;
 
     // CPU实例化
     generate
@@ -286,10 +285,9 @@ module chip_top #(
         .slave_addr_mask (io_slave_addr_mask),
         .slave_addr_base (io_slave_addr_base),
 
-        // 中断信号
-        .irq_timer     (irq_timer),
-        .irq_uart_rx   (irq_uart_rx),
-        .irq_uart_tx   (irq_uart_tx),
+        // 中断控制器输出信号
+        .int_req_o     (int_req),
+        .int_id_o      (int_id),
 
         // UART接口
         .uart_rx       (uart_rx),
@@ -313,16 +311,6 @@ module chip_top #(
         .flash_spi_dq_oe  (flash_spi_dq_oe),
         .flash_spi_dq_in  (flash_spi_dq_in)
     );
-
-    // 中断源
-    always @ (*) begin
-        irq_src     = 32'h0;
-        // 从io_top获取的中断信号
-        irq_src[ 0] = irq_timer;     // 定时器中断
-        irq_src[ 1] = irq_uart_rx;   // UART接收中断
-        irq_src[ 2] = irq_uart_tx;   // UART发送中断
-        // 其他未实现的中断信号保持为0
-    end
 
     // 内部总线
     obi_interconnect #(
