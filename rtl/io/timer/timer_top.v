@@ -1,6 +1,5 @@
 
 
-`include "timer.v"
 
 module timer_top(
     input  wire                    clk,
@@ -18,6 +17,18 @@ module timer_top(
     output reg                     irq_o       // 中断信号
 );
 
+    localparam TIMER_ADDR_CTRL      = 8'h00;  //  控制寄存器0 :控制
+    localparam TIMER_ADDR_INTR      = 8'h04;  //  控制寄存器1 :中断
+    localparam TIMER_ADDR_EXPR      = 8'h08;  //  控制寄存器2 :最大值
+    localparam TIMER_ADDR_COUNTER   = 8'h0c;  //  控制寄存器3 :计数器
+
+    localparam TIMER_START_LOC      = 0;     // 起始位的位置
+    localparam TIMER_MODE_LOC       = 1;     // 模式位的位置
+    localparam TIMER_MODE_ONE_SHOT  = 1'b0;  // 模式 :单次定时器
+    localparam TIMER_MODE_PERIODIC  = 1'b1;  // 模式 :循环定时器
+
+    localparam TIMER_IRQ_LOC        = 0;     // 中断位的位置
+
     /********** 控制寄存器 **********/
     // 控制寄存器 0 : 控制
     reg                            mode;       // 模式位
@@ -29,7 +40,7 @@ module timer_top(
     // OBI协议控制信号
     reg                            req_accepted; // 请求已接受
 
-    wire addr                      = addr_i[`TimerAddrBus];
+    wire [7:0]     addr            = addr_i[7:0];
 
     /********** 计时完成标志位 **********/
     wire expr_flag = ((start == 1'b1) && (counter == expr_val)) ? 1'b1 : 1'b0;
@@ -64,7 +75,7 @@ module timer_top(
             /* 异步复位 */
             data_out_o  <= 32'b0;
             start       <= 1'b0;
-            mode        <= `TIMER_MODE_ONE_SHOT;
+            mode        <= TIMER_MODE_ONE_SHOT;
             irq_o       <= 1'b0;
             expr_val    <= 32'b0;
             counter     <= 32'b0;
@@ -72,16 +83,16 @@ module timer_top(
             /* 读取访问 */
             if (req_accepted && !we_i) begin
                 case (addr)
-                    `TIMER_ADDR_CTRL    : begin // 控制寄存器 0
+                    TIMER_ADDR_CTRL    : begin // 控制寄存器 0
                         data_out_o     <= {{32-2{1'b0}}, mode, start};
                     end
-                    `TIMER_ADDR_INTR    : begin // 控制寄存器 1
+                    TIMER_ADDR_INTR    : begin // 控制寄存器 1
                         data_out_o     <= {{32-1{1'b0}}, irq_o};
                     end
-                    `TIMER_ADDR_EXPR    : begin // 控制寄存器 2
+                    TIMER_ADDR_EXPR    : begin // 控制寄存器 2
                         data_out_o     <= expr_val;
                     end
-                    `TIMER_ADDR_COUNTER : begin // 控制寄存器 3
+                    TIMER_ADDR_COUNTER : begin // 控制寄存器 3
                         data_out_o     <= counter;
                     end
                 endcase
@@ -90,24 +101,24 @@ module timer_top(
             end
             /* 写入访问 */
             // 控制寄存器 0
-            if (req_accepted && we_i && (addr == `TIMER_ADDR_CTRL)) begin
-                start     <= wr_data_i[`TimerStartLoc];
-                mode      <= wr_data_i[`TimerModeLoc];
-            end else if ((expr_flag == 1'b1) && (mode == `TIMER_MODE_ONE_SHOT)) begin
+            if (req_accepted && we_i && (addr == TIMER_ADDR_CTRL)) begin
+                start     <= wr_data_i[TIMER_START_LOC];
+                mode      <= wr_data_i[TIMER_MODE_LOC];
+            end else if ((expr_flag == 1'b1) && (mode == TIMER_MODE_ONE_SHOT)) begin
                 start     <= 1'b0;
             end
             // 控制寄存器 1
             if (expr_flag == 1'b1) begin
                 irq_o         <= 1'b1;
-            end else if (req_accepted && we_i && (addr == `TIMER_ADDR_INTR)) begin
-                irq_o         <= wr_data_i[`TimerIrqLoc];
+            end else if (req_accepted && we_i && (addr == TIMER_ADDR_INTR)) begin
+                irq_o         <= wr_data_i[TIMER_IRQ_LOC];
             end
             // 控制寄存器 2
-            if (req_accepted && we_i && (addr == `TIMER_ADDR_EXPR)) begin
+            if (req_accepted && we_i && (addr == TIMER_ADDR_EXPR)) begin
                 expr_val <= wr_data_i;
             end
             // 控制寄存器 3
-            if (req_accepted && we_i && (addr == `TIMER_ADDR_COUNTER)) begin
+            if (req_accepted && we_i && (addr == TIMER_ADDR_COUNTER)) begin
                 counter     <= wr_data_i;
             end else if (expr_flag == 1'b1) begin
                 counter     <= 32'b0;
