@@ -79,40 +79,6 @@
 .section .text.vector
 .align 4
 .global vector_table
-vector_table:
-    # RISC-V标准异常向量表（索引0-15为异常，16-31为中断）
-    .word exception_handler         # 0: 指令地址不对齐
-    .word exception_handler         # 1: 非法指令
-    .word exception_handler         # 2: 断点
-    .word exception_handler         # 3: 加载地址不对齐
-    .word exception_handler         # 4: 存储地址不对齐
-    .word exception_handler         # 5: 环境调用
-    .word exception_handler         # 6: 保留
-    .word exception_handler         # 7: 保留
-    .word exception_handler         # 8: 保留
-    .word exception_handler         # 9: 保留
-    .word exception_handler         # 10: 保留
-    .word exception_handler         # 11: 机器模式软件中断
-    .word exception_handler         # 12: 保留
-    .word timer_interrupt_handler   # 13: 机器模式定时器中断
-    .word exception_handler         # 14: 保留
-    .word uart_interrupt_handler    # 15: 机器模式外部中断 - UART
-    .word gpio_interrupt_handler    # 16: 用户模式软件中断 - GPIO
-    .word spi_interrupt_handler     # 17: 保留 - SPI
-    .word pe_interrupt_handler      # 18: 用户模式定时器中断 - PE
-    .word exception_handler         # 19: 保留
-    .word exception_handler         # 20: 用户模式外部中断
-    .word exception_handler         # 21: 保留
-    .word exception_handler         # 22: 保留
-    .word exception_handler         # 23: 保留
-    .word exception_handler         # 24: 保留
-    .word exception_handler         # 25: 保留
-    .word exception_handler         # 26: 保留
-    .word exception_handler         # 27: 保留
-    .word exception_handler         # 28: 保留
-    .word exception_handler         # 29: 保留
-    .word exception_handler         # 30: 保留
-    .word exception_handler         # 31: 保留
 
 _start:
     # 初始化栈指针
@@ -2002,15 +1968,73 @@ test_timer_module:
     addi sp, sp, 16
     ret
 
+/* 异常和中断总入口 */
+trap_entry:
+    addi sp, sp, -32*17
+    sw x1,   0*4(sp)
+    sw x5,   1*4(sp)
+    sw x6,   2*4(sp)
+    sw x7,   3*4(sp)
+    sw x10,  4*4(sp)
+    sw x11,  5*4(sp)
+    sw x12,  6*4(sp)
+    sw x13,  7*4(sp)
+    sw x14,  8*4(sp)
+    sw x15,  9*4(sp)
+    sw x16, 10*4(sp)
+    sw x17, 11*4(sp)
+    sw x28, 12*4(sp)
+    sw x29, 13*4(sp)
+    sw x30, 14*4(sp)
+    sw x31, 15*4(sp)
+
+    /* 保存异常(中断)返回地址 */
+    csrr x10, mepc
+    sw x10, 16*4(sp)
+
+    /* 使能全局中断 */
+    csrrsi x0, mstatus, 0x8
+
+    /* 读取异常(中断)号 */
+    csrr a1, mcause
+    slli a1, a1, 2
+    la a0, vector_table
+    add a1, a0, a1
+    /* 读取异常(中断)处理函数地址 */
+    lw a1, 0(a1)
+    /* 跳转到异常(中断)处理函数 */
+    jalr ra, 0(a1)
+
+    /* 恢复异常(中断)返回地址 */
+    lw x10,  16*4(sp)
+    csrw mepc, x10
+    lw x1,   0*4(sp)
+    lw x5,   1*4(sp)
+    lw x6,   2*4(sp)
+    lw x7,   3*4(sp)
+    lw x10,  4*4(sp)
+    lw x11,  5*4(sp)
+    lw x12,  6*4(sp)
+    lw x13,  7*4(sp)
+    lw x14,  8*4(sp)
+    lw x15,  9*4(sp)
+    lw x16, 10*4(sp)
+    lw x17, 11*4(sp)
+    lw x28, 12*4(sp)
+    lw x29, 13*4(sp)
+    lw x30, 14*4(sp)
+    lw x31, 15*4(sp)
+    addi sp, sp, 32*17
+    mret
+
 # 中断控制器初始化
 irq_init:
     addi sp, sp, -8
     sw ra, 4(sp)
 
     # 配置mtvec寄存器，指向中断向量表（向量模式）
-    la a0, vector_table
-    # ori a0, a0, 1     # 设置向量模式（最低位为1）
-    csrrw zero, mtvec, a0
+    la a0, trap_entry
+    csrw mtvec, a0
 
     # 启用全局中断（设置mstatus.MIE位）
     li a0, 0x8  # MIE位掩码
@@ -2023,7 +2047,7 @@ irq_init:
 
     # 设置中断使能寄存器（使能定时器中断）
     li a0, IRQ_CTRL_ENABLE
-    li a1, 0xFFFFFFFF  # 只使能定时器中断（中断源0）
+    li a1, 0xFFFFFFFF
     sw a1, 0(a0)
 
     li a0, 'I'
@@ -2297,6 +2321,41 @@ exception_handler:
     lw ra, 4(sp)
     addi sp, sp, 8
     ret
+
+vector_table:
+    # RISC-V标准异常向量表（索引0-15为异常，16-31为中断）
+    .word exception_handler         # 0: 指令地址不对齐
+    .word exception_handler         # 1: 非法指令
+    .word exception_handler         # 2: 断点
+    .word exception_handler         # 3: 加载地址不对齐
+    .word exception_handler         # 4: 存储地址不对齐
+    .word exception_handler         # 5: 环境调用
+    .word exception_handler         # 6: 保留
+    .word exception_handler         # 7: 保留
+    .word exception_handler         # 8: 保留
+    .word exception_handler         # 9: 保留
+    .word exception_handler         # 10: 保留
+    .word exception_handler         # 11: 保留
+    .word exception_handler         # 12: 保留
+    .word exception_handler         # 13: 保留
+    .word exception_handler         # 14: 保留
+    .word exception_handler         # 15: 保留
+    .word exception_handler         # 16: 机器模式软件中断
+    .word exception_handler         # 17: 保留
+    .word timer_interrupt_handler   # 18: 机器模式定时器中断
+    .word exception_handler         # 19: 保留
+    .word exception_handler         # 20: 机器模式外部中断
+    .word uart_interrupt_handler    # 21: UART RX
+    .word uart_interrupt_handler    # 22: UART TX
+    .word spi_interrupt_handler     # 23: SPI中断
+    .word gpio_interrupt_handler    # 24: GPIO中断
+    .word pe_interrupt_handler      # 25: PE中断
+    .word exception_handler         # 26: 保留
+    .word exception_handler         # 27: 保留
+    .word exception_handler         # 28: 保留
+    .word exception_handler         # 29: 保留
+    .word exception_handler         # 30: 保留
+    .word exception_handler         # 31: 保留
 
 .section .data
 # 数据段可以在这里定义

@@ -67,11 +67,11 @@ module io_top #(
     localparam int SLAVE_IRQ_INDEX     = 5;
 
     // 中断源定义
-    localparam int IRQ_TIMER_ID        = 16;  // 定时器中断
-    localparam int IRQ_UART_RX_ID      = 17;  // UART接收中断
-    localparam int IRQ_UART_TX_ID      = 18;  // UART发送中断
-    localparam int IRQ_SPI_ID          = 19;  // SPI中断
-    localparam int IRQ_GPIO_ID         = 20;  // GPIO中断
+    localparam int IRQ_TIMER_ID        = 18 - 8;  // 定时器中断
+    localparam int IRQ_UART_RX_ID      = 21 - 8;  // UART接收中断
+    localparam int IRQ_UART_TX_ID      = 22 - 8;  // UART发送中断
+    localparam int IRQ_SPI_ID          = 23 - 8;  // SPI中断
+    localparam int IRQ_GPIO_ID         = 24 - 8;  // GPIO中断
 
     // 中断源信号
     wire [NUM_IRQ_SOURCES-1:0]         irq_sources;
