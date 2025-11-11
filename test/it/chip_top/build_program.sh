@@ -17,7 +17,7 @@ function compile_asm() {
     local elf_file=$2
     local cflags="-march=rv64im -mabi=lp64 -static -mcmodel=medany -nostartfiles -nostdlib"
 
-    cflags="-march=rv64im"
+    cflags="-march=rv64im_zicsr"
     ${RISCV_PREFIX}as $cflags -o ${asm_file%.s}.o ${asm_file}
     ${RISCV_PREFIX}ld -T ${TOP_DIR}/script.ld -o ${elf_file} ${asm_file%.s}.o
 }

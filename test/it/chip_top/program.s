@@ -38,6 +38,14 @@
 .equ TIMER_EXPR,     TIMER_BASE + 0x08  # 最大值寄存器
 .equ TIMER_COUNTER,  TIMER_BASE + 0x0C  # 计数器寄存器
 
+# 中断控制器地址定义
+.equ IRQ_CTRL_BASE,    IO_BASE    + 0x00060000
+.equ IRQ_CTRL_STATUS,  IRQ_CTRL_BASE + 0x00  # 中断状态寄存器
+.equ IRQ_CTRL_MASK,    IRQ_CTRL_BASE + 0x04  # 中断屏蔽寄存器
+.equ IRQ_CTRL_PENDING, IRQ_CTRL_BASE + 0x08 # 中断挂起寄存器
+.equ IRQ_CTRL_ACK,     IRQ_CTRL_BASE + 0x0C  # 中断应答寄存器
+.equ IRQ_CTRL_ID,      IRQ_CTRL_BASE + 0x10  # 中断ID寄存器
+
 # SPI模块地址定义
 .equ SPI_BASE,       IO_BASE  + 0x00040000
 .equ SPI_CONTROL,    SPI_BASE + 0x00  # 控制寄存器
@@ -64,9 +72,21 @@
 # 栈指针初始地址
 .equ STACK_TOP,      RAM_BASE + 0x1000
 
+# 中断向量表
+.section .text.vector
+.align 4
+.global vector_table
+vector_table:
+    j _start                    # 复位向量
+    j interrupt_handler         # 中断处理程序
+    j exception_handler         # 异常处理程序
+
 _start:
     # 初始化栈指针
     li sp, STACK_TOP
+
+    # 初始化中断控制器
+    call irq_init
 
     # 初始化UART
     call uart_init
@@ -1753,7 +1773,7 @@ test_timer_module:
 
     # 设置Timer最大值
     li s0, TIMER_EXPR
-    li s1, 0x0000FFFF  # 设置最大值
+    li s1, 0x00001000  # 设置最大值
     sw s1, 0(s0)
 
     mv a0, s1
@@ -1776,7 +1796,7 @@ test_timer_module:
 
     # 启动Timer (设置控制寄存器)
     li s0, TIMER_CTRL
-    li s1, 0x00000003  # 启动Timer + 周期模式
+    li s1, 0x00000003  # 启动Timer + 周期模式 + 中断使能
     sw s1, 0(s0)
 
     mv a0, s1
@@ -1947,6 +1967,167 @@ test_timer_module:
     lw s1, 4(sp)
     lw s2, 0(sp)
     addi sp, sp, 16
+    ret
+
+# 中断控制器初始化
+irq_init:
+    addi sp, sp, -8
+    sw ra, 4(sp)
+
+    # 配置mtvec寄存器，指向中断向量表
+    la a0, vector_table
+    csrrw zero, mtvec, a0
+
+    # 启用全局中断（设置mstatus.MIE位）
+    li a0, 0x8  # MIE位掩码
+    csrrs zero, mstatus, a0
+
+    # 清除所有中断挂起状态
+    li a0, IRQ_CTRL_PENDING
+    li a1, 0xFFFFFFFF
+    sw a1, 0(a0)
+
+    # 设置中断屏蔽寄存器（使能定时器中断）
+    li a0, IRQ_CTRL_MASK
+    li a1, 0x00000001  # 只使能定时器中断（中断源0）
+    sw a1, 0(a0)
+
+    # 清除所有中断应答
+    li a0, IRQ_CTRL_ACK
+    li a1, 0xFFFFFFFF
+    sw a1, 0(a0)
+
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'Q'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, 'i'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'K'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    call print_newline
+
+    lw ra, 4(sp)
+    addi sp, sp, 8
+    ret
+
+# 中断处理程序
+interrupt_handler:
+    addi sp, sp, -32
+    sw ra, 28(sp)
+    sw t0, 24(sp)
+    sw t1, 20(sp)
+    sw t2, 16(sp)
+    sw a0, 12(sp)
+    sw a1, 8(sp)
+    sw a2, 4(sp)
+    sw a3, 0(sp)
+
+    # 读取中断ID
+    li t0, IRQ_CTRL_ID
+    lw t1, 0(t0)
+
+    # 检查中断源
+    li t2, 0  # 定时器中断ID
+    beq t1, t2, timer_interrupt
+
+    # 未知中断
+    j interrupt_handler_end
+
+timer_interrupt:
+    # 处理定时器中断
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'i'
+    call uart_write_byte
+    li a0, 'm'
+    call uart_write_byte
+    li a0, 'e'
+    call uart_write_byte
+    li a0, 'r'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    call print_newline
+
+    # 清除Timer中断（写入Timer中断寄存器）
+    li t0, TIMER_INTR
+    li t1, 0x00000000  # 清除中断
+    sw t1, 0(t0)
+
+    # 应答中断控制器
+    li t0, IRQ_CTRL_ACK
+    li t1, 0x00000001  # 应答定时器中断
+    sw t1, 0(t0)
+
+interrupt_handler_end:
+    lw ra, 28(sp)
+    lw t0, 24(sp)
+    lw t1, 20(sp)
+    lw t2, 16(sp)
+    lw a0, 12(sp)
+    lw a1, 8(sp)
+    lw a2, 4(sp)
+    lw a3, 0(sp)
+    addi sp, sp, 32
+    ret
+
+# 异常处理程序
+exception_handler:
+    addi sp, sp, -8
+    sw ra, 4(sp)
+
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'x'
+    call uart_write_byte
+    li a0, 'c'
+    call uart_write_byte
+    li a0, 'e'
+    call uart_write_byte
+    li a0, 'p'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, 'i'
+    call uart_write_byte
+    li a0, 'o'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    call print_newline
+
+    # 无限循环，等待复位
+    j exception_handler
+
+    lw ra, 4(sp)
+    addi sp, sp, 8
     ret
 
 .section .data
