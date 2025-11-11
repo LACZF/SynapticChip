@@ -39,12 +39,11 @@
 .equ TIMER_COUNTER,  TIMER_BASE + 0x0C  # 计数器寄存器
 
 # 中断控制器地址定义
-.equ IRQ_CTRL_BASE,    IO_BASE    + 0x00060000
-.equ IRQ_CTRL_STATUS,  IRQ_CTRL_BASE + 0x00  # 中断状态寄存器
-.equ IRQ_CTRL_MASK,    IRQ_CTRL_BASE + 0x04  # 中断屏蔽寄存器
-.equ IRQ_CTRL_PENDING, IRQ_CTRL_BASE + 0x08 # 中断挂起寄存器
-.equ IRQ_CTRL_ACK,     IRQ_CTRL_BASE + 0x0C  # 中断应答寄存器
-.equ IRQ_CTRL_ID,      IRQ_CTRL_BASE + 0x10  # 中断ID寄存器
+.equ IRQ_CTRL_BASE,      IO_BASE    + 0x00060000
+.equ IRQ_CTRL_ENABLE,    IRQ_CTRL_BASE + 0x00  # 中断使能寄存器
+.equ IRQ_CTRL_PENDING,   IRQ_CTRL_BASE + 0x04  # 中断挂起寄存器
+.equ IRQ_CTRL_PRIORITY0, IRQ_CTRL_BASE + 0x08 # 优先级寄存器0
+.equ IRQ_CTRL_PRIORITY1, IRQ_CTRL_BASE + 0x0C # 优先级寄存器1
 
 # SPI模块地址定义
 .equ SPI_BASE,       IO_BASE  + 0x00040000
@@ -1987,14 +1986,9 @@ irq_init:
     li a1, 0xFFFFFFFF
     sw a1, 0(a0)
 
-    # 设置中断屏蔽寄存器（使能定时器中断）
-    li a0, IRQ_CTRL_MASK
+    # 设置中断使能寄存器（使能定时器中断）
+    li a0, IRQ_CTRL_ENABLE
     li a1, 0x00000001  # 只使能定时器中断（中断源0）
-    sw a1, 0(a0)
-
-    # 清除所有中断应答
-    li a0, IRQ_CTRL_ACK
-    li a1, 0xFFFFFFFF
     sw a1, 0(a0)
 
     li a0, 'I'
@@ -2079,9 +2073,9 @@ timer_interrupt:
     li t1, 0x00000000  # 清除中断
     sw t1, 0(t0)
 
-    # 应答中断控制器
-    li t0, IRQ_CTRL_ACK
-    li t1, 0x00000001  # 应答定时器中断
+    # 应答中断控制器（通过写入挂起寄存器清除中断）
+    li t0, IRQ_CTRL_PENDING
+    li t1, 0x00000001  # 清除定时器中断的挂起位
     sw t1, 0(t0)
 
 interrupt_handler_end:
