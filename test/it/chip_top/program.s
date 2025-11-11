@@ -72,13 +72,47 @@
 .equ STACK_TOP,      RAM_BASE + 0x1000
 
 # 中断向量表
+# RISC-V中断向量表索引规则：
+# - 索引0-15：异常处理（mcause[31]=0）
+# - 索引16-31：中断处理（mcause[31]=1）
+# 注意：实际硬件中断号需要加上0x80000000
 .section .text.vector
 .align 4
 .global vector_table
 vector_table:
-    j _start                    # 复位向量
-    j interrupt_handler         # 中断处理程序
-    j exception_handler         # 异常处理程序
+    # RISC-V标准异常向量表（索引0-15为异常，16-31为中断）
+    .word exception_handler         # 0: 指令地址不对齐
+    .word exception_handler         # 1: 非法指令
+    .word exception_handler         # 2: 断点
+    .word exception_handler         # 3: 加载地址不对齐
+    .word exception_handler         # 4: 存储地址不对齐
+    .word exception_handler         # 5: 环境调用
+    .word exception_handler         # 6: 保留
+    .word exception_handler         # 7: 保留
+    .word exception_handler         # 8: 保留
+    .word exception_handler         # 9: 保留
+    .word exception_handler         # 10: 保留
+    .word exception_handler         # 11: 机器模式软件中断
+    .word exception_handler         # 12: 保留
+    .word timer_interrupt_handler   # 13: 机器模式定时器中断
+    .word exception_handler         # 14: 保留
+    .word uart_interrupt_handler    # 15: 机器模式外部中断 - UART
+    .word gpio_interrupt_handler    # 16: 用户模式软件中断 - GPIO
+    .word spi_interrupt_handler     # 17: 保留 - SPI
+    .word pe_interrupt_handler      # 18: 用户模式定时器中断 - PE
+    .word exception_handler         # 19: 保留
+    .word exception_handler         # 20: 用户模式外部中断
+    .word exception_handler         # 21: 保留
+    .word exception_handler         # 22: 保留
+    .word exception_handler         # 23: 保留
+    .word exception_handler         # 24: 保留
+    .word exception_handler         # 25: 保留
+    .word exception_handler         # 26: 保留
+    .word exception_handler         # 27: 保留
+    .word exception_handler         # 28: 保留
+    .word exception_handler         # 29: 保留
+    .word exception_handler         # 30: 保留
+    .word exception_handler         # 31: 保留
 
 _start:
     # 初始化栈指针
@@ -1973,8 +2007,9 @@ irq_init:
     addi sp, sp, -8
     sw ra, 4(sp)
 
-    # 配置mtvec寄存器，指向中断向量表
+    # 配置mtvec寄存器，指向中断向量表（向量模式）
     la a0, vector_table
+    # ori a0, a0, 1     # 设置向量模式（最低位为1）
     csrrw zero, mtvec, a0
 
     # 启用全局中断（设置mstatus.MIE位）
@@ -1988,7 +2023,7 @@ irq_init:
 
     # 设置中断使能寄存器（使能定时器中断）
     li a0, IRQ_CTRL_ENABLE
-    li a1, 0x00000001  # 只使能定时器中断（中断源0）
+    li a1, 0xFFFFFFFF  # 只使能定时器中断（中断源0）
     sw a1, 0(a0)
 
     li a0, 'I'
@@ -2021,31 +2056,17 @@ irq_init:
     addi sp, sp, 8
     ret
 
-# 中断处理程序
-interrupt_handler:
-    addi sp, sp, -32
-    sw ra, 28(sp)
-    sw t0, 24(sp)
-    sw t1, 20(sp)
-    sw t2, 16(sp)
-    sw a0, 12(sp)
-    sw a1, 8(sp)
-    sw a2, 4(sp)
-    sw a3, 0(sp)
 
-    # 读取中断ID
-    li t0, IRQ_CTRL_ID
-    lw t1, 0(t0)
 
-    # 检查中断源
-    li t2, 0  # 定时器中断ID
-    beq t1, t2, timer_interrupt
+# 定时器中断处理函数
+timer_interrupt_handler:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw a0, 8(sp)
+    sw a1, 4(sp)
+    sw a2, 0(sp)
 
-    # 未知中断
-    j interrupt_handler_end
-
-timer_interrupt:
-    # 处理定时器中断
+    # 打印定时器中断信息
     li a0, 'T'
     call uart_write_byte
     li a0, 'i'
@@ -2069,26 +2090,179 @@ timer_interrupt:
     call print_newline
 
     # 清除Timer中断（写入Timer中断寄存器）
-    li t0, TIMER_INTR
-    li t1, 0x00000000  # 清除中断
-    sw t1, 0(t0)
+    li a0, TIMER_INTR
+    li a1, 0x00000000  # 清除中断
+    sw a1, 0(a0)
 
     # 应答中断控制器（通过写入挂起寄存器清除中断）
-    li t0, IRQ_CTRL_PENDING
-    li t1, 0x00000001  # 清除定时器中断的挂起位
-    sw t1, 0(t0)
+    li a0, IRQ_CTRL_PENDING
+    li a1, 0x00000001  # 清除定时器中断的挂起位
+    sw a1, 0(a0)
 
-interrupt_handler_end:
-    lw ra, 28(sp)
-    lw t0, 24(sp)
-    lw t1, 20(sp)
-    lw t2, 16(sp)
-    lw a0, 12(sp)
-    lw a1, 8(sp)
-    lw a2, 4(sp)
-    lw a3, 0(sp)
-    addi sp, sp, 32
-    ret
+    lw ra, 12(sp)
+    lw a0, 8(sp)
+    lw a1, 4(sp)
+    lw a2, 0(sp)
+    addi sp, sp, 16
+    mret
+
+# UART中断处理函数
+uart_interrupt_handler:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw a0, 8(sp)
+    sw a1, 4(sp)
+    sw a2, 0(sp)
+
+    # 打印UART中断信息
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    call print_newline
+
+    # 应答中断控制器（通过写入挂起寄存器清除中断）
+    li a0, IRQ_CTRL_PENDING
+    li a1, 0x00000002  # 清除UART中断的挂起位
+    sw a1, 0(a0)
+
+    lw ra, 12(sp)
+    lw a0, 8(sp)
+    lw a1, 4(sp)
+    lw a2, 0(sp)
+    addi sp, sp, 16
+    mret
+
+# GPIO中断处理函数
+gpio_interrupt_handler:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw a0, 8(sp)
+    sw a1, 4(sp)
+    sw a2, 0(sp)
+
+    # 打印GPIO中断信息
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    call print_newline
+
+    # 应答中断控制器（通过写入挂起寄存器清除中断）
+    li a0, IRQ_CTRL_PENDING
+    li a1, 0x00000004  # 清除GPIO中断的挂起位
+    sw a1, 0(a0)
+
+    lw ra, 12(sp)
+    lw a0, 8(sp)
+    lw a1, 4(sp)
+    lw a2, 0(sp)
+    addi sp, sp, 16
+    mret
+
+# SPI中断处理函数
+spi_interrupt_handler:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw a0, 8(sp)
+    sw a1, 4(sp)
+    sw a2, 0(sp)
+
+    # 打印SPI中断信息
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    call print_newline
+
+    # 应答中断控制器（通过写入挂起寄存器清除中断）
+    li a0, IRQ_CTRL_PENDING
+    li a1, 0x00000008  # 清除SPI中断的挂起位
+    sw a1, 0(a0)
+
+    lw ra, 12(sp)
+    lw a0, 8(sp)
+    lw a1, 4(sp)
+    lw a2, 0(sp)
+    addi sp, sp, 16
+    mret
+
+# PE中断处理函数
+pe_interrupt_handler:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw a0, 8(sp)
+    sw a1, 4(sp)
+    sw a2, 0(sp)
+
+    # 打印PE中断信息
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'n'
+    call uart_write_byte
+    li a0, 't'
+    call uart_write_byte
+    li a0, '!'
+    call uart_write_byte
+    call print_newline
+
+    # 应答中断控制器（通过写入挂起寄存器清除中断）
+    li a0, IRQ_CTRL_PENDING
+    li a1, 0x00000010  # 清除PE中断的挂起位
+    sw a1, 0(a0)
+
+    lw ra, 12(sp)
+    lw a0, 8(sp)
+    lw a1, 4(sp)
+    lw a2, 0(sp)
+    addi sp, sp, 16
+    mret
 
 # 异常处理程序
 exception_handler:
