@@ -228,8 +228,10 @@ module chip_top_test;
     /********** 接收信号的监测 **********/
     always @(posedge clk) begin
         if (rx_end == 1'b1) begin // 输出接收到的文字
-            $write("%c", rx_data);
-            $fflush(); // 强制刷新输出缓冲区，实现实时显示
+            if (rx_data !== TEST_CMD_END) begin
+                $write("%c", rx_data);
+                $fflush(); // 强制刷新输出缓冲区，实现实时显示
+            end
         end
     end
 
