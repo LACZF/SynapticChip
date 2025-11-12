@@ -1802,41 +1802,55 @@ test_timer_module:
     call print_hex
     call print_newline
 
-    # 4. 读取Timer计数器
-    call delay
-    call delay
-
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-
-    # 读取Timer计数器
-    li s0, TIMER_COUNTER
-    lw s1, 0(s0)
-
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 5. 再次读取Timer计数器 (验证计数增加)
-    call delay
-    call delay
-
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
+    # 4. 等待Timer中断发生
     li a0, 'W'
     call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+
+    # 初始化中断计数器
+    la s0, timer_interrupt_count
+    li s1, 0
+    sw s1, 0(s0)
+
+    # 等待中断发生（最多等待一定时间）
+    li s2, 1000  # 最大等待循环次数
+wait_for_interrupt:
+    # 检查中断计数器是否增加
+    lw s1, 0(s0)
+    bnez s1, interrupt_occurred
+
+    # 延迟一段时间
+    call delay
+
+    # 减少等待计数器
+    addi s2, s2, -1
+    bnez s2, wait_for_interrupt
+
+    # 超时，中断未发生
+    j interrupt_timeout
+
+interrupt_occurred:
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'K'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
     li a0, 'C'
     call uart_write_byte
     li a0, 'O'
@@ -1850,17 +1864,13 @@ test_timer_module:
     li a0, '='
     call uart_write_byte
 
-    # 读取Timer计数器
-    lw s2, 0(s0)
-
-    mv a0, s2
+    # 打印中断发生次数
+    lw a0, 0(s0)
     call print_hex
     call print_newline
+    j timer_test_end
 
-    # 6. 验证计数是否增加
-    bgt s2, s1, timer_count_ok
-
-    # 计数失败
+interrupt_timeout:
     li a0, 'F'
     call uart_write_byte
     li a0, 'A'
@@ -1874,16 +1884,8 @@ test_timer_module:
     li a0, 'D'
     call uart_write_byte
     call print_newline
-    j timer_test_end
 
-    timer_count_ok:
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'K'
-    call uart_write_byte
-    call print_newline
-
-    timer_test_end:
+timer_test_end:
 
     # 7. 停止Timer
     li a0, 'S'
@@ -2158,6 +2160,12 @@ timer_interrupt_handler:
     call uart_write_byte
     call print_newline
 
+    # 增加中断计数器
+    la a0, timer_interrupt_count
+    lw a1, 0(a0)
+    addi a1, a1, 1
+    sw a1, 0(a0)
+
     # 清除Timer中断（写入Timer中断寄存器）
     li a0, TIMER_INTR
     li a1, 0x00000000  # 清除中断
@@ -2409,3 +2417,5 @@ message:
 
 .section .bss
 # 未初始化数据段
+timer_interrupt_count:
+    .word 0  # Timer中断计数器

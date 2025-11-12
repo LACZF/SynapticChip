@@ -2,7 +2,7 @@
 
 ## Prepare
 
-### Prepare instructions.hex(option)
+### Prepare instructions.hex and data_bss.hex(option)
 ```bash
 cd $REPO_TOP_DIR/test/it/chip_top/
 ./build_program.sh
@@ -11,13 +11,14 @@ cd $REPO_TOP_DIR/test/it/chip_top/
 
 ## Test cmd
 
-### Test by uart
 ```bash
 cd $REPO_TOP_DIR
-make test M=test/it/chip_top/makefile_uart.txt
+make test M=test/it/chip_top
 ```
-### Test base instructions by hex.
+
+### Specify ram and rom to content for testing.
+
 ```bash
 cd $REPO_TOP_DIR
-make test M=test/it/chip_top/makefile_base.txt
+make test M=test/it/chip_top ROM_PRG=program.hex RAM_PRG=data_bss.hex
 ```

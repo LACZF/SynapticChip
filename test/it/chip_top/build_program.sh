@@ -26,7 +26,8 @@ function disassemble() {
     local elf_file=$1
     local dis_file=$2
 
-    ${RISCV_PREFIX}objdump -D $elf_file > $dis_file
+    # 仅反汇编.text.vector段（代码段）
+    ${RISCV_PREFIX}objdump -D -j .text.vector $elf_file > $dis_file
 }
 
 function clean_compile_gen_files() {
@@ -81,4 +82,22 @@ function build_program() {
     asm_to_readmemh_file $dis_file $hex_file
 }
 
+function extract_data_bss() {
+    local elf_file=$1
+    local hex_file=$2
+
+    # 使用objcopy提取.data和.bss段到二进制文件
+    ${RISCV_PREFIX}objcopy -O binary -j .data -j .bss $elf_file temp_data_bss.bin
+
+    # 将二进制文件转换为hex格式（每行32位）
+    hexdump -v -e '1/4 "%08x\n"' temp_data_bss.bin > $hex_file
+
+    # 清理临时文件
+    rm -f temp_data_bss.bin
+
+    # echo "提取完成：$hex_file"
+    # echo "数据大小：$(wc -l < $hex_file) 个32位字"
+}
+
 build_program program.s program.elf program.dis program.hex
+extract_data_bss program.elf data_bss.hex

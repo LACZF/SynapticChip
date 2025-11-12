@@ -2,13 +2,14 @@ OUTPUT_ARCH("riscv")
 ENTRY(_start)
 
 MEMORY {
-    ram (rwx) : ORIGIN = 0x00000000, LENGTH = 64K
+    rom (rwx) : ORIGIN = 0x00000000, LENGTH = 32K
+    ram (rwx) : ORIGIN = 0x20000000, LENGTH = 4K
 }
 
 SECTIONS {
     .text : {
         *(.text)
-    } > ram
+    } > rom
 
     .data : {
         *(.data)
