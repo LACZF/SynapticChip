@@ -1,8 +1,8 @@
 `include "spi.v"
 
 module spi_top #(
-    parameter DATA_WIDTH             = 64,
-    parameter ADDR_WIDTH             = 64,
+    parameter DATA_WIDTH             = 32,
+    parameter ADDR_WIDTH             = 32,
     parameter SPI_NUM                = 1
 ) (
     input wire                       clk,

@@ -2,8 +2,8 @@
     `define __PE_CTRL__
 
     // System Parameters
-    `define DATA_WIDTH 64
-    `define ADDR_WIDTH 64
+    `define DATA_WIDTH 32
+    `define ADDR_WIDTH 32
     `define PE_ID_WIDTH 4
 
     // PE Array Dimensions

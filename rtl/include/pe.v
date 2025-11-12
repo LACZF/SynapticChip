@@ -1,8 +1,8 @@
 `ifndef __PE_V__
     `define __PE_V__
     // Data width
-    `define DATA_WIDTH 64
-    `define ADDR_WIDTH 64
+    `define DATA_WIDTH 32
+    `define ADDR_WIDTH 32
 
     // Instruction width and fields
     `define INST_WIDTH 32

@@ -2,8 +2,8 @@
     `define __PE_ROUTE__
 
     // Data width
-    `define DATA_WIDTH 64
-    `define ADDR_WIDTH 64
+    `define DATA_WIDTH 32
+    `define ADDR_WIDTH 32
 
     // Routing parameters
     `define NUM_PORTS 5

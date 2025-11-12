@@ -1,8 +1,8 @@
 `include "pe_router.v"
 
 module pe_router_core #(
-    parameter ADDR_WIDTH                         = 64,
-    parameter DATA_WIDTH                         = 64,
+    parameter ADDR_WIDTH                         = 32,
+    parameter DATA_WIDTH                         = 32,
     parameter NUM_PORTS                          = 4
 ) (
     input                                         clk,
