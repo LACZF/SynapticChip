@@ -10,8 +10,6 @@ RTL_SRC += $(TOP_DIR)/rtl/include/common.v
 RTL_SRC += $(TOP_DIR)/rtl/include/pe_ctrl.v
 RTL_SRC += $(TOP_DIR)/rtl/include/pe_router.v
 RTL_SRC += $(TOP_DIR)/rtl/include/pe.v
-RTL_SRC += $(TOP_DIR)/rtl/include/spi_addr.v
-RTL_SRC += $(TOP_DIR)/rtl/include/spi.v
 
 RTL_SRC += $(TOP_DIR)/rtl/common/fifo.v
 RTL_SRC += $(TOP_DIR)/rtl/common/cache.v
