@@ -1,8 +1,9 @@
 #!/bin/bash
 
 TOP_DIR="$(realpath $(dirname $(readlink -f $0))/../)"
+WORK_DIR="."
 MODULE_NAME=""
-BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
+BUILD_DIR=$WORK_DIR/build/$MODULE_NAME
 SRC_DIR=$BUILD_DIR/src
 LOG_DIR=$BUILD_DIR/log
 YOSYS=${YOSYS:-$(which yosys)}
@@ -88,7 +89,7 @@ function parse_rtl_src() { # do_not_function_help
 		MODULE_NAME=${TOP_MODULE:-$(basename "${RTL_SRC_DIR}")}
 	fi
 
-	BUILD_DIR=$TOP_DIR/build/$MODULE_NAME
+	BUILD_DIR=$WORK_DIR/build/$MODULE_NAME
 	SRC_DIR=$BUILD_DIR/src
 	LOG_DIR=$BUILD_DIR/log
 
@@ -219,7 +220,7 @@ function gen_read_verilog_ys() {
 	do
 		grep -v "include" $f >> $rtl_all
 		echo "$(basename $f)" >> $filelist
-		echo "read_verilog $args $f" >> $script
+		echo "read_verilog $args $SRC_DIR/$(basename $f)" >> $script
 	done
 	process_rtl_all_file $rtl_all
 }
@@ -307,14 +308,14 @@ function do_synth_rtl() {
 	gen_read_verilog_ys $script
 
 	cat >> $script << EOF
-read_verilog -lib $TOP_DIR/lib/cells.v
+read_verilog -lib $WORK_DIR/lib/cells.v
 
 synth $top
-dfflibmap -liberty $TOP_DIR/lib/cells.lib
-abc -liberty $TOP_DIR/lib/cells.lib
+dfflibmap -liberty $WORK_DIR/lib/cells.lib
+abc -liberty $WORK_DIR/lib/cells.lib
 opt_clean
 
-stat -liberty $TOP_DIR/lib/cells.lib
+stat -liberty $WORK_DIR/lib/cells.lib
 
 # http://vlsiarch.ecen.okstate.edu/flows/MOSIS_SCMOS/latest/cadence/lib/tsmc025/signalstorm/osu025_stdcells.lib
 # dfflibmap -liberty osu025_stdcells.lib
@@ -359,7 +360,7 @@ function env_list { # do_not_function_help
 	echo -e "ENV list:"
 	echo -e "\t export EXCEPT_LIST=\"chip_top_test.v\""
 	echo -e "\t export TOP_MODULE=\"chip_top\""
-	echo -e "\t export READ_RTL_ARGS=\"-I$TOP_DIR/rtl/\""
+	echo -e "\t export READ_RTL_ARGS=\"-I$WORK_DIR/rtl/\""
 	echo -e "\t export OUTPUT_PNG=0|1"
 	echo -e "\t export OUTPUT_SVG=0|1"
 	echo -e "\t export OUTPUT_PS=0|1"
