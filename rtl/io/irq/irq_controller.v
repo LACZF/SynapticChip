@@ -139,6 +139,7 @@ module irq_controller #(
         end else if (req_accepted && we_i) begin
             case (reg_addr)
                 8'h00: irq_enable <= wr_data_i[NUM_IRQ_SOURCES-1:0];  // 中断使能寄存器
+                8'h04: irq_pending <= irq_pending & ~wr_data_i[NUM_IRQ_SOURCES-1:0]; // 中断挂起寄存器（清除指定的挂起位）
                 8'h08: irq_priority[31:0] <= wr_data_i;              // 优先级寄存器0
                 8'h0C: irq_priority[63:32] <= wr_data_i;              // 优先级寄存器1
                 // 可以继续添加更多优先级寄存器

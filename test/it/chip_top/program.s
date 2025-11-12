@@ -1993,18 +1993,64 @@ trap_entry:
     sw x10, 16*4(sp)
 
     /* 使能全局中断 */
-    csrrsi x0, mstatus, 0x8
+    csrsi mstatus, 0x8
 
     /* 读取异常(中断)号 */
     csrr a1, mcause
-    slli a1, a1, 2
-    la a0, vector_table
-    add a1, a0, a1
-    /* 读取异常(中断)处理函数地址 */
-    lw a1, 0(a1)
-    /* 跳转到异常(中断)处理函数 */
-    jalr ra, 0(a1)
 
+    /* 直接判断timer中断（中断号18） */
+    li a0, 18
+    beq a1, a0, timer_interrupt
+
+    /* 判断UART RX中断（中断号21） */
+    li a0, 21
+    beq a1, a0, uart_interrupt
+
+    /* 判断UART TX中断（中断号22） */
+    li a0, 22
+    beq a1, a0, uart_interrupt
+
+    /* 判断SPI中断（中断号23） */
+    li a0, 23
+    beq a1, a0, spi_interrupt
+
+    /* 判断GPIO中断（中断号24） */
+    li a0, 24
+    beq a1, a0, gpio_interrupt
+
+    /* 判断PE中断（中断号25） */
+    li a0, 25
+    beq a1, a0, pe_interrupt
+
+    /* 如果不是上述中断，跳转到默认异常处理 */
+    j exception_handler
+
+timer_interrupt:
+    /* 调用timer中断处理函数 */
+    call timer_interrupt_handler
+    j trap_return
+
+uart_interrupt:
+    /* 调用uart中断处理函数 */
+    call uart_interrupt_handler
+    j trap_return
+
+spi_interrupt:
+    /* 调用spi中断处理函数 */
+    call spi_interrupt_handler
+    j trap_return
+
+gpio_interrupt:
+    /* 调用gpio中断处理函数 */
+    call gpio_interrupt_handler
+    j trap_return
+
+pe_interrupt:
+    /* 调用pe中断处理函数 */
+    call pe_interrupt_handler
+    j trap_return
+
+trap_return:
     /* 恢复异常(中断)返回地址 */
     lw x10,  16*4(sp)
     csrw mepc, x10
@@ -2037,8 +2083,7 @@ irq_init:
     csrw mtvec, a0
 
     # 启用全局中断（设置mstatus.MIE位）
-    li a0, 0x8  # MIE位掩码
-    csrrs zero, mstatus, a0
+    csrsi mstatus, 0x8
 
     # 清除所有中断挂起状态
     li a0, IRQ_CTRL_PENDING
@@ -2120,7 +2165,7 @@ timer_interrupt_handler:
 
     # 应答中断控制器（通过写入挂起寄存器清除中断）
     li a0, IRQ_CTRL_PENDING
-    li a1, 0x00000001  # 清除定时器中断的挂起位
+    li a1, 0x00000400  # 写入1到位10（Timer中断）以清除挂起位
     sw a1, 0(a0)
 
     lw ra, 12(sp)
@@ -2128,7 +2173,7 @@ timer_interrupt_handler:
     lw a1, 4(sp)
     lw a2, 0(sp)
     addi sp, sp, 16
-    mret
+    ret
 
 # UART中断处理函数
 uart_interrupt_handler:
@@ -2161,7 +2206,7 @@ uart_interrupt_handler:
 
     # 应答中断控制器（通过写入挂起寄存器清除中断）
     li a0, IRQ_CTRL_PENDING
-    li a1, 0x00000002  # 清除UART中断的挂起位
+    li a1, 0x00002000  # 写入1到位13（UART中断）以清除挂起位
     sw a1, 0(a0)
 
     lw ra, 12(sp)
@@ -2169,7 +2214,7 @@ uart_interrupt_handler:
     lw a1, 4(sp)
     lw a2, 0(sp)
     addi sp, sp, 16
-    mret
+    ret
 
 # GPIO中断处理函数
 gpio_interrupt_handler:
@@ -2202,7 +2247,7 @@ gpio_interrupt_handler:
 
     # 应答中断控制器（通过写入挂起寄存器清除中断）
     li a0, IRQ_CTRL_PENDING
-    li a1, 0x00000004  # 清除GPIO中断的挂起位
+    li a1, 0x00010000  # 写入1到位16（GPIO中断）以清除挂起位
     sw a1, 0(a0)
 
     lw ra, 12(sp)
@@ -2210,7 +2255,7 @@ gpio_interrupt_handler:
     lw a1, 4(sp)
     lw a2, 0(sp)
     addi sp, sp, 16
-    mret
+    ret
 
 # SPI中断处理函数
 spi_interrupt_handler:
@@ -2241,7 +2286,7 @@ spi_interrupt_handler:
 
     # 应答中断控制器（通过写入挂起寄存器清除中断）
     li a0, IRQ_CTRL_PENDING
-    li a1, 0x00000008  # 清除SPI中断的挂起位
+    li a1, 0x00008000  # 写入1到位15（SPI中断）以清除挂起位
     sw a1, 0(a0)
 
     lw ra, 12(sp)
@@ -2249,7 +2294,7 @@ spi_interrupt_handler:
     lw a1, 4(sp)
     lw a2, 0(sp)
     addi sp, sp, 16
-    mret
+    ret
 
 # PE中断处理函数
 pe_interrupt_handler:
@@ -2278,7 +2323,7 @@ pe_interrupt_handler:
 
     # 应答中断控制器（通过写入挂起寄存器清除中断）
     li a0, IRQ_CTRL_PENDING
-    li a1, 0x00000010  # 清除PE中断的挂起位
+    li a1, 0x00020000  # 写入1到位17（PE中断）以清除挂起位
     sw a1, 0(a0)
 
     lw ra, 12(sp)
@@ -2286,7 +2331,7 @@ pe_interrupt_handler:
     lw a1, 4(sp)
     lw a2, 0(sp)
     addi sp, sp, 16
-    mret
+    ret
 
 # 异常处理程序
 exception_handler:
