@@ -20,7 +20,7 @@ module tb_gpio;
     wire       rvalid_o;
 
     // GPIO接口信号
-    reg [3:0]  gpio_in;
+    reg  [3:0] gpio_in;
     wire [3:0] gpio_out;
     wire [3:0] gpio_io;
 
@@ -33,9 +33,9 @@ module tb_gpio;
 
     // 实例化GPIO模块
     gpio_top #(
-        .GPIO_IN_CH    (4),
-        .GPIO_OUT_CH   (4),
-        .GPIO_IO_CH    (4)
+        .GPIO_IN_NUM   (4),
+        .GPIO_OUT_NUM  (4),
+        .GPIO_INOUT_NUM(4)
     ) u_gpio (
         .clk           (clk),
         .rst_n         (rst_n),

@@ -17,7 +17,9 @@ module chip_top_test;
     localparam TEST_CMD_TIMER = 8'h74; // 't'
     localparam TEST_CMD_END   = 8'h04;
     localparam CPU_NUM        = 1;
-    localparam GPIO_NUM       = 32;
+    localparam GPIO_IN_NUM    = 14;
+    localparam GPIO_OUT_NUM   = 8;
+    localparam GPIO_INOUT_NUM = 66;
     localparam SPI_NUM        = 2;
     localparam SAMPLE_CYCLES  = 4;
     localparam UART_DIV_RATE  = 2;
@@ -49,9 +51,9 @@ module chip_top_test;
     end
 
     // 通用输入/输出端口
-    wire [GPIO_NUM-1:0]       gpio_in = {GPIO_NUM{1'b1}}; // 输入端口
-    wire [GPIO_NUM-1:0]       gpio_out;                   // 输出端口
-    wire [GPIO_NUM-1:0]       gpio_io = {GPIO_NUM{1'bz}}; // 输入输出端口
+    wire [GPIO_IN_NUM-1:0]       gpio_in = {GPIO_IN_NUM{1'b1}};
+    wire [GPIO_OUT_NUM-1:0]      gpio_out;
+    wire [GPIO_INOUT_NUM-1:0]    gpio_io = {GPIO_INOUT_NUM{1'bz}};
 
     /********** UART模型 **********/
     wire                      rx_busy;          // 接收中标志
@@ -127,7 +129,9 @@ module chip_top_test;
         .IMPLEMENT_FLASH(0),
         .IMPLEMENT_TIMER(1),
         .IMPLEMENT_I2C(1),
-        .GPIO_NUM(GPIO_NUM),
+        .GPIO_IN_NUM(GPIO_IN_NUM),
+        .GPIO_OUT_NUM(GPIO_OUT_NUM),
+        .GPIO_INOUT_NUM(GPIO_INOUT_NUM),
         .I2C_NUM(1),
         .UART_NUM(1),
         .SPI_NUM(SPI_NUM)

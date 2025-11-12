@@ -13,10 +13,10 @@ module io_top #(
     parameter IMPLEMENT_FLASH      = 1,
     parameter SPI_NUM              = 1,
     parameter NUM_IRQ_SOURCES      = 32,
-    parameter GPIO_IN_CH           = 1,
-    parameter GPIO_OUT_CH          = 1,
-    parameter GPIO_IO_CH           = 1,
-    parameter NUM_PES              = 4           // PE数量，用于IRQ信号位宽定义
+    parameter GPIO_IN_NUM          = 1,
+    parameter GPIO_OUT_NUM         = 1,
+    parameter GPIO_INOUT_NUM       = 1,
+    parameter NUM_PES              = 4
 ) (
     input  wire                               clk,
     input  wire                               rst_n,
@@ -47,9 +47,9 @@ module io_top #(
     output wire                               uart_tx,
 
     // GPIO接口
-    input  wire [GPIO_IN_CH-1:0]              gpio_in,
-    output wire [GPIO_OUT_CH-1:0]             gpio_out,
-    inout  wire [GPIO_IO_CH-1:0]              gpio_io,
+    input  wire [GPIO_IN_NUM-1:0]             gpio_in,
+    output wire [GPIO_OUT_NUM-1:0]            gpio_out,
+    inout  wire [GPIO_INOUT_NUM-1:0]          gpio_io,
 
     // SPI接口
     output wire [SPI_NUM-1:0]                 spi_cs_n,
@@ -167,9 +167,9 @@ module io_top #(
             assign slave_addr_base[SLAVE_GPIO_INDEX]  = GPIO_ADDR_BASE;
             assign slave_addr_mask[SLAVE_GPIO_INDEX]  = GPIO_ADDR_MASK;
             gpio_top #(
-                .GPIO_IN_CH    (GPIO_IN_CH),
-                .GPIO_OUT_CH   (GPIO_OUT_CH),
-                .GPIO_IO_CH    (GPIO_IO_CH)
+                .GPIO_IN_NUM     (GPIO_IN_NUM),
+                .GPIO_OUT_NUM    (GPIO_OUT_NUM),
+                .GPIO_INOUT_NUM  (GPIO_INOUT_NUM)
             ) u_gpio (
                 .clk             (clk),
                 .rst_n           (rst_n),
@@ -190,7 +190,7 @@ module io_top #(
             assign slave_rdata[SLAVE_GPIO_INDEX]     = 32'h0;
             assign slave_rvalid[SLAVE_GPIO_INDEX]    = 1'b0;
             assign slave_gnt[SLAVE_GPIO_INDEX]       = 1'b0;
-            assign gpio_out                          = {GPIO_OUT_CH{1'b0}};
+            assign gpio_out                          = {GPIO_OUT_NUM{1'b0}};
             // GPIO_IO需要保持三态，不做赋值
         end
     endgenerate

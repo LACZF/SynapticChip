@@ -25,7 +25,9 @@ module chip_top #(
     parameter IMPLEMENT_FLASH           = 1,
     parameter IMPLEMENT_TIMER           = 1,
     parameter IMPLEMENT_I2C             = 1,
-    parameter GPIO_NUM                  = 16,
+    parameter GPIO_IN_NUM               = 14,
+    parameter GPIO_OUT_NUM              = 8,
+    parameter GPIO_INOUT_NUM            = 66,
     parameter I2C_NUM                   = 2,
     parameter UART_NUM                  = 3,
     parameter SPI_NUM                   = 1
@@ -38,9 +40,9 @@ module chip_top #(
     output wire                         uart_tx,
 
     /********** GPIO  **********/
-    input  wire [GPIO_NUM-1:0]          gpio_in,
-    output wire [GPIO_NUM-1:0]          gpio_out,
-    inout  wire [GPIO_NUM-1:0]          gpio_io,
+    input  wire [GPIO_IN_NUM-1:0]       gpio_in,
+    output wire [GPIO_OUT_NUM-1:0]      gpio_out,
+    inout  wire [GPIO_INOUT_NUM-1:0]    gpio_io,
 
     /********** SPI **********/
     output wire [SPI_NUM-1:0]           spi_cs_n,
@@ -271,10 +273,10 @@ module chip_top #(
         .IMPLEMENT_TIMER        (IMPLEMENT_TIMER),
         .IMPLEMENT_FLASH        (IMPLEMENT_FLASH),
         .SPI_NUM                (SPI_NUM),
-        .GPIO_IN_CH             (GPIO_NUM),
-        .GPIO_OUT_CH            (GPIO_NUM),
-        .GPIO_IO_CH             (GPIO_NUM),
-        .NUM_PES                (NUM_PES)           // PE数量参数
+        .GPIO_IN_NUM            (GPIO_IN_NUM),
+        .GPIO_OUT_NUM           (GPIO_OUT_NUM),
+        .GPIO_INOUT_NUM         (GPIO_INOUT_NUM),
+        .NUM_PES                (NUM_PES)
     ) u_io (
         .clk           (clk),
         .rst_n         (rst_n),
