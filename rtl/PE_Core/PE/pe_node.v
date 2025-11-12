@@ -50,7 +50,11 @@ module pe_node #(
 
     // Status output
     output [DATA_WIDTH-1:0]      status_o,
-    output                       busy_o
+    output                       busy_o,
+
+    // IRQ interface
+    output                       irq_o,           // IRQ输出信号
+    output [7:0]                 irq_id_o         // IRQ ID输出
 );
 
     // Local memory
@@ -135,7 +139,9 @@ module pe_node #(
         .out_valid_o(out_valid_o),
         .out_data_o(out_data_o),
         .status_o(status_o),
-        .busy_o(busy_o)
+        .busy_o(busy_o),
+        .irq_o(irq_o),
+        .irq_id_o(irq_id_o)
     );
 
 endmodule

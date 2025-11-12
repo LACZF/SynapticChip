@@ -134,6 +134,10 @@ module chip_top #(
     wire        int_req;
     wire[7:0]   int_id;
 
+    // PE IRQ信号
+    wire [NUM_PES-1:0]               pe_irq;
+    wire [(NUM_PES*8)-1:0]           pe_irq_id;
+
     // CPU实例化
     generate
         genvar i;
@@ -231,7 +235,9 @@ module chip_top #(
         .wr_data_i  (slave_wdata[SLAVE_PE_TOP_INDEX]),
         .rd_data_o  (slave_rdata[SLAVE_PE_TOP_INDEX]),
         .gnt_o      (slave_gnt[SLAVE_PE_TOP_INDEX]),
-        .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX])
+        .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX]),
+        .pe_irq_o   (pe_irq),
+        .pe_irq_id_o(pe_irq_id)
     );
 
     generate
@@ -267,7 +273,8 @@ module chip_top #(
         .SPI_NUM                (SPI_NUM),
         .GPIO_IN_CH             (GPIO_NUM),
         .GPIO_OUT_CH            (GPIO_NUM),
-        .GPIO_IO_CH             (GPIO_NUM)
+        .GPIO_IO_CH             (GPIO_NUM),
+        .NUM_PES                (NUM_PES)           // PE数量参数
     ) u_io (
         .clk           (clk),
         .rst_n         (rst_n),
@@ -288,6 +295,10 @@ module chip_top #(
         // 中断控制器输出信号
         .int_req_o     (int_req),
         .int_id_o      (int_id),
+
+        // PE IRQ输入信号
+        .pe_irq_i      (pe_irq),
+        .pe_irq_id_i   (pe_irq_id),
 
         // UART接口
         .uart_rx       (uart_rx),

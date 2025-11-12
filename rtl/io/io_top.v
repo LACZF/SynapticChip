@@ -15,7 +15,8 @@ module io_top #(
     parameter NUM_IRQ_SOURCES      = 32,
     parameter GPIO_IN_CH           = 1,
     parameter GPIO_OUT_CH          = 1,
-    parameter GPIO_IO_CH           = 1
+    parameter GPIO_IO_CH           = 1,
+    parameter NUM_PES              = 4           // PE数量，用于IRQ信号位宽定义
 ) (
     input  wire                               clk,
     input  wire                               rst_n,
@@ -36,6 +37,10 @@ module io_top #(
     // 中断信号（新增中断控制器输出）
     output wire                               int_req_o,        // 中断请求信号
     output wire [7:0]                         int_id_o,         // 中断号
+
+    // PE IRQ输入信号
+    input  wire [NUM_PES-1:0]                 pe_irq_i,         // PE IRQ输入信号
+    input  wire [(NUM_PES*8)-1:0]             pe_irq_id_i,      // PE IRQ ID输入
 
     // UART接口
     input  wire                               uart_rx,
@@ -72,6 +77,7 @@ module io_top #(
     localparam int IRQ_UART_TX_ID      = 22 - 8;  // UART发送中断
     localparam int IRQ_SPI_ID          = 23 - 8;  // SPI中断
     localparam int IRQ_GPIO_ID         = 24 - 8;  // GPIO中断
+    localparam int IRQ_PE_ID           = 25 - 8;  // PE中断
 
     // 中断源信号
     wire [NUM_IRQ_SOURCES-1:0]         irq_sources;
@@ -281,6 +287,9 @@ module io_top #(
                 assign irq_sources[i] = irq_uart_rx;
             end else if (i == IRQ_UART_TX_ID) begin
                 assign irq_sources[i] = irq_uart_tx;
+            end else if (i == IRQ_PE_ID) begin
+                // PE IRQ: 当任意一个PE产生IRQ时触发
+                assign irq_sources[i] = |pe_irq_i;
             end else begin
                 assign irq_sources[i] = 1'b0;
             end

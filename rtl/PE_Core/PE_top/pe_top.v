@@ -19,7 +19,11 @@ module pe_top #(
     input  [DATA_WIDTH-1:0]            wr_data_i,
     output [DATA_WIDTH-1:0]            rd_data_o,
     output                             gnt_o,
-    output                             rvalid_o
+    output                             rvalid_o,
+
+    // IRQ interface
+    output [NUM_PES-1:0]               pe_irq_o,           // PE IRQ输出信号
+    output [(NUM_PES*8)-1:0]           pe_irq_id_o         // PE IRQ ID输出
 );
 
     localparam int PE_CTRL_ADDR        = 32'h0000_0000;
@@ -142,6 +146,10 @@ module pe_top #(
     wire [(NUM_PES*DATA_WIDTH)-1:0]  pe_west_data;
     wire [NUM_PES-1:0]               pe_west_ready;
 
+    // PE IRQ signals
+    wire [NUM_PES-1:0]               pe_irq;
+    wire [(NUM_PES*8)-1:0]           pe_irq_id;
+
     // Instantiate PE array
     genvar i, j;
     generate
@@ -177,7 +185,9 @@ module pe_top #(
                     .out_data_o(pe_outputs[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
                     .out_valid_o(),
                     .busy_o(pe_busy[pe_idx]),
-                    .status_o(pe_status[pe_idx*DATA_WIDTH +: DATA_WIDTH])
+                    .status_o(pe_status[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
+                    .irq_o(pe_irq[pe_idx]),
+                    .irq_id_o(pe_irq_id[pe_idx*8 +: 8])
                 );
             end
         end
@@ -261,5 +271,9 @@ module pe_top #(
         pe_busy,        // PE busy status
         pe_enable       // PE enable status
     };
+
+    // IRQ output assignments
+    assign pe_irq_o    = pe_irq;
+    assign pe_irq_id_o = pe_irq_id;
 
 endmodule

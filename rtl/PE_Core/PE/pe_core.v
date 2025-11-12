@@ -50,7 +50,11 @@ module pe_core #(
 
     // Status output
     output reg  [DATA_WIDTH-1:0]     status_o,
-    output reg                       busy_o
+    output reg                       busy_o,
+
+    // IRQ interface
+    output reg                       irq_o,           // IRQ输出信号
+    output reg  [7:0]                irq_id_o         // IRQ ID输出
 );
 
     // Internal register file
@@ -76,6 +80,11 @@ module pe_core #(
     reg [DATA_WIDTH-1:0] pc; // Program counter
     reg [DATA_WIDTH-1:0] mar; // Memory address register
     reg [DATA_WIDTH-1:0] mdr; // Memory data register
+
+    // IRQ related signals
+    reg                  irq_pending;    // IRQ挂起标志
+    reg [7:0]            irq_source;     // IRQ源标识
+    reg [DATA_WIDTH-1:0] irq_count;      // IRQ计数器（用于调试）
 
     // Communication buffers - storage for incoming data from neighboring PEs
     reg [DATA_WIDTH-1:0] comm_buffer [0:3]; // 0: North, 1: South, 2: East, 3: West
@@ -124,6 +133,11 @@ module pe_core #(
             out_data_o  <= 0;
             busy_o      <= 0;
             status_o    <= 0;
+            irq_o       <= 0;
+            irq_id_o    <= 0;
+            irq_pending <= 0;
+            irq_source  <= 0;
+            irq_count   <= 0;
 
             // Initialize register file
             for (integer i = 0; i < `NUM_REGS; i = i + 1) begin
@@ -245,6 +259,20 @@ module pe_core #(
                             state <= S_IDLE;
                         end
                     endcase
+
+                    // IRQ generation logic
+                    // Generate IRQ when specific conditions are met
+                    /*
+                    if (opcode == `OP_ADD && alu_out == 32'hDEADBEEF) begin
+                        // Special IRQ trigger condition
+                        irq_pending <= 1'b1;
+                        irq_source  <= 8'h01; // PE computation complete IRQ
+                    end else if (opcode == `OP_STORE && mem_addr_o == 32'h40000000) begin
+                        // Memory access to special address triggers IRQ
+                        irq_pending <= 1'b1;
+                        irq_source  <= 8'h02; // PE memory access IRQ
+                    end
+                    */
                 end
 
                 S_MEMORY: begin
@@ -287,6 +315,17 @@ module pe_core #(
 
             // Update status output with R15 register value
             status_o <= status_reg;
+
+            // IRQ output logic
+            if (irq_pending) begin
+                irq_o    <= 1'b1;
+                irq_id_o <= irq_source;
+                irq_count <= irq_count + 1;
+                irq_pending <= 1'b0; // Clear pending flag after asserting IRQ
+            end else begin
+                irq_o    <= 1'b0;
+                irq_id_o <= 8'h00;
+            end
         end
     end
 
