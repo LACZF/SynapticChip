@@ -28,6 +28,14 @@ module pe_node #(
     input  [DATA_WIDTH-1:0]      ext_mem_data_in_i,
     input                        ext_mem_ack_i,
 
+    // DMA interface
+    input                        dma_req_i,           // DMA请求信号
+    input                        dma_we_i,            // DMA写使能 (0:读PE, 1:写PE)
+    input [ADDR_WIDTH-1:0]       dma_addr_i,          // DMA地址
+    input [DATA_WIDTH-1:0]       dma_data_i,          // DMA写入数据
+    output                       dma_ack_o,           // DMA应答信号
+    output [DATA_WIDTH-1:0]      dma_data_o,          // DMA读取数据
+
     // Neighbor PE communication interface
     input                        north_valid_i,
     input  [DATA_WIDTH-1:0]      north_data_i,
@@ -61,6 +69,12 @@ module pe_node #(
     reg [DATA_WIDTH-1:0] local_mem [0:`MEM_DEPTH-1];
     reg                  local_mem_ack;
 
+    // DMA相关信号
+    reg                  dma_ack_reg;
+    reg [DATA_WIDTH-1:0] dma_data_reg;
+    wire                 dma_local_access;
+    wire                 dma_ext_access;
+
     // Memory interface signals
     wire                  mem_req;
     wire                  mem_we;
@@ -73,22 +87,48 @@ module pe_node #(
     wire local_access = (mem_addr < `MEM_DEPTH);
     wire ext_access   = !local_access;
 
+    // DMA地址解码
+    assign dma_local_access = (dma_addr_i < `MEM_DEPTH);
+    assign dma_ext_access   = !dma_local_access;
+
     // Local memory access
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             local_mem_ack <= 0;
+            dma_ack_reg   <= 0;
+            dma_data_reg  <= 0;
             // Initialize local memory
             for (integer i = 0; i < `MEM_DEPTH; i = i + 1) begin
                 local_mem[i] <= 0;
             end
         end else begin
             local_mem_ack <= 0;
+            dma_ack_reg   <= 0;
 
+            // PE核心内存访问
             if (mem_req && local_access) begin
                 if (mem_we) begin
                     local_mem[mem_addr] <= mem_data_out;
                 end
                 local_mem_ack <= 1;
+            end
+
+            // DMA访问处理
+            if (dma_req_i) begin
+                if (dma_local_access) begin
+                    if (dma_we_i) begin
+                        // DMA写PE本地内存
+                        local_mem[dma_addr_i] <= dma_data_i;
+                    end else begin
+                        // DMA读PE本地内存
+                        dma_data_reg <= local_mem[dma_addr_i];
+                    end
+                    dma_ack_reg <= 1;
+                end else begin
+                    // DMA访问外部内存，通过PE核心的外部内存接口
+                    // 这里可以添加外部内存DMA访问逻辑
+                    dma_ack_reg <= 1; // 暂时直接应答
+                end
             end
         end
     end
@@ -96,6 +136,10 @@ module pe_node #(
     // Memory data selection
     assign mem_data_in = local_access ? local_mem[mem_addr] : ext_mem_data_in_i;
     assign mem_ack     = local_access ? local_mem_ack : ext_mem_ack_i;
+
+    // DMA接口输出
+    assign dma_ack_o   = dma_ack_reg;
+    assign dma_data_o  = dma_data_reg;
 
     // External memory interface
     assign ext_mem_req_o      = mem_req && ext_access;

@@ -21,6 +21,14 @@ module pe_top #(
     output                             gnt_o,
     output                             rvalid_o,
 
+    // DMA interface
+    input                              dma_req_i,           // DMA请求信号
+    input                              dma_we_i,            // DMA写使能 (0:读PE, 1:写PE)
+    input  [ADDR_WIDTH-1:0]            dma_addr_i,          // DMA地址
+    input  [DATA_WIDTH-1:0]            dma_data_i,          // DMA写入数据
+    output                             dma_ack_o,           // DMA应答信号
+    output [DATA_WIDTH-1:0]            dma_data_o,          // DMA读取数据
+
     // IRQ interface
     output [NUM_PES-1:0]               pe_irq_o,           // PE IRQ输出信号
     output [(NUM_PES*8)-1:0]           pe_irq_id_o         // PE IRQ ID输出
@@ -187,7 +195,14 @@ module pe_top #(
                     .busy_o(pe_busy[pe_idx]),
                     .status_o(pe_status[pe_idx*DATA_WIDTH +: DATA_WIDTH]),
                     .irq_o(pe_irq[pe_idx]),
-                    .irq_id_o(pe_irq_id[pe_idx*8 +: 8])
+                    .irq_id_o(pe_irq_id[pe_idx*8 +: 8]),
+                    // DMA interface
+                    .dma_req_i(dma_req_i),
+                    .dma_we_i(dma_we_i),
+                    .dma_addr_i(dma_addr_i),
+                    .dma_data_i(dma_data_i),
+                    .dma_ack_o(dma_ack_o),
+                    .dma_data_o(dma_data_o)
                 );
             end
         end

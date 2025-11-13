@@ -11,12 +11,14 @@ module io_top #(
     parameter IMPLEMENT_SPI        = 1,
     parameter IMPLEMENT_TIMER      = 1,
     parameter IMPLEMENT_FLASH      = 1,
+    parameter IMPLEMENT_DMA        = 1,
     parameter SPI_NUM              = 1,
     parameter NUM_IRQ_SOURCES      = 32,
     parameter GPIO_IN_NUM          = 1,
     parameter GPIO_OUT_NUM         = 1,
     parameter GPIO_INOUT_NUM       = 1,
-    parameter NUM_PES              = 4
+    parameter NUM_PES              = 4,
+    parameter DMA_FIFO_DEPTH       = 16
 ) (
     input  wire                               clk,
     input  wire                               rst_n,
@@ -41,6 +43,18 @@ module io_top #(
     // PE IRQ输入信号
     input  wire [NUM_PES-1:0]                 pe_irq_i,         // PE IRQ输入信号
     input  wire [(NUM_PES*8)-1:0]             pe_irq_id_i,      // PE IRQ ID输入
+
+    // DMA中断输入信号
+    input  wire                               dma_irq_i,        // DMA中断信号
+    input  wire [7:0]                         dma_irq_id_i,     // DMA中断ID
+
+    // DMA到PE接口信号
+    output wire                               dma_pe_req_o,     // DMA到PE的请求信号
+    output wire                               dma_pe_we_o,      // DMA到PE的写使能
+    output wire [ADDR_WIDTH-1:0]              dma_pe_addr_o,    // DMA到PE的地址
+    output wire [DATA_WIDTH-1:0]              dma_pe_data_o,    // DMA到PE的数据
+    input  wire                               dma_pe_ack_i,     // DMA到PE的应答信号
+    input  wire [DATA_WIDTH-1:0]              dma_pe_data_i,    // DMA从PE读取的数据
 
     // UART接口
     input  wire                               uart_rx,
@@ -70,6 +84,7 @@ module io_top #(
     localparam int SLAVE_SPI_INDEX     = 3;
     localparam int SLAVE_FLASH_INDEX   = 4;
     localparam int SLAVE_IRQ_INDEX     = 5;
+    localparam int SLAVE_DMA_INDEX     = 6;
 
     // 中断源定义
     localparam int IRQ_TIMER_ID        = 18 - 8;  // 定时器中断
@@ -78,6 +93,7 @@ module io_top #(
     localparam int IRQ_SPI_ID          = 23 - 8;  // SPI中断
     localparam int IRQ_GPIO_ID         = 24 - 8;  // GPIO中断
     localparam int IRQ_PE_ID           = 25 - 8;  // PE中断
+    localparam int IRQ_DMA_ID          = 26 - 8;  // DMA中断
 
     // 中断源信号
     wire [NUM_IRQ_SOURCES-1:0]         irq_sources;
@@ -102,6 +118,9 @@ module io_top #(
 
     localparam int IRQ_CTRL_ADDR_BASE  = IO_ADDR_BASE + 32'h00060000;
     localparam int IRQ_CTRL_ADDR_MASK  = `CALC_ADDR_MASK_BY_LENGTH(IRQ_CTRL_ADDR_BASE, 4096);
+
+    localparam int DMA_ADDR_BASE       = IO_ADDR_BASE + 32'h00070000;
+    localparam int DMA_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(DMA_ADDR_BASE, 4096);
 
     /********** TIMER **********/
     generate
@@ -278,6 +297,61 @@ module io_top #(
         end
     endgenerate
 
+    /********** DMA控制器 **********/
+    generate
+        if (IMPLEMENT_DMA) begin : dma_gen
+            assign slave_addr_base[SLAVE_DMA_INDEX] = DMA_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_DMA_INDEX] = DMA_ADDR_MASK;
+            dma_controller #(
+                .ADDR_WIDTH(ADDR_WIDTH),
+                .DATA_WIDTH(DATA_WIDTH),
+                .NUM_PES(NUM_PES),
+                .DMA_FIFO_DEPTH(DMA_FIFO_DEPTH)
+            ) u_dma_controller (
+                .clk(clk),
+                .rst_n(rst_n),
+
+                // 从设备接口（CPU配置DMA）
+                .req_i(slave_req[SLAVE_DMA_INDEX]),
+                .we_i(slave_we[SLAVE_DMA_INDEX]),
+                .addr_i(slave_addr[SLAVE_DMA_INDEX]),
+                .wr_data_i(slave_wdata[SLAVE_DMA_INDEX]),
+                .data_out_o(slave_rdata[SLAVE_DMA_INDEX]),
+                .gnt_o(slave_gnt[SLAVE_DMA_INDEX]),
+                .rvalid_o(slave_rvalid[SLAVE_DMA_INDEX]),
+
+                // 主设备接口（DMA访问内存）
+                .mem_req_o(),
+                .mem_we_o(),
+                .mem_addr_o(),
+                .mem_data_out_o(),
+                .mem_gnt_i(1'b0),
+                .mem_rvalid_i(1'b0),
+                .mem_data_in_i(32'b0),
+
+                // PE接口（DMA访问PE）
+                .pe_dma_req_o(dma_pe_req_o),
+                .pe_dma_we_o(dma_pe_we_o),
+                .pe_dma_addr_o(dma_pe_addr_o),
+                .pe_dma_data_o(dma_pe_data_o),
+                .pe_dma_ack_i(dma_pe_ack_i),
+                .pe_dma_data_i(dma_pe_data_i),
+
+                // 中断接口
+                .dma_irq_o(dma_irq_i)
+            );
+        end else begin
+            // DMA未实现时的默认连接
+            assign slave_gnt[SLAVE_DMA_INDEX]    = 1'b0;
+            assign slave_rvalid[SLAVE_DMA_INDEX] = 1'b0;
+            assign slave_rdata[SLAVE_DMA_INDEX]  = 32'b0;
+            assign dma_pe_req_o                  = 1'b0;
+            assign dma_pe_we_o                   = 1'b0;
+            assign dma_pe_addr_o                 = 32'b0;
+            assign dma_pe_data_o                 = 32'b0;
+        end
+    endgenerate
+
     genvar i;
     generate
         for (i = 0; i < NUM_IRQ_SOURCES; i = i + 1) begin : all_irq_sources
@@ -290,6 +364,9 @@ module io_top #(
             end else if (i == IRQ_PE_ID) begin
                 // PE IRQ: 当任意一个PE产生IRQ时触发
                 assign irq_sources[i] = |pe_irq_i;
+            end else if (i == IRQ_DMA_ID) begin
+                // DMA IRQ: DMA传输完成中断
+                assign irq_sources[i] = dma_irq_i;
             end else begin
                 assign irq_sources[i] = 1'b0;
             end
