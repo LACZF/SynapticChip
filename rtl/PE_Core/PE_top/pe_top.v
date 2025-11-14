@@ -34,7 +34,6 @@ module pe_top #(
 
     wire                  start_computation;
     wire                  computation_done;
-    wire [PE_ARRAY_X-1:0] pe_enable;
 
     // PE array signals - 使用一维数组表示二维结构
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_result;
@@ -116,8 +115,7 @@ module pe_top #(
         .mem_wdata(mem_wdata),
         .mem_rdata(mem_rdata),
         .start_computation(start_computation),
-        .computation_done(computation_done),
-        .pe_enable(pe_enable)
+        .computation_done(computation_done)
     );
 
     // Instantiate PE array with individual routing
@@ -133,7 +131,7 @@ module pe_top #(
                 ) u_pe (
                     .clk(clk),
                     .rst_n(rst_n),
-                    .enable(pe_enable[i]),
+                    .enable(1'b1),  // PE默认使能
                     .start(start_computation),
                     .operand1(pe_operand1[idx]),
                     .operand2(pe_operand2[idx]),

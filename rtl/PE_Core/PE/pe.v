@@ -109,7 +109,6 @@ module pe #(
         endcase
     end
 
-    // Computation logic - 修复版本
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result             <= {DATA_WIDTH{1'b0}};

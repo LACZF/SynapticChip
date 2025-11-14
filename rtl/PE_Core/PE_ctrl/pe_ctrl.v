@@ -26,7 +26,6 @@ module pe_control #(
     // PE Control
     output reg                                             start_computation,
     input  wire                                            computation_done,
-    output reg  [PE_ARRAY_X-1:0]                           pe_enable,
 
     // 高带宽内存接口
     output reg                                             high_bw_req_o,
@@ -114,7 +113,6 @@ module pe_control #(
             mem_addr    <= {ADDR_WIDTH{1'b0}};
             mem_wdata   <= {DATA_WIDTH{1'b0}};
             control_reg <= {DATA_WIDTH{1'b0}};
-            pe_enable   <= {PE_ARRAY_X{1'b1}}; // Enable all PEs by default
         end else begin
             case (obi_state)
                 IDLE: begin
@@ -135,7 +133,6 @@ module pe_control #(
                     if (we_i) begin
                         case (addr_base)
                             CONTROL_REG_ADDR: control_reg <= wdata_i;
-                            PE_ENABLE_ADDR:   pe_enable   <= wdata_i[PE_ARRAY_X-1:0];
                             HIGH_BW_WRITE_ADDR: begin
                                 // 高带宽内存写入请求 - 使用wdata_i的低16bit作为地址，高16bit作为长度
                                 high_bw_transfer_length <= wdata_i[31:16];  // 高16bit作为长度
@@ -160,7 +157,6 @@ module pe_control #(
                         case (addr_base)
                             CONTROL_REG_ADDR: rdata_o <= control_reg;
                             STATUS_REG_ADDR:  rdata_o <= status_reg;
-                            PE_ENABLE_ADDR:   rdata_o <= {{(DATA_WIDTH-PE_ARRAY_X){1'b0}}, pe_enable};
                             HIGH_BW_READ_ADDR: begin
                                 // 高带宽内存读取请求 - 使用wdata_i的低16bit作为地址，高16bit作为长度
                                 high_bw_transfer_length <= wdata_i[31:16];  // 高16bit作为长度

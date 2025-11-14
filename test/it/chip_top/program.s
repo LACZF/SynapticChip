@@ -76,9 +76,7 @@
 .equ PE_CONFIG_BASE,        PE_OPERAND2_BASE + (PE_TOTAL_COUNT * 4)   # 配置区域 (每个PE 4字节)
 .equ PE_OUTPUT_BASE,        PE_CONFIG_BASE + (PE_TOTAL_COUNT * 4)     # 输出区域 (每个PE 4字节)
 
-# PE控制寄存器位定义
-.equ PE_EN_BIT,      0                   # 使能位
-.equ PE_RESET_BIT,   1                   # 复位位
+# PE控制寄存器位定义 - 默认使能，无需复位和使能控制
 
 # PE配置位定义 - 重构后配置格式
 .equ PE_OPCODE_SHIFT, 0        # 操作码在配置字中的位置
@@ -380,65 +378,22 @@ test_pe_module:
     call uart_write_byte
     call print_newline
 
-    # 1. 复位PE模块
-    li s0, PE_CTRL_ADDR
-    li s1, 1<<PE_RESET_BIT     # 设置复位位
-    sw s1, 0(s0)
-    call delay                 # 等待复位完成
-    call delay
-    call delay
-
-    # 清除复位位
-    li s1, 0
-    sw s1, 0(s0)
-    call delay
-
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    call print_newline
-
-    # 2. 使能PE模块
-    li s0, PE_CTRL_ADDR
-    li s1, 1<<PE_EN_BIT        # 设置使能位
-    sw s1, 0(s0)
-
+    # PE模块默认使能，无需复位和使能操作
     li a0, 'P'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, 'E'
+    li a0, 'R'
     call uart_write_byte
-    li a0, 'N'
+    li a0, 'E'
     call uart_write_byte
     li a0, 'A'
     call uart_write_byte
-    li a0, 'B'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
     li a0, 'D'
+    call uart_write_byte
+    li a0, 'Y'
     call uart_write_byte
     call print_newline
 
@@ -577,7 +532,7 @@ load_config_loop:
     call print_newline
 
     li s0, PE_CTRL_ADDR
-    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
+    li s1, 1 << 0  # 启动PE计算（PE默认使能）
     sw s1, 0(s0)
     call delay                 # 等待计算完成
     call delay
@@ -748,35 +703,6 @@ test_failed:
 test_end:
     call print_newline
 
-    # 7. 关闭PE模块
-    li s0, PE_CTRL_ADDR
-    li s1, 0                   # 清除使能位
-    sw s1, 0(s0)
-
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'B'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    call print_newline
-
     # 恢复寄存器并返回
     lw s6, 0(sp)
     lw s5, 4(sp)
@@ -787,345 +713,6 @@ test_end:
     lw s0, 24(sp)
     lw ra, 28(sp)
     addi sp, sp, 32
-    ret
-    li s0, PE_CTRL_ADDR
-    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
-    sw s1, 0(s0)
-    call delay                 # 等待计算完成
-
-    # 读取SUB结果
-    li s0, PE_OUTPUT_BASE
-    lw s1, 0(s0)
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'B'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 5. 逻辑运算测试 - 重构后测试
-    li a0, '\n'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    call print_newline
-
-    # 5.1 配置逻辑运算操作数
-    li s0, PE_OPERAND1_BASE
-    li s1, 0x0000000F          # 操作数1 = 0xF
-    sw s1, 0(s0)
-
-    li s0, PE_OPERAND2_BASE
-    li s1, 0x00000003          # 操作数2 = 0x3
-    sw s1, 0(s0)
-
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    li a0, '0'
-    call uart_write_byte
-    li a0, 'x'
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, '0'
-    call uart_write_byte
-    li a0, 'x'
-    call uart_write_byte
-    li a0, '3'
-    call uart_write_byte
-    call print_newline
-
-    # 5.2 AND运算测试
-    li s0, PE_CONFIG_BASE
-    li s1, (PE_OP_AND << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT)
-    sw s1, 0(s0)
-
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 启动AND计算
-    li s0, PE_CTRL_ADDR
-    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
-    sw s1, 0(s0)
-    call delay                 # 等待计算完成
-
-    # 读取AND结果
-    li s0, PE_OUTPUT_BASE
-    lw s1, 0(s0)
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 5.3 OR运算测试
-    li s0, PE_CONFIG_BASE
-    li s1, (PE_OP_OR << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT)
-    sw s1, 0(s0)
-
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 启动OR计算
-    li s0, PE_CTRL_ADDR
-    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
-    sw s1, 0(s0)
-    call delay                 # 等待计算完成
-
-    # 读取OR结果
-    li s0, PE_OUTPUT_BASE
-    lw s1, 0(s0)
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 5.4 XOR运算测试
-    li s0, PE_CONFIG_BASE
-    li s1, (PE_OP_XOR << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT)
-    sw s1, 0(s0)
-
-    li a0, 'X'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 启动XOR计算
-    li s0, PE_CTRL_ADDR
-    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
-    sw s1, 0(s0)
-    call delay                 # 等待计算完成
-
-    # 读取XOR结果
-    li s0, PE_OUTPUT_BASE
-    lw s1, 0(s0)
-    li a0, 'X'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 6. 数据寄存器读写测试
-    li a0, '\n'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    call print_newline
-
-    lw ra, 12(sp)
-    lw s0, 8(sp)
-    lw s1, 4(sp)
-    lw s2, 0(sp)
-    addi sp, sp, 16
     ret
 
 # 打印十六进制数
