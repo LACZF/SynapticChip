@@ -25,12 +25,12 @@ module pe_router #(
     output reg                   west_valid_out
 );
 
-    // Configuration decoding - 使用独立的bit位控制每个输出方向
-    wire output_north = pe_config[4];   // 输出到北方向
-    wire output_south = pe_config[5];   // 输出到南方向
-    wire output_east  = pe_config[6];   // 输出到东方向
-    wire output_west  = pe_config[7];   // 输出到西方向
-    wire store_to_mem = pe_config[8];   // 存储结果到内存
+    // Configuration decoding - 路由输出控制位从bit16开始，低16位用于PE操作数和操作码
+    wire output_north = pe_config[16];  // 输出到北方向
+    wire output_south = pe_config[17];  // 输出到南方向
+    wire output_east  = pe_config[18];  // 输出到东方向
+    wire output_west  = pe_config[19];  // 输出到西方向
+    wire store_to_mem = pe_config[20];  // 存储结果到内存
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

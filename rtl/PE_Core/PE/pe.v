@@ -24,74 +24,89 @@ module pe #(
     output reg                   result_valid
 );
 
-    // Configuration bits
-    wire [3:0] opcode                = config_data[3:0];
-    wire       use_external_operands = config_data[6];
-    wire [1:0] src1_sel              = config_data[8:7];
-    wire [1:0] src2_sel              = config_data[10:9];
+    // Configuration bits - 重新分配配置位
+    wire [7:0] opcode    = config_data[7:0];   // 操作码使用8位
+    wire [2:0] src1_sel  = config_data[10:8];  // 源1选择器使用3位
+    wire [2:0] src2_sel  = config_data[13:11]; // 源2选择器使用3位
 
     // Internal signals
     reg  [DATA_WIDTH-1:0] src1, src2;
     reg                   src1_valid, src2_valid;
     reg                   computation_active;
 
-    // Input selection logic
+    // Input selection logic - 删除use_external_operands，统一处理
     always @(*) begin
-        if (use_external_operands) begin
-            // Use external operands from memory
-            src1       = operand1;
-            src2       = operand2;
-            src1_valid = 1'b1;
-            src2_valid = 1'b1;
-        end else begin
-            // Select source 1 from inter-PE connections
-            case (src1_sel)
-                2'b00: begin
-                    src1       = north_in;
-                    src1_valid = north_valid_in;
-                end
-                2'b01: begin
-                    src1       = south_in;
-                    src1_valid = south_valid_in;
-                end
-                2'b10: begin
-                    src1       = east_in;
-                    src1_valid = east_valid_in;
-                end
-                2'b11: begin
-                    src1       = west_in;
-                    src1_valid = west_valid_in;
-                end
-                default: begin
-                    src1       = {DATA_WIDTH{1'b0}};
-                    src1_valid = 1'b0;
-                end
-            endcase
+        // Select source 1 from inter-PE connections or external operands
+        case (src1_sel)
+            3'b000: begin // 非法值
+                src1       = {DATA_WIDTH{1'b0}};
+                src1_valid = 1'b0;
+            end
+            3'b001: begin // 东方向输入
+                src1       = east_in;
+                src1_valid = east_valid_in;
+            end
+            3'b010: begin // 南方向输入
+                src1       = south_in;
+                src1_valid = south_valid_in;
+            end
+            3'b011: begin // 西方向输入
+                src1       = west_in;
+                src1_valid = west_valid_in;
+            end
+            3'b100: begin // 北方向输入
+                src1       = north_in;
+                src1_valid = north_valid_in;
+            end
+            3'b101: begin // 外部操作数1
+                src1       = operand1;
+                src1_valid = 1'b1;
+            end
+            3'b110: begin // 外部操作数2
+                src1       = operand2;
+                src1_valid = 1'b1;
+            end
+            default: begin // 其他值视为非法
+                src1       = {DATA_WIDTH{1'b0}};
+                src1_valid = 1'b0;
+            end
+        endcase
 
-            // Select source 2 from inter-PE connections
-            case (src2_sel)
-                2'b00: begin
-                    src2       = north_in;
-                    src2_valid = north_valid_in;
-                end
-                2'b01: begin
-                    src2       = south_in;
-                    src2_valid = south_valid_in;
-                end
-                2'b10: begin
-                    src2       = east_in;
-                    src2_valid = east_valid_in;
-                end
-                2'b11: begin
-                    src2       = west_in;
-                    src2_valid = west_valid_in;
-                end
-                default: begin
-                    src2       = {DATA_WIDTH{1'b0}};
-                    src2_valid = 1'b0;
-                end
-            endcase
-        end
+        // Select source 2 from inter-PE connections or external operands
+        case (src2_sel)
+            3'b000: begin // 非法值
+                src2       = {DATA_WIDTH{1'b0}};
+                src2_valid = 1'b0;
+            end
+            3'b001: begin // 东方向输入
+                src2       = east_in;
+                src2_valid = east_valid_in;
+            end
+            3'b010: begin // 南方向输入
+                src2       = south_in;
+                src2_valid = south_valid_in;
+            end
+            3'b011: begin // 西方向输入
+                src2       = west_in;
+                src2_valid = west_valid_in;
+            end
+            3'b100: begin // 北方向输入
+                src2       = north_in;
+                src2_valid = north_valid_in;
+            end
+            3'b101: begin // 外部操作数1
+                src2       = operand1;
+                src2_valid = 1'b1;
+            end
+            3'b110: begin // 外部操作数2
+                src2       = operand2;
+                src2_valid = 1'b1;
+            end
+            default: begin // 其他值视为非法
+                src2       = {DATA_WIDTH{1'b0}};
+                src2_valid = 1'b0;
+            end
+        endcase
     end
 
     // Computation logic - 修复版本
