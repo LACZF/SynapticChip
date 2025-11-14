@@ -56,17 +56,54 @@
 .equ SPI_CONFIG,     SPI_BASE + 0x18  # 配置寄存器
 .equ SPI_CS_SEL,     SPI_BASE + 0x1C  # 片选寄存器
 
-# PE模块地址定义
-.equ PE_TOP_BASE,    0x30000000
-.equ PE_CTRL_ADDR,   PE_TOP_BASE + 0x00  # 控制寄存器
-.equ PE_STATUS_ADDR, PE_TOP_BASE + 0x04  # 状态寄存器
-.equ PE_INST_ADDR,   PE_TOP_BASE + 0x08  # 指令寄存器
-.equ PE_DATA_ADDR,   PE_TOP_BASE + 0x0c  # 数据寄存器
-.equ PE_ROUTE_ADDR,  PE_TOP_BASE + 0x10  # 路由配置寄存器
+# PE模块地址定义 - 重构后使用PE_control模块的地址映射
+.equ PE_TOP_BASE,           0x30000000
+.equ PE_CTRL_ADDR,          PE_TOP_BASE + 0x100000   # 控制寄存器
+.equ PE_STATUS_ADDR,        PE_TOP_BASE + 0x100004   # 状态寄存器
+.equ PE_ENABLE_ADDR,        PE_TOP_BASE + 0x100008   # PE使能寄存器
+.equ PE_HIGH_BW_WRITE_ADDR, PE_TOP_BASE + 0x10000C   # 高带宽写入地址
+.equ PE_HIGH_BW_READ_ADDR,  PE_TOP_BASE + 0x100010   # 高带宽读取地址
+
+# PE阵列尺寸定义
+.equ PE_ARRAY_X,            4                        # PE阵列X方向尺寸
+.equ PE_ARRAY_Y,            4                        # PE阵列Y方向尺寸
+.equ PE_TOTAL_COUNT,        PE_ARRAY_X * PE_ARRAY_Y  # PE总数
+
+# PE内存映射 - 操作数和配置存储在PE_mem中
+.equ PE_MEM_BASE,           PE_TOP_BASE + 0x000000                    # PE内存基地址
+.equ PE_OPERAND1_BASE,      PE_MEM_BASE + 0x0000                      # 操作数1区域 (每个PE 4字节)
+.equ PE_OPERAND2_BASE,      PE_OPERAND1_BASE + (PE_TOTAL_COUNT * 4)   # 操作数2区域 (每个PE 4字节)
+.equ PE_CONFIG_BASE,        PE_OPERAND2_BASE + (PE_TOTAL_COUNT * 4)   # 配置区域 (每个PE 4字节)
+.equ PE_OUTPUT_BASE,        PE_CONFIG_BASE + (PE_TOTAL_COUNT * 4)     # 输出区域 (每个PE 4字节)
 
 # PE控制寄存器位定义
 .equ PE_EN_BIT,      0                   # 使能位
 .equ PE_RESET_BIT,   1                   # 复位位
+
+# PE配置位定义 - 重构后配置格式
+.equ PE_OPCODE_SHIFT, 0        # 操作码在配置字中的位置
+.equ PE_SRC1_SEL_SHIFT, 8      # 输入源1选择位
+.equ PE_SRC2_SEL_SHIFT, 11     # 输入源2选择位
+.equ PE_ROUTE_NORTH_SHIFT, 16  # 北向路由输出
+.equ PE_ROUTE_SOUTH_SHIFT, 17  # 南向路由输出
+.equ PE_ROUTE_EAST_SHIFT, 18   # 东向路由输出
+.equ PE_ROUTE_WEST_SHIFT, 19   # 西向路由输出
+.equ PE_STORE_MEM_SHIFT, 20    # 存储到内存
+
+# PE操作码定义
+.equ PE_OP_ADD, 0x01           # 加法
+.equ PE_OP_SUB, 0x02           # 减法
+.equ PE_OP_MUL, 0x03           # 乘法
+.equ PE_OP_AND, 0x04           # 与运算
+.equ PE_OP_OR, 0x05            # 或运算
+.equ PE_OP_XOR, 0x06           # 异或运算
+
+# PE输入源选择定义
+.equ PE_SRC_MEM, 0x0           # 从内存读取
+.equ PE_SRC_NORTH, 0x1         # 从北向PE输入
+.equ PE_SRC_SOUTH, 0x2         # 从南向PE输入
+.equ PE_SRC_EAST, 0x3          # 从东向PE输入
+.equ PE_SRC_WEST, 0x4          # 从西向PE输入
 
 # 栈指针初始地址
 .equ STACK_TOP,      RAM_BASE + 0x1000
@@ -308,11 +345,15 @@ pe_test_command:
 
 # PE模块测试函数
 test_pe_module:
-    addi sp, sp, -16
-    sw ra, 12(sp)
-    sw s0, 8(sp)
-    sw s1, 4(sp)
-    sw s2, 0(sp)
+    addi sp, sp, -32
+    sw ra, 28(sp)
+    sw s0, 24(sp)
+    sw s1, 20(sp)
+    sw s2, 16(sp)
+    sw s3, 12(sp)
+    sw s4, 8(sp)
+    sw s5, 4(sp)
+    sw s6, 0(sp)
 
     # 打印测试标题
     li a0, '-'
@@ -339,30 +380,7 @@ test_pe_module:
     call uart_write_byte
     call print_newline
 
-    # 1. 测试读取PE状态寄存器
-    li s0, PE_STATUS_ADDR
-    lw s1, 0(s0)
-
-    # 打印状态寄存器值
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 2. 复位PE模块
+    # 1. 复位PE模块
     li s0, PE_CTRL_ADDR
     li s1, 1<<PE_RESET_BIT     # 设置复位位
     sw s1, 0(s0)
@@ -385,19 +403,29 @@ test_pe_module:
     call uart_write_byte
     li a0, 'T'
     call uart_write_byte
-    li a0, '='
+    li a0, ' '
     call uart_write_byte
     li a0, 'D'
     call uart_write_byte
     li a0, 'O'
     call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
     call print_newline
 
-    # 3. 使能PE模块
+    # 2. 使能PE模块
     li s0, PE_CTRL_ADDR
     li s1, 1<<PE_EN_BIT        # 设置使能位
     sw s1, 0(s0)
 
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
     li a0, 'E'
     call uart_write_byte
     li a0, 'N'
@@ -410,139 +438,383 @@ test_pe_module:
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    li a0, '1'
+    li a0, 'D'
     call uart_write_byte
     call print_newline
 
-    # 4. 指令测试 - 算术运算测试
-    li a0, '\n'
+    # 3. 从数据段加载PE测试数据到PE内存
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'O'
     call uart_write_byte
     li a0, 'A'
     call uart_write_byte
-    li a0, 'R'
+    li a0, 'D'
     call uart_write_byte
     li a0, 'I'
     call uart_write_byte
-    li a0, 'T'
+    li a0, 'N'
     call uart_write_byte
-    li a0, 'H'
-    call uart_write_byte
-    li a0, 'M'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'C'
+    li a0, 'G'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
-    li a0, 'T'
+    li a0, 'P'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
-    li a0, 'S'
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'A'
     call uart_write_byte
     li a0, 'T'
     call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
     call print_newline
 
-    # 4.1 ADD指令测试
-    li s0, PE_INST_ADDR
-    li s1, 0x00000001          # ADD指令测试
-    sw s1, 0(s0)
-    call delay                 # 等待指令执行
+    # 3.1 加载源操作数1数据
+    la s0, pe_operand1_data    # 源操作数1数据地址
+    li s1, PE_OPERAND1_BASE    # PE操作数1基地址
+    li s2, 16                  # 16个PE
+load_operand1_loop:
+    lw s3, 0(s0)               # 从数据段读取操作数1
+    sw s3, 0(s1)               # 写入PE操作数1内存
+    addi s0, s0, 4             # 下一个数据段地址
+    addi s1, s1, 4             # 下一个PE内存地址
+    addi s2, s2, -1            # 计数器减1
+    bnez s2, load_operand1_loop
 
+    # 3.2 加载源操作数2数据
+    la s0, pe_operand2_data    # 源操作数2数据地址
+    li s1, PE_OPERAND2_BASE    # PE操作数2基地址
+    li s2, 16                  # 16个PE
+load_operand2_loop:
+    lw s3, 0(s0)               # 从数据段读取操作数2
+    sw s3, 0(s1)               # 写入PE操作数2内存
+    addi s0, s0, 4             # 下一个数据段地址
+    addi s1, s1, 4             # 下一个PE内存地址
+    addi s2, s2, -1            # 计数器减1
+    bnez s2, load_operand2_loop
+
+    # 3.3 加载配置与路由数据
+    la s0, pe_config_data      # 配置数据地址
+    li s1, PE_CONFIG_BASE      # PE配置基地址
+    li s2, 16                  # 16个PE
+load_config_loop:
+    lw s3, 0(s0)               # 从数据段读取配置
+    sw s3, 0(s1)               # 写入PE配置内存
+    addi s0, s0, 4             # 下一个数据段地址
+    addi s1, s1, 4             # 下一个PE内存地址
+    addi s2, s2, -1            # 计数器减1
+    bnez s2, load_config_loop
+
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
     li a0, 'A'
     call uart_write_byte
     li a0, 'D'
     call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
     li a0, 'D'
     call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
     call print_newline
 
-    # 读取结果
-    li s0, PE_DATA_ADDR
-    lw s1, 0(s0)
+    # 4. 启动PE计算
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    call print_newline
+
+    li s0, PE_CTRL_ADDR
+    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
+    sw s1, 0(s0)
+    call delay                 # 等待计算完成
+    call delay
+    call delay
+
+    # 5. 从结果内存读取结果并进行判断
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'H'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'K'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
     li a0, 'R'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
     li a0, 'S'
     call uart_write_byte
-    li a0, '='
+    li a0, 'U'
     call uart_write_byte
-    mv a0, s1
-    call print_hex
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
     call print_newline
 
-    # 4.2 SUB指令测试
-    li s0, PE_INST_ADDR
-    li s1, 0x00000002          # SUB指令测试
-    sw s1, 0(s0)
-    call delay                 # 等待指令执行
+    # 初始化测试结果标志为成功
+    li s6, 1                   # s6 = 测试结果 (1=成功, 0=失败)
 
+    # 检查前4个PE的结果
+    li s0, PE_OUTPUT_BASE      # PE0结果地址
+    la s1, pe_expected_results # 期望结果地址
+    li s2, 4                   # 检查前4个PE
+
+check_results_loop:
+    lw s3, 0(s0)               # 读取PE实际结果
+    lw s4, 0(s1)               # 读取期望结果
+
+    # 打印PE编号和结果
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    mv a0, s2
+    li a1, 4
+    sub a0, a1, a0             # 计算PE编号
+    addi a0, a0, 1
+    call print_dec
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    mv a0, s3
+    call print_hex
+    li a0, ' '
+    call uart_write_byte
+    li a0, '('
+    call uart_write_byte
+    mv a0, s4
+    call print_hex
+    li a0, ')'
+    call uart_write_byte
+
+    # 比较结果
+    bne s3, s4, result_mismatch
+
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'K'
+    call uart_write_byte
+    j result_ok
+
+result_mismatch:
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'F'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li s6, 0                   # 标记测试失败
+
+result_ok:
+    call print_newline
+
+    addi s0, s0, 4             # 下一个PE结果地址
+    addi s1, s1, 4             # 下一个期望结果地址
+    addi s2, s2, -1            # 计数器减1
+    bnez s2, check_results_loop
+
+    # 6. 输出最终测试结果
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    beqz s6, test_failed
+
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    j test_end
+
+test_failed:
+    li a0, 'F'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+
+test_end:
+    call print_newline
+
+    # 7. 关闭PE模块
+    li s0, PE_CTRL_ADDR
+    li s1, 0                   # 清除使能位
+    sw s1, 0(s0)
+
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'B'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    call print_newline
+
+    # 恢复寄存器并返回
+    lw s6, 0(sp)
+    lw s5, 4(sp)
+    lw s4, 8(sp)
+    lw s3, 12(sp)
+    lw s2, 16(sp)
+    lw s1, 20(sp)
+    lw s0, 24(sp)
+    lw ra, 28(sp)
+    addi sp, sp, 32
+    ret
+    li s0, PE_CTRL_ADDR
+    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
+    sw s1, 0(s0)
+    call delay                 # 等待计算完成
+
+    # 读取SUB结果
+    li s0, PE_OUTPUT_BASE
+    lw s1, 0(s0)
     li a0, 'S'
     call uart_write_byte
     li a0, 'U'
     call uart_write_byte
     li a0, 'B'
     call uart_write_byte
-    li a0, '='
+    li a0, ' '
     call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 读取结果
-    li s0, PE_DATA_ADDR
-    lw s1, 0(s0)
     li a0, 'R'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
     li a0, 'S'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 4.3 MUL指令测试
-    li s0, PE_INST_ADDR
-    li s1, 0x00000003          # MUL指令测试
-    sw s1, 0(s0)
-    call delay                 # 等待指令执行
-
-    li a0, 'M'
     call uart_write_byte
     li a0, 'U'
     call uart_write_byte
     li a0, 'L'
     call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 读取结果
-    li s0, PE_DATA_ADDR
-    lw s1, 0(s0)
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
+    li a0, 'T'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
@@ -550,7 +822,7 @@ test_pe_module:
     call print_hex
     call print_newline
 
-    # 5. 指令测试 - 逻辑运算测试
+    # 5. 逻辑运算测试 - 重构后测试
     li a0, '\n'
     call uart_write_byte
     li a0, 'L'
@@ -579,11 +851,55 @@ test_pe_module:
     call uart_write_byte
     call print_newline
 
-    # 5.1 AND指令测试
-    li s0, PE_INST_ADDR
-    li s1, 0x00000004          # AND指令测试
+    # 5.1 配置逻辑运算操作数
+    li s0, PE_OPERAND1_BASE
+    li s1, 0x0000000F          # 操作数1 = 0xF
     sw s1, 0(s0)
-    call delay                 # 等待指令执行
+
+    li s0, PE_OPERAND2_BASE
+    li s1, 0x00000003          # 操作数2 = 0x3
+    sw s1, 0(s0)
+
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, '='
+    call uart_write_byte
+    li a0, '0'
+    call uart_write_byte
+    li a0, 'x'
+    call uart_write_byte
+    li a0, 'F'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, '0'
+    call uart_write_byte
+    li a0, 'x'
+    call uart_write_byte
+    li a0, '3'
+    call uart_write_byte
+    call print_newline
+
+    # 5.2 AND运算测试
+    li s0, PE_CONFIG_BASE
+    li s1, (PE_OP_AND << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT)
+    sw s1, 0(s0)
 
     li a0, 'A'
     call uart_write_byte
@@ -591,63 +907,127 @@ test_pe_module:
     call uart_write_byte
     li a0, 'D'
     call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'F'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
     li a0, '='
     call uart_write_byte
     mv a0, s1
     call print_hex
     call print_newline
 
-    # 读取结果
-    li s0, PE_DATA_ADDR
+    # 启动AND计算
+    li s0, PE_CTRL_ADDR
+    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
+    sw s1, 0(s0)
+    call delay                 # 等待计算完成
+
+    # 读取AND结果
+    li s0, PE_OUTPUT_BASE
     lw s1, 0(s0)
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
     li a0, 'R'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
     li a0, 'S'
     call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
     li a0, '='
     call uart_write_byte
     mv a0, s1
     call print_hex
     call print_newline
 
-    # 5.2 OR指令测试
-    li s0, PE_INST_ADDR
-    li s1, 0x00000005          # OR指令测试
+    # 5.3 OR运算测试
+    li s0, PE_CONFIG_BASE
+    li s1, (PE_OP_OR << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT)
     sw s1, 0(s0)
-    call delay                 # 等待指令执行
 
     li a0, 'O'
     call uart_write_byte
     li a0, 'R'
     call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'F'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
     li a0, '='
     call uart_write_byte
     mv a0, s1
     call print_hex
     call print_newline
 
-    # 读取结果
-    li s0, PE_DATA_ADDR
+    # 启动OR计算
+    li s0, PE_CTRL_ADDR
+    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
+    sw s1, 0(s0)
+    call delay                 # 等待计算完成
+
+    # 读取OR结果
+    li s0, PE_OUTPUT_BASE
     lw s1, 0(s0)
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
     li a0, 'R'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
     li a0, 'S'
     call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
     li a0, '='
     call uart_write_byte
     mv a0, s1
     call print_hex
     call print_newline
 
-    # 5.3 XOR指令测试
-    li s0, PE_INST_ADDR
-    li s1, 0x00000006          # XOR指令测试
+    # 5.4 XOR运算测试
+    li s0, PE_CONFIG_BASE
+    li s1, (PE_OP_XOR << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT)
     sw s1, 0(s0)
-    call delay                 # 等待指令执行
 
     li a0, 'X'
     call uart_write_byte
@@ -655,20 +1035,54 @@ test_pe_module:
     call uart_write_byte
     li a0, 'R'
     call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'F'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'G'
+    call uart_write_byte
     li a0, '='
     call uart_write_byte
     mv a0, s1
     call print_hex
     call print_newline
 
-    # 读取结果
-    li s0, PE_DATA_ADDR
+    # 启动XOR计算
+    li s0, PE_CTRL_ADDR
+    li s1, (1 << PE_EN_BIT) | (1 << 0)  # 使能PE并启动计算
+    sw s1, 0(s0)
+    call delay                 # 等待计算完成
+
+    # 读取XOR结果
+    li s0, PE_OUTPUT_BASE
     lw s1, 0(s0)
+    li a0, 'X'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
     li a0, 'R'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
     li a0, 'S'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'T'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
@@ -704,292 +1118,6 @@ test_pe_module:
     li a0, 'S'
     call uart_write_byte
     li a0, 'T'
-    call uart_write_byte
-    call print_newline
-
-    # 6.1 写入测试数据
-    li s0, PE_DATA_ADDR
-    li s1, 0x12345678          # 测试数据
-    sw s1, 0(s0)
-
-    li a0, 'W'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 6.2 读取验证
-    lw s2, 0(s0)
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s2
-    call print_hex
-    call print_newline
-
-    # 6.3 验证结果
-    beq s1, s2, data_write_read_ok
-
-    # 读写失败
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    call print_newline
-    j data_test_end
-
-    data_write_read_ok:
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'K'
-    call uart_write_byte
-    call print_newline
-
-    data_test_end:
-
-    # 7. 路由配置模块测试
-    li a0, '\n'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    call print_newline
-
-    # 7.1 测试配置1: 基本路由配置
-    li s0, PE_ROUTE_ADDR
-    li s1, 0x00001111          # 测试配置1
-    sw s1, 0(s0)
-    call delay
-
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, '1'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 验证配置1效果
-    li s0, PE_INST_ADDR
-    li s1, 0x00000010          # 路由测试指令1
-    sw s1, 0(s0)
-    call delay
-
-    li s0, PE_DATA_ADDR
-    lw s1, 0(s0)
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 7.2 测试配置2: 复杂路由配置
-    li s0, PE_ROUTE_ADDR
-    li s1, 0x0000AAAA          # 测试配置2
-    sw s1, 0(s0)
-    call delay
-
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, '2'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 验证配置2效果
-    li s0, PE_INST_ADDR
-    li s1, 0x00000020          # 路由测试指令2
-    sw s1, 0(s0)
-    call delay
-
-    li s0, PE_DATA_ADDR
-    lw s1, 0(s0)
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 7.3 测试配置3: 特殊路由配置
-    li s0, PE_ROUTE_ADDR
-    li s1, 0x00005555          # 测试配置3
-    sw s1, 0(s0)
-    call delay
-
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'G'
-    call uart_write_byte
-    li a0, '3'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 验证配置3效果
-    li s0, PE_INST_ADDR
-    li s1, 0x00000030          # 路由测试指令3
-    sw s1, 0(s0)
-    call delay
-
-    li s0, PE_DATA_ADDR
-    lw s1, 0(s0)
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 8. 关闭PE模块
-    li s0, PE_CTRL_ADDR
-    li s1, 0                   # 清除使能位
-    sw s1, 0(s0)
-
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'B'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-    li a0, '0'
-    call uart_write_byte
-    call print_newline
-
-    # 9. 测试完成
-    li a0, '\n'
-    call uart_write_byte
-    li a0, '-'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'M'
-    call uart_write_byte
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, '-'
     call uart_write_byte
     call print_newline
 
@@ -1040,6 +1168,77 @@ hex_to_ascii:
     ret
 hex_digit:
     addi a0, a0, 48            # '0'-'9'
+    ret
+
+# 打印十进制数
+# 参数: a0 = 要打印的32位整数
+print_dec:
+    addi sp, sp, -32
+    sw ra, 28(sp)
+    sw s0, 24(sp)
+    sw s1, 20(sp)
+    sw s2, 16(sp)
+    sw s3, 12(sp)
+    sw s4, 8(sp)
+    sw s5, 4(sp)
+    sw s6, 0(sp)
+
+    mv s0, a0                  # 保存原始值
+    li s1, 0                   # 数字计数器
+    li s2, 10                  # 除数
+    li s3, 0                   # 是否为负数标志
+
+    # 检查是否为负数
+    bgez s0, positive_number
+    li s3, 1                   # 标记为负数
+    neg s0, s0                 # 取绝对值
+
+positive_number:
+    # 特殊情况：如果数字为0，直接打印'0'
+    bnez s0, convert_loop
+    li a0, '0'
+    call uart_write_byte
+    j print_dec_end
+
+convert_loop:
+    # 除以10，获取余数
+    remu s4, s0, s2            # 余数
+    divu s0, s0, s2            # 商
+
+    # 将余数转换为ASCII并压栈
+    addi s4, s4, 48            # 转换为ASCII
+    addi sp, sp, -1
+    sb s4, 0(sp)
+    addi s1, s1, 1             # 计数器加1
+
+    # 如果商不为0，继续循环
+    bnez s0, convert_loop
+
+    # 如果是负数，打印负号
+    beqz s3, print_digits
+    li a0, '-'
+    call uart_write_byte
+
+print_digits:
+    # 从栈中弹出并打印数字
+    li s5, 0
+print_digits_loop:
+    lb a0, 0(sp)
+    call uart_write_byte
+    addi sp, sp, 1
+    addi s5, s5, 1
+    blt s5, s1, print_digits_loop
+
+print_dec_end:
+    lw ra, 28(sp)
+    lw s0, 24(sp)
+    lw s1, 20(sp)
+    lw s2, 16(sp)
+    lw s3, 12(sp)
+    lw s4, 8(sp)
+    lw s5, 4(sp)
+    lw s6, 0(sp)
+    addi sp, sp, 32
     ret
 
 # 打印换行符
@@ -2411,9 +2610,57 @@ vector_table:
     .word exception_handler         # 31: 保留
 
 .section .data
-# 数据段可以在这里定义
+# PE测试数据段
 message:
     .string "RISC-V UART Test Program\n"
+
+# PE测试数据 - 源操作数1 (4x4 PE阵列，每个PE一个32位操作数)
+pe_operand1_data:
+    .word 0x0000000A, 0x0000000B, 0x0000000C, 0x0000000D  # PE0-PE3
+    .word 0x0000000E, 0x0000000F, 0x00000010, 0x00000011  # PE4-PE7
+    .word 0x00000012, 0x00000013, 0x00000014, 0x00000015  # PE8-PE11
+    .word 0x00000016, 0x00000017, 0x00000018, 0x00000019  # PE12-PE15
+
+# PE测试数据 - 源操作数2 (4x4 PE阵列，每个PE一个32位操作数)
+pe_operand2_data:
+    .word 0x00000005, 0x00000006, 0x00000007, 0x00000008  # PE0-PE3
+    .word 0x00000009, 0x0000000A, 0x0000000B, 0x0000000C  # PE4-PE7
+    .word 0x0000000D, 0x0000000E, 0x0000000F, 0x00000010  # PE8-PE11
+    .word 0x00000011, 0x00000012, 0x00000013, 0x00000014  # PE12-PE15
+
+# PE测试数据 - 配置与路由 (4x4 PE阵列，每个PE一个32位配置字)
+pe_config_data:
+    # PE0: ADD运算，从内存读取，输出到北向和存储到内存
+    .word (PE_OP_ADD << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_NORTH_SHIFT) | (1 << PE_STORE_MEM_SHIFT)
+    # PE1: SUB运算，从内存读取，输出到南向
+    .word (PE_OP_SUB << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_SOUTH_SHIFT)
+    # PE2: MUL运算，从内存读取，输出到东向
+    .word (PE_OP_MUL << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_EAST_SHIFT)
+    # PE3: AND运算，从内存读取，输出到西向
+    .word (PE_OP_AND << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_WEST_SHIFT)
+    # PE4-PE15: 使用默认配置
+    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
+    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
+    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
+
+# PE期望结果数据 (4x4 PE阵列，每个PE一个32位期望结果)
+pe_expected_results:
+    # PE0: 0x0000000A + 0x00000005 = 0x0000000F
+    .word 0x0000000F
+    # PE1: 0x0000000B - 0x00000006 = 0x00000005
+    .word 0x00000005
+    # PE2: 0x0000000C * 0x00000007 = 0x00000054
+    .word 0x00000054
+    # PE3: 0x0000000D & 0x00000008 = 0x00000008
+    .word 0x00000008
+    # PE4-PE15: 默认期望结果
+    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
+    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
+    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
+
+# 测试结果标志
+pe_test_result:
+    .word 0x00000000  # 0=测试中, 1=成功, 2=失败
 
 .section .bss
 # 未初始化数据段
