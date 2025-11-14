@@ -866,10 +866,10 @@ index 2a51e6c..a7711d6 100644
 +endmodule
 \ No newline at end of file
 diff --git a/rtl/perips/ram.sv b/rtl/perips/ram.sv
-index 8f0d318..785db50 100644
+index 8f0d318..fed74ad 100644
 --- a/rtl/perips/ram.sv
 +++ b/rtl/perips/ram.sv
-@@ -1,20 +1,20 @@
+@@ -1,28 +1,32 @@
 - /*                                                                      
 + /*
   Copyright 2020 Blue Liang, liangkangnan@163.com
@@ -903,6 +903,82 @@ index 8f0d318..785db50 100644
  
  
  module ram #(
+-    parameter DP = 4096
++    parameter DP = 4096,
++    parameter DATA_WIDTH = 32,
++    parameter HIGH_BW_DW = 320,  // 高带宽数据宽度
++    parameter HIGH_BW_MW = 10    // 高带宽字节使能宽度（HIGH_BW_DW/32）
+     )(
+     input  wire        clk_i,
+     input  wire        rst_ni,
+ 
++    // OBI总线接口（32位宽）
+     input  wire        req_i,
+     input  wire        we_i,
+     input  wire [ 3:0] be_i,
+@@ -30,14 +34,26 @@ module ram #(
+     input  wire [31:0] data_i,
+     output wire        gnt_o,
+     output wire        rvalid_o,
+-	output wire [31:0] data_o
++	output wire [31:0] data_o,
++
++    // 高带宽内存接口
++    input  wire                        high_bw_req_i,
++    input  wire                        high_bw_we_i,
++    input  wire [31:0]                 high_bw_addr_i,
++    input  wire [HIGH_BW_DW-1:0]       high_bw_data_i,
++    output wire                        high_bw_ack_o,
++    output wire [HIGH_BW_DW-1:0]       high_bw_data_o
+     );
+ 
+     reg rvalid_q;
+     wire[31:0] addr;
+ 
++    // 高带宽内存地址对齐（去掉低2位，按字对齐）
++    wire [31:0] high_bw_addr_aligned;
++
+     assign addr = {6'h0, addr_i[27:2]};
+     assign gnt_o = req_i;
++    assign high_bw_addr_aligned = {high_bw_addr_i[31:2], 2'b00};
+ 
+     always @(posedge clk_i or negedge rst_ni) begin
+         if (!rst_ni) begin
+@@ -49,18 +65,30 @@ module ram #(
+ 
+     assign rvalid_o = rvalid_q;
+ 
++    // 单一gen_ram实例，同时支持OBI总线和高速带宽内存接口
+     gen_ram #(
+         .DP(DP),
+         .DW(32),
+         .MW(4),
+-        .AW(32)
++        .AW(32),
++        .HIGH_BW_DW(HIGH_BW_DW),
++        .HIGH_BW_MW(HIGH_BW_MW)
+     ) u_gen_ram(
+         .clk(clk_i),
+         .addr_i(addr),
+         .data_i(data_i),
+         .sel_i(be_i),
+         .we_i(we_i),
+-        .data_o(data_o)
++        .data_o(data_o),
++
++        // 高速带宽内存接口
++        .high_bw_req_i(high_bw_req_i),
++        .high_bw_we_i(high_bw_we_i),
++        .high_bw_addr_i(high_bw_addr_aligned),
++        .high_bw_data_i(high_bw_data_i),
++        .high_bw_sel_i({HIGH_BW_MW{1'b1}}), // 全字节使能
++        .high_bw_ack_o(high_bw_ack_o),
++        .high_bw_data_o(high_bw_data_o)
+     );
+ 
+-endmodule
++endmodule
+\ No newline at end of file
 diff --git a/rtl/perips/rom.sv b/rtl/perips/rom.sv
 index 601f3f1..7247048 100644
 --- a/rtl/perips/rom.sv
@@ -1119,10 +1195,10 @@ index 2e9088f..eb37b6c 100644
      output  logic  [SLAVE_BITS-1:0]     slave_sel_int_o
      );
 diff --git a/rtl/utils/gen_ram.sv b/rtl/utils/gen_ram.sv
-index a487a83..0f7c6bd 100644
+index a487a83..2a68447 100644
 --- a/rtl/utils/gen_ram.sv
 +++ b/rtl/utils/gen_ram.sv
-@@ -1,20 +1,20 @@
+@@ -1,27 +1,30 @@
 - /*                                                                      
 + /*
   Copyright 2020 Blue Liang, liangkangnan@163.com
@@ -1156,3 +1232,96 @@ index a487a83..0f7c6bd 100644
  
  
  module gen_ram #(
+     parameter DP = 512,
+     parameter DW = 32,
+     parameter MW = 4,
+-    parameter AW = 32)(
++    parameter AW = 32,
++    parameter HIGH_BW_DW = 320,  // 高带宽数据宽度
++    parameter HIGH_BW_MW = 10   // 高带宽字节使能宽度（HIGH_BW_DW/32）
++    )(
+ 
+     input wire clk,
+     input wire[AW-1:0] addr_i,
+@@ -29,7 +32,16 @@ module gen_ram #(
+     input wire[MW-1:0] sel_i,
+     input wire we_i,
+ 
+-	output wire[DW-1:0] data_o
++	output wire[DW-1:0] data_o,
++
++    // 高带宽内存接口（宽位宽）
++    input wire high_bw_req_i,                                    // 高带宽请求信号
++    input wire high_bw_we_i,                                     // 高带宽写使能
++    input wire[AW-1:0] high_bw_addr_i,                           // 高带宽地址
++    input wire[HIGH_BW_DW-1:0] high_bw_data_i,                   // 高带宽写数据
++    input wire[HIGH_BW_MW-1:0] high_bw_sel_i,                    // 高带宽字节使能
++    output wire high_bw_ack_o,                                   // 高带宽应答信号
++    output wire[HIGH_BW_DW-1:0] high_bw_data_o                   // 高带宽读数据
+ 
+     );
+ 
+@@ -38,16 +50,43 @@ module gen_ram #(
+     wire[MW-1:0] wen;
+     wire ren;
+ 
++    // 高带宽接口相关信号
++    reg high_bw_ack_reg;
++    reg[AW-1:0] high_bw_addr_r;
++    wire[HIGH_BW_MW-1:0] high_bw_wen;
++    wire high_bw_ren;
++
+     assign ren = (~we_i);
+     assign wen = ({MW{we_i}} & sel_i);
+ 
++    assign high_bw_ren = (~high_bw_we_i) && high_bw_req_i;
++    assign high_bw_wen = ({HIGH_BW_MW{high_bw_we_i}} & high_bw_sel_i) && high_bw_req_i;
++
+     always @ (posedge clk) begin
+         if (ren) begin
+             addr_r <= addr_i;
+         end
++
++        // 高带宽接口地址锁存
++        if (high_bw_ren) begin
++            high_bw_addr_r <= high_bw_addr_i;
++        end
++
++        // 高带宽应答信号
++        high_bw_ack_reg <= high_bw_req_i;
+     end
+ 
+     assign data_o = ram[addr_r];
++    assign high_bw_ack_o = high_bw_ack_reg;
++
++    // 高带宽宽位宽数据输出
++    // 将多个32位字组合成高带宽需要的宽位宽数据
++    genvar j;
++    generate
++        for (j = 0; j < HIGH_BW_MW; j = j + 1) begin: high_bw_data_out
++            assign high_bw_data_o[32*j+31:32*j] = ram[high_bw_addr_r + j];
++        end
++    endgenerate
+ 
+     genvar i;
+ 
+@@ -69,4 +108,17 @@ module gen_ram #(
+         end
+     endgenerate
+ 
+-endmodule
++    // 高带宽宽位宽数据写入
++    // 将高带宽的宽位宽数据分解为多个32位字写入RAM
++    genvar k;
++    generate
++        for (k = 0; k < HIGH_BW_MW; k = k + 1) begin: high_bw_data_in
++            always @ (posedge clk) begin: high_bw_write_ff
++                if (high_bw_wen[k]) begin: high_bw_wen_k
++                    ram[high_bw_addr_i + k] <= high_bw_data_i[32*k+31:32*k];
++                end
++            end
++        end
++    endgenerate
++
++endmodule
+\ No newline at end of file

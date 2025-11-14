@@ -78,6 +78,7 @@ module chip_top #(
     localparam int SLAVE_RAM_INDEX          = 1;
     localparam int SLAVE_JTAG_INDEX         = 2;
     localparam int SLAVE_PE_TOP_INDEX       = 3;
+    localparam int SLAVE_PE_MEM_INDEX       = 4;  // PE直接内存控制器
     localparam int IO_SLAVES                = 8;
     localparam int SLAVE_IO_START_INDEX     = 8;
     localparam int SLAVE_IO_END_INDEX       = SLAVE_IO_START_INDEX + IO_SLAVES - 1;
@@ -93,6 +94,9 @@ module chip_top #(
 
     localparam int PE_ADDR_BASE             = 32'h30000000;
     localparam int PE_ADDR_MASK             = `CALC_ADDR_MASK_BY_LENGTH(PE_ADDR_BASE, 1 * 1024 * 1024);
+
+    localparam int PE_MEM_ADDR_BASE         = 32'h38000000;  // PE直接内存控制器地址空间
+    localparam int PE_MEM_ADDR_MASK         = `CALC_ADDR_MASK_BY_LENGTH(PE_MEM_ADDR_BASE, 1 * 1024 * 1024);
 
     localparam int IO_ADDR_BASE             = 32'h40000000;
     localparam int IO_ADDR_MASK             = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
@@ -149,9 +153,17 @@ module chip_top #(
     wire                             dma_pe_req;                 // DMA到PE的请求信号
     wire                             dma_pe_we;                  // DMA到PE的写使能
     wire [ADDR_WIDTH-1:0]            dma_pe_addr;                // DMA到PE的地址
-    wire [DATA_WIDTH-1:0]            dma_pe_data;                // DMA到PE的数据
+    wire [DATA_WIDTH-1:0]             dma_pe_data;                // DMA到PE的数据（32位）
     wire                             dma_pe_ack;                 // DMA到PE的应答信号
-    wire [DATA_WIDTH-1:0]            dma_pe_rdata;               // DMA从PE读取的数据
+    wire [DATA_WIDTH-1:0]             dma_pe_rdata;               // DMA从PE读取的数据（32位）
+
+    // 高带宽内存接口信号（用于PE直接内存访问）
+    wire                             pe_mem_req;                 // 高带宽内存请求信号
+    wire                             pe_mem_we;                  // 高带宽内存写使能
+    wire [ADDR_WIDTH-1:0]            pe_mem_addr;                // 高带宽内存地址
+    wire [(PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH-1:0] pe_mem_data_o;              // 高带宽内存写入数据
+    wire                             pe_mem_ack;                 // 高带宽内存应答信号
+    wire [(PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH-1:0] pe_mem_data_i;              // 高带宽内存读取数据
 
     // CPU实例化
     generate
@@ -215,7 +227,10 @@ module chip_top #(
     assign slave_addr_base[SLAVE_RAM_INDEX] = RAM_ADDR_BASE;
     // 数据存储器
     ram #(
-        .DP(RAM_DEPTH)
+        .DP(RAM_DEPTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .HIGH_BW_DW((PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH),  // 高带宽数据宽度
+        .HIGH_BW_MW(((PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH)/32)  // 高带宽字节使能宽度
     ) u_ram (
         .clk_i      (clk),
         .rst_ni     (ndmreset_n),
@@ -226,7 +241,14 @@ module chip_top #(
         .we_i       (slave_we[SLAVE_RAM_INDEX]),
         .gnt_o      (slave_gnt[SLAVE_RAM_INDEX]),
         .rvalid_o   (slave_rvalid[SLAVE_RAM_INDEX]),
-        .data_o     (slave_rdata[SLAVE_RAM_INDEX])
+        .data_o     (slave_rdata[SLAVE_RAM_INDEX]),
+        // 高带宽内存接口 - 连接到PE_TOP的宽位宽接口
+        .high_bw_req_i(pe_mem_req),
+        .high_bw_we_i (pe_mem_we),
+        .high_bw_addr_i(pe_mem_addr),
+        .high_bw_data_i(pe_mem_data_o),
+        .high_bw_ack_o(pe_mem_ack),
+        .high_bw_data_o(pe_mem_data_i)
     );
 
 
@@ -253,13 +275,13 @@ module chip_top #(
         .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX]),
         .pe_irq_o   (pe_irq),
         .pe_irq_id_o(pe_irq_id),
-        // DMA接口
-        .dma_req_i  (dma_pe_req),
-        .dma_we_i   (dma_pe_we),
-        .dma_addr_i (dma_pe_addr),
-        .dma_data_i (dma_pe_data),
-        .dma_ack_o  (dma_pe_ack),
-        .dma_data_o (dma_pe_rdata)
+        // 直接内存接口 - 连接到高带宽内存接口信号
+        .mem_req_o  (pe_mem_req),
+        .mem_we_o   (pe_mem_we),
+        .mem_addr_o (pe_mem_addr),
+        .mem_data_o (pe_mem_data_o),
+        .mem_ack_i  (pe_mem_ack),
+        .mem_data_i (pe_mem_data_i)
     );
 
     generate
@@ -324,7 +346,7 @@ module chip_top #(
         .pe_irq_i      (pe_irq),
         .pe_irq_id_i   (pe_irq_id),
 
-        // DMA到PE接口信号
+        // DMA到PE接口信号（32位）
         .dma_pe_req_o  (dma_pe_req),
         .dma_pe_we_o   (dma_pe_we),
         .dma_pe_addr_o (dma_pe_addr),
