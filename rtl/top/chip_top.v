@@ -258,23 +258,19 @@ module chip_top #(
     pe_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
-        .NUM_PES(NUM_PES),
-        .INST_WIDTH(INST_WIDTH),
-        .PE_ID_WIDTH(PE_ID_WIDTH),
-        .PE_ARRAY_ROWS(PE_ARRAY_ROWS),
-        .PE_ARRAY_COLS(PE_ARRAY_COLS)
+        .PE_ARRAY_X(PE_ARRAY_ROWS),  // 使用PE_ARRAY_ROWS作为PE_ARRAY_X
+        .PE_ARRAY_Y(PE_ARRAY_COLS),  // 使用PE_ARRAY_COLS作为PE_ARRAY_Y
+        .HIGH_BW_DW(320)             // 高带宽数据宽度
     ) u_pe_top (
         .clk        (clk),
         .rst_n      (rst_n),
         .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
         .we_i       (slave_we[SLAVE_PE_TOP_INDEX]),
         .addr_i     (slave_addr[SLAVE_PE_TOP_INDEX]),
-        .wr_data_i  (slave_wdata[SLAVE_PE_TOP_INDEX]),
-        .rd_data_o  (slave_rdata[SLAVE_PE_TOP_INDEX]),
+        .wdata_i    (slave_wdata[SLAVE_PE_TOP_INDEX]),
+        .rdata_o    (slave_rdata[SLAVE_PE_TOP_INDEX]),
         .gnt_o      (slave_gnt[SLAVE_PE_TOP_INDEX]),
         .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX]),
-        .pe_irq_o   (pe_irq),
-        .pe_irq_id_o(pe_irq_id),
         // 直接内存接口 - 连接到高带宽内存接口信号
         .mem_req_o  (pe_mem_req),
         .mem_we_o   (pe_mem_we),

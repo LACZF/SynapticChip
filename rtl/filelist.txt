@@ -7,9 +7,6 @@ RTL_INCLUDE_DIR += -I$(TOP_DIR)/tinyriscv/rtl/core
 RTL_INCLUDE_DIR += -I$(TOP_DIR)/tinyriscv/rtl/debug
 
 RTL_SRC += $(TOP_DIR)/rtl/include/common.v
-RTL_SRC += $(TOP_DIR)/rtl/include/pe_ctrl.v
-RTL_SRC += $(TOP_DIR)/rtl/include/pe_router.v
-RTL_SRC += $(TOP_DIR)/rtl/include/pe.v
 
 RTL_SRC += $(TOP_DIR)/rtl/common/fifo.v
 RTL_SRC += $(TOP_DIR)/rtl/common/cache.v
@@ -106,6 +103,7 @@ RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_top.sv
 
 # PE
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe.v
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_mem/pe_mem.v
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl.v
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router.v
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v

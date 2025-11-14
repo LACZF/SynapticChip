@@ -1,83 +1,87 @@
 module pe_router #(
-    parameter DATA_WIDTH    = 32,
-    parameter PE_ARRAY_ROWS = 2,
-    parameter PE_ARRAY_COLS = 2
-) (
-    input                      clk,
-    input                      rst_n,
+    parameter DATA_WIDTH = 32
+)(
+    input  wire                  clk,
+    input  wire                  rst_n,
 
-    // PE计算结果输入
-    input [PE_ARRAY_ROWS*PE_ARRAY_COLS-1:0]             pe_done_i,
-    input [PE_ARRAY_ROWS*PE_ARRAY_COLS*DATA_WIDTH-1:0]  pe_result_i,
+    // From PE
+    input  wire [DATA_WIDTH-1:0] pe_result,
+    input  wire                  pe_result_valid,
 
-    // 路由配置输入（来自内存）
-    input [PE_ARRAY_ROWS*PE_ARRAY_COLS*DATA_WIDTH-1:0]  route_config_i,
+    // Configuration
+    input  wire [DATA_WIDTH-1:0] pe_config,
 
-    // PE数据输出
-    output [PE_ARRAY_ROWS*PE_ARRAY_COLS*DATA_WIDTH-1:0] pe_data_o
+    // To memory
+    output reg  [DATA_WIDTH-1:0] pe_output,
+
+    // To neighboring PEs
+    output reg  [DATA_WIDTH-1:0] north_out,
+    output reg  [DATA_WIDTH-1:0] south_out,
+    output reg  [DATA_WIDTH-1:0] east_out,
+    output reg  [DATA_WIDTH-1:0] west_out,
+    output reg                   north_valid_out,
+    output reg                   south_valid_out,
+    output reg                   east_valid_out,
+    output reg                   west_valid_out
 );
 
-    // 路由方向定义
-    localparam DIR_NONE  = 2'b00;
-    localparam DIR_NORTH = 2'b01;
-    localparam DIR_SOUTH = 2'b10;
-    localparam DIR_EAST  = 2'b11;
-    localparam DIR_WEST  = 2'b11;
+    // Configuration decoding
+    wire [1:0] output_dest  = pe_config[5:4];       // Output destination
+    wire       store_to_mem = pe_config[6];         // Store result to memory
 
-    // 内部数据寄存器
-    reg [DATA_WIDTH-1:0] data_buffer [0:PE_ARRAY_ROWS-1][0:PE_ARRAY_COLS-1];
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            north_out       <= {DATA_WIDTH{1'b0}};
+            south_out       <= {DATA_WIDTH{1'b0}};
+            east_out        <= {DATA_WIDTH{1'b0}};
+            west_out        <= {DATA_WIDTH{1'b0}};
+            north_valid_out <= 1'b0;
+            south_valid_out <= 1'b0;
+            east_valid_out  <= 1'b0;
+            west_valid_out  <= 1'b0;
+            pe_output       <= {DATA_WIDTH{1'b0}};
+        end else begin
+            // Default outputs
+            north_out       <= {DATA_WIDTH{1'b0}};
+            south_out       <= {DATA_WIDTH{1'b0}};
+            east_out        <= {DATA_WIDTH{1'b0}};
+            west_out        <= {DATA_WIDTH{1'b0}};
+            north_valid_out <= 1'b0;
+            south_valid_out <= 1'b0;
+            east_valid_out  <= 1'b0;
+            west_valid_out  <= 1'b0;
 
-    genvar i, j;
-    generate
-        for (i = 0; i < PE_ARRAY_ROWS; i = i + 1) begin : row
-            for (j = 0; j < PE_ARRAY_COLS; j = j + 1) begin : col
-                localparam pe_idx = i * PE_ARRAY_COLS + j;
-
-                // 路由配置解析
-                wire [1:0] route_dir = route_config_i[pe_idx*DATA_WIDTH+4:pe_idx*DATA_WIDTH+3];
-                wire route_enable = route_config_i[pe_idx*DATA_WIDTH+5];
-
-                // 路由逻辑
-                always @(posedge clk or negedge rst_n) begin
-                    if (!rst_n) begin
-                        data_buffer[i][j] <= {DATA_WIDTH{1'b0}};
-                    end else begin
-                        // 如果PE计算完成且路由使能，则进行数据传输
-                        if (pe_done_i[pe_idx] && route_enable) begin
-                            case (route_dir)
-                                DIR_NORTH: begin
-                                    if (i > 0) begin
-                                        data_buffer[i-1][j] <= pe_result_i[pe_idx*DATA_WIDTH +: DATA_WIDTH];
-                                    end
-                                end
-                                DIR_SOUTH: begin
-                                    if (i < PE_ARRAY_ROWS-1) begin
-                                        data_buffer[i+1][j] <= pe_result_i[pe_idx*DATA_WIDTH +: DATA_WIDTH];
-                                    end
-                                end
-                                DIR_EAST: begin
-                                    if (j < PE_ARRAY_COLS-1) begin
-                                        data_buffer[i][j+1] <= pe_result_i[pe_idx*DATA_WIDTH +: DATA_WIDTH];
-                                    end
-                                end
-                                DIR_WEST: begin
-                                    if (j > 0) begin
-                                        data_buffer[i][j-1] <= pe_result_i[pe_idx*DATA_WIDTH +: DATA_WIDTH];
-                                    end
-                                end
-                                default: begin
-                                    // 不路由，数据保留在原地
-                                    data_buffer[i][j] <= pe_result_i[pe_idx*DATA_WIDTH +: DATA_WIDTH];
-                                end
-                            endcase
-                        end
+            if (pe_result_valid) begin
+                // Route result based on configuration
+                case (output_dest)
+                    2'b00: begin // North
+                        north_out       <= pe_result;
+                        north_valid_out <= 1'b1;
                     end
-                end
+                    2'b01: begin // South
+                        south_out       <= pe_result;
+                        south_valid_out <= 1'b1;
+                    end
+                    2'b10: begin // East
+                        east_out       <= pe_result;
+                        east_valid_out <= 1'b1;
+                    end
+                    2'b11: begin // West
+                        west_out       <= pe_result;
+                        west_valid_out <= 1'b1;
+                    end
+                endcase
 
-                // 输出连接
-                assign pe_data_o[pe_idx*DATA_WIDTH +: DATA_WIDTH] = data_buffer[i][j];
+                // Store to memory if configured
+                if (store_to_mem) begin
+                    pe_output <= pe_result;
+                end else begin
+                    pe_output <= {DATA_WIDTH{1'b0}};
+                end
+            end else begin
+                pe_output <= {DATA_WIDTH{1'b0}};
             end
         end
-    endgenerate
+    end
 
 endmodule
