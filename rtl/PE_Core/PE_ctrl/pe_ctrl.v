@@ -46,15 +46,11 @@ module pe_control #(
     reg [DATA_WIDTH-1:0] status_reg;
 
     // Address mapping
-    localparam CONTROL_REG_ADDR   = 16'h0000;
-    localparam STATUS_REG_ADDR    = 16'h0004;
-    localparam PE_ENABLE_ADDR     = 16'h0008;
-    localparam HIGH_BW_WRITE_ADDR = 16'h1000;   // 高带宽内存写入地址
-    localparam HIGH_BW_READ_ADDR  = 16'h2000;   // 高带宽内存读取地址
-
-    // 高带宽内存地址范围定义
-    localparam HIGH_BW_BASE_ADDR  = 16'h1000;
-    localparam HIGH_BW_ADDR_MASK  = 16'hF000;  // 高带宽地址掩码
+    localparam CONTROL_REG_ADDR   = 16'h100000;
+    localparam STATUS_REG_ADDR    = 16'h100004;
+    localparam PE_ENABLE_ADDR     = 16'h100008;
+    localparam HIGH_BW_WRITE_ADDR = 16'h10000C;
+    localparam HIGH_BW_READ_ADDR  = 16'h100010;
 
     // 高带宽内存控制状态机
     typedef enum logic [1:0] {
@@ -141,29 +137,19 @@ module pe_control #(
                             CONTROL_REG_ADDR: control_reg <= wdata_i;
                             PE_ENABLE_ADDR:   pe_enable   <= wdata_i[PE_ARRAY_X-1:0];
                             HIGH_BW_WRITE_ADDR: begin
-                                // 高带宽内存写入请求
-                                high_bw_transfer_length <= transfer_length;
-                                high_bw_current_addr    <= addr_base;
+                                // 高带宽内存写入请求 - 使用wdata_i的低16bit作为地址，高16bit作为长度
+                                high_bw_transfer_length <= wdata_i[31:16];  // 高16bit作为长度
+                                high_bw_current_addr    <= wdata_i[15:0];   // 低16bit作为地址
                                 high_bw_transfer_count  <= 16'b0;
                                 high_bw_we_o            <= 1'b1;  // 写操作
                                 high_bw_start           <= 1'b1;  // 启动高带宽传输
                             end
                             default: begin
-                                // 检查是否为高带宽内存地址范围
-                                if ((addr_base & HIGH_BW_ADDR_MASK) == HIGH_BW_BASE_ADDR) begin
-                                    // 高带宽内存写入请求
-                                    high_bw_transfer_length <= transfer_length;
-                                    high_bw_current_addr    <= addr_base;
-                                    high_bw_transfer_count  <= 16'b0;
-                                    high_bw_we_o            <= 1'b1;  // 写操作
-                                    high_bw_start           <= 1'b1;  // 启动高带宽传输
-                                end else begin
-                                    // 普通内存写入
-                                    if (addr_base < (4 * PE_ARRAY_X * PE_ARRAY_Y)) begin
-                                        mem_we    <= 1'b1;
-                                        mem_addr  <= addr_base;
-                                        mem_wdata <= wdata_i;
-                                    end
+                                // 普通内存写入
+                                if (addr_base < (4 * PE_ARRAY_X * PE_ARRAY_Y)) begin
+                                    mem_we    <= 1'b1;
+                                    mem_addr  <= addr_base;
+                                    mem_wdata <= wdata_i;
                                 end
                             end
                         endcase
@@ -176,30 +162,20 @@ module pe_control #(
                             STATUS_REG_ADDR:  rdata_o <= status_reg;
                             PE_ENABLE_ADDR:   rdata_o <= {{(DATA_WIDTH-PE_ARRAY_X){1'b0}}, pe_enable};
                             HIGH_BW_READ_ADDR: begin
-                                // 高带宽内存读取请求
-                                high_bw_transfer_length <= transfer_length;
-                                high_bw_current_addr    <= addr_base;
+                                // 高带宽内存读取请求 - 使用wdata_i的低16bit作为地址，高16bit作为长度
+                                high_bw_transfer_length <= wdata_i[31:16];  // 高16bit作为长度
+                                high_bw_current_addr    <= wdata_i[15:0];   // 低16bit作为地址
                                 high_bw_transfer_count  <= 16'b0;
                                 high_bw_we_o            <= 1'b0;  // 读操作
                                 high_bw_start           <= 1'b1;  // 启动高带宽传输
                             end
                             default: begin
-                                // 检查是否为高带宽内存地址范围
-                                if ((addr_base & HIGH_BW_ADDR_MASK) == HIGH_BW_BASE_ADDR) begin
-                                    // 高带宽内存读取请求
-                                    high_bw_transfer_length <= transfer_length;
-                                    high_bw_current_addr    <= addr_base;
-                                    high_bw_transfer_count  <= 16'b0;
-                                    high_bw_we_o            <= 1'b0;  // 读操作
-                                    high_bw_start           <= 1'b1;  // 启动高带宽传输
+                                // 普通内存读取
+                                if (addr_base < (4 * PE_ARRAY_X * PE_ARRAY_Y)) begin
+                                    mem_addr <= addr_base;
+                                    rdata_o  <= mem_rdata;
                                 end else begin
-                                    // 普通内存读取
-                                    if (addr_base < (4 * PE_ARRAY_X * PE_ARRAY_Y)) begin
-                                        mem_addr <= addr_base;
-                                        rdata_o  <= mem_rdata;
-                                    end else begin
-                                        rdata_o  <= {DATA_WIDTH{1'b0}};
-                                    end
+                                    rdata_o  <= {DATA_WIDTH{1'b0}};
                                 end
                             end
                         endcase
