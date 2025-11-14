@@ -5,7 +5,5 @@ TEST_TARGET := router_node
 TEST_ARGS ?=
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
 
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router.v
 TEST_SRC += $(CUR_DIR)/tb_router.v

@@ -1,252 +1,284 @@
-// tb_router.v
-// Router Module Test Bench (Pure Verilog)
+// tb_router_new.v
+// PE Router Test Bench for Refactored Module
 
-`include "pe_router.v"
 `timescale 1ns/1ps
 
 module tb_router;
 
+    // Parameters
+    parameter DATA_WIDTH     = 32;
+    parameter TIMEOUT_CYCLES = 1000;
+
+    // Error counter
+    integer error_count = 0;
+
     // Clock and Reset
-    reg clk;
-    reg rst_n;
+    reg                   clk;
+    reg                   rst_n;
 
-    // Configuration Interface
-    reg                    cfg_valid;
-    reg  [`ADDR_WIDTH-1:0] cfg_addr;
-    reg  [`DATA_WIDTH-1:0] cfg_data;
-    wire                   cfg_ack;
+    // PE Interface
+    reg  [DATA_WIDTH-1:0] pe_result;
+    reg                   pe_result_valid;
+    reg  [DATA_WIDTH-1:0] pe_config;
 
-    // Data Input Interface
-    reg  [`NUM_PORTS-1:0]               data_in_valid;
-    reg  [(`NUM_PORTS*`DATA_WIDTH)-1:0] data_in;
-    wire [`NUM_PORTS-1:0]               data_in_ready;
+    // Memory Interface
+    wire [DATA_WIDTH-1:0] pe_output;
 
-    // Data Output Interface
-    wire [`NUM_PORTS-1:0]               data_out_valid;
-    wire [(`NUM_PORTS*`DATA_WIDTH)-1:0] data_out;
-    reg  [`NUM_PORTS-1:0]               data_out_ready;
+    // Neighbor PE Outputs
+    wire [DATA_WIDTH-1:0] north_out;
+    wire [DATA_WIDTH-1:0] south_out;
+    wire [DATA_WIDTH-1:0] east_out;
+    wire [DATA_WIDTH-1:0] west_out;
+    wire                  north_valid_out;
+    wire                  south_valid_out;
+    wire                  east_valid_out;
+    wire                  west_valid_out;
 
-    // Status Output
-    wire [`DATA_WIDTH-1:0] status;
-
-    // Instantiate DUT - Explicitly Pass Parameters for Consistency
-    pe_router_top #(
-        .NUM_PORTS(`NUM_PORTS),
-        .ADDR_WIDTH(`ADDR_WIDTH),
-        .DATA_WIDTH(`DATA_WIDTH)
+    // Instantiate DUT
+    pe_router #(
+        .DATA_WIDTH(DATA_WIDTH)
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .cfg_valid_i(cfg_valid),
-        .cfg_addr_i(cfg_addr),
-        .cfg_data_i(cfg_data),
-        .cfg_ack_o(cfg_ack),
-        .data_in_valid_i(data_in_valid),
-        .data_in_i(data_in),
-        .data_in_ready_o(data_in_ready),
-        .data_out_valid_o(data_out_valid),
-        .data_out_o(data_out),
-        .data_out_ready_i(data_out_ready),
-        .status_o(status)
+        .pe_result(pe_result),
+        .pe_result_valid(pe_result_valid),
+        .pe_config(pe_config),
+        .pe_output(pe_output),
+        .north_out(north_out),
+        .south_out(south_out),
+        .east_out(east_out),
+        .west_out(west_out),
+        .north_valid_out(north_valid_out),
+        .south_valid_out(south_valid_out),
+        .east_valid_out(east_valid_out),
+        .west_valid_out(west_valid_out)
     );
 
     // Clock Generation
     always #5 clk = ~clk;
 
-    // Define Timeout Period Parameter
-    localparam TIMEOUT_CYCLES = 1000;
-
-    // Test Task: Send Configuration (with Timeout Mechanism)
-    task send_config;
-        input [`ADDR_WIDTH-1:0] addr;
-        input [`DATA_WIDTH-1:0] data;
-        integer timeout;
+    // Test Task: Configure Router
+    task configure_router;
+        input [1:0] output_dest;
+        input store_to_mem;
         begin
+            pe_config = {25'b0, store_to_mem, 1'b0, output_dest, 26'b0};
             @(posedge clk);
-            cfg_valid = 1'b1;
-            cfg_addr = addr;
-            cfg_data = data;
-            timeout = 0;
-
-            while (!cfg_ack && timeout < TIMEOUT_CYCLES) begin
-                @(posedge clk);
-                timeout = timeout + 1;
-            end
-
-            if (timeout >= TIMEOUT_CYCLES) begin
-                $display("ERROR: Configuration timeout for address 0x%h", addr);
-            end
-
-            @(posedge clk);
-            cfg_valid = 1'b0;
         end
     endtask
 
-    // Test Task: Send Data (with Timeout Mechanism)
-    task send_data;
-        input integer port;
-        input [`DATA_WIDTH-1:0] data;
-        integer timeout;
+    // Test Task: Send PE Result
+    task send_pe_result;
+        input [DATA_WIDTH-1:0] result;
         begin
+            pe_result = result;
+            pe_result_valid = 1'b1;
             @(posedge clk);
-            data_in_valid[port] = 1'b1;
-            data_in[port*`DATA_WIDTH +: `DATA_WIDTH] = data;
-            timeout = 0;
-
-            while (!data_in_ready[port] && timeout < TIMEOUT_CYCLES) begin
-                @(posedge clk);
-                timeout = timeout + 1;
-            end
-
-            if (timeout >= TIMEOUT_CYCLES) begin
-                $display("ERROR: Send data timeout on port %0d", port);
-            end
-
+            pe_result_valid = 1'b0;
             @(posedge clk);
-            data_in_valid[port] = 1'b0;
         end
     endtask
 
-    // Test Task: Receive Data (with Timeout Mechanism)
-    task receive_data;
-        input integer port;
-        output [`DATA_WIDTH-1:0] data;
-        integer timeout;
+    // Test Task: Verify Output
+    task verify_output;
+        input [DATA_WIDTH-1:0] expected_data;
+        input expected_north;
+        input expected_south;
+        input expected_east;
+        input expected_west;
+        input expected_mem;
+        input integer test_num;
         begin
-            timeout = 0;
-            while (!data_out_valid[port] && timeout < TIMEOUT_CYCLES) begin
-                @(posedge clk);
-                timeout = timeout + 1;
+            // Check memory output
+            if (expected_mem && pe_output !== expected_data) begin
+                $display("ERROR: Test %d - Memory output mismatch: Expected 0x%h, Got 0x%h",
+                         test_num, expected_data, pe_output);
+                error_count = error_count + 1;
+            end else if (!expected_mem && pe_output !== 0) begin
+                $display("ERROR: Test %d - Memory output should be 0, Got 0x%h",
+                         test_num, pe_output);
+                error_count = error_count + 1;
             end
 
-            if (timeout >= TIMEOUT_CYCLES) begin
-                $display("ERROR: Receive data timeout on port %0d", port);
-                data = 32'hDEADBEEF; // Timeout flag value
-            end else begin
-                data = data_out[port*`DATA_WIDTH +: `DATA_WIDTH];
+            // Check north output
+            if (expected_north && (north_out !== expected_data || !north_valid_out)) begin
+                $display("ERROR: Test %d - North output mismatch or invalid", test_num);
+                error_count = error_count + 1;
+            end else if (!expected_north && (north_out !== 0 || north_valid_out)) begin
+                $display("ERROR: Test %d - North output should be inactive", test_num);
+                error_count = error_count + 1;
             end
 
-            @(posedge clk);
-            data_out_ready[port] = 1'b1;
-            @(posedge clk);
-            data_out_ready[port] = 1'b0;
+            // Check south output
+            if (expected_south && (south_out !== expected_data || !south_valid_out)) begin
+                $display("ERROR: Test %d - South output mismatch or invalid", test_num);
+                error_count = error_count + 1;
+            end else if (!expected_south && (south_out !== 0 || south_valid_out)) begin
+                $display("ERROR: Test %d - South output should be inactive", test_num);
+                error_count = error_count + 1;
+            end
+
+            // Check east output
+            if (expected_east && (east_out !== expected_data || !east_valid_out)) begin
+                $display("ERROR: Test %d - East output mismatch or invalid", test_num);
+                error_count = error_count + 1;
+            end else if (!expected_east && (east_out !== 0 || east_valid_out)) begin
+                $display("ERROR: Test %d - East output should be inactive", test_num);
+                error_count = error_count + 1;
+            end
+
+            // Check west output
+            if (expected_west && (west_out !== expected_data || !west_valid_out)) begin
+                $display("ERROR: Test %d - West output mismatch or invalid", test_num);
+                error_count = error_count + 1;
+            end else if (!expected_west && (west_out !== 0 || west_valid_out)) begin
+                $display("ERROR: Test %d - West output should be inactive", test_num);
+                error_count = error_count + 1;
+            end
+
+            if (error_count == 0) begin
+                $display("PASS: Test %d - Router outputs verified correctly", test_num);
+            end
         end
     endtask
 
     // Main Test Program
-    reg [`DATA_WIDTH-1:0] received_data;
-
     initial begin
-        // Initialization
+        // Initialize
         clk = 0;
         rst_n = 0;
-        cfg_valid = 0;
-        cfg_addr = 0;
-        cfg_data = 0;
-        data_in_valid = 5'b00000;
-        data_in = 0;
-        data_out_ready = 5'b11111; // By default, all output ports are ready
+        pe_result = 0;
+        pe_result_valid = 0;
+        pe_config = 0;
+        error_count = 0;
 
         // Reset
         #20 rst_n = 1;
 
-        fork
-            // Main Test Flow
-            begin
-                $display("Starting Router Test");
+        $display("Starting PE Router Test for Refactored Module");
+        $display("==========================================");
 
-                // Test 1: Configure Routing Algorithm
-                $display("Test 1: Configure routing algorithm");
-                send_config(`REG_ROUTE_ALGO, `ROUTE_XY);
-                $display("Routing algorithm configured to XY");
+        // Test 1: Route to North with Memory Store
+        $display("Test 1: Route to North with Memory Store");
+        configure_router(2'b00, 1'b1); // North + Store to memory
+        send_pe_result(32'h12345678);
+        verify_output(32'h12345678, 1, 0, 0, 0, 1, 1);
+        #20;
 
-                // Test 2: Configure Routing Table
-                $display("Test 2: Configure routing table");
-                // Set Routing Table: Local Port -> North Port
-                send_config(`REG_ROUTE_TABLE, 25'b0000100000000000000000000);
-                $display("Routing table configured");
+        // Test 2: Route to South without Memory Store
+        $display("Test 2: Route to South without Memory Store");
+        configure_router(2'b01, 1'b0); // South, no memory store
+        send_pe_result(32'hAABBCCDD);
+        verify_output(32'h00000000, 0, 1, 0, 0, 0, 2);
+        #20;
 
-                // Test 3: Send Data from Local to North
-                $display("Test 3: Send data from local to north");
-                fork
-                    begin
-                        send_data(4, 32'hAABBCCDD); // Send data from local port
-                        $display("Data sent from local port: 0x%h", 32'hAABBCCDD);
-                    end
-                    begin
-                        receive_data(0, received_data); // Receive data from north port
-                        if (received_data !== 32'hAABBCCDD && received_data !== 32'hDEADBEEF) begin
-                            $display("ERROR: Received 0x%h, expected 0xAABBCCDD", received_data);
-                        end else if (received_data === 32'hAABBCCDD) begin
-                            $display("Data received at north port: 0x%h", received_data);
-                        end
-                    end
-                join
+        // Test 3: Route to East with Memory Store
+        $display("Test 3: Route to East with Memory Store");
+        configure_router(2'b10, 1'b1); // East + Store to memory
+        send_pe_result(32'h11223344);
+        verify_output(32'h11223344, 0, 0, 1, 0, 1, 3);
+        #20;
 
-                // Test 4: Test Backpressure Mechanism
-                $display("Test 4: Test backpressure mechanism");
+        // Test 4: Route to West without Memory Store
+        $display("Test 4: Route to West without Memory Store");
+        configure_router(2'b11, 1'b0); // West, no memory store
+        send_pe_result(32'h55667788);
+        verify_output(32'h00000000, 0, 0, 0, 1, 0, 4);
+        #20;
 
-                // First fill the output buffer of north port
-                data_out_ready[0] = 1'b0; // Prevent north port from receiving data
+        // Test 5: No Routing (Invalid Configuration)
+        $display("Test 5: No Routing (Invalid Configuration)");
+        configure_router(2'b00, 1'b0); // North, no memory store
+        send_pe_result(32'h99AABBCC);
+        verify_output(32'h00000000, 1, 0, 0, 0, 0, 5);
+        #20;
 
-                // Send multiple data packets
-                send_data(4, 32'h11223344);
-                send_data(4, 32'h55667788);
-                send_data(4, 32'h99AABBCC);
+        // Test 6: Multiple Consecutive Transmissions
+        $display("Test 6: Multiple Consecutive Transmissions");
+        configure_router(2'b10, 1'b1); // East + Store to memory
 
-                // Check if local port ready signal is low (backpressure)
-                if (data_in_ready[4] !== 1'b0) begin
-                    $display("ERROR: Backpressure not working, local port ready: %b", data_in_ready[4]);
-                end else begin
-                    $display("Backpressure working correctly");
-                end
+        // First transmission
+        send_pe_result(32'h11111111);
+        verify_output(32'h11111111, 0, 0, 1, 0, 1, 6);
 
-                // Release north port
-                data_out_ready[0] = 1'b1;
+        // Second transmission
+        send_pe_result(32'h22222222);
+        verify_output(32'h22222222, 0, 0, 1, 0, 1, 6);
 
-                // Receive all data
-                receive_data(0, received_data);
-                $display("Received: 0x%h", received_data);
-                receive_data(0, received_data);
-                $display("Received: 0x%h", received_data);
-                receive_data(0, received_data);
-                $display("Received: 0x%h", received_data);
+        // Third transmission
+        send_pe_result(32'h33333333);
+        verify_output(32'h33333333, 0, 0, 1, 0, 1, 6);
+        #20;
 
-                // Test 5: Test Port Disable
-                $display("Test 5: Test port disable");
+        // Test 7: Configuration Change During Operation
+        $display("Test 7: Configuration Change During Operation");
 
-                // Disable north port
-                send_config(`REG_PORT_CTRL, 5'b01111); // Only north port disabled
+        // Start with North routing
+        configure_router(2'b00, 1'b1);
+        send_pe_result(32'h44444444);
+        verify_output(32'h44444444, 1, 0, 0, 0, 1, 7);
 
-                // Try to send data to north port
-                send_data(4, 32'hDEADBEEF);
-                // Check if data is not routed to disabled north port
-                #50; // Wait for a period
-                if (data_out_valid[0] !== 1'b0) begin
-                    $display("ERROR: Data routed to disabled north port");
-                end else begin
-                    $display("Port disable working correctly");
-                end
+        // Change to South routing
+        configure_router(2'b01, 1'b0);
+        send_pe_result(32'h55555555);
+        verify_output(32'h00000000, 0, 1, 0, 0, 0, 7);
+        #20;
 
-                // Re-enable north port
-                send_config(`REG_PORT_CTRL, 5'b11111); // All ports enabled
+        // Test 8: Invalid PE Result (No Valid Signal)
+        $display("Test 8: Invalid PE Result (No Valid Signal)");
+        configure_router(2'b00, 1'b1);
 
-                // Test 6: Read Status Register
-                $display("Test 6: Read status register");
-                // Status register contains buffer status and port enable status
-                $display("Status register: 0x%h", status);
+        // Send data without valid signal
+        pe_result = 32'h66666666;
+        pe_result_valid = 1'b0;
+        @(posedge clk);
 
-                $display("All tests completed!");
-                $finish;
-            end
+        // Verify no outputs are active
+        verify_output(32'h00000000, 0, 0, 0, 0, 0, 8);
+        #20;
 
-            // Global Timeout Mechanism
-            begin
-                #1000000; // 1ms timeout (assuming time unit is ns)
-                $display("ERROR: Global test timeout after 1ms");
-                $finish;
-            end
-        join
+        // Test 9: Reset Test
+        $display("Test 9: Reset Test");
+
+        // Configure and send data
+        configure_router(2'b00, 1'b1);
+        send_pe_result(32'h77777777);
+
+        // Apply reset
+        @(posedge clk);
+        rst_n = 0;
+        #20;
+        rst_n = 1;
+        #20;
+
+        // Verify outputs are reset
+        if (north_out !== 0 || south_out !== 0 || east_out !== 0 || west_out !== 0 ||
+            north_valid_out !== 0 || south_valid_out !== 0 || east_valid_out !== 0 || west_valid_out !== 0 ||
+            pe_output !== 0) begin
+            $display("ERROR: Test 9 - Outputs not properly reset");
+            error_count = error_count + 1;
+        end else begin
+            $display("PASS: Test 9 - Router properly reset");
+        end
+        #20;
+
+        // Test 10: Edge Case - Maximum Data Value
+        $display("Test 10: Edge Case - Maximum Data Value");
+        configure_router(2'b11, 1'b1); // West + Store to memory
+        send_pe_result(32'hFFFFFFFF);
+        verify_output(32'hFFFFFFFF, 0, 0, 0, 1, 1, 10);
+        #20;
+
+        // Final Test Results
+        $display("==========================================");
+        if (error_count == 0) begin
+            $display("TEST PASSED: All %d tests completed successfully", 10);
+        end else begin
+            $display("TEST FAILED: %d errors detected", error_count);
+        end
+        $display("==========================================");
+
+        $finish;
     end
 
     // Waveform Output

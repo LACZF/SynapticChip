@@ -1,319 +1,305 @@
-// tb_pe.v
-// PE Test Bench
+// tb_pe_new.v
+// PE Test Bench for Refactored PE Module
 
-`include "pe.v"
 `timescale 1ns/1ps
 
 module tb_pe;
 
-    // Define timeout cycle parameter
-    parameter TIMEOUT_CYCLES = 10000; // 10000 clock cycles as timeout threshold
+    // Parameters
+    parameter DATA_WIDTH = 32;
+    parameter TIMEOUT_CYCLES = 1000;
 
     // Error counter
     integer error_count = 0;
 
     // Clock and Reset
-    reg clk;
-    reg rst_n;
-    reg enable;
+    reg                   clk;
+    reg                   rst_n;
+    reg                   enable;
+    reg                   start;
 
-    // Instruction Interface
-    reg [`INST_WIDTH-1:0] instruction;
-    reg                   inst_valid;
+    // Operands and Configuration
+    reg  [DATA_WIDTH-1:0] operand1;
+    reg  [DATA_WIDTH-1:0] operand2;
+    reg  [DATA_WIDTH-1:0] config_data;
 
-    // External Memory Interface
-    wire                   ext_mem_req;
-    wire                   ext_mem_we;
-    wire [`ADDR_WIDTH-1:0] ext_mem_addr;
-    wire [`DATA_WIDTH-1:0] ext_mem_data_out;
-    reg  [`DATA_WIDTH-1:0] ext_mem_data_in;
-    reg                    ext_mem_ack;
+    // Inter-PE Inputs
+    reg  [DATA_WIDTH-1:0] north_in;
+    reg  [DATA_WIDTH-1:0] south_in;
+    reg  [DATA_WIDTH-1:0] east_in;
+    reg  [DATA_WIDTH-1:0] west_in;
+    reg                   north_valid_in;
+    reg                   south_valid_in;
+    reg                   east_valid_in;
+    reg                   west_valid_in;
 
-    // Neighbor PE Communication Interface
-    reg                    north_valid;
-    reg  [`DATA_WIDTH-1:0] north_data;
-    wire                   north_ready;
+    // Outputs
+    wire [DATA_WIDTH-1:0] result;
+    wire                  result_valid;
 
-    reg                    south_valid;
-    reg  [`DATA_WIDTH-1:0] south_data;
-    wire                   south_ready;
-
-    reg                    east_valid;
-    reg  [`DATA_WIDTH-1:0] east_data;
-    wire                   east_ready;
-
-    reg                    west_valid;
-    reg  [`DATA_WIDTH-1:0] west_data;
-    wire                   west_ready;
-
-    // Output Interface
-    wire                   out_valid;
-    wire [`DATA_WIDTH-1:0] out_data;
-
-    // Status Output
-    wire [`DATA_WIDTH-1:0] status;
-    wire                   busy;
-
-    // Instantiate DUT with Parameter Definitions
-    pe_node #(
-        .ADDR_WIDTH(`ADDR_WIDTH),
-        .DATA_WIDTH(`DATA_WIDTH),
-        .NUM_PES(4),
-        .INST_WIDTH(`INST_WIDTH),
-        .PE_ID_WIDTH(3),
-        .PE_ARRAY_ROWS(2),
-        .PE_ARRAY_COLS(2)
+    // Instantiate DUT
+    pe #(
+        .DATA_WIDTH(DATA_WIDTH)
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .enable_i(enable),
-        .instruction_i(instruction),
-        .inst_valid_i(inst_valid),
-        .ext_mem_req_o(ext_mem_req),
-        .ext_mem_we_o(ext_mem_we),
-        .ext_mem_addr_o(ext_mem_addr),
-        .ext_mem_data_out_o(ext_mem_data_out),
-        .ext_mem_data_in_i(ext_mem_data_in),
-        .ext_mem_ack_i(ext_mem_ack),
-        .north_valid_i(north_valid),
-        .north_data_i(north_data),
-        .north_ready_o(north_ready),
-        .south_valid_i(south_valid),
-        .south_data_i(south_data),
-        .south_ready_o(south_ready),
-        .east_valid_i(east_valid),
-        .east_data_i(east_data),
-        .east_ready_o(east_ready),
-        .west_valid_i(west_valid),
-        .west_data_i(west_data),
-        .west_ready_o(west_ready),
-        .out_valid_o(out_valid),
-        .out_data_o(out_data),
-        .status_o(status),
-        .busy_o(busy)
+        .enable(enable),
+        .start(start),
+        .operand1(operand1),
+        .operand2(operand2),
+        .config_data(config_data),
+        .north_in(north_in),
+        .south_in(south_in),
+        .east_in(east_in),
+        .west_in(west_in),
+        .north_valid_in(north_valid_in),
+        .south_valid_in(south_valid_in),
+        .east_valid_in(east_valid_in),
+        .west_valid_in(west_valid_in),
+        .result(result),
+        .result_valid(result_valid)
     );
 
     // Clock Generation
     always #5 clk = ~clk;
 
-    // Test Task: Send Instruction (with Timeout Mechanism)
-    task send_instruction;
-        input [`INST_WIDTH-1:0] inst;
-        integer timeout;
-        reg [`OPCODE_WIDTH-1:0] opcode;
-        reg [`REG_ADDR_WIDTH-1:0] rd, rs1, rs2;
+    // Test Task: Configure PE Operation
+    task configure_pe;
+        input [3:0] opcode;
+        input       use_external_operands;
+        input [1:0] src1_sel;
+        input [1:0] src2_sel;
         begin
-            // Decode instruction for debugging
-            opcode = inst[31:26];
-            rd = inst[25:22];
-            rs1 = inst[21:18];
-            rs2 = inst[17:14];
-
-        `ifdef DEBUG
-            $display("DEBUG: Sending instruction: Opcode=0x%h, Rd=%d, Rs1=%d, Rs2=%d", opcode, rd, rs1, rs2);
-        `endif
+            config_data = {22'b0, src2_sel, src1_sel, use_external_operands, 1'b0, opcode};
             @(posedge clk);
-            instruction <= inst;
-            inst_valid <= 1'b1;
-            @(posedge clk);
-            inst_valid <= 1'b0;
+        end
+    endtask
 
-            // Wait for instruction to complete (with timeout mechanism)
+    // Test Task: Set External Operands
+    task set_external_operands;
+        input [DATA_WIDTH-1:0] op1;
+        input [DATA_WIDTH-1:0] op2;
+        begin
+            operand1 = op1;
+            operand2 = op2;
+            @(posedge clk);
+        end
+    endtask
+
+    // Test Task: Set Inter-PE Inputs
+    task set_inter_pe_inputs;
+        input [DATA_WIDTH-1:0] north;
+        input [DATA_WIDTH-1:0] south;
+        input [DATA_WIDTH-1:0] east;
+        input [DATA_WIDTH-1:0] west;
+        input north_valid;
+        input south_valid;
+        input east_valid;
+        input west_valid;
+        begin
+            north_in       = north;
+            south_in       = south;
+            east_in        = east;
+            west_in        = west;
+            north_valid_in = north_valid;
+            south_valid_in = south_valid;
+            east_valid_in  = east_valid;
+            west_valid_in  = west_valid;
+            @(posedge clk);
+        end
+    endtask
+
+    // Test Task: Start Computation
+    task start_computation;
+        begin
+            start = 1'b1;
+            @(posedge clk);
+            start = 1'b0;
+        end
+    endtask
+
+    // Test Task: Wait for Result
+    task wait_for_result;
+        integer timeout;
+        begin
             timeout = 0;
-            while (busy && timeout < TIMEOUT_CYCLES) begin
+            while (!result_valid && timeout < TIMEOUT_CYCLES) begin
                 @(posedge clk);
                 timeout = timeout + 1;
             end
 
             if (timeout >= TIMEOUT_CYCLES) begin
-                $display("ERROR: Timeout waiting for instruction to complete");
+                $display("ERROR: Timeout waiting for result");
                 error_count = error_count + 1;
+            end else begin
+                @(posedge clk);
             end
-
-            #10;
         end
     endtask
 
-    // Test task: Verify instruction execution by checking busy signal behavior
-    task verify_instruction_execution;
+    // Test Task: Verify Result
+    task verify_result;
+        input [DATA_WIDTH-1:0] expected;
         input integer test_num;
         begin
-            // Check if the busy signal behaved correctly during instruction execution
-            if (error_count == 0) begin
-                $display("PASS: Test %d instruction execution completed successfully", test_num);
+            if (result !== expected) begin
+                $display("ERROR: Test %d - Expected 0x%h, Got 0x%h", test_num, expected, result);
+                error_count = error_count + 1;
             end else begin
-                $display("ERROR: Test %d instruction execution failed", test_num);
+                $display("PASS: Test %d - Result 0x%h matches expected", test_num, result);
             end
         end
     endtask
 
-    // Original register check task (kept for reference but not used)
-    task check_register;
-        input integer reg_num;
-        input [`DATA_WIDTH-1:0] expected_value;
-        begin
-            $display("INFO: Register verification skipped for this test");
-        end
-    endtask
-
-    // Main test program
+    // Main Test Program
     initial begin
         // Initialize
-        clk = 0;
-        rst_n = 0;
-        enable = 0;
-        instruction = 0;
-        inst_valid = 0;
-        ext_mem_data_in = 0;
-        ext_mem_ack = 0;
-        north_valid = 0;
-        north_data = 0;
-        south_valid = 0;
-        south_data = 0;
-        east_valid = 0;
-        east_data = 0;
-        west_valid = 0;
-        west_data = 0;
-        error_count = 0;
+        clk            = 0;
+        rst_n          = 0;
+        enable         = 0;
+        start          = 0;
+        operand1       = 0;
+        operand2       = 0;
+        config_data    = 0;
+        north_in       = 0;
+        south_in       = 0;
+        east_in        = 0;
+        west_in        = 0;
+        north_valid_in = 0;
+        south_valid_in = 0;
+        east_valid_in  = 0;
+        west_valid_in  = 0;
+        error_count    = 0;
 
         // Reset
         #20 rst_n = 1;
         enable = 1;
 
-        $display("Starting PE Test");
+        $display("Starting PE Test for Refactored Module");
+        $display("=====================================");
 
-        // Test 1: Arithmetic operations
-        $display("Test 1: Arithmetic operations");
+        // Test 1: Basic Arithmetic with External Operands
+        $display("Test 1: Basic Arithmetic with External Operands");
+        configure_pe(4'b0000, 1'b1, 2'b00, 2'b00); // ADD with external operands
+        set_external_operands(32'h00000005, 32'h00000003); // 5 + 3
+        start_computation();
+        wait_for_result();
+        verify_result(32'h00000008, 1); // Expected: 8
+        #20;
 
-        // Load values into registers
-        send_instruction({`OP_ADD, 4'd1, 4'd0, 4'd0, 14'd5});  // R1 = 0 + 5 = 5
-        send_instruction({`OP_ADD, 4'd2, 4'd0, 4'd0, 14'd3});  // R2 = 0 + 3 = 3
+        // Test 2: Subtraction
+        $display("Test 2: Subtraction");
+        configure_pe(4'b0001, 1'b1, 2'b00, 2'b00); // SUB with external operands
+        set_external_operands(32'h0000000A, 32'h00000004); // 10 - 4
+        start_computation();
+        wait_for_result();
+        verify_result(32'h00000006, 2); // Expected: 6
+        #20;
 
-        // Addition
-        send_instruction({`OP_ADD, 4'd3, 4'd1, 4'd2, 14'd0});  // R3 = R1 + R2 = 8
+        // Test 3: Multiplication
+        $display("Test 3: Multiplication");
+        configure_pe(4'b0101, 1'b1, 2'b00, 2'b00); // MUL with external operands
+        set_external_operands(32'h00000006, 32'h00000007); // 6 * 7
+        start_computation();
+        wait_for_result();
+        verify_result(32'h0000002A, 3); // Expected: 42
+        #20;
 
-        // Subtraction
-        send_instruction({`OP_SUB, 4'd4, 4'd1, 4'd2, 14'd0});  // R4 = R1 - R2 = 2
+        // Test 4: Bitwise AND
+        $display("Test 4: Bitwise AND");
+        configure_pe(4'b0010, 1'b1, 2'b00, 2'b00); // AND with external operands
+        set_external_operands(32'hF0F0F0F0, 32'h0F0F0F0F);
+        start_computation();
+        wait_for_result();
+        verify_result(32'h00000000, 4); // Expected: 0
+        #20;
 
-        // Multiplication
-        send_instruction({`OP_MUL, 4'd5, 4'd1, 4'd2, 14'd0});  // R5 = R1 * R2 = 15
+        // Test 5: Bitwise OR
+        $display("Test 5: Bitwise OR");
+        configure_pe(4'b0011, 1'b1, 2'b00, 2'b00); // OR with external operands
+        set_external_operands(32'hF0F0F0F0, 32'h0F0F0F0F);
+        start_computation();
+        wait_for_result();
+        verify_result(32'hFFFFFFFF, 5); // Expected: 0xFFFFFFFF
+        #20;
 
-        // Verify instruction execution
-        verify_instruction_execution(1);
+        // Test 6: Inter-PE Communication (North Input)
+        $display("Test 6: Inter-PE Communication (North Input)");
+        configure_pe(4'b0000, 1'b0, 2'b00, 2'b00); // ADD with inter-PE inputs
+        set_inter_pe_inputs(32'h0000000A, 32'h00000000, 32'h00000000, 32'h00000000, 1'b1, 1'b0, 1'b0, 1'b0);
+        set_external_operands(32'h00000005, 32'h00000000); // Use North input (10) + 5
+        start_computation();
+        wait_for_result();
+        verify_result(32'h0000000F, 6); // Expected: 15
+        #20;
 
-        // Test 2: Logical operations
-        $display("Test 2: Logical operations");
+        // Test 7: Shift Left
+        $display("Test 7: Shift Left");
+        configure_pe(4'b1000, 1'b1, 2'b00, 2'b00); // SHL with external operands
+        set_external_operands(32'h00000001, 32'h00000004); // 1 << 4
+        start_computation();
+        wait_for_result();
+        verify_result(32'h00000010, 7); // Expected: 16
+        #20;
 
-        send_instruction({`OP_ADD, 4'd6, 4'd0, 4'd0, 14'h00FF});  // R6 = 0x00FF
-        send_instruction({`OP_ADD, 4'd7, 4'd0, 4'd0, 14'h0F0F});  // R7 = 0x0F0F
+        // Test 8: Shift Right
+        $display("Test 8: Shift Right");
+        configure_pe(4'b1001, 1'b1, 2'b00, 2'b00); // SHR with external operands
+        set_external_operands(32'h00000010, 32'h00000002); // 16 >> 2
+        start_computation();
+        wait_for_result();
+        verify_result(32'h00000004, 8); // Expected: 4
+        #20;
 
-        // AND
-        send_instruction({`OP_AND, 4'd8, 4'd6, 4'd7, 14'd0});  // R8 = R6 & R7 = 0x000F
+        // Test 9: Minimum
+        $display("Test 9: Minimum");
+        configure_pe(4'b0110, 1'b1, 2'b00, 2'b00); // MIN with external operands
+        set_external_operands(32'h0000000A, 32'h00000005); // min(10, 5)
+        start_computation();
+        wait_for_result();
+        verify_result(32'h00000005, 9); // Expected: 5
+        #20;
 
-        // OR
-        send_instruction({`OP_OR, 4'd9, 4'd6, 4'd7, 14'd0});   // R9 = R6 | R7 = 0x0FFF
+        // Test 10: Maximum
+        $display("Test 10: Maximum");
+        configure_pe(4'b0111, 1'b1, 2'b00, 2'b00); // MAX with external operands
+        set_external_operands(32'h0000000A, 32'h00000005); // max(10, 5)
+        start_computation();
+        wait_for_result();
+        verify_result(32'h0000000A, 10); // Expected: 10
+        #20;
 
-        // XOR
-        send_instruction({`OP_XOR, 4'd10, 4'd6, 4'd7, 14'd0}); // R10 = R6 ^ R7 = 0x0FF0
+        // Test 11: Reset Test
+        $display("Test 11: Reset Test");
+        @(posedge clk);
+        rst_n = 0;
+        #20;
+        rst_n = 1;
+        enable = 1;
+        #20;
 
-        // NOT
-        send_instruction({`OP_NOT, 4'd11, 4'd6, 4'd0, 14'd0}); // R11 = ~R6 = 0xFF00
-
-        // Verify instruction execution
-        verify_instruction_execution(2);
-
-        // Test 3: Shift operations
-        $display("Test 3: Shift operations");
-
-        send_instruction({`OP_ADD, 4'd12, 4'd0, 4'd0, 14'd8});   // R12 = 8
-        send_instruction({`OP_ADD, 4'd13, 4'd0, 4'd0, 14'd1});   // R13 = 1
-
-        // Left shift
-        send_instruction({`OP_SHL, 4'd14, 4'd12, 4'd13, 14'd0}); // R14 = R12 << R13 = 16
-
-        // Right shift
-        send_instruction({`OP_SHR, 4'd15, 4'd12, 4'd13, 14'd0}); // R15 = R12 >> R13 = 4
-
-        // Verify instruction execution
-        verify_instruction_execution(3);
-
-        // Test 4: Memory operations
-        $display("Test 4: Memory operations");
-
-        // Store data to memory
-        send_instruction({`OP_ADD, 4'd1, 4'd0, 4'd0, 14'd42});    // R1 = 42
-        send_instruction({`OP_ADD, 4'd2, 4'd0, 4'd0, 14'd10});    // R2 = 10 (address)
-        send_instruction({`OP_STORE, 4'd0, 4'd2, 4'd1, 14'd0});   // MEM[10] = R1 = 42
-
-        // Load data from memory
-        send_instruction({`OP_LOAD, 4'd3, 4'd2, 4'd0, 14'd0});    // R3 = MEM[10] = 42
-
-        // Verify instruction execution
-        verify_instruction_execution(4);
-
-        // Test 5: Conditional branches
-        $display("Test 5: Conditional branches");
-
-        // Initialize test values
-        send_instruction({`OP_ADD, 4'd1, 4'd0, 4'd0, 14'd5});     // R1 = 5
-        send_instruction({`OP_ADD, 4'd2, 4'd0, 4'd0, 14'd5});     // R2 = 5
-        send_instruction({`OP_ADD, 4'd3, 4'd0, 4'd0, 14'd3});     // R3 = 3
-
-        // BEQ test (should branch)
-        send_instruction({`OP_BEQ, 4'd0, 4'd1, 4'd2, 14'd4});     // if R1 == R2, jump +4
-        send_instruction({`OP_ADD, 4'd4, 4'd0, 4'd0, 14'd100});   // This line should be skipped if branch occurs
-        send_instruction({`OP_ADD, 4'd4, 4'd0, 4'd0, 14'd200});   // Branch target
-
-        // BNE test (should branch)
-        send_instruction({`OP_BNE, 4'd0, 4'd1, 4'd3, 14'd4});     // if R1 != R3, jump +4
-        send_instruction({`OP_ADD, 4'd5, 4'd0, 4'd0, 14'd100});   // This line should be skipped if branch occurs
-        send_instruction({`OP_ADD, 4'd5, 4'd0, 4'd0, 14'd200});   // Branch target
-
-        // Verify instruction execution
-        verify_instruction_execution(5);
-
-        // Test completion report
-        if (error_count == 0) begin
-            $display("All tests passed! Basic PE functionality verified.");
+        // Verify that PE is properly reset
+        if (result_valid !== 1'b0) begin
+            $display("ERROR: Test 11 - result_valid should be 0 after reset");
+            error_count = error_count + 1;
         end else begin
-            $display("Test completed with %0d errors", error_count);
+            $display("PASS: Test 11 - PE properly reset");
         end
+        #20;
+
+        // Final Test Results
+        $display("=====================================");
+        if (error_count == 0) begin
+            $display("TEST PASSED: All %d tests completed successfully", 11);
+        end else begin
+            $display("TEST FAILED: %d errors detected", error_count);
+        end
+        $display("=====================================");
+
         $finish;
     end
 
-    // Global timeout protection process
-    initial begin
-        #(TIMEOUT_CYCLES * 10); // Assuming clock period is 10ns
-        $display("ERROR: Global timeout after %0d cycles", TIMEOUT_CYCLES);
-        $display("Test completed with %0d errors", error_count + 1);
-        $finish;
-    end
-
-    // External memory simulation
-    reg [`DATA_WIDTH-1:0] external_mem [0:255];
-    initial begin
-        for (integer i = 0; i < 256; i = i + 1) begin
-            external_mem[i] = 0;
-        end
-    end
-
-    always @(posedge clk) begin
-        ext_mem_ack <= 0;
-
-        if (ext_mem_req) begin
-            #1; // Simulate memory delay
-
-            if (ext_mem_we) begin
-                external_mem[ext_mem_addr] <= ext_mem_data_out;
-            end else begin
-                ext_mem_data_in <= external_mem[ext_mem_addr];
-            end
-
-            ext_mem_ack <= 1;
-        end
-    end
-
-    // Waveform output
+    // Waveform Output
     initial begin
         $dumpfile("tb_pe.vcd");
         $dumpvars(0, tb_pe);

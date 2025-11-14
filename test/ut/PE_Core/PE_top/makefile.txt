@@ -5,10 +5,8 @@ TEST_ARGS ?= -g2005-sv
 TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
 
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl_route_config.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_node.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe_core.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_top.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_core.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router_config.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router.v
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_mem/pe_mem.v
 TEST_SRC += $(CUR_DIR)/tb_pe_top.v
