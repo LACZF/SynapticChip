@@ -25,9 +25,12 @@ module pe_router #(
     output reg                   west_valid_out
 );
 
-    // Configuration decoding
-    wire [1:0] output_dest  = pe_config[5:4];       // Output destination
-    wire       store_to_mem = pe_config[6];         // Store result to memory
+    // Configuration decoding - 使用独立的bit位控制每个输出方向
+    wire output_north = pe_config[4];   // 输出到北方向
+    wire output_south = pe_config[5];   // 输出到南方向
+    wire output_east  = pe_config[6];   // 输出到东方向
+    wire output_west  = pe_config[7];   // 输出到西方向
+    wire store_to_mem = pe_config[8];   // 存储结果到内存
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -52,25 +55,26 @@ module pe_router #(
             west_valid_out  <= 1'b0;
 
             if (pe_result_valid) begin
-                // Route result based on configuration
-                case (output_dest)
-                    2'b00: begin // North
-                        north_out       <= pe_result;
-                        north_valid_out <= 1'b1;
-                    end
-                    2'b01: begin // South
-                        south_out       <= pe_result;
-                        south_valid_out <= 1'b1;
-                    end
-                    2'b10: begin // East
-                        east_out       <= pe_result;
-                        east_valid_out <= 1'b1;
-                    end
-                    2'b11: begin // West
-                        west_out       <= pe_result;
-                        west_valid_out <= 1'b1;
-                    end
-                endcase
+                // 根据配置位同时输出到多个方向
+                if (output_north) begin
+                    north_out       <= pe_result;
+                    north_valid_out <= 1'b1;
+                end
+
+                if (output_south) begin
+                    south_out       <= pe_result;
+                    south_valid_out <= 1'b1;
+                end
+
+                if (output_east) begin
+                    east_out       <= pe_result;
+                    east_valid_out <= 1'b1;
+                end
+
+                if (output_west) begin
+                    west_out       <= pe_result;
+                    west_valid_out <= 1'b1;
+                end
 
                 // Store to memory if configured
                 if (store_to_mem) begin
