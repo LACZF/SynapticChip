@@ -15,8 +15,8 @@ module chip_top #(
     parameter NUM_PES                   = 16,
     parameter INST_WIDTH                = 32,
     parameter PE_ID_WIDTH               = 4,
-    parameter PE_ARRAY_ROWS             = 4,
-    parameter PE_ARRAY_COLS             = 4,
+    parameter PE_ARRAY_X                = 4,
+    parameter PE_ARRAY_Y                = 4,
     parameter IMPLEMENT_ROM             = 1,
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
@@ -158,9 +158,9 @@ module chip_top #(
     wire                                                  pe_mem_req;                 // 高带宽内存请求信号
     wire                                                  pe_mem_we;                  // 高带宽内存写使能
     wire [ADDR_WIDTH-1:0]                                 pe_mem_addr;                // 高带宽内存地址
-    wire [(PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH-1:0] pe_mem_data_o;              // 高带宽内存写入数据
+    wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_o;              // 高带宽内存写入数据
     wire                                                  pe_mem_ack;                 // 高带宽内存应答信号
-    wire [(PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH-1:0] pe_mem_data_i;              // 高带宽内存读取数据
+    wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_i;              // 高带宽内存读取数据
 
     // CPU实例化
     generate
@@ -226,8 +226,8 @@ module chip_top #(
     ram #(
         .DP(RAM_DEPTH),
         .DATA_WIDTH(DATA_WIDTH),
-        .HIGH_BW_DW((PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH),  // 高带宽数据宽度
-        .HIGH_BW_MW(((PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH)/32)  // 高带宽字节使能宽度
+        .HIGH_BW_DW((PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH),
+        .HIGH_BW_MW(((PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH)/32)
     ) u_ram (
         .clk_i          (clk),
         .rst_ni         (ndmreset_n),
@@ -255,9 +255,9 @@ module chip_top #(
     pe_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
-        .PE_ARRAY_X(PE_ARRAY_ROWS),  // 使用PE_ARRAY_ROWS作为PE_ARRAY_X
-        .PE_ARRAY_Y(PE_ARRAY_COLS),  // 使用PE_ARRAY_COLS作为PE_ARRAY_Y
-        .HIGH_BW_DW((PE_ARRAY_ROWS+3)*PE_ARRAY_COLS*DATA_WIDTH)             // 高带宽数据宽度
+        .PE_ARRAY_X(PE_ARRAY_X),
+        .PE_ARRAY_Y(PE_ARRAY_Y),
+        .HIGH_BW_DW((PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH)
     ) u_pe_top (
         .clk        (clk),
         .rst_n      (rst_n),
