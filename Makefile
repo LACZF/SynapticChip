@@ -49,7 +49,6 @@ TOP_MODULE_ARG :=
 else
 TOP_MODULE_ARG := TOP_MODULE=$(TOP_MODULE)
 endif
-READ_RTL_ARGS += -sv
 endif
 
 ifneq ($(DEBUG),0)
