@@ -26,12 +26,7 @@ module pe_top #(
     input  wire [HIGH_BW_DW-1:0] mem_data_i
 );
 
-    // Internal signals
-    wire                  mem_we;
-    wire [ADDR_WIDTH-1:0] mem_addr;
-    wire [DATA_WIDTH-1:0] mem_wdata;
-    wire [DATA_WIDTH-1:0] mem_rdata;
-
+    // Internal signals - 简化信号连接
     wire                  start_computation;
     wire                  computation_done;
 
@@ -40,7 +35,6 @@ module pe_top #(
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_operand1;
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_operand2;
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_config;
-    wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_output;
 
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1]                 pe_result_valid;
 
@@ -67,34 +61,7 @@ module pe_top #(
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1]                 east_valid_out;
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1]                 west_valid_out;
 
-    // Instantiate memory module
-    pe_mem #(
-        .PE_ARRAY_X(PE_ARRAY_X),
-        .PE_ARRAY_Y(PE_ARRAY_Y),
-        .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .HIGH_BW_DW(HIGH_BW_DW)
-    ) u_pe_mem (
-        .clk(clk),
-        .rst_n(rst_n),
-        .we(mem_we),
-        .addr(mem_addr),
-        .wdata(mem_wdata),
-        .rdata(mem_rdata),
-        .pe_operand1(pe_operand1),
-        .pe_operand2(pe_operand2),
-        .pe_config(pe_config),
-        .pe_output(pe_output),
-        .start_computation(start_computation),
-        .mem_data_i(mem_data_i),
-        .mem_ack_i(mem_ack_i),
-        .mem_req_o(mem_req_o),
-        .mem_we_o(mem_we_o),
-        .mem_addr_o(mem_addr_o),
-        .mem_data_o(mem_data_o)
-    );
-
-    // Instantiate control module - 更新接口
+    // Instantiate combined control and memory module - 集成版本
     pe_control #(
         .PE_ARRAY_X(PE_ARRAY_X),
         .PE_ARRAY_Y(PE_ARRAY_Y),
@@ -106,17 +73,24 @@ module pe_top #(
         .rst_n(rst_n),
         .req_i(req_i),
         .we_i(we_i),
-        .addr_i(addr_i),      // 现在为32位
+        .addr_i(addr_i),
         .wdata_i(wdata_i),
         .gnt_o(gnt_o),
         .rvalid_o(rvalid_o),
         .rdata_o(rdata_o),
-        .mem_we(mem_we),
-        .mem_addr(mem_addr),
-        .mem_wdata(mem_wdata),
-        .mem_rdata(mem_rdata),
         .start_computation(start_computation),
-        .computation_done(computation_done)
+        .computation_done(computation_done),
+        .high_bw_req_o(mem_req_o),
+        .high_bw_we_o(mem_we_o),
+        .high_bw_addr_o(mem_addr_o),
+        .high_bw_data_o(mem_data_o),
+        .high_bw_ack_i(mem_ack_i),
+        .high_bw_data_i(mem_data_i),
+        .pe_result(pe_result),
+        .pe_result_valid(pe_result_valid),
+        .pe_operand1(pe_operand1),
+        .pe_operand2(pe_operand2),
+        .pe_config(pe_config)
     );
 
     // Instantiate PE array with individual routing
@@ -158,7 +132,6 @@ module pe_top #(
                     .pe_result(pe_result[idx]),
                     .pe_result_valid(pe_result_valid[idx]),
                     .pe_config(pe_config[idx]),
-                    .pe_output(pe_output[idx]),
                     .north_out(north_out[idx]),
                     .south_out(south_out[idx]),
                     .east_out(east_out[idx]),
