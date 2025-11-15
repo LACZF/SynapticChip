@@ -1,0 +1,9 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := PE_node
+TEST_ARGS ?=
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
+
+TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe.v
+TEST_SRC += $(CUR_DIR)/tb_pe.v

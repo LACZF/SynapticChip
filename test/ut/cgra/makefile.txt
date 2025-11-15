@@ -1,0 +1,13 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := tb_cgra
+TEST_ARGS   ?= -g2005-sv
+
+# TEST_INCLUDE_DIR +=
+
+TEST_SRC += $(CUR_DIR)/router.v
+TEST_SRC += $(CUR_DIR)/processing_element.v
+TEST_SRC += $(CUR_DIR)/config_manager.v
+TEST_SRC += $(CUR_DIR)/obi_interface.v
+TEST_SRC += $(CUR_DIR)/cgra_top.v
+TEST_SRC += $(CUR_DIR)/cgra_tb.v

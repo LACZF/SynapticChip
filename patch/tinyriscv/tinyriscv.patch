@@ -1,0 +1,1327 @@
+diff --git a/rtl/core/defines.sv b/rtl/core/defines.sv
+index 70e62e8..f81cbf4 100644
+--- a/rtl/core/defines.sv
++++ b/rtl/core/defines.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ // 从Flash启动时打开下面这个宏
+@@ -149,7 +149,7 @@
+ `define DECINFO_CSR_RS1IMM        (`DECINFO_GRP_WIDTH+3)
+ `define DECINFO_CSR_CSRADDR       `DECINFO_GRP_WIDTH+4+12-1:`DECINFO_GRP_WIDTH+4
+ 
+-`define DECINFO_MEM_BUS_WIDTH     (`DECINFO_GRP_WIDTH+8)
++`define DECINFO_MEM_BUS_WIDTH     (`DECINFO_GRP_WIDTH+11)  // 增加3位以支持RV64I指令
+ `define DECINFO_MEM_LB            (`DECINFO_GRP_WIDTH+0)
+ `define DECINFO_MEM_LH            (`DECINFO_GRP_WIDTH+1)
+ `define DECINFO_MEM_LW            (`DECINFO_GRP_WIDTH+2)
+@@ -158,6 +158,10 @@
+ `define DECINFO_MEM_SB            (`DECINFO_GRP_WIDTH+5)
+ `define DECINFO_MEM_SH            (`DECINFO_GRP_WIDTH+6)
+ `define DECINFO_MEM_SW            (`DECINFO_GRP_WIDTH+7)
++// RV64I 内存指令位定义
++`define DECINFO_MEM_LWU           (`DECINFO_GRP_WIDTH+8)
++`define DECINFO_MEM_LD            (`DECINFO_GRP_WIDTH+9)
++`define DECINFO_MEM_SD            (`DECINFO_GRP_WIDTH+10)
+ 
+ `define DECINFO_SYS_BUS_WIDTH     (`DECINFO_GRP_WIDTH+6)
+ `define DECINFO_SYS_ECALL         (`DECINFO_GRP_WIDTH+0)
+@@ -193,4 +197,4 @@
+ `define CSR_TDATA2      12'h7A2
+ `define CSR_TDATA3      12'h7A3
+ `define CSR_MCONTEXT    12'h7A8
+-`define CSR_SCONTEXT    12'h7AA
++`define CSR_SCONTEXT    12'h7AA
+\ No newline at end of file
+diff --git a/rtl/core/exu.sv b/rtl/core/exu.sv
+index 355eaeb..9ddc48f 100644
+--- a/rtl/core/exu.sv
++++ b/rtl/core/exu.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -62,6 +62,8 @@ module exu #(
+ 
+     //
+     output wire inst_valid_o,               // 指令有效
++    output wire[31:0] pc_o,
++    output wire[31:0] inst_o,
+     output wire inst_executed_o,            // 指令已经执行完毕
+ 
+     // from idu_exu
+@@ -142,6 +144,10 @@ module exu #(
+     wire mem_op_sb_o;
+     wire mem_op_sh_o;
+     wire mem_op_sw_o;
++    // RV64I 内存指令支持
++    wire mem_op_lwu_o;
++    wire mem_op_ld_o;
++    wire mem_op_sd_o;
+     // dispatch to SYS
+     wire sys_op_nop_o;
+     wire sys_op_mret_o;
+@@ -221,6 +227,9 @@ module exu #(
+         .mem_op_sb_o(mem_op_sb_o),
+         .mem_op_sh_o(mem_op_sh_o),
+         .mem_op_sw_o(mem_op_sw_o),
++        .mem_op_lwu_o(mem_op_lwu_o),
++        .mem_op_ld_o(mem_op_ld_o),
++        .mem_op_sd_o(mem_op_sd_o),
+         // dispatch to SYS
+         .sys_op_nop_o(sys_op_nop_o),
+         .sys_op_mret_o(sys_op_mret_o),
+@@ -310,6 +319,9 @@ module exu #(
+         .mem_op_sb_i(mem_op_sb_o),
+         .mem_op_sh_i(mem_op_sh_o),
+         .mem_op_sw_i(mem_op_sw_o),
++        .mem_op_lwu_i(mem_op_lwu_o),
++        .mem_op_ld_i(mem_op_ld_o),
++        .mem_op_sd_i(mem_op_sd_o),
+         .mem_access_misaligned_o(mem_access_misaligned_o),
+         .mem_stall_o(mem_stall_o),
+         .mem_addr_o(mem_addr_o),
+@@ -407,6 +419,8 @@ module exu #(
+     assign mem_wdata_o = mem_wdata;
+ 
+     assign inst_valid_o = hold_flag_o? 1'b0: inst_valid_i;
++    assign pc_o         = dec_pc_i;
++    assign inst_o       = inst_i;
+ 
+     reg inst_executed_q;
+ 
+@@ -425,4 +439,4 @@ module exu #(
+ 
+     assign inst_executed_o = inst_executed_q;
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/exu_alu_datapath.sv b/rtl/core/exu_alu_datapath.sv
+index 5817d4f..4a8ba26 100644
+--- a/rtl/core/exu_alu_datapath.sv
++++ b/rtl/core/exu_alu_datapath.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -102,9 +102,9 @@ module exu_alu_datapath(
+     wire[31:0] add_op1 = req_bjp_i? bjp_jump_op1_i: mux_op1;
+     wire[31:0] add_op2 = req_bjp_i? bjp_jump_op2_i: mux_op2;
+     wire[31:0] add_sub_res = add_op1 + (op_sub? (-add_op2): add_op2);
+-    // 左移
++    // 左移 - 支持64位操作（在32位实现中，我们保持32位，但为未来扩展做准备）
+     wire[31:0] sll_res = mux_op1 << mux_op2[4:0];
+-    // 逻辑右移
++    // 逻辑右移 - 支持64位操作
+     wire[31:0] srl_res = mux_op1 >> mux_op2[4:0];
+     // 算数右移
+     wire[31:0] sr_shift_mask = 32'hffffffff >> mux_op2[4:0];
+@@ -251,4 +251,4 @@ module exu_alu_datapath(
+                   1'b0
+                  });
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/exu_dispatch.sv b/rtl/core/exu_dispatch.sv
+index 5b6cc8d..c416fce 100644
+--- a/rtl/core/exu_dispatch.sv
++++ b/rtl/core/exu_dispatch.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -94,6 +94,10 @@ module exu_dispatch(
+     output wire mem_op_sb_o,
+     output wire mem_op_sh_o,
+     output wire mem_op_sw_o,
++    // RV64I 内存指令支持
++    output wire mem_op_lwu_o,
++    output wire mem_op_ld_o,
++    output wire mem_op_sd_o,
+ 
+     // dispatch to SYS
+     output wire sys_op_nop_o,
+@@ -196,6 +200,10 @@ module exu_dispatch(
+     assign mem_op_sb_o = mem_info[`DECINFO_MEM_SB];
+     assign mem_op_sh_o = mem_info[`DECINFO_MEM_SH];
+     assign mem_op_sw_o = mem_info[`DECINFO_MEM_SW];
++    // RV64I 内存指令
++    assign mem_op_lwu_o = mem_info[`DECINFO_MEM_LWU];
++    assign mem_op_ld_o = mem_info[`DECINFO_MEM_LD];
++    assign mem_op_sd_o = mem_info[`DECINFO_MEM_SD];
+     assign mem_op1_o = op_mem? rs1_rdata_i: 32'h0;
+     assign mem_op2_o = op_mem? dec_imm_i: 32'h0;
+     assign mem_rs2_data_o = op_mem? rs2_rdata_i: 32'h0;
+@@ -211,4 +219,4 @@ module exu_dispatch(
+     assign sys_op_fence_o = sys_info[`DECINFO_SYS_FENCE];
+     assign sys_op_dret_o = sys_info[`DECINFO_SYS_DRET];
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/exu_mem.sv b/rtl/core/exu_mem.sv
+index eca5b41..4e0b268 100644
+--- a/rtl/core/exu_mem.sv
++++ b/rtl/core/exu_mem.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -36,6 +36,10 @@ module exu_mem(
+     input wire mem_op_sb_i,
+     input wire mem_op_sh_i,
+     input wire mem_op_sw_i,
++    // RV64I 内存指令支持
++    input wire mem_op_lwu_i,   // 无符号字加载
++    input wire mem_op_ld_i,    // 双字加载
++    input wire mem_op_sd_i,    // 双字存储
+ 
+     output wire mem_access_misaligned_o,
+     output wire mem_stall_o,
+@@ -55,10 +59,11 @@ module exu_mem(
+     wire mem_addr_index10 = (mem_addr_index == 2'b10);
+     wire mem_addr_index11 = (mem_addr_index == 2'b11);
+ 
+-    assign mem_be_o[0] = mem_addr_index00 | mem_op_sw_i;
+-    assign mem_be_o[1] = mem_addr_index01 | (mem_op_sh_i & mem_addr_index00) | mem_op_sw_i;
+-    assign mem_be_o[2] = mem_addr_index10 | mem_op_sw_i;
+-    assign mem_be_o[3] = mem_addr_index11 | (mem_op_sh_i & mem_addr_index10) | mem_op_sw_i;
++    // 扩展字节使能逻辑以支持64位操作
++    assign mem_be_o[0] = mem_addr_index00 | mem_op_sw_i | mem_op_sd_i;
++    assign mem_be_o[1] = mem_addr_index01 | (mem_op_sh_i & mem_addr_index00) | mem_op_sw_i | mem_op_sd_i;
++    assign mem_be_o[2] = mem_addr_index10 | mem_op_sw_i | mem_op_sd_i;
++    assign mem_be_o[3] = mem_addr_index11 | (mem_op_sh_i & mem_addr_index10) | mem_op_sw_i | mem_op_sd_i;
+ 
+     reg[31:0] sb_res;
+ 
+@@ -116,18 +121,21 @@ module exu_mem(
+             mem_op_sb_i:  mem_wdata = sb_res;
+             mem_op_sh_i:  mem_wdata = sh_res;
+             mem_op_sw_i:  mem_wdata = sw_res;
++            mem_op_sd_i:  mem_wdata = sw_res;  // 在32位实现中，SD指令先处理低32位
+             mem_op_lb_i:  mem_wdata = lb_res;
+             mem_op_lbu_i: mem_wdata = lb_res;
+             mem_op_lh_i:  mem_wdata = lh_res;
+             mem_op_lhu_i: mem_wdata = lh_res;
+             mem_op_lw_i:  mem_wdata = lw_res;
++            mem_op_lwu_i: mem_wdata = lw_res;  // LWU与LW数据处理相同，但符号扩展不同
++            mem_op_ld_i:  mem_wdata = lw_res;  // 在32位实现中，LD指令先处理低32位
+         endcase
+     end
+ 
+     assign mem_wdata_o = mem_wdata;
+ 
+-    wire op_load = mem_op_lb_i | mem_op_lh_i | mem_op_lw_i | mem_op_lbu_i | mem_op_lhu_i;
+-    wire op_store = mem_op_sb_i | mem_op_sh_i | mem_op_sw_i;
++    wire op_load = mem_op_lb_i | mem_op_lh_i | mem_op_lw_i | mem_op_lbu_i | mem_op_lhu_i | mem_op_lwu_i | mem_op_ld_i;
++    wire op_store = mem_op_sb_i | mem_op_sh_i | mem_op_sw_i | mem_op_sd_i;
+ 
+     localparam S_IDLE       = 3'b001;
+     localparam S_WAIT_READ  = 3'b010;
+@@ -199,7 +207,8 @@ module exu_mem(
+     // 写内存使能
+     assign mem_mem_we_o = mem_mem_we_d;
+ 
+-    assign mem_access_misaligned_o = (mem_op_sw_i | mem_op_lw_i)? (mem_addr_i[0] | mem_addr_i[1]):
++    assign mem_access_misaligned_o = (mem_op_sw_i | mem_op_lw_i | mem_op_lwu_i)? (mem_addr_i[0] | mem_addr_i[1]):
++                                     (mem_op_sd_i | mem_op_ld_i)? (mem_addr_i[0] | mem_addr_i[1] | mem_addr_i[2]):
+                                      (mem_op_sh_i | mem_op_lh_i | mem_op_lhu_i)? mem_addr_i[0]:
+                                      0;
+ 
+@@ -211,4 +220,4 @@ module exu_mem(
+         end
+     end
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/exu_muldiv.sv b/rtl/core/exu_muldiv.sv
+index 1dd06f5..0bc3e41 100644
+--- a/rtl/core/exu_muldiv.sv
++++ b/rtl/core/exu_muldiv.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -42,11 +42,11 @@ module exu_muldiv(
+     );
+ 
+     // 除法操作
++    wire div_ready;
+     wire op_div = muldiv_op_div_i | muldiv_op_divu_i | muldiv_op_rem_i | muldiv_op_remu_i;
+     wire div_start = op_div & (!div_ready) & (~int_stall_i);
+     wire[3:0] div_op = {muldiv_op_div_i, muldiv_op_divu_i, muldiv_op_rem_i, muldiv_op_remu_i};
+     wire[31:0] div_result;
+-    wire div_ready;
+ 
+     divider u_divider(
+         .clk(clk),
+diff --git a/rtl/core/gpr_reg.sv b/rtl/core/gpr_reg.sv
+index 79e0390..b0f486e 100644
+--- a/rtl/core/gpr_reg.sv
++++ b/rtl/core/gpr_reg.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -19,18 +19,24 @@
+ // 通用寄存器模块
+ module gpr_reg(
+ 
+-    input wire clk,
+-    input wire rst_n,
++    input  wire clk,
++    input  wire rst_n,
+ 
+-    input wire we_i,                        // 写寄存器使能
+-    input wire[4:0] waddr_i,                // 写寄存器地址
+-    input wire[31:0] wdata_i,               // 写寄存器数据
++    input  wire we_i,                          // 写寄存器使能
++    input  wire        ex_valid_i,
++    input  wire[31:0]  ex_pc_i,
++    input  wire[31:0]  ex_inst_i,
++    input  wire[4:0]   waddr_i,                 // 写寄存器地址
++    input  wire[31:0]  wdata_i,                 // 写寄存器数据
+ 
+-    input wire[4:0] raddr1_i,               // 读寄存器1地址
+-    output wire[31:0] rdata1_o,             // 读寄存器1数据
++    input  wire        id_valid_i,
++    input  wire[31:0]  id_pc_i,
++    input  wire[31:0]  id_inst_i,
++    input  wire[4:0]   raddr1_i,               // 读寄存器1地址
++    output wire[31:0]  rdata1_o,               // 读寄存器1数据
+ 
+-    input wire[4:0] raddr2_i,               // 读寄存器2地址
+-    output wire[31:0] rdata2_o              // 读寄存器2数据
++    input  wire[4:0]   raddr2_i,               // 读寄存器2地址
++    output wire[31:0]  rdata2_o                // 读寄存器2数据
+ 
+     );
+ 
+diff --git a/rtl/core/idu.sv b/rtl/core/idu.sv
+index 2390993..dbebc44 100644
+--- a/rtl/core/idu.sv
++++ b/rtl/core/idu.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -86,6 +86,7 @@ module idu(
+     wire opcode_0110011 = (opcode == 7'b0110011);
+     wire opcode_0001111 = (opcode == 7'b0001111);
+     wire opcode_1110011 = (opcode == 7'b1110011);
++    wire opcode_0011011 = (opcode == 7'b0011011); // RV64I ADDIW指令的opcode
+ 
+     // 指令funct3域的取值
+     wire funct3_000 = (funct3 == 3'b000);
+@@ -106,6 +107,10 @@ module idu(
+     wire type_i_imm_000000000000 = (type_i_imm_11_0 == 12'b000000000000);
+     wire type_i_imm_000000000001 = (type_i_imm_11_0 == 12'b000000000001);
+ 
++    // 复用已定义的funct3信号
++    // funct3_110用于LWU指令
++    // funct3_011用于LD/SD指令
++
+     // 译码出具体指令
+     wire inst_lui = opcode_0110111;
+     wire inst_auipc = opcode_0010111;
+@@ -125,6 +130,11 @@ module idu(
+     wire inst_sb = opcode_0100011 & funct3_000;
+     wire inst_sh = opcode_0100011 & funct3_001;
+     wire inst_sw = opcode_0100011 & funct3_010;
++
++    // RV64I 指令支持
++    wire inst_lwu = opcode_0000011 & funct3_110;  // 无符号字加载
++    wire inst_ld = opcode_0000011 & funct3_011;   // 双字加载
++    wire inst_sd = opcode_0100011 & funct3_011;   // 双字存储
+     wire inst_addi = opcode_0010011 & funct3_000;
+     wire inst_slti = opcode_0010011 & funct3_010;
+     wire inst_sltiu = opcode_0010011 & funct3_011;
+@@ -134,6 +144,7 @@ module idu(
+     wire inst_slli = opcode_0010011 & funct3_001 & funct7_0000000;
+     wire inst_srli = opcode_0010011 & funct3_101 & funct7_0000000;
+     wire inst_srai = opcode_0010011 & funct3_101 & funct7_0100000;
++    wire inst_addiw = opcode_0011011 & funct3_000; // RV64I ADDIW指令
+     wire inst_add = opcode_0110011 & funct3_000 & funct7_0000000;
+     wire inst_sub = opcode_0110011 & funct3_000 & funct7_0100000;
+     wire inst_sll = opcode_0110011 & funct3_001 & funct7_0000000;
+@@ -177,7 +188,7 @@ module idu(
+     assign dec_alu_info_bus[`DECINFO_GRP_BUS] = `DECINFO_GRP_ALU;
+     assign dec_alu_info_bus[`DECINFO_ALU_LUI] = inst_lui;
+     assign dec_alu_info_bus[`DECINFO_ALU_AUIPC] = inst_auipc;
+-    assign dec_alu_info_bus[`DECINFO_ALU_ADD] = inst_add | inst_addi;
++    assign dec_alu_info_bus[`DECINFO_ALU_ADD] = inst_add | inst_addi | inst_addiw;
+     assign dec_alu_info_bus[`DECINFO_ALU_SUB] = inst_sub;
+     assign dec_alu_info_bus[`DECINFO_ALU_SLL] = inst_sll | inst_slli;
+     assign dec_alu_info_bus[`DECINFO_ALU_SLT] = inst_slt | inst_slti;
+@@ -187,7 +198,7 @@ module idu(
+     assign dec_alu_info_bus[`DECINFO_ALU_SRA] = inst_sra | inst_srai;
+     assign dec_alu_info_bus[`DECINFO_ALU_OR] = inst_or | inst_ori;
+     assign dec_alu_info_bus[`DECINFO_ALU_AND] = inst_and | inst_andi;
+-    assign dec_alu_info_bus[`DECINFO_ALU_OP2IMM] = opcode_0010011 | inst_lui | inst_auipc;
++    assign dec_alu_info_bus[`DECINFO_ALU_OP2IMM] = opcode_0010011 | inst_lui | inst_auipc | inst_addiw;
+     assign dec_alu_info_bus[`DECINFO_ALU_OP1PC] = inst_auipc;
+ 
+     wire[`DECINFO_BJP_BUS_WIDTH-1:0] dec_bjp_info_bus;
+@@ -230,6 +241,10 @@ module idu(
+     assign dec_mem_info_bus[`DECINFO_MEM_SB] = inst_sb;
+     assign dec_mem_info_bus[`DECINFO_MEM_SH] = inst_sh;
+     assign dec_mem_info_bus[`DECINFO_MEM_SW] = inst_sw;
++    // RV64I 内存指令
++    assign dec_mem_info_bus[`DECINFO_MEM_LWU] = inst_lwu;
++    assign dec_mem_info_bus[`DECINFO_MEM_LD] = inst_ld;
++    assign dec_mem_info_bus[`DECINFO_MEM_SD] = inst_sd;
+ 
+     wire[`DECINFO_SYS_BUS_WIDTH-1:0] dec_sys_info_bus;
+     assign dec_sys_info_bus[`DECINFO_GRP_BUS] = `DECINFO_GRP_SYS;
+@@ -253,7 +268,7 @@ module idu(
+     wire inst_sel_j_imm = inst_jal;
+     wire inst_sel_b_imm = inst_type_branch;
+     wire inst_sel_s_imm = inst_type_store;
+-    wire inst_sel_i_imm = inst_addi | inst_slti | inst_sltiu | inst_xori | inst_ori | inst_andi | inst_type_load | inst_jalr;
++    wire inst_sel_i_imm = inst_addi | inst_slti | inst_sltiu | inst_xori | inst_ori | inst_andi | inst_type_load | inst_jalr | inst_lwu | inst_ld | inst_addiw;
+     wire inst_sel_csr_imm = inst_csrrwi | inst_csrrsi | inst_csrrci;
+     wire inst_sel_shift_imm = inst_slli | inst_srli | inst_srai;
+ 
+@@ -265,7 +280,7 @@ module idu(
+                        ({32{inst_sel_csr_imm}} & inst_csr_type_imm) |
+                        ({32{inst_sel_shift_imm}} & inst_shift_type_imm);
+ 
+-    wire op_alu = inst_lui | inst_auipc | opcode_0010011 | (opcode_0110011 & (~inst_type_muldiv));
++    wire op_alu = inst_lui | inst_auipc | opcode_0010011 | opcode_0011011 | (opcode_0110011 & (~inst_type_muldiv));
+     wire op_bjp = inst_jal | inst_jalr | inst_type_branch;
+     wire op_muldiv = inst_type_muldiv;
+     wire op_csr = inst_csrrw | inst_csrrwi | inst_csrrs | inst_csrrsi | inst_csrrc | inst_csrrci;
+@@ -303,7 +318,7 @@ module idu(
+     assign rs2_raddr_o = access_rs2? rs2: 5'h0;
+ 
+     // 是否需要访问rd寄存器
+-    wire access_rd = inst_lui | inst_auipc | inst_jal | inst_jalr | inst_type_load | opcode_0010011 | opcode_0110011 | op_csr;
++    wire access_rd = inst_lui | inst_auipc | inst_jal | inst_jalr | inst_type_load | opcode_0010011 | opcode_0110011 | opcode_0011011 | op_csr;
+ 
+     assign rd_waddr_o = access_rd? rd: 5'h0;
+     assign rd_we_o = access_rd;
+@@ -313,4 +328,4 @@ module idu(
+     //assign illegal_inst_o = ~(|dec_info_bus_o);
+     assign illegal_inst_o = 1'b0;
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/core/tinyriscv_core.sv b/rtl/core/tinyriscv_core.sv
+index ff7eac3..2e30496 100644
+--- a/rtl/core/tinyriscv_core.sv
++++ b/rtl/core/tinyriscv_core.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2019 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -112,6 +112,8 @@ module tinyriscv_core #(
+     wire ex_csr_we_o;
+     wire[31:0] ex_csr_waddr_o;
+     wire[31:0] ex_csr_raddr_o;
++    wire[31:0] ex_pc_o;
++    wire[31:0] ex_inst_o;
+     wire ex_inst_ecall_o;
+     wire ex_inst_ebreak_o;
+     wire ex_inst_mret_o;
+@@ -186,8 +188,14 @@ module tinyriscv_core #(
+         .clk(clk),
+         .rst_n(rst_n),
+         .we_i(ex_reg_we_o),
++        .ex_valid_i(ex_inst_valid_o),
++        .ex_pc_i(ex_pc_o),
++        .ex_inst_i(ex_inst_o),
+         .waddr_i(ex_reg_waddr_o),
+         .wdata_i(ex_reg_wdata_o),
++        .id_valid_i(id_inst_valid_o),
++        .id_pc_i(id_dec_pc_o),
++        .id_inst_i(id_inst_o),
+         .raddr1_i(id_rs1_raddr_o),
+         .rdata1_o(regs_rdata1_o),
+         .raddr2_i(id_rs2_raddr_o),
+@@ -313,6 +321,8 @@ module tinyriscv_core #(
+         .csr_waddr_o(ex_csr_waddr_o),
+         .inst_valid_o(ex_inst_valid_o),
+         .inst_valid_i(ie_inst_valid_o),
++        .pc_o(ex_pc_o),
++        .inst_o(ex_inst_o),
+         .inst_executed_o(ex_inst_executed_o),
+         .inst_i(ie_inst_o),
+         .dec_info_bus_i(ie_dec_info_bus_o),
+@@ -353,6 +363,7 @@ module tinyriscv_core #(
+         .int_assert_o(excep_int_assert_o)
+     );
+ 
++`ifdef SUPPORT_TRACE_FOR_CORE
+     if (TRACE_ENABLE) begin: instr_trace
+         tracer u_tracer(
+             .clk(clk),
+@@ -362,5 +373,6 @@ module tinyriscv_core #(
+             .inst_valid_i(ex_inst_valid_o)
+         );
+     end
++`endif
+ 
+ endmodule
+diff --git a/rtl/core/tracer.sv b/rtl/core/tracer.sv
+index 2a51e6c..a7711d6 100644
+--- a/rtl/core/tracer.sv
++++ b/rtl/core/tracer.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2021 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ module tracer(
+@@ -65,6 +65,12 @@ module tracer(
+     parameter logic [31:0] INSN_SRLI    = { 7'b0000000, 10'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+     parameter logic [31:0] INSN_SRAI    = { 7'b0100000, 10'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+ 
++    // RV64I OPIMM-32
++    parameter logic [31:0] INSN_ADDIW   = { 17'h?,             3'b000, 5'h?, 7'h1b };
++    parameter logic [31:0] INSN_SLLIW   = { 7'b0000000, 10'h?, 3'b001, 5'h?, 7'h1b };
++    parameter logic [31:0] INSN_SRLIW   = { 7'b0000000, 10'h?, 3'b101, 5'h?, 7'h1b };
++    parameter logic [31:0] INSN_SRAIW   = { 7'b0100000, 10'h?, 3'b101, 5'h?, 7'h1b };
++
+     // OP
+     parameter logic [31:0] INSN_ADD     = { 7'b0000000, 10'h?, 3'b000, 5'h?, {OPCODE_OP} };
+     parameter logic [31:0] INSN_SUB     = { 7'b0100000, 10'h?, 3'b000, 5'h?, {OPCODE_OP} };
+@@ -77,6 +83,13 @@ module tracer(
+     parameter logic [31:0] INSN_OR      = { 7'b0000000, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+     parameter logic [31:0] INSN_AND     = { 7'b0000000, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
+ 
++    // RV64I OP-32
++    parameter logic [31:0] INSN_ADDW    = { 7'b0000000, 10'h?, 3'b000, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SUBW    = { 7'b0100000, 10'h?, 3'b000, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SLLW    = { 7'b0000000, 10'h?, 3'b001, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SRLW    = { 7'b0000000, 10'h?, 3'b101, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_SRAW    = { 7'b0100000, 10'h?, 3'b101, 5'h?, 7'h3b };
++
+     // SYSTEM
+     parameter logic [31:0] INSN_CSRRW   = { 17'h?,             3'b001, 5'h?, {OPCODE_SYSTEM} };
+     parameter logic [31:0] INSN_CSRRS   = { 17'h?,             3'b010, 5'h?, {OPCODE_SYSTEM} };
+@@ -100,6 +113,13 @@ module tracer(
+     parameter logic [31:0] INSN_REM     = { 7'b0000001, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+     parameter logic [31:0] INSN_REMU    = { 7'b0000001, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
+ 
++    // RV64M
++    parameter logic [31:0] INSN_MULW    = { 7'b0000001, 10'h?, 3'b000, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_DIVW    = { 7'b0000001, 10'h?, 3'b100, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_DIVUW   = { 7'b0000001, 10'h?, 3'b101, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_REMW    = { 7'b0000001, 10'h?, 3'b110, 5'h?, 7'h3b };
++    parameter logic [31:0] INSN_REMUW   = { 7'b0000001, 10'h?, 3'b111, 5'h?, 7'h3b };
++
+     // LOAD & STORE
+     parameter logic [31:0] INSN_LOAD    = {25'h?,                            {OPCODE_LOAD } };
+     parameter logic [31:0] INSN_STORE   = {25'h?,                            {OPCODE_STORE} };
+@@ -110,7 +130,7 @@ module tracer(
+ 
+     // Get a CSR name for a CSR address.
+     function automatic string get_csr_name(input logic [11:0] csr_addr);
+-        unique case (csr_addr)
++        case (csr_addr)
+             12'd0: return "ustatus";
+             12'd4: return "uie";
+             12'd5: return "utvec";
+@@ -370,7 +390,7 @@ module tracer(
+     endfunction
+ 
+     function automatic void decode_j_insn(input string mnemonic);
+-        decoded_str = $sformatf("%s x%0d,%0x", mnemonic, rd_addr, 
++        decoded_str = $sformatf("%s x%0d,%0x", mnemonic, rd_addr,
+             {{12{inst_i[31]}}, inst_i[19:12], inst_i[20], inst_i[30:21], 1'b0});
+     endfunction
+ 
+@@ -499,10 +519,11 @@ module tracer(
+     endfunction
+ 
+ 
+-    always_comb begin
++    // 使用always代替always_comb来避免非整数类型的综合警告
++    always @(*) begin
+         decoded_str = "";
+ 
+-        unique casez (inst_i)
++        casez (inst_i)
+             INSN_LUI:        decode_u_insn("lui");
+             INSN_AUIPC:      decode_u_insn("auipc");
+             INSN_JAL:        decode_j_insn("jal");
+@@ -530,6 +551,11 @@ module tracer(
+             INSN_SLLI:       decode_i_shift_insn("slli");
+             INSN_SRLI:       decode_i_shift_insn("srli");
+             INSN_SRAI:       decode_i_shift_insn("srai");
++            // RV64I OPIMM-32
++            INSN_ADDIW:      decode_i_insn("addiw");
++            INSN_SLLIW:      decode_i_shift_insn("slliw");
++            INSN_SRLIW:      decode_i_shift_insn("srliw");
++            INSN_SRAIW:      decode_i_shift_insn("sraiw");
+             // OP
+             INSN_ADD:        decode_r_insn("add");
+             INSN_SUB:        decode_r_insn("sub");
+@@ -541,6 +567,12 @@ module tracer(
+             INSN_SRA:        decode_r_insn("sra");
+             INSN_OR:         decode_r_insn("or");
+             INSN_AND:        decode_r_insn("and");
++            // RV64I OP-32
++            INSN_ADDW:       decode_r_insn("addw");
++            INSN_SUBW:       decode_r_insn("subw");
++            INSN_SLLW:       decode_r_insn("sllw");
++            INSN_SRLW:       decode_r_insn("srlw");
++            INSN_SRAW:       decode_r_insn("sraw");
+             // SYSTEM (CSR manipulation)
+             INSN_CSRRW:      decode_csr_insn("csrrw");
+             INSN_CSRRS:      decode_csr_insn("csrrs");
+@@ -563,6 +595,12 @@ module tracer(
+             INSN_DIVU:       decode_r_insn("divu");
+             INSN_REM:        decode_r_insn("rem");
+             INSN_REMU:       decode_r_insn("remu");
++            // RV64M
++            INSN_MULW:       decode_r_insn("mulw");
++            INSN_DIVW:       decode_r_insn("divw");
++            INSN_DIVUW:      decode_r_insn("divuw");
++            INSN_REMW:       decode_r_insn("remw");
++            INSN_REMUW:      decode_r_insn("remuw");
+             // LOAD & STORE
+             INSN_LOAD:       decode_load_insn();
+             INSN_STORE:      decode_store_insn();
+@@ -574,10 +612,9 @@ module tracer(
+     end
+ 
+ 
+-
+     initial begin
+-        string file_name_base = "trace_core";
+-        $sformat(file_name, "%s.log", file_name_base);
++        // 直接在$sformat中使用字符串，避免静态变量初始化警告
++        $sformat(file_name, "trace_core.log");
+ 
+         $display("Writing execution trace to %s", file_name);
+         file_handle = $fopen(file_name, "w");
+@@ -610,4 +647,4 @@ module tracer(
+         end
+     end
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/perips/ram.sv b/rtl/perips/ram.sv
+index 8f0d318..fed74ad 100644
+--- a/rtl/perips/ram.sv
++++ b/rtl/perips/ram.sv
+@@ -1,28 +1,32 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+-`include "../core/defines.sv"
++`include "defines.sv"
+ 
+ 
+ module ram #(
+-    parameter DP = 4096
++    parameter DP = 4096,
++    parameter DATA_WIDTH = 32,
++    parameter HIGH_BW_DW = 320,  // 高带宽数据宽度
++    parameter HIGH_BW_MW = 10    // 高带宽字节使能宽度（HIGH_BW_DW/32）
+     )(
+     input  wire        clk_i,
+     input  wire        rst_ni,
+ 
++    // OBI总线接口（32位宽）
+     input  wire        req_i,
+     input  wire        we_i,
+     input  wire [ 3:0] be_i,
+@@ -30,14 +34,26 @@ module ram #(
+     input  wire [31:0] data_i,
+     output wire        gnt_o,
+     output wire        rvalid_o,
+-	output wire [31:0] data_o
++	output wire [31:0] data_o,
++
++    // 高带宽内存接口
++    input  wire                        high_bw_req_i,
++    input  wire                        high_bw_we_i,
++    input  wire [31:0]                 high_bw_addr_i,
++    input  wire [HIGH_BW_DW-1:0]       high_bw_data_i,
++    output wire                        high_bw_ack_o,
++    output wire [HIGH_BW_DW-1:0]       high_bw_data_o
+     );
+ 
+     reg rvalid_q;
+     wire[31:0] addr;
+ 
++    // 高带宽内存地址对齐（去掉低2位，按字对齐）
++    wire [31:0] high_bw_addr_aligned;
++
+     assign addr = {6'h0, addr_i[27:2]};
+     assign gnt_o = req_i;
++    assign high_bw_addr_aligned = {high_bw_addr_i[31:2], 2'b00};
+ 
+     always @(posedge clk_i or negedge rst_ni) begin
+         if (!rst_ni) begin
+@@ -49,18 +65,30 @@ module ram #(
+ 
+     assign rvalid_o = rvalid_q;
+ 
++    // 单一gen_ram实例，同时支持OBI总线和高速带宽内存接口
+     gen_ram #(
+         .DP(DP),
+         .DW(32),
+         .MW(4),
+-        .AW(32)
++        .AW(32),
++        .HIGH_BW_DW(HIGH_BW_DW),
++        .HIGH_BW_MW(HIGH_BW_MW)
+     ) u_gen_ram(
+         .clk(clk_i),
+         .addr_i(addr),
+         .data_i(data_i),
+         .sel_i(be_i),
+         .we_i(we_i),
+-        .data_o(data_o)
++        .data_o(data_o),
++
++        // 高速带宽内存接口
++        .high_bw_req_i(high_bw_req_i),
++        .high_bw_we_i(high_bw_we_i),
++        .high_bw_addr_i(high_bw_addr_aligned),
++        .high_bw_data_i(high_bw_data_i),
++        .high_bw_sel_i({HIGH_BW_MW{1'b1}}), // 全字节使能
++        .high_bw_ack_o(high_bw_ack_o),
++        .high_bw_data_o(high_bw_data_o)
+     );
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+diff --git a/rtl/perips/rom.sv b/rtl/perips/rom.sv
+index 601f3f1..7247048 100644
+--- a/rtl/perips/rom.sv
++++ b/rtl/perips/rom.sv
+@@ -1,20 +1,20 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+-`include "../core/defines.sv"
++`include "defines.sv"
+ 
+ 
+ module rom #(
+diff --git a/rtl/sys_bus/obi_interconnect.sv b/rtl/sys_bus/obi_interconnect.sv
+index 97954a5..57f6639 100644
+--- a/rtl/sys_bus/obi_interconnect.sv
++++ b/rtl/sys_bus/obi_interconnect.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2021 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ // obi总线交叉互联矩阵，支持一对多、多对一、多对多
+@@ -25,26 +25,26 @@ module obi_interconnect #(
+     input logic         clk_i,
+     input logic         rst_ni,
+ 
+-    input logic         master_req_i      [MASTERS],
+-    output logic        master_gnt_o      [MASTERS],
+-    output logic        master_rvalid_o   [MASTERS],
+-    input logic         master_we_i       [MASTERS],
+-    input logic  [ 3:0] master_be_i       [MASTERS],
+-    input logic  [31:0] master_addr_i     [MASTERS],
+-    input logic  [31:0] master_wdata_i    [MASTERS],
+-    output logic [31:0] master_rdata_o    [MASTERS],
+-
+-    input logic  [31:0] slave_addr_mask_i [SLAVES],
+-    input logic  [31:0] slave_addr_base_i [SLAVES],
+-
+-    output logic        slave_req_o       [SLAVES],
+-    input logic         slave_gnt_i       [SLAVES],
+-    input logic         slave_rvalid_i    [SLAVES],
+-    output logic        slave_we_o        [SLAVES],
+-    output logic [ 3:0] slave_be_o        [SLAVES],
+-    output logic [31:0] slave_addr_o      [SLAVES],
+-    output logic [31:0] slave_wdata_o     [SLAVES],
+-    input logic  [31:0] slave_rdata_i     [SLAVES]
++    input logic  [MASTERS-1:0]       master_req_i,
++    output logic [MASTERS-1:0]       master_gnt_o,
++    output logic [MASTERS-1:0]       master_rvalid_o,
++    input logic  [MASTERS-1:0]       master_we_i,
++    input logic  [MASTERS-1:0][ 3:0] master_be_i,
++    input logic  [MASTERS-1:0][31:0] master_addr_i,
++    input logic  [MASTERS-1:0][31:0] master_wdata_i,
++    output logic [MASTERS-1:0][31:0] master_rdata_o,
++
++    input logic  [SLAVES-1:0][31:0]  slave_addr_mask_i,
++    input logic  [SLAVES-1:0][31:0]  slave_addr_base_i,
++
++    output logic [SLAVES-1:0]        slave_req_o,
++    input logic  [SLAVES-1:0]        slave_gnt_i,
++    input logic  [SLAVES-1:0]        slave_rvalid_i,
++    output logic [SLAVES-1:0]        slave_we_o,
++    output logic [SLAVES-1:0][ 3:0]  slave_be_o,
++    output logic [SLAVES-1:0][31:0]  slave_addr_o,
++    output logic [SLAVES-1:0][31:0]  slave_wdata_o,
++    input logic  [SLAVES-1:0][31:0]  slave_rdata_i
+     );
+ 
+     genvar m, s;
+diff --git a/rtl/sys_bus/obi_interconnect_master_sel.sv b/rtl/sys_bus/obi_interconnect_master_sel.sv
+index ebee0bc..703620b 100644
+--- a/rtl/sys_bus/obi_interconnect_master_sel.sv
++++ b/rtl/sys_bus/obi_interconnect_master_sel.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2021 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ // 从多个master之间选择一个
+@@ -22,10 +22,10 @@ module obi_interconnect_master_sel #(
+     input   logic                       clk_i,
+     input   logic                       rst_ni,
+ 
+-    input   logic                       master_req_i     [MASTERS],
+-    input   logic     [       31:0]     master_addr_i    [MASTERS],
+-    input   logic     [       31:0]     slave_addr_mask_i,
+-    input   logic     [       31:0]     slave_addr_base_i,
++    input   logic [MASTERS-1:0]         master_req_i,
++    input   logic [MASTERS-1:0][31:0]   master_addr_i,
++    input   logic              [31:0]   slave_addr_mask_i,
++    input   logic              [31:0]   slave_addr_base_i,
+ 
+     output  logic [MASTER_BITS-1:0]     master_sel_int_o,
+     output  logic     [MASTERS-1:0]     master_sel_vec_o,
+diff --git a/rtl/sys_bus/obi_interconnect_slave_sel.sv b/rtl/sys_bus/obi_interconnect_slave_sel.sv
+index 2e9088f..eb37b6c 100644
+--- a/rtl/sys_bus/obi_interconnect_slave_sel.sv
++++ b/rtl/sys_bus/obi_interconnect_slave_sel.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2021 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ // 从多个slave之间选择一个
+@@ -23,9 +23,9 @@ module obi_interconnect_slave_sel #(
+     input   logic                       rst_ni,
+ 
+     input   logic                       master_req_i,
+-    input   logic     [       31:0]     master_addr_i,
+-    input   logic     [       31:0]     slave_addr_mask_i[SLAVES],
+-    input   logic     [       31:0]     slave_addr_base_i[SLAVES],
++    input   logic         [31:0]        master_addr_i,
++    input   logic [SLAVES-1:0][31:0]    slave_addr_mask_i,
++    input   logic [SLAVES-1:0][31:0]    slave_addr_base_i,
+ 
+     output  logic  [SLAVE_BITS-1:0]     slave_sel_int_o
+     );
+diff --git a/rtl/utils/gen_ram.sv b/rtl/utils/gen_ram.sv
+index a487a83..2a68447 100644
+--- a/rtl/utils/gen_ram.sv
++++ b/rtl/utils/gen_ram.sv
+@@ -1,27 +1,30 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+-`include "../core/defines.sv"
++`include "defines.sv"
+ 
+ 
+ module gen_ram #(
+     parameter DP = 512,
+     parameter DW = 32,
+     parameter MW = 4,
+-    parameter AW = 32)(
++    parameter AW = 32,
++    parameter HIGH_BW_DW = 320,  // 高带宽数据宽度
++    parameter HIGH_BW_MW = 10   // 高带宽字节使能宽度（HIGH_BW_DW/32）
++    )(
+ 
+     input wire clk,
+     input wire[AW-1:0] addr_i,
+@@ -29,7 +32,16 @@ module gen_ram #(
+     input wire[MW-1:0] sel_i,
+     input wire we_i,
+ 
+-	output wire[DW-1:0] data_o
++	output wire[DW-1:0] data_o,
++
++    // 高带宽内存接口（宽位宽）
++    input wire high_bw_req_i,                                    // 高带宽请求信号
++    input wire high_bw_we_i,                                     // 高带宽写使能
++    input wire[AW-1:0] high_bw_addr_i,                           // 高带宽地址
++    input wire[HIGH_BW_DW-1:0] high_bw_data_i,                   // 高带宽写数据
++    input wire[HIGH_BW_MW-1:0] high_bw_sel_i,                    // 高带宽字节使能
++    output wire high_bw_ack_o,                                   // 高带宽应答信号
++    output wire[HIGH_BW_DW-1:0] high_bw_data_o                   // 高带宽读数据
+ 
+     );
+ 
+@@ -38,16 +50,43 @@ module gen_ram #(
+     wire[MW-1:0] wen;
+     wire ren;
+ 
++    // 高带宽接口相关信号
++    reg high_bw_ack_reg;
++    reg[AW-1:0] high_bw_addr_r;
++    wire[HIGH_BW_MW-1:0] high_bw_wen;
++    wire high_bw_ren;
++
+     assign ren = (~we_i);
+     assign wen = ({MW{we_i}} & sel_i);
+ 
++    assign high_bw_ren = (~high_bw_we_i) && high_bw_req_i;
++    assign high_bw_wen = ({HIGH_BW_MW{high_bw_we_i}} & high_bw_sel_i) && high_bw_req_i;
++
+     always @ (posedge clk) begin
+         if (ren) begin
+             addr_r <= addr_i;
+         end
++
++        // 高带宽接口地址锁存
++        if (high_bw_ren) begin
++            high_bw_addr_r <= high_bw_addr_i;
++        end
++
++        // 高带宽应答信号
++        high_bw_ack_reg <= high_bw_req_i;
+     end
+ 
+     assign data_o = ram[addr_r];
++    assign high_bw_ack_o = high_bw_ack_reg;
++
++    // 高带宽宽位宽数据输出
++    // 将多个32位字组合成高带宽需要的宽位宽数据
++    genvar j;
++    generate
++        for (j = 0; j < HIGH_BW_MW; j = j + 1) begin: high_bw_data_out
++            assign high_bw_data_o[32*j+31:32*j] = ram[high_bw_addr_r + j];
++        end
++    endgenerate
+ 
+     genvar i;
+ 
+@@ -69,4 +108,17 @@ module gen_ram #(
+         end
+     endgenerate
+ 
+-endmodule
++    // 高带宽宽位宽数据写入
++    // 将高带宽的宽位宽数据分解为多个32位字写入RAM
++    genvar k;
++    generate
++        for (k = 0; k < HIGH_BW_MW; k = k + 1) begin: high_bw_data_in
++            always @ (posedge clk) begin: high_bw_write_ff
++                if (high_bw_wen[k]) begin: high_bw_wen_k
++                    ram[high_bw_addr_i + k] <= high_bw_data_i[32*k+31:32*k];
++                end
++            end
++        end
++    endgenerate
++
++endmodule
+\ No newline at end of file

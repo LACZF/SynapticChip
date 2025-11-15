@@ -1,0 +1,4 @@
+[submodule "tinyriscv"]
+	path = tinyriscv
+	url = https://gitee.com/liangkangnan/tinyriscv.git
+	branch = verilator

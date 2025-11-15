@@ -1,3 +1,9 @@
+.vscode
+build
+*.elf
+*.dis
+*.code-workspace
+
 # Prerequisites
 *.d
 
