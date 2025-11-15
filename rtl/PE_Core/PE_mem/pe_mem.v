@@ -15,6 +15,7 @@ module pe_mem #(
     output reg  [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_operand2,
     output reg  [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_config,
     input  wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_output,
+    input  wire                                             start_computation,  // PE开始计算信号
 
     // 高带宽内存接口
     input  wire [HIGH_BW_DW-1:0]                            mem_data_i,
@@ -64,8 +65,16 @@ module pe_mem #(
                 memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= {DATA_WIDTH{1'b0}};
             end
         end else begin
-            for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
-                memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= pe_output[k];
+            // 在PE开始计算之前清零PE输出区域
+            if (start_computation) begin
+                for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
+                    memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= {DATA_WIDTH{1'b0}};
+                end
+            end else begin
+                // 正常写入PE输出结果
+                for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
+                    memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= pe_output[k];
+                end
             end
         end
     end

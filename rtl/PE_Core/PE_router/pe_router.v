@@ -44,7 +44,6 @@ module pe_router #(
             west_valid_out  <= 1'b0;
             pe_output       <= {DATA_WIDTH{1'b0}};
         end else begin
-            // Default outputs
             north_out       <= {DATA_WIDTH{1'b0}};
             south_out       <= {DATA_WIDTH{1'b0}};
             east_out        <= {DATA_WIDTH{1'b0}};
@@ -76,14 +75,10 @@ module pe_router #(
                     west_valid_out <= 1'b1;
                 end
 
-                // Store to memory if configured
+                // Store to memory if configured - 锁存结果直到新的计算结果到来
                 if (store_to_mem) begin
                     pe_output <= pe_result;
-                end else begin
-                    pe_output <= {DATA_WIDTH{1'b0}};
                 end
-            end else begin
-                pe_output <= {DATA_WIDTH{1'b0}};
             end
         end
     end

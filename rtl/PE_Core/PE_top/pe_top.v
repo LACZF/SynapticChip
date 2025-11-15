@@ -85,6 +85,7 @@ module pe_top #(
         .pe_operand2(pe_operand2),
         .pe_config(pe_config),
         .pe_output(pe_output),
+        .start_computation(start_computation),
         .mem_data_i(mem_data_i),
         .mem_ack_i(mem_ack_i),
         .mem_req_o(mem_req_o),
