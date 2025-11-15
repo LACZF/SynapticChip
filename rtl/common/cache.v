@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 module cache #(
     parameter CACHE_LINE_SIZE               = 64,       // Cache line size in bytes
     parameter CACHE_SIZE                    = 4096,     // Cache size in bytes
