@@ -51,7 +51,7 @@ TOP_MODULE_ARG := TOP_MODULE=$(TOP_MODULE)
 endif
 endif
 
-ifneq ($(DEBUG),0)
+ifeq ($(DEBUG),1)
 TEST_ARGS += -D DEBUG=1
 endif
 

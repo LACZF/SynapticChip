@@ -17,12 +17,13 @@ module chip_top #(
     parameter PE_ID_WIDTH               = 4,
     parameter PE_ARRAY_X                = 4,
     parameter PE_ARRAY_Y                = 4,
-    parameter IMPLEMENT_ROM             = 1,
+    parameter BOOT_TYPE                 = 2,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
     parameter IMPLEMENT_SPI             = 1,
-    parameter IMPLEMENT_FLASH           = 1,
+    parameter IMPLEMENT_XIP             = 1,
+    parameter IMPLEMENT_SPI_FLASH       = 1,
     parameter IMPLEMENT_TIMER           = 1,
     parameter IMPLEMENT_I2C             = 1,
     parameter IMPLEMENT_DMA             = 1,           // DMA控制器使能
@@ -54,11 +55,17 @@ module chip_top #(
     input  wire                         spi_miso,
 
     /********** FLASH **********/
-    input  wire[3:0]                    flash_spi_dq_in,
-    output wire[3:0]                    flash_spi_dq_oe,
-    output wire[3:0]                    flash_spi_dq_out,
-    output wire                         flash_spi_clk_pin,
-    output wire                         flash_spi_ss_pin,
+    input  wire[3:0]                    qspi_flash_dq_in,
+    output wire[3:0]                    qspi_flash_dq_oe,
+    output wire[3:0]                    qspi_flash_dq_out,
+    output wire                         qspi_flash_clk_pin,
+    output wire                         qspi_flash_ss_pin,
+
+    /********** SPI FLASH **********/
+    output wire                         spi_flash_cs_n,
+    output wire                         spi_flash_clk,
+    output wire                         spi_flash_mosi,
+    input  wire                         spi_flash_miso,
 
     /********** JTAG **********/
     input  wire                         jtag_tck_pin,
@@ -204,7 +211,7 @@ module chip_top #(
 
     // ROM实例化 - 条件编译
     generate
-        if (IMPLEMENT_ROM) begin : rom_gen
+        if (BOOT_TYPE == 0) begin : rom_gen
             assign slave_addr_mask[SLAVE_ROM_INDEX] = ROM_ADDR_MASK;
             assign slave_addr_base[SLAVE_ROM_INDEX] = ROM_ADDR_BASE;
             // 指令存储器
@@ -313,12 +320,13 @@ module chip_top #(
         .IO_SLAVES              (IO_SLAVES),
         .IO_ADDR_BASE           (IO_ADDR_BASE),
         .IO_ADDR_MASK           (IO_ADDR_MASK),
-        .IMPLEMENT_ROM          (IMPLEMENT_ROM),
+        .BOOT_TYPE              (BOOT_TYPE),
         .IMPLEMENT_UART         (IMPLEMENT_UART),
         .IMPLEMENT_GPIO         (IMPLEMENT_GPIO),
         .IMPLEMENT_SPI          (IMPLEMENT_SPI),
         .IMPLEMENT_TIMER        (IMPLEMENT_TIMER),
-        .IMPLEMENT_FLASH        (IMPLEMENT_FLASH),
+        .IMPLEMENT_XIP          (IMPLEMENT_XIP),
+        .IMPLEMENT_SPI_FLASH    (IMPLEMENT_SPI_FLASH),
         .IMPLEMENT_DMA          (IMPLEMENT_DMA),
         .DMA_FIFO_DEPTH         (DMA_FIFO_DEPTH),
         .SPI_NUM                (SPI_NUM),
@@ -375,11 +383,17 @@ module chip_top #(
         .spi_miso         (spi_miso),
 
         // Flash接口
-        .flash_spi_clk    (flash_spi_clk_pin),
-        .flash_spi_ss     (flash_spi_ss_pin),
-        .flash_spi_dq_out (flash_spi_dq_out),
-        .flash_spi_dq_oe  (flash_spi_dq_oe),
-        .flash_spi_dq_in  (flash_spi_dq_in)
+        .qspi_flash_clk    (qspi_flash_clk_pin),
+        .qspi_flash_ss     (qspi_flash_ss_pin),
+        .qspi_flash_dq_out (qspi_flash_dq_out),
+        .qspi_flash_dq_oe  (qspi_flash_dq_oe),
+        .qspi_flash_dq_in  (qspi_flash_dq_in),
+
+        // SPI Flash接口
+        .spi_flash_cs_n    (spi_flash_cs_n),
+        .spi_flash_clk     (spi_flash_clk),
+        .spi_flash_mosi    (spi_flash_mosi),
+        .spi_flash_miso    (spi_flash_miso)
     );
 
     // 内部总线

@@ -6,12 +6,13 @@ module io_top #(
     parameter IO_SLAVES            = 8,
     parameter IO_ADDR_BASE         = 32'h40000000,
     parameter IO_ADDR_MASK         = ~32'hFFFFFFF,
-    parameter IMPLEMENT_ROM        = 1,
+    parameter BOOT_TYPE            = 2,
     parameter IMPLEMENT_UART       = 1,
     parameter IMPLEMENT_GPIO       = 1,
     parameter IMPLEMENT_SPI        = 1,
     parameter IMPLEMENT_TIMER      = 1,
-    parameter IMPLEMENT_FLASH      = 1,
+    parameter IMPLEMENT_XIP        = 1,
+    parameter IMPLEMENT_SPI_FLASH  = 1,
     parameter IMPLEMENT_DMA        = 1,
     parameter SPI_NUM              = 1,
     parameter NUM_IRQ_SOURCES      = 32,
@@ -73,19 +74,26 @@ module io_top #(
     input  wire                               spi_miso,
 
     // Flash接口
-    output wire                               flash_spi_clk,
-    output wire                               flash_spi_ss,
-    output wire [3:0]                         flash_spi_dq_out,
-    output wire [3:0]                         flash_spi_dq_oe,
-    input  wire [3:0]                         flash_spi_dq_in
+    output wire                               qspi_flash_clk,
+    output wire                               qspi_flash_ss,
+    output wire [3:0]                         qspi_flash_dq_out,
+    output wire [3:0]                         qspi_flash_dq_oe,
+    input  wire [3:0]                         qspi_flash_dq_in,
+
+    // SPI Flash接口（用于直接SPI Flash控制器）
+    output wire                               spi_flash_cs_n,
+    output wire                               spi_flash_clk,
+    output wire                               spi_flash_mosi,
+    input  wire                               spi_flash_miso
 );
-    localparam int SLAVE_TIMER_INDEX   = 0;
-    localparam int SLAVE_GPIO_INDEX    = 1;
-    localparam int SLAVE_UART_INDEX    = 2;
-    localparam int SLAVE_SPI_INDEX     = 3;
-    localparam int SLAVE_FLASH_INDEX   = 4;
-    localparam int SLAVE_IRQ_INDEX     = 5;
-    localparam int SLAVE_DMA_INDEX     = 6;
+    localparam int SLAVE_TIMER_INDEX     = 0;
+    localparam int SLAVE_GPIO_INDEX      = 1;
+    localparam int SLAVE_UART_INDEX      = 2;
+    localparam int SLAVE_SPI_INDEX       = 3;
+    localparam int SLAVE_FLASH_INDEX     = 4;
+    localparam int SLAVE_SPI_FLASH_INDEX = 5;
+    localparam int SLAVE_IRQ_INDEX       = 6;
+    localparam int SLAVE_DMA_INDEX       = 7;
 
     // 中断源定义
     localparam int IRQ_TIMER_ID        = 18 - 8;  // 定时器中断
@@ -120,8 +128,11 @@ module io_top #(
     localparam int DMA_ADDR_BASE       = IO_ADDR_BASE + 32'h00070000;
     localparam int DMA_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(DMA_ADDR_BASE, 4096);
 
-    localparam int XIP_ADDR_BASE       = IMPLEMENT_ROM ? IO_ADDR_BASE + 32'h01000000 : 32'h0;
+    localparam int XIP_ADDR_BASE       = (BOOT_TYPE != 1) ? IO_ADDR_BASE + 32'h01000000 : 32'h0;
     localparam int XIP_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 128 * 1024 * 1024);
+
+    localparam int SPI_FLASH_ADDR_BASE = (BOOT_TYPE != 2) ? IO_ADDR_BASE + 32'h02000000 : 32'h0;
+    localparam int SPI_FLASH_ADDR_MASK = `CALC_ADDR_MASK_BY_LENGTH(SPI_FLASH_ADDR_BASE, 128 * 1024 * 1024);
 
     /********** TIMER **********/
     generate
@@ -253,9 +264,44 @@ module io_top #(
         end
     endgenerate
 
+    /********** SPI Flash控制器 **********/
+    generate
+        if (IMPLEMENT_SPI_FLASH) begin : spi_flash_gen
+            assign slave_addr_base[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_MASK;
+            spi_flash_top #(
+                .ADDR_WIDTH    (ADDR_WIDTH),
+                .DATA_WIDTH    (DATA_WIDTH)
+            ) u_spi_flash (
+                .clk           (clk),
+                .rst_n         (rst_n),
+
+                .req_i         (slave_req[SLAVE_SPI_FLASH_INDEX]),
+                .we_i          (slave_we[SLAVE_SPI_FLASH_INDEX]),
+                .addr_i        (slave_addr[SLAVE_SPI_FLASH_INDEX]),
+                .data_in_i     (slave_wdata[SLAVE_SPI_FLASH_INDEX]),
+                .data_out_o    (slave_rdata[SLAVE_SPI_FLASH_INDEX]),
+                .gnt_o         (slave_gnt[SLAVE_SPI_FLASH_INDEX]),
+                .rvalid_o      (slave_rvalid[SLAVE_SPI_FLASH_INDEX]),
+
+                .spi_cs_n_o    (spi_flash_cs_n),
+                .spi_clk_o     (spi_flash_clk),
+                .spi_mosi_o    (spi_flash_mosi),
+                .spi_miso_i    (spi_flash_miso)
+            );
+        end else begin
+            assign slave_rdata[SLAVE_SPI_FLASH_INDEX]      = 32'h0;
+            assign slave_rvalid[SLAVE_SPI_FLASH_INDEX]     = 1'b0;
+            assign slave_gnt[SLAVE_SPI_FLASH_INDEX]        = 1'b0;
+            assign spi_flash_cs_n                          = 1'b1;
+            assign spi_flash_clk                           = 1'b0;
+            assign spi_flash_mosi                           = 1'b0;
+        end
+    endgenerate
+
     /********** FLASH/XIP **********/
     generate
-        if (IMPLEMENT_FLASH) begin : flash_gen
+        if (IMPLEMENT_XIP) begin : flash_gen
             assign slave_addr_base[SLAVE_FLASH_INDEX]  = XIP_ADDR_BASE;
             assign slave_addr_mask[SLAVE_FLASH_INDEX]  = XIP_ADDR_MASK;
             xip_top u_xip (
@@ -270,31 +316,31 @@ module io_top #(
                 .rvalid_o       (slave_rvalid[SLAVE_FLASH_INDEX]),
                 .data_o         (slave_rdata[SLAVE_FLASH_INDEX]),
 
-                .spi_clk_o      (flash_spi_clk),
+                .spi_clk_o      (qspi_flash_clk),
                 .spi_clk_oe_o   (), // 不使用
-                .spi_ss_o       (flash_spi_ss),
+                .spi_ss_o       (qspi_flash_ss),
                 .spi_ss_oe_o    (), // 不使用
-                .spi_dq0_i      (flash_spi_dq_in[0]),
-                .spi_dq0_o      (flash_spi_dq_out[0]),
-                .spi_dq0_oe_o   (flash_spi_dq_oe[0]),
-                .spi_dq1_i      (flash_spi_dq_in[1]),
-                .spi_dq1_o      (flash_spi_dq_out[1]),
-                .spi_dq1_oe_o   (flash_spi_dq_oe[1]),
-                .spi_dq2_i      (flash_spi_dq_in[2]),
-                .spi_dq2_o      (flash_spi_dq_out[2]),
-                .spi_dq2_oe_o   (flash_spi_dq_oe[2]),
-                .spi_dq3_i      (flash_spi_dq_in[3]),
-                .spi_dq3_o      (flash_spi_dq_out[3]),
-                .spi_dq3_oe_o   (flash_spi_dq_oe[3])
+                .spi_dq0_i      (qspi_flash_dq_in[0]),
+                .spi_dq0_o      (qspi_flash_dq_out[0]),
+                .spi_dq0_oe_o   (qspi_flash_dq_oe[0]),
+                .spi_dq1_i      (qspi_flash_dq_in[1]),
+                .spi_dq1_o      (qspi_flash_dq_out[1]),
+                .spi_dq1_oe_o   (qspi_flash_dq_oe[1]),
+                .spi_dq2_i      (qspi_flash_dq_in[2]),
+                .spi_dq2_o      (qspi_flash_dq_out[2]),
+                .spi_dq2_oe_o   (qspi_flash_dq_oe[2]),
+                .spi_dq3_i      (qspi_flash_dq_in[3]),
+                .spi_dq3_o      (qspi_flash_dq_out[3]),
+                .spi_dq3_oe_o   (qspi_flash_dq_oe[3])
             );
         end else begin
             assign slave_rdata[SLAVE_FLASH_INDEX]      = 32'h0;
             assign slave_rvalid[SLAVE_FLASH_INDEX]     = 1'b0;
             assign slave_gnt[SLAVE_FLASH_INDEX]        = 1'b0;
-            assign flash_spi_clk                       = 1'b0;
-            assign flash_spi_ss                        = 1'b1;
-            assign flash_spi_dq_out                    = 4'b0000;
-            assign flash_spi_dq_oe                     = 4'b0000;
+            assign qspi_flash_clk                      = 1'b0;
+            assign qspi_flash_ss                       = 1'b1;
+            assign qspi_flash_dq_out                   = 4'b0000;
+            assign qspi_flash_dq_oe                    = 4'b0000;
         end
     endgenerate
 

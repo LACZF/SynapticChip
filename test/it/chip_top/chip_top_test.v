@@ -20,19 +20,30 @@ module chip_top_test;
     reg                       clk;
     reg                       rst_n;
 
-    localparam TEST_CMD_PE    = 8'h70; // 'p'
-    localparam TEST_CMD_GPIO  = 8'h67; // 'g'
-    localparam TEST_CMD_SPI   = 8'h73; // 's'
-    localparam TEST_CMD_TIMER = 8'h74; // 't'
-    localparam TEST_CMD_END   = 8'h04;
-    localparam CPU_NUM        = 1;
-    localparam GPIO_IN_NUM    = 14;
-    localparam GPIO_OUT_NUM   = 8;
-    localparam GPIO_INOUT_NUM = 66;
-    localparam SPI_NUM        = 2;
-    localparam SAMPLE_CYCLES  = 4;
-    localparam UART_DIV_RATE  = 2;
-    localparam IMPLEMENT_ROM  = 1;
+    localparam TIMEOUT_CYCLES       = 10000;
+    localparam TEST_CMD_PE          = 8'h70; // 'p'
+    localparam TEST_CMD_GPIO        = 8'h67; // 'g'
+    localparam TEST_CMD_SPI         = 8'h73; // 's'
+    localparam TEST_CMD_TIMER       = 8'h74; // 't'
+    localparam TEST_CMD_END         = 8'h04;
+    localparam CPU_NUM              = 1;
+    localparam SPI_NUM              = 2;
+    localparam GPIO_IN_NUM          = 14;
+    localparam GPIO_OUT_NUM         = 8;
+    localparam GPIO_INOUT_NUM       = 66;
+    localparam I2C_NUM              = 1;
+    localparam UART_NUM             = 1;
+    localparam SAMPLE_CYCLES        = 4;
+    localparam UART_DIV_RATE        = 2;
+    localparam BOOT_TYPE            = 2;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
+    localparam IMPLEMENT_JTAG       = 1;
+    localparam IMPLEMENT_UART       = 1;
+    localparam IMPLEMENT_GPIO       = 1;
+    localparam IMPLEMENT_SPI        = SPI_NUM > 0 ? 1 : 0;
+    localparam IMPLEMENT_XIP        = 0;
+    localparam IMPLEMENT_SPI_FLASH  = 1;
+    localparam IMPLEMENT_TIMER      = 1;
+    localparam IMPLEMENT_I2C        = 1;
 
     // UART
     reg                       uart_rx;       // UART接收信号
@@ -45,11 +56,32 @@ module chip_top_test;
     wire                      spi_miso;      // SPI主机输入从机输出
 
     // QSPI Flash接口
-    wire [3:0]                flash_spi_dq_in;   // QSPI Flash数据输入
-    wire [3:0]                flash_spi_dq_out;  // QSPI Flash数据输出
-    wire [3:0]                flash_spi_dq_oe;    // QSPI Flash数据输出使能
-    wire                      flash_spi_clk_pin; // QSPI Flash时钟
-    wire                      flash_spi_ss_pin;  // QSPI Flash片选
+    wire [3:0]                qspi_flash_dq_in;   // QSPI Flash数据输入
+    wire [3:0]                qspi_flash_dq_out;  // QSPI Flash数据输出
+    wire [3:0]                qspi_flash_dq_oe;   // QSPI Flash数据输出使能
+    wire                      qspi_flash_clk_pin; // QSPI Flash时钟
+    wire                      qspi_flash_ss_pin;  // QSPI Flash片选
+
+    // SPI Flash接口
+    wire                      spi_flash_cs_n;    // SPI Flash片选信号
+    wire                      spi_flash_clk;     // SPI Flash时钟信号
+    wire                      spi_flash_mosi;    // SPI Flash主机输出从机输入
+    wire                      spi_flash_miso;    // SPI Flash主机输入从机输出
+
+    if (IMPLEMENT_SPI_FLASH == 1) begin : spi_flash_gen
+        /********** 实例化SPI Flash模拟模块 **********/
+        spi_flash_model #(
+            .FLASH_SIZE  (64*1024),
+            .PROGRAM_FILE(`ROM_PRG)
+        ) u_spi_flash (
+            .clk            (clk),
+            .rst_n          (rst_n),
+            .cs_n           (spi_flash_cs_n),
+            .sck            (spi_flash_clk),
+            .mosi           (spi_flash_mosi),
+            .miso           (spi_flash_miso)
+        );
+    end
 
     // SPI从机MISO信号数组（用于多个从机）
     wire [SPI_NUM-1:0] spi_slave_miso;
@@ -124,10 +156,10 @@ module chip_top_test;
 
     // QSPI Flash数据线连接
     // 当输出使能有效时，使用chip_top的输出数据，否则为高阻态
-    assign flash_spi_dq_in[0] = flash_spi_dq_oe[0] ? flash_spi_dq_out[0] : 1'bz;
-    assign flash_spi_dq_in[1] = flash_spi_dq_oe[1] ? flash_spi_dq_out[1] : 1'bz;
-    assign flash_spi_dq_in[2] = flash_spi_dq_oe[2] ? flash_spi_dq_out[2] : 1'bz;
-    assign flash_spi_dq_in[3] = flash_spi_dq_oe[3] ? flash_spi_dq_out[3] : 1'bz;
+    assign qspi_flash_dq_in[0] = qspi_flash_dq_oe[0] ? qspi_flash_dq_out[0] : 1'bz;
+    assign qspi_flash_dq_in[1] = qspi_flash_dq_oe[1] ? qspi_flash_dq_out[1] : 1'bz;
+    assign qspi_flash_dq_in[2] = qspi_flash_dq_oe[2] ? qspi_flash_dq_out[2] : 1'bz;
+    assign qspi_flash_dq_in[3] = qspi_flash_dq_oe[3] ? qspi_flash_dq_out[3] : 1'bz;
 
     /********** 时钟生成 **********/
     always #2 clk = ~clk;
@@ -145,19 +177,20 @@ module chip_top_test;
         .PE_ID_WIDTH(4),
         .PE_ARRAY_X(4),
         .PE_ARRAY_Y(4),
-        .IMPLEMENT_ROM(IMPLEMENT_ROM),
-        .IMPLEMENT_JTAG(1),
-        .IMPLEMENT_UART(1),
-        .IMPLEMENT_GPIO(1),
-        .IMPLEMENT_SPI(1),
-        .IMPLEMENT_FLASH(1),
-        .IMPLEMENT_TIMER(1),
-        .IMPLEMENT_I2C(1),
+        .BOOT_TYPE(BOOT_TYPE),
+        .IMPLEMENT_JTAG(IMPLEMENT_JTAG),
+        .IMPLEMENT_UART(IMPLEMENT_UART),
+        .IMPLEMENT_GPIO(IMPLEMENT_GPIO),
+        .IMPLEMENT_SPI(IMPLEMENT_SPI),
+        .IMPLEMENT_XIP(IMPLEMENT_XIP),
+        .IMPLEMENT_SPI_FLASH(IMPLEMENT_SPI_FLASH),
+        .IMPLEMENT_TIMER(IMPLEMENT_TIMER),
+        .IMPLEMENT_I2C(IMPLEMENT_I2C),
         .GPIO_IN_NUM(GPIO_IN_NUM),
         .GPIO_OUT_NUM(GPIO_OUT_NUM),
         .GPIO_INOUT_NUM(GPIO_INOUT_NUM),
-        .I2C_NUM(1),
-        .UART_NUM(1),
+        .I2C_NUM(I2C_NUM),
+        .UART_NUM(UART_NUM),
         .SPI_NUM(SPI_NUM)
     ) u_chip_top (
         .clk         (clk),
@@ -179,26 +212,34 @@ module chip_top_test;
         .spi_miso    (spi_miso),
 
         /********** QSPI Flash **********/
-        .flash_spi_dq_in   (flash_spi_dq_in),
-        .flash_spi_dq_out  (flash_spi_dq_out),
-        .flash_spi_dq_oe   (flash_spi_dq_oe),
-        .flash_spi_clk_pin (flash_spi_clk_pin),
-        .flash_spi_ss_pin  (flash_spi_ss_pin)
+        .qspi_flash_dq_in   (qspi_flash_dq_in),
+        .qspi_flash_dq_out  (qspi_flash_dq_out),
+        .qspi_flash_dq_oe   (qspi_flash_dq_oe),
+        .qspi_flash_clk_pin (qspi_flash_clk_pin),
+        .qspi_flash_ss_pin  (qspi_flash_ss_pin),
+
+        /********** SPI Flash **********/
+        .spi_flash_cs_n     (spi_flash_cs_n),
+        .spi_flash_clk      (spi_flash_clk),
+        .spi_flash_mosi     (spi_flash_mosi),
+        .spi_flash_miso     (spi_flash_miso)
     );
 
-    /********** 实例化QSPI Flash模拟模块 **********/
-    qspi_flash_model #(
-        .FLASH_SIZE  (64*1024),
-        .PROGRAM_FILE(`ROM_PRG)
-    ) u_qspi_flash (
-        .clk            (clk),
-        .rst_n          (rst_n),
-        .cs_n           (flash_spi_ss_pin),
-        .sck            (flash_spi_clk_pin),
-        .io_in          (flash_spi_dq_in),
-        .io_out         (flash_spi_dq_out),
-        .io_oe          (flash_spi_dq_oe[0])
-    );
+    if (IMPLEMENT_XIP == 1) begin : xip_gen
+        /********** 实例化QSPI Flash模拟模块 **********/
+        qspi_flash_model #(
+            .FLASH_SIZE  (64*1024),
+            .PROGRAM_FILE(`ROM_PRG)
+        ) u_qspi_flash (
+            .clk            (clk),
+            .rst_n          (rst_n),
+            .cs_n           (qspi_flash_ss_pin),
+            .sck            (qspi_flash_clk_pin),
+            .io_in          (qspi_flash_dq_in),
+            .io_out         (qspi_flash_dq_out),
+            .io_oe          (qspi_flash_dq_oe[0])
+        );
+    end
 
     /********** UART发送相关信号 **********/
     reg                       tx_start;     // 发送开始信号
@@ -274,19 +315,24 @@ module chip_top_test;
         end
     endtask;
 
+    reg init_done = 1'b0;
     /********** 接收信号的监测 **********/
     always @(posedge clk) begin
         if (rx_end == 1'b1) begin // 输出接收到的文字
             if (rx_data !== TEST_CMD_END) begin
                 $write("%c", rx_data);
                 $fflush(); // 强制刷新输出缓冲区，实现实时显示
+            end else begin
+                init_done <= 1'b1;
             end
         end
     end
 
     /********** 测试用例 **********/
     initial begin
-        if (IMPLEMENT_ROM) begin
+        integer timeout;
+
+        if (BOOT_TYPE == 0) begin
             $readmemh(`ROM_PRG, u_chip_top.rom_gen.u_rom.u_gen_ram.ram);
         end
         $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
@@ -300,8 +346,17 @@ module chip_top_test;
         @(posedge clk);
         rst_n <= 1;
 
-        // 等待系统初始化完成
-        wait(rx_data == TEST_CMD_END);
+        timeout = 0;
+
+        while (!init_done && timeout < TIMEOUT_CYCLES) begin
+            @(posedge clk);
+            timeout = timeout + 1;
+        end
+
+        if (timeout >= TIMEOUT_CYCLES) begin
+            $display("Init timeout.");
+            $finish;
+        end
         # 500;
 
         // 发送测试命令
