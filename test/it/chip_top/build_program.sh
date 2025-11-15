@@ -90,6 +90,7 @@ function extract_data_bss() {
     ${RISCV_PREFIX}objcopy -O binary -j .data -j .bss $elf_file temp_data_bss.bin
 
     # 将二进制文件转换为hex格式（每行32位）
+    # hexdump -v -e '4/1 "%02x" "\n"' temp_data_bss.bin > $hex_file
     hexdump -v -e '1/4 "%08x\n"' temp_data_bss.bin > $hex_file
 
     # 清理临时文件
