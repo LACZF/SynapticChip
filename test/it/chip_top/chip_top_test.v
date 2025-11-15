@@ -32,7 +32,7 @@ module chip_top_test;
     localparam SPI_NUM        = 2;
     localparam SAMPLE_CYCLES  = 4;
     localparam UART_DIV_RATE  = 2;
-    localparam IMPLEMENT_ROM  = 0;
+    localparam IMPLEMENT_ROM  = 1;
 
     // UART
     reg                       uart_rx;       // UART接收信号
@@ -286,7 +286,7 @@ module chip_top_test;
     /********** 测试用例 **********/
     initial begin
         if (IMPLEMENT_ROM) begin
-            $readmemh(`ROM_PRG, u_chip_top.u_rom.u_gen_ram.ram);
+            $readmemh(`ROM_PRG, u_chip_top.rom_gen.u_rom.u_gen_ram.ram);
         end
         $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
