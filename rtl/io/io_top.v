@@ -258,7 +258,7 @@ module io_top #(
         if (IMPLEMENT_FLASH) begin : flash_gen
             assign slave_addr_base[SLAVE_FLASH_INDEX]  = XIP_ADDR_BASE;
             assign slave_addr_mask[SLAVE_FLASH_INDEX]  = XIP_ADDR_MASK;
-            xip_top u_flash (
+            xip_top u_xip (
                 .clk_i          (clk),
                 .rst_ni         (rst_n),
                 .req_i          (slave_req[SLAVE_FLASH_INDEX]),
