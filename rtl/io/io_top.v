@@ -6,6 +6,7 @@ module io_top #(
     parameter IO_SLAVES            = 8,
     parameter IO_ADDR_BASE         = 32'h40000000,
     parameter IO_ADDR_MASK         = ~32'hFFFFFFF,
+    parameter IMPLEMENT_ROM        = 1,
     parameter IMPLEMENT_UART       = 1,
     parameter IMPLEMENT_GPIO       = 1,
     parameter IMPLEMENT_SPI        = 1,
@@ -113,14 +114,14 @@ module io_top #(
     localparam int SPI_ADDR_BASE       = IO_ADDR_BASE + 32'h00040000;
     localparam int SPI_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(SPI_ADDR_BASE, 4096);
 
-    localparam int XIP_ADDR_BASE       = IO_ADDR_BASE + 32'h00050000;
-    localparam int XIP_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 4096);
-
     localparam int IRQ_CTRL_ADDR_BASE  = IO_ADDR_BASE + 32'h00060000;
     localparam int IRQ_CTRL_ADDR_MASK  = `CALC_ADDR_MASK_BY_LENGTH(IRQ_CTRL_ADDR_BASE, 4096);
 
     localparam int DMA_ADDR_BASE       = IO_ADDR_BASE + 32'h00070000;
     localparam int DMA_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(DMA_ADDR_BASE, 4096);
+
+    localparam int XIP_ADDR_BASE       = IMPLEMENT_ROM ? IO_ADDR_BASE + 32'h01000000 : 32'h0;
+    localparam int XIP_ADDR_MASK       = `CALC_ADDR_MASK_BY_LENGTH(XIP_ADDR_BASE, 128 * 1024 * 1024);
 
     /********** TIMER **********/
     generate

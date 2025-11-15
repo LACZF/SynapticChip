@@ -32,6 +32,7 @@ module chip_top_test;
     localparam SPI_NUM        = 2;
     localparam SAMPLE_CYCLES  = 4;
     localparam UART_DIV_RATE  = 2;
+    localparam IMPLEMENT_ROM  = 0;
 
     // UART
     reg                       uart_rx;       // UART接收信号
@@ -42,6 +43,13 @@ module chip_top_test;
     wire                      spi_clk;       // SPI时钟信号
     wire                      spi_mosi;      // SPI主机输出从机输入
     wire                      spi_miso;      // SPI主机输入从机输出
+
+    // QSPI Flash接口
+    wire [3:0]                flash_spi_dq_in;   // QSPI Flash数据输入
+    wire [3:0]                flash_spi_dq_out;  // QSPI Flash数据输出
+    wire [3:0]                flash_spi_dq_oe;    // QSPI Flash数据输出使能
+    wire                      flash_spi_clk_pin; // QSPI Flash时钟
+    wire                      flash_spi_ss_pin;  // QSPI Flash片选
 
     // SPI从机MISO信号数组（用于多个从机）
     wire [SPI_NUM-1:0] spi_slave_miso;
@@ -114,6 +122,13 @@ module chip_top_test;
         end
     endgenerate
 
+    // QSPI Flash数据线连接
+    // 当输出使能有效时，使用chip_top的输出数据，否则为高阻态
+    assign flash_spi_dq_in[0] = flash_spi_dq_oe[0] ? flash_spi_dq_out[0] : 1'bz;
+    assign flash_spi_dq_in[1] = flash_spi_dq_oe[1] ? flash_spi_dq_out[1] : 1'bz;
+    assign flash_spi_dq_in[2] = flash_spi_dq_oe[2] ? flash_spi_dq_out[2] : 1'bz;
+    assign flash_spi_dq_in[3] = flash_spi_dq_oe[3] ? flash_spi_dq_out[3] : 1'bz;
+
     /********** 时钟生成 **********/
     always #2 clk = ~clk;
 
@@ -130,12 +145,12 @@ module chip_top_test;
         .PE_ID_WIDTH(4),
         .PE_ARRAY_X(4),
         .PE_ARRAY_Y(4),
-        .IMPLEMENT_ROM(1),
+        .IMPLEMENT_ROM(IMPLEMENT_ROM),
         .IMPLEMENT_JTAG(1),
         .IMPLEMENT_UART(1),
         .IMPLEMENT_GPIO(1),
         .IMPLEMENT_SPI(1),
-        .IMPLEMENT_FLASH(0),
+        .IMPLEMENT_FLASH(1),
         .IMPLEMENT_TIMER(1),
         .IMPLEMENT_I2C(1),
         .GPIO_IN_NUM(GPIO_IN_NUM),
@@ -161,7 +176,27 @@ module chip_top_test;
         .spi_cs_n    (spi_cs_n),
         .spi_clk     (spi_clk),
         .spi_mosi    (spi_mosi),
-        .spi_miso    (spi_miso)
+        .spi_miso    (spi_miso),
+
+        /********** QSPI Flash **********/
+        .flash_spi_dq_in   (flash_spi_dq_in),
+        .flash_spi_dq_out  (flash_spi_dq_out),
+        .flash_spi_dq_oe   (flash_spi_dq_oe),
+        .flash_spi_clk_pin (flash_spi_clk_pin),
+        .flash_spi_ss_pin  (flash_spi_ss_pin)
+    );
+
+    /********** 实例化QSPI Flash模拟模块 **********/
+    qspi_flash_model #(
+        .PROGRAM_FILE(`ROM_PRG)
+    ) u_qspi_flash (
+        .clk            (clk),
+        .rst_n          (rst_n),
+        .cs_n           (flash_spi_ss_pin),
+        .sck            (flash_spi_clk_pin),
+        .io_in          (flash_spi_dq_in),
+        .io_out         (flash_spi_dq_out),
+        .io_oe          (flash_spi_dq_oe[0])
     );
 
     /********** UART发送相关信号 **********/
@@ -250,7 +285,9 @@ module chip_top_test;
 
     /********** 测试用例 **********/
     initial begin
-        $readmemh(`ROM_PRG, u_chip_top.u_rom.u_gen_ram.ram);
+        if (IMPLEMENT_ROM) begin
+            $readmemh(`ROM_PRG, u_chip_top.u_rom.u_gen_ram.ram);
+        end
         $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;

@@ -202,23 +202,34 @@ module chip_top #(
         end
     endgenerate
 
-    assign slave_addr_mask[SLAVE_ROM_INDEX] = ROM_ADDR_MASK;
-    assign slave_addr_base[SLAVE_ROM_INDEX] = ROM_ADDR_BASE;
-    // 指令存储器
-    rom #(
-        .DP(ROM_DEPTH)
-    ) u_rom (
-        .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
-        .req_i      (slave_req[SLAVE_ROM_INDEX]),
-        .addr_i     (slave_addr[SLAVE_ROM_INDEX]),
-        .data_i     (slave_wdata[SLAVE_ROM_INDEX]),
-        .be_i       (slave_be[SLAVE_ROM_INDEX]),
-        .we_i       (slave_we[SLAVE_ROM_INDEX]),
-        .gnt_o      (slave_gnt[SLAVE_ROM_INDEX]),
-        .rvalid_o   (slave_rvalid[SLAVE_ROM_INDEX]),
-        .data_o     (slave_rdata[SLAVE_ROM_INDEX])
-    );
+    // ROM实例化 - 条件编译
+    generate
+        if (IMPLEMENT_ROM) begin : rom_gen
+            assign slave_addr_mask[SLAVE_ROM_INDEX] = ROM_ADDR_MASK;
+            assign slave_addr_base[SLAVE_ROM_INDEX] = ROM_ADDR_BASE;
+            // 指令存储器
+            rom #(
+                .DP(ROM_DEPTH)
+            ) u_rom (
+                .clk_i      (clk),
+                .rst_ni     (ndmreset_n),
+                .req_i      (slave_req[SLAVE_ROM_INDEX]),
+                .addr_i     (slave_addr[SLAVE_ROM_INDEX]),
+                .data_i     (slave_wdata[SLAVE_ROM_INDEX]),
+                .be_i       (slave_be[SLAVE_ROM_INDEX]),
+                .we_i       (slave_we[SLAVE_ROM_INDEX]),
+                .gnt_o      (slave_gnt[SLAVE_ROM_INDEX]),
+                .rvalid_o   (slave_rvalid[SLAVE_ROM_INDEX]),
+                .data_o     (slave_rdata[SLAVE_ROM_INDEX])
+            );
+        end else begin
+            assign slave_addr_mask[SLAVE_ROM_INDEX] = 32'h0;
+            assign slave_addr_base[SLAVE_ROM_INDEX] = 32'h0;
+            assign slave_gnt[SLAVE_ROM_INDEX]       = 1'b0;
+            assign slave_rvalid[SLAVE_ROM_INDEX]    = 1'b0;
+            assign slave_rdata[SLAVE_ROM_INDEX]     = 32'h0;
+        end
+    endgenerate
 
     assign slave_addr_mask[SLAVE_RAM_INDEX] = RAM_ADDR_MASK;
     assign slave_addr_base[SLAVE_RAM_INDEX] = RAM_ADDR_BASE;
@@ -302,6 +313,7 @@ module chip_top #(
         .IO_SLAVES              (IO_SLAVES),
         .IO_ADDR_BASE           (IO_ADDR_BASE),
         .IO_ADDR_MASK           (IO_ADDR_MASK),
+        .IMPLEMENT_ROM          (IMPLEMENT_ROM),
         .IMPLEMENT_UART         (IMPLEMENT_UART),
         .IMPLEMENT_GPIO         (IMPLEMENT_GPIO),
         .IMPLEMENT_SPI          (IMPLEMENT_SPI),
