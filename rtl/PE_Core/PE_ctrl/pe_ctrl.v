@@ -45,11 +45,11 @@ module pe_control #(
     reg [DATA_WIDTH-1:0] status_reg;
 
     // Address mapping
-    localparam CONTROL_REG_ADDR   = 24'h100000;
-    localparam STATUS_REG_ADDR    = 24'h100004;
-    localparam PE_ENABLE_ADDR     = 24'h100008;
-    localparam HIGH_BW_WRITE_ADDR = 24'h10000C;
-    localparam HIGH_BW_READ_ADDR  = 24'h100010;
+    localparam CONTROL_REG_ADDR   = 24'h100000 >> 2;
+    localparam STATUS_REG_ADDR    = 24'h100004 >> 2;
+    localparam PE_ENABLE_ADDR     = 24'h100008 >> 2;
+    localparam HIGH_BW_WRITE_ADDR = 24'h10000C >> 2;
+    localparam HIGH_BW_READ_ADDR  = 24'h100010 >> 2;
 
     // 高带宽内存控制状态机
     typedef enum logic [1:0] {

@@ -88,20 +88,29 @@
 .equ PE_ROUTE_WEST_SHIFT, 19   # 西向路由输出
 .equ PE_STORE_MEM_SHIFT, 20    # 存储到内存
 
-# PE操作码定义
-.equ PE_OP_ADD, 0x01           # 加法
-.equ PE_OP_SUB, 0x02           # 减法
-.equ PE_OP_MUL, 0x03           # 乘法
-.equ PE_OP_AND, 0x04           # 与运算
-.equ PE_OP_OR, 0x05            # 或运算
-.equ PE_OP_XOR, 0x06           # 异或运算
+# PE操作码定义 - 与pe.v保持一致
+.equ PE_OP_PASS,  0x00         # PASS (直接传递src1)
+.equ PE_OP_ADD,   0x01         # 加法
+.equ PE_OP_SUB,   0x02         # 减法
+.equ PE_OP_AND,   0x03         # 与运算
+.equ PE_OP_OR,    0x04         # 或运算
+.equ PE_OP_XOR,   0x05         # 异或运算
+.equ PE_OP_MUL,   0x06         # 乘法
+.equ PE_OP_MIN,   0x07         # 最小值
+.equ PE_OP_MAX,   0x08         # 最大值
+.equ PE_OP_SHL,   0x09         # 逻辑左移
+.equ PE_OP_SHR,   0x0A         # 逻辑右移
+.equ PE_OP_ASHR,  0x0B         # 算术右移
+.equ PE_OP_EQ,    0x0C         # 等于比较
+.equ PE_OP_LT,    0x0D         # 小于比较
 
-# PE输入源选择定义
-.equ PE_SRC_MEM, 0x0           # 从内存读取
-.equ PE_SRC_NORTH, 0x1         # 从北向PE输入
-.equ PE_SRC_SOUTH, 0x2         # 从南向PE输入
-.equ PE_SRC_EAST, 0x3          # 从东向PE输入
-.equ PE_SRC_WEST, 0x4          # 从西向PE输入
+# PE输入源选择定义 - 与pe.v保持一致（3位编码）
+.equ PE_SRC_EAST,      0x1     # 东方向输入  (3'b001)
+.equ PE_SRC_SOUTH,     0x2     # 南方向输入  (3'b010)
+.equ PE_SRC_WEST,      0x3     # 西方向输入  (3'b011)
+.equ PE_SRC_NORTH,     0x4     # 北方向输入  (3'b100)
+.equ PE_SRC_OPERAND1,  0x5     # 外部操作数1 (3'b101)
+.equ PE_SRC_OPERAND2,  0x6     # 外部操作数2 (3'b110)
 
 # 栈指针初始地址
 .equ STACK_TOP,      RAM_BASE + 0x1000
@@ -2219,14 +2228,14 @@ pe_operand2_data:
 
 # PE测试数据 - 配置与路由 (4x4 PE阵列，每个PE一个32位配置字)
 pe_config_data:
-    # PE0: ADD运算，从内存读取，输出到北向和存储到内存
-    .word (PE_OP_ADD << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_NORTH_SHIFT) | (1 << PE_STORE_MEM_SHIFT)
-    # PE1: SUB运算，从内存读取，输出到南向
-    .word (PE_OP_SUB << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_SOUTH_SHIFT)
-    # PE2: MUL运算，从内存读取，输出到东向
-    .word (PE_OP_MUL << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_EAST_SHIFT)
-    # PE3: AND运算，从内存读取，输出到西向
-    .word (PE_OP_AND << PE_OPCODE_SHIFT) | (PE_SRC_MEM << PE_SRC1_SEL_SHIFT) | (PE_SRC_MEM << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_WEST_SHIFT)
+    # PE0: ADD运算，从外部操作数1和2读取，输出到北向和存储到内存
+    .word (PE_OP_ADD << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_NORTH_SHIFT) | (1 << PE_STORE_MEM_SHIFT)
+    # PE1: SUB运算，从外部操作数1和2读取，输出到南向
+    .word (PE_OP_SUB << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_SOUTH_SHIFT)
+    # PE2: MUL运算，从外部操作数1和2读取，输出到东向
+    .word (PE_OP_MUL << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_EAST_SHIFT)
+    # PE3: AND运算，从外部操作数1和2读取，输出到西向
+    .word (PE_OP_AND << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_WEST_SHIFT)
     # PE4-PE15: 使用默认配置
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
