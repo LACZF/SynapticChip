@@ -82,7 +82,7 @@ module pe_control #(
     reg         high_bw_start;
 
     // 地址拆分
-    wire [15:0] addr_base       = addr_i[23:0];
+    wire [23:0] addr_base       = (addr_i[23:0] >> 2);
 
     // Control register bits
     wire start_bit = control_reg[0];
