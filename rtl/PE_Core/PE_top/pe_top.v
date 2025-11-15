@@ -129,17 +129,17 @@ module pe_top #(
                 ) u_pe_route (
                     .clk(clk),
                     .rst_n(rst_n),
-                    .pe_result(pe_result[idx]),
-                    .pe_result_valid(pe_result_valid[idx]),
-                    .pe_config(pe_config[idx]),
-                    .north_out(north_out[idx]),
-                    .south_out(south_out[idx]),
-                    .east_out(east_out[idx]),
-                    .west_out(west_out[idx]),
-                    .north_valid_out(north_valid_out[idx]),
-                    .south_valid_out(south_valid_out[idx]),
-                    .east_valid_out(east_valid_out[idx]),
-                    .west_valid_out(west_valid_out[idx])
+                    .pe_result_i(pe_result[idx]),
+                    .pe_result_valid_i(pe_result_valid[idx]),
+                    .pe_config_i(pe_config[idx]),
+                    .north_out_o(north_out[idx]),
+                    .south_out_o(south_out[idx]),
+                    .east_out_o(east_out[idx]),
+                    .west_out_o(west_out[idx]),
+                    .north_valid_out_o(north_valid_out[idx]),
+                    .south_valid_out_o(south_valid_out[idx]),
+                    .east_valid_out_o(east_valid_out[idx]),
+                    .west_valid_out_o(west_valid_out[idx])
                 );
             end
         end

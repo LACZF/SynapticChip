@@ -29,16 +29,9 @@ module tb_pe_ctrl;
     wire                  rvalid_o;
     wire [DATA_WIDTH-1:0] rdata_o;
 
-    // Memory Interface
-    wire                  mem_we;
-    wire [ADDR_WIDTH-1:0] mem_addr;
-    wire [DATA_WIDTH-1:0] mem_wdata;
-    reg  [DATA_WIDTH-1:0] mem_rdata;
-
     // PE Control
     wire                  start_computation;
     reg                   computation_done;
-    wire [PE_ARRAY_X-1:0] pe_enable;
 
     // High Bandwidth Memory Interface
     wire                  high_bw_req_o;
@@ -51,6 +44,11 @@ module tb_pe_ctrl;
     // PE Result Interface
     reg [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_result;
     reg [0:PE_ARRAY_X*PE_ARRAY_Y-1]                 pe_result_valid;
+
+    // PE Operand and Config Outputs
+    wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_operand1;
+    wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_operand2;
+    wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_config;
 
     // Instantiate DUT
     pe_control #(
@@ -69,13 +67,8 @@ module tb_pe_ctrl;
         .gnt_o(gnt_o),
         .rvalid_o(rvalid_o),
         .rdata_o(rdata_o),
-        .mem_we(mem_we),
-        .mem_addr(mem_addr),
-        .mem_wdata(mem_wdata),
-        .mem_rdata(mem_rdata),
         .start_computation(start_computation),
         .computation_done(computation_done),
-        .pe_enable(pe_enable),
         .high_bw_req_o(high_bw_req_o),
         .high_bw_we_o(high_bw_we_o),
         .high_bw_addr_o(high_bw_addr_o),
@@ -83,7 +76,10 @@ module tb_pe_ctrl;
         .high_bw_ack_i(high_bw_ack_i),
         .high_bw_data_i(high_bw_data_i),
         .pe_result(pe_result),
-        .pe_result_valid(pe_result_valid)
+        .pe_result_valid(pe_result_valid),
+        .pe_operand1(pe_operand1),
+        .pe_operand2(pe_operand2),
+        .pe_config(pe_config)
     );
 
     // Clock Generation
@@ -222,7 +218,7 @@ module tb_pe_ctrl;
         we_i             = 0;
         addr_i           = 0;
         wdata_i          = 0;
-        mem_rdata        = 0;
+        // mem_rdata is no longer used
         computation_done = 0;
         high_bw_ack_i    = 0;
         high_bw_data_i   = 0;
@@ -269,7 +265,7 @@ module tb_pe_ctrl;
 
         // Test 5: Memory Read Operation
         $display("Test 5: Memory Read Operation");
-        mem_rdata = 32'h12345678; // Simulate memory read
+        // mem_rdata is no longer used
         obi_read(32'h00000010, read_value);
         if (read_value !== 32'h12345678) begin
             $display("ERROR: Test 5 - Memory read mismatch: Expected 0x12345678, Got 0x%h", read_value);

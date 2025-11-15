@@ -65,12 +65,12 @@ module tb_pe;
 
     // Test Task: Configure PE Operation
     task configure_pe;
-        input [3:0] opcode;
+        input [7:0] opcode;
         input       use_external_operands;
-        input [1:0] src1_sel;
-        input [1:0] src2_sel;
+        input [2:0] src1_sel;
+        input [2:0] src2_sel;
         begin
-            config_data = {22'b0, src2_sel, src1_sel, use_external_operands, 1'b0, opcode};
+            config_data = {18'b0, src2_sel, src1_sel, use_external_operands, 1'b0, opcode};
             @(posedge clk);
         end
     endtask
@@ -180,7 +180,7 @@ module tb_pe;
 
         // Test 1: Basic Arithmetic with External Operands
         $display("Test 1: Basic Arithmetic with External Operands");
-        configure_pe(4'b0000, 1'b1, 2'b00, 2'b00); // ADD with external operands
+        configure_pe(8'h01, 1'b1, 3'b101, 3'b110); // ADD with external operands (src1=operand1, src2=operand2)
         set_external_operands(32'h00000005, 32'h00000003); // 5 + 3
         start_computation();
         wait_for_result();
@@ -189,7 +189,7 @@ module tb_pe;
 
         // Test 2: Subtraction
         $display("Test 2: Subtraction");
-        configure_pe(4'b0001, 1'b1, 2'b00, 2'b00); // SUB with external operands
+        configure_pe(8'h02, 1'b1, 3'b101, 3'b110); // SUB with external operands
         set_external_operands(32'h0000000A, 32'h00000004); // 10 - 4
         start_computation();
         wait_for_result();
@@ -198,7 +198,7 @@ module tb_pe;
 
         // Test 3: Multiplication
         $display("Test 3: Multiplication");
-        configure_pe(4'b0101, 1'b1, 2'b00, 2'b00); // MUL with external operands
+        configure_pe(8'h06, 1'b1, 3'b101, 3'b110); // MUL with external operands
         set_external_operands(32'h00000006, 32'h00000007); // 6 * 7
         start_computation();
         wait_for_result();
@@ -207,7 +207,7 @@ module tb_pe;
 
         // Test 4: Bitwise AND
         $display("Test 4: Bitwise AND");
-        configure_pe(4'b0010, 1'b1, 2'b00, 2'b00); // AND with external operands
+        configure_pe(8'h03, 1'b1, 3'b101, 3'b110); // AND with external operands
         set_external_operands(32'hF0F0F0F0, 32'h0F0F0F0F);
         start_computation();
         wait_for_result();
@@ -216,7 +216,7 @@ module tb_pe;
 
         // Test 5: Bitwise OR
         $display("Test 5: Bitwise OR");
-        configure_pe(4'b0011, 1'b1, 2'b00, 2'b00); // OR with external operands
+        configure_pe(8'h04, 1'b1, 3'b101, 3'b110); // OR with external operands
         set_external_operands(32'hF0F0F0F0, 32'h0F0F0F0F);
         start_computation();
         wait_for_result();
@@ -225,9 +225,9 @@ module tb_pe;
 
         // Test 6: Inter-PE Communication (North Input)
         $display("Test 6: Inter-PE Communication (North Input)");
-        configure_pe(4'b0000, 1'b0, 2'b00, 2'b00); // ADD with inter-PE inputs
+        configure_pe(8'h01, 1'b0, 3'b100, 3'b101); // ADD with North input and operand1
         set_inter_pe_inputs(32'h0000000A, 32'h00000000, 32'h00000000, 32'h00000000, 1'b1, 1'b0, 1'b0, 1'b0);
-        set_external_operands(32'h00000005, 32'h00000000); // Use North input (10) + 5
+        set_external_operands(32'h00000005, 32'h00000000); // Use North input (10) + operand1 (5)
         start_computation();
         wait_for_result();
         verify_result(32'h0000000F, 6); // Expected: 15
@@ -235,7 +235,7 @@ module tb_pe;
 
         // Test 7: Shift Left
         $display("Test 7: Shift Left");
-        configure_pe(4'b1000, 1'b1, 2'b00, 2'b00); // SHL with external operands
+        configure_pe(8'h09, 1'b1, 3'b101, 3'b110); // SHL with external operands
         set_external_operands(32'h00000001, 32'h00000004); // 1 << 4
         start_computation();
         wait_for_result();
@@ -244,7 +244,7 @@ module tb_pe;
 
         // Test 8: Shift Right
         $display("Test 8: Shift Right");
-        configure_pe(4'b1001, 1'b1, 2'b00, 2'b00); // SHR with external operands
+        configure_pe(8'h0A, 1'b1, 3'b101, 3'b110); // SHR with external operands
         set_external_operands(32'h00000010, 32'h00000002); // 16 >> 2
         start_computation();
         wait_for_result();
@@ -253,7 +253,7 @@ module tb_pe;
 
         // Test 9: Minimum
         $display("Test 9: Minimum");
-        configure_pe(4'b0110, 1'b1, 2'b00, 2'b00); // MIN with external operands
+        configure_pe(8'h07, 1'b1, 3'b101, 3'b110); // MIN with external operands
         set_external_operands(32'h0000000A, 32'h00000005); // min(10, 5)
         start_computation();
         wait_for_result();
@@ -262,7 +262,7 @@ module tb_pe;
 
         // Test 10: Maximum
         $display("Test 10: Maximum");
-        configure_pe(4'b0111, 1'b1, 2'b00, 2'b00); // MAX with external operands
+        configure_pe(8'h08, 1'b1, 3'b101, 3'b110); // MAX with external operands
         set_external_operands(32'h0000000A, 32'h00000005); // max(10, 5)
         start_computation();
         wait_for_result();

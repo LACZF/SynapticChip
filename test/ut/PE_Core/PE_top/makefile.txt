@@ -8,5 +8,4 @@ TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe.v
 TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router.v
-TEST_SRC += $(TOP_DIR)/rtl/PE_Core/PE_mem/pe_mem.v
 TEST_SRC += $(CUR_DIR)/tb_pe_top.v

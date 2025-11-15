@@ -21,9 +21,6 @@ module tb_router;
     reg                   pe_result_valid;
     reg  [DATA_WIDTH-1:0] pe_config;
 
-    // Memory Interface
-    wire [DATA_WIDTH-1:0] pe_output;
-
     // Neighbor PE Outputs
     wire [DATA_WIDTH-1:0] north_out;
     wire [DATA_WIDTH-1:0] south_out;
@@ -40,18 +37,17 @@ module tb_router;
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .pe_result(pe_result),
-        .pe_result_valid(pe_result_valid),
-        .pe_config(pe_config),
-        .pe_output(pe_output),
-        .north_out(north_out),
-        .south_out(south_out),
-        .east_out(east_out),
-        .west_out(west_out),
-        .north_valid_out(north_valid_out),
-        .south_valid_out(south_valid_out),
-        .east_valid_out(east_valid_out),
-        .west_valid_out(west_valid_out)
+        .pe_result_i(pe_result),
+        .pe_result_valid_i(pe_result_valid),
+        .pe_config_i(pe_config),
+        .north_out_o(north_out),
+        .south_out_o(south_out),
+        .east_out_o(east_out),
+        .west_out_o(west_out),
+        .north_valid_out_o(north_valid_out),
+        .south_valid_out_o(south_valid_out),
+        .east_valid_out_o(east_valid_out),
+        .west_valid_out_o(west_valid_out)
     );
 
     // Clock Generation
@@ -60,9 +56,8 @@ module tb_router;
     // Test Task: Configure Router
     task configure_router;
         input [1:0] output_dest;
-        input store_to_mem;
         begin
-            pe_config = {25'b0, store_to_mem, 1'b0, output_dest, 26'b0};
+            pe_config = {26'b0, output_dest, 26'b0};
             @(posedge clk);
         end
     endtask
@@ -86,20 +81,8 @@ module tb_router;
         input expected_south;
         input expected_east;
         input expected_west;
-        input expected_mem;
         input integer test_num;
         begin
-            // Check memory output
-            if (expected_mem && pe_output !== expected_data) begin
-                $display("ERROR: Test %d - Memory output mismatch: Expected 0x%h, Got 0x%h",
-                         test_num, expected_data, pe_output);
-                error_count = error_count + 1;
-            end else if (!expected_mem && pe_output !== 0) begin
-                $display("ERROR: Test %d - Memory output should be 0, Got 0x%h",
-                         test_num, pe_output);
-                error_count = error_count + 1;
-            end
-
             // Check north output
             if (expected_north && (north_out !== expected_data || !north_valid_out)) begin
                 $display("ERROR: Test %d - North output mismatch or invalid", test_num);
@@ -158,75 +141,75 @@ module tb_router;
         $display("Starting PE Router Test for Refactored Module");
         $display("==========================================");
 
-        // Test 1: Route to North with Memory Store
-        $display("Test 1: Route to North with Memory Store");
-        configure_router(2'b00, 1'b1); // North + Store to memory
+        // Test 1: Route to North
+        $display("Test 1: Route to North");
+        configure_router(2'b00); // North
         send_pe_result(32'h12345678);
-        verify_output(32'h12345678, 1, 0, 0, 0, 1, 1);
+        verify_output(32'h12345678, 1, 0, 0, 0, 1);
         #20;
 
-        // Test 2: Route to South without Memory Store
-        $display("Test 2: Route to South without Memory Store");
-        configure_router(2'b01, 1'b0); // South, no memory store
+        // Test 2: Route to South
+        $display("Test 2: Route to South");
+        configure_router(2'b01); // South
         send_pe_result(32'hAABBCCDD);
-        verify_output(32'h00000000, 0, 1, 0, 0, 0, 2);
+        verify_output(32'hAABBCCDD, 0, 1, 0, 0, 2);
         #20;
 
-        // Test 3: Route to East with Memory Store
-        $display("Test 3: Route to East with Memory Store");
-        configure_router(2'b10, 1'b1); // East + Store to memory
+        // Test 3: Route to East
+        $display("Test 3: Route to East");
+        configure_router(2'b10); // East
         send_pe_result(32'h11223344);
-        verify_output(32'h11223344, 0, 0, 1, 0, 1, 3);
+        verify_output(32'h11223344, 0, 0, 1, 0, 3);
         #20;
 
-        // Test 4: Route to West without Memory Store
-        $display("Test 4: Route to West without Memory Store");
-        configure_router(2'b11, 1'b0); // West, no memory store
+        // Test 4: Route to West
+        $display("Test 4: Route to West");
+        configure_router(2'b11); // West
         send_pe_result(32'h55667788);
-        verify_output(32'h00000000, 0, 0, 0, 1, 0, 4);
+        verify_output(32'h55667788, 0, 0, 0, 1, 4);
         #20;
 
         // Test 5: No Routing (Invalid Configuration)
         $display("Test 5: No Routing (Invalid Configuration)");
-        configure_router(2'b00, 1'b0); // North, no memory store
+        configure_router(2'b00); // North
         send_pe_result(32'h99AABBCC);
-        verify_output(32'h00000000, 1, 0, 0, 0, 0, 5);
+        verify_output(32'h99AABBCC, 1, 0, 0, 0, 5);
         #20;
 
         // Test 6: Multiple Consecutive Transmissions
         $display("Test 6: Multiple Consecutive Transmissions");
-        configure_router(2'b10, 1'b1); // East + Store to memory
+        configure_router(2'b10); // East
 
         // First transmission
         send_pe_result(32'h11111111);
-        verify_output(32'h11111111, 0, 0, 1, 0, 1, 6);
+        verify_output(32'h11111111, 0, 0, 1, 0, 6);
 
         // Second transmission
         send_pe_result(32'h22222222);
-        verify_output(32'h22222222, 0, 0, 1, 0, 1, 6);
+        verify_output(32'h22222222, 0, 0, 1, 0, 6);
 
         // Third transmission
         send_pe_result(32'h33333333);
-        verify_output(32'h33333333, 0, 0, 1, 0, 1, 6);
+        verify_output(32'h33333333, 0, 0, 1, 0, 6);
         #20;
 
         // Test 7: Configuration Change During Operation
         $display("Test 7: Configuration Change During Operation");
 
         // Start with North routing
-        configure_router(2'b00, 1'b1);
+        configure_router(2'b00);
         send_pe_result(32'h44444444);
-        verify_output(32'h44444444, 1, 0, 0, 0, 1, 7);
+        verify_output(32'h44444444, 1, 0, 0, 0, 7);
 
         // Change to South routing
-        configure_router(2'b01, 1'b0);
+        configure_router(2'b01);
         send_pe_result(32'h55555555);
-        verify_output(32'h00000000, 0, 1, 0, 0, 0, 7);
+        verify_output(32'h55555555, 0, 1, 0, 0, 7);
         #20;
 
         // Test 8: Invalid PE Result (No Valid Signal)
         $display("Test 8: Invalid PE Result (No Valid Signal)");
-        configure_router(2'b00, 1'b1);
+        configure_router(2'b00);
 
         // Send data without valid signal
         pe_result = 32'h66666666;
@@ -234,14 +217,14 @@ module tb_router;
         @(posedge clk);
 
         // Verify no outputs are active
-        verify_output(32'h00000000, 0, 0, 0, 0, 0, 8);
+        verify_output(32'h00000000, 0, 0, 0, 0, 8);
         #20;
 
         // Test 9: Reset Test
         $display("Test 9: Reset Test");
 
         // Configure and send data
-        configure_router(2'b00, 1'b1);
+        configure_router(2'b00);
         send_pe_result(32'h77777777);
 
         // Apply reset
@@ -253,8 +236,7 @@ module tb_router;
 
         // Verify outputs are reset
         if (north_out !== 0 || south_out !== 0 || east_out !== 0 || west_out !== 0 ||
-            north_valid_out !== 0 || south_valid_out !== 0 || east_valid_out !== 0 || west_valid_out !== 0 ||
-            pe_output !== 0) begin
+            north_valid_out !== 0 || south_valid_out !== 0 || east_valid_out !== 0 || west_valid_out !== 0) begin
             $display("ERROR: Test 9 - Outputs not properly reset");
             error_count = error_count + 1;
         end else begin
@@ -264,9 +246,9 @@ module tb_router;
 
         // Test 10: Edge Case - Maximum Data Value
         $display("Test 10: Edge Case - Maximum Data Value");
-        configure_router(2'b11, 1'b1); // West + Store to memory
+        configure_router(2'b11); // West
         send_pe_result(32'hFFFFFFFF);
-        verify_output(32'hFFFFFFFF, 0, 0, 0, 1, 1, 10);
+        verify_output(32'hFFFFFFFF, 0, 0, 0, 1, 10);
         #20;
 
         // Final Test Results
