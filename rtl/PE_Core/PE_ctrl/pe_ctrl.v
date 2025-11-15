@@ -11,7 +11,7 @@ module pe_control #(
     // OBI Bus Interface
     input  wire                                            req_i,
     input  wire                                            we_i,
-    input  wire [31:0]                                     addr_i,  // [31:16] = 长度, [15:0] = 地址
+    input  wire [31:0]                                     addr_i,
     input  wire [DATA_WIDTH-1:0]                           wdata_i,
     output reg                                             gnt_o,
     output reg                                             rvalid_o,
@@ -82,8 +82,7 @@ module pe_control #(
     reg         high_bw_start;
 
     // 地址拆分
-    wire [15:0] addr_base       = addr_i[15:0];      // 基地址
-    wire [15:0] transfer_length = addr_i[31:16];     // 传输长度
+    wire [15:0] addr_base       = addr_i[23:0];
 
     // Control register bits
     wire start_bit = control_reg[0];
