@@ -60,6 +60,7 @@ endif
 
 default: help
 
+TEST_ARGS += $(APPEND_ARGS)
 $(COMPLETE_TEST_TARGET):
 	$(QUITE)echo "test : $(M)"
 	$(QUITE)mkdir -p $(TEST_BUILD_DIR)

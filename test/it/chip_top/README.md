@@ -22,3 +22,27 @@ make test M=test/it/chip_top
 cd $REPO_TOP_DIR
 make test M=test/it/chip_top ROM_PRG=program.hex RAM_PRG=data_bss.hex
 ```
+
+### Test pe module only
+```bash
+cd $REPO_TOP_DIR
+make test M=test/it/chip_top APPEND_ARGS='-DPE_TEST_FOR_CHIP_TOP'
+```
+
+### Test timer module only
+```bash
+cd $REPO_TOP_DIR
+make test M=test/it/chip_top APPEND_ARGS='-DTIMER_TEST_FOR_CHIP_TOP'
+```
+
+### Test spi module only
+```bash
+cd $REPO_TOP_DIR
+make test M=test/it/chip_top APPEND_ARGS='-DSPI_TEST_FOR_CHIP_TOP'
+```
+
+### Test gpio module only
+```bash
+cd $REPO_TOP_DIR
+make test M=test/it/chip_top APPEND_ARGS='-DGPIO_TEST_FOR_CHIP_TOP'
+```

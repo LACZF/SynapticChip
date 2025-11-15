@@ -1,10 +1,19 @@
 
 `timescale 1ns/1ps
 
-`define PE_TEST_FOR_CHIP_TOP
-`define GPIO_TEST_FOR_CHIP_TOP
-`define TIMER_TEST_FOR_CHIP_TOP
-`define SPI_TEST_FOR_CHIP_TOP
+// 当所有测试宏都未定义时，自动定义所有测试宏
+`ifndef PE_TEST_FOR_CHIP_TOP
+    `ifndef GPIO_TEST_FOR_CHIP_TOP
+        `ifndef TIMER_TEST_FOR_CHIP_TOP
+            `ifndef SPI_TEST_FOR_CHIP_TOP
+                `define PE_TEST_FOR_CHIP_TOP
+                `define GPIO_TEST_FOR_CHIP_TOP
+                `define TIMER_TEST_FOR_CHIP_TOP
+                `define SPI_TEST_FOR_CHIP_TOP
+            `endif
+        `endif
+    `endif
+`endif
 
 module chip_top_test;
     /********** 输入/输出信号 **********/
