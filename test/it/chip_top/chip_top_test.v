@@ -188,6 +188,7 @@ module chip_top_test;
 
     /********** 实例化QSPI Flash模拟模块 **********/
     qspi_flash_model #(
+        .FLASH_SIZE  (64*1024),
         .PROGRAM_FILE(`ROM_PRG)
     ) u_qspi_flash (
         .clk            (clk),
