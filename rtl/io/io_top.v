@@ -269,23 +269,20 @@ module io_top #(
         if (IMPLEMENT_SPI_FLASH) begin : spi_flash_gen
             assign slave_addr_base[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_BASE;
             assign slave_addr_mask[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_MASK;
-            spi_flash_top #(
-                .ADDR_WIDTH    (ADDR_WIDTH),
-                .DATA_WIDTH    (DATA_WIDTH)
-            ) u_spi_flash (
+            spi_flash_controller u_spi_flash (
                 .clk           (clk),
                 .rst_n         (rst_n),
 
                 .req_i         (slave_req[SLAVE_SPI_FLASH_INDEX]),
                 .we_i          (slave_we[SLAVE_SPI_FLASH_INDEX]),
                 .addr_i        (slave_addr[SLAVE_SPI_FLASH_INDEX]),
-                .data_in_i     (slave_wdata[SLAVE_SPI_FLASH_INDEX]),
-                .data_out_o    (slave_rdata[SLAVE_SPI_FLASH_INDEX]),
+                .wdata_i       (slave_wdata[SLAVE_SPI_FLASH_INDEX]),
+                .rdata_o       (slave_rdata[SLAVE_SPI_FLASH_INDEX]),
                 .gnt_o         (slave_gnt[SLAVE_SPI_FLASH_INDEX]),
                 .rvalid_o      (slave_rvalid[SLAVE_SPI_FLASH_INDEX]),
 
-                .spi_cs_n_o    (spi_flash_cs_n),
-                .spi_clk_o     (spi_flash_clk),
+                .spi_cs_o      (spi_flash_cs_n),
+                .spi_sck_o     (spi_flash_clk),
                 .spi_mosi_o    (spi_flash_mosi),
                 .spi_miso_i    (spi_flash_miso)
             );
