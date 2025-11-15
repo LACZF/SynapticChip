@@ -35,7 +35,7 @@ module chip_top_test;
     localparam UART_NUM             = 1;
     localparam SAMPLE_CYCLES        = 4;
     localparam UART_DIV_RATE        = 2;
-    localparam BOOT_TYPE            = 2;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
+    localparam BOOT_TYPE            = 0;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
     localparam IMPLEMENT_JTAG       = 1;
     localparam IMPLEMENT_UART       = 1;
     localparam IMPLEMENT_GPIO       = 1;
@@ -68,18 +68,26 @@ module chip_top_test;
     wire                      spi_flash_mosi;    // SPI Flash主机输出从机输入
     wire                      spi_flash_miso;    // SPI Flash主机输入从机输出
 
+    // MX25L6436F专用接口
+    wire                      spi_flash_wp;      // MX25L6436F写保护引脚
+    wire                      spi_flash_sio3;    // MX25L6436F SIO3引脚
+
+    // MX25L6436F引脚赋值
+    assign spi_flash_wp       = 1'b1;   // 写保护引脚，设置为高电平（不保护）
+    assign spi_flash_sio3     = 1'b1;   // 保留引脚，设置为高电平
+
     if (IMPLEMENT_SPI_FLASH == 1) begin : spi_flash_gen
-        /********** 实例化SPI Flash模拟模块 **********/
-        spi_flash_model #(
-            .FLASH_SIZE  (64*1024),
-            .PROGRAM_FILE(`ROM_PRG)
+        /********** 实例化MX25L6436F SPI Flash模拟模块 **********/
+        MX25L6436F #(
+            .TOP_Add(23'hffff),
+            .Init_File(`ROM_PRG)
         ) u_spi_flash (
-            .clk            (clk),
-            .rst_n          (rst_n),
-            .cs_n           (spi_flash_cs_n),
-            .sck            (spi_flash_clk),
-            .mosi           (spi_flash_mosi),
-            .miso           (spi_flash_miso)
+            .SCLK           (spi_flash_clk),
+            .CS             (spi_flash_cs_n),
+            .SI             (spi_flash_mosi),
+            .SO             (spi_flash_miso),
+            .WP             (spi_flash_wp),   // 写保护引脚
+            .SIO3           (spi_flash_sio3)  // 保留引脚
         );
     end
 
