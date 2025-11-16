@@ -14,7 +14,7 @@ module spi_flash_controller (
     output wire [31:0]  rdata_o,
 
     // SPI接口
-    output wire         spi_cs_o,
+    output wire         spi_cs_n_o,
     output wire         spi_sck_o,
     output wire         spi_mosi_o,
     input  wire         spi_miso_i
@@ -221,7 +221,7 @@ module spi_flash_controller (
     end
 
     // 实例化SPI控制器
-    spi_controller spi_ctrl (
+    spi_controller u_spi_ctrl (
         .clk(clk),
         .rst_n(rst_n),
         .start(spi_start),
@@ -231,17 +231,17 @@ module spi_flash_controller (
         .wdata(spi_wdata),
         .done(spi_done),
         .rdata(spi_rdata),
-        .spi_cs(spi_cs_o),
-        .spi_sck(spi_sck_o),
-        .spi_mosi(spi_mosi_o),
-        .spi_miso(spi_miso_i)
+        .spi_cs_n_o(spi_cs_n_o),
+        .spi_sck_o(spi_sck_o),
+        .spi_mosi_o(spi_mosi_o),
+        .spi_miso_i(spi_miso_i)
     );
 
 endmodule
 
 // SPI控制器模块（保持不变）
 module spi_controller #(
-    parameter CLK_DIV_VALUE = 8'd9   // 100MHz / (2*10) = 5MHz
+    parameter CLK_DIV_VALUE = 8'd1
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -254,10 +254,10 @@ module spi_controller #(
     output reg  [31:0] rdata,
 
     // SPI物理接口
-    output reg         spi_cs,
-    output reg         spi_sck,
-    output reg         spi_mosi,
-    input  wire        spi_miso
+    output reg         spi_cs_n_o,
+    output reg         spi_sck_o,
+    output reg         spi_mosi_o,
+    input  wire        spi_miso_i
 );
 
     // 状态定义
@@ -307,12 +307,12 @@ module spi_controller #(
     // SPI SCK生成
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            spi_sck <= 1'b0;
+            spi_sck_o <= 1'b0;
         end else begin
             if (sck_enable && sck_falling) begin
-                spi_sck <= ~spi_sck;
+                spi_sck_o <= ~spi_sck_o;
             end else if (!sck_enable) begin
-                spi_sck <= 1'b0;
+                spi_sck_o <= 1'b0;
             end
         end
     end
@@ -321,8 +321,8 @@ module spi_controller #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= S_IDLE;
-            spi_cs <= 1'b1;
-            spi_mosi <= 1'b0;
+            spi_cs_n_o <= 1'b1;
+            spi_mosi_o <= 1'b0;
             done <= 1'b0;
             rdata <= 32'h0;
             sck_enable <= 1'b0;
@@ -337,15 +337,15 @@ module spi_controller #(
 
             case (state)
                 S_IDLE: begin
-                    spi_cs <= 1'b1;
-                    spi_mosi <= 1'b0;
+                    spi_cs_n_o <= 1'b1;
+                    spi_mosi_o <= 1'b0;
                     sck_enable <= 1'b0;
                     bit_count <= 8'h0;
                     byte_count <= 3'h0;
 
                     if (start) begin
                         state <= S_CMD;
-                        spi_cs <= 1'b0;
+                        spi_cs_n_o <= 1'b0;
                         sck_enable <= 1'b1;
                         shift_out <= cmd;
                         addr_reg <= addr;
@@ -354,9 +354,9 @@ module spi_controller #(
                 end
 
                 S_CMD: begin
-                    if (sck_falling && !spi_sck) begin
+                    if (sck_falling && !spi_sck_o) begin
                         // SCK下降沿发送数据
-                        spi_mosi <= shift_out[7];
+                        spi_mosi_o <= shift_out[7];
                         shift_out <= {shift_out[6:0], 1'b0};
                         bit_count <= bit_count + 1;
 
@@ -369,8 +369,8 @@ module spi_controller #(
                 end
 
                 S_ADDR: begin
-                    if (sck_falling && !spi_sck) begin
-                        spi_mosi <= shift_out[7];
+                    if (sck_falling && !spi_sck_o) begin
+                        spi_mosi_o <= shift_out[7];
                         shift_out <= {shift_out[6:0], 1'b0};
                         bit_count <= bit_count + 1;
 
@@ -395,8 +395,8 @@ module spi_controller #(
                 end
 
                 S_WRITE: begin
-                    if (sck_falling && !spi_sck) begin
-                        spi_mosi <= shift_out[7];
+                    if (sck_falling && !spi_sck_o) begin
+                        spi_mosi_o <= shift_out[7];
                         shift_out <= {shift_out[6:0], 1'b0};
                         bit_count <= bit_count + 1;
 
@@ -418,9 +418,9 @@ module spi_controller #(
                 end
 
                 S_READ: begin
-                    if (sck_falling && spi_sck) begin
+                    if (sck_falling && spi_sck_o) begin
                         // SCK上升沿采样数据
-                        shift_in <= {shift_in[6:0], spi_miso};
+                        shift_in <= {shift_in[6:0], spi_miso_i};
                         bit_count <= bit_count + 1;
 
                         if (bit_count == 7) begin
@@ -428,11 +428,11 @@ module spi_controller #(
                             byte_count <= byte_count + 1;
 
                             case (byte_count)
-                                3'h3: rdata[31:24] <= {shift_in[6:0], spi_miso};
-                                3'h4: rdata[23:16] <= {shift_in[6:0], spi_miso};
-                                3'h5: rdata[15:8] <= {shift_in[6:0], spi_miso};
+                                3'h3: rdata[31:24] <= {shift_in[6:0], spi_miso_i};
+                                3'h4: rdata[23:16] <= {shift_in[6:0], spi_miso_i};
+                                3'h5: rdata[15:8] <= {shift_in[6:0], spi_miso_i};
                                 3'h6: begin
-                                    rdata[7:0] <= {shift_in[6:0], spi_miso};
+                                    rdata[7:0] <= {shift_in[6:0], spi_miso_i};
                                     state <= S_DONE;
                                 end
                             endcase
@@ -441,7 +441,7 @@ module spi_controller #(
                 end
 
                 S_DONE: begin
-                    spi_cs <= 1'b1;
+                    spi_cs_n_o <= 1'b1;
                     sck_enable <= 1'b0;
                     done <= 1'b1;
                     state <= S_IDLE;

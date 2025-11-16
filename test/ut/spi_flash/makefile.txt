@@ -1,0 +1,9 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+TEST_TARGET := tb_spi_flash
+TEST_ARGS ?= -g2005-sv
+
+TEST_INCLUDE_DIR +=
+
+TEST_SRC += $(CUR_DIR)/MX25L6436F.v
+TEST_SRC += $(CUR_DIR)/spi_flash.v
+TEST_SRC += $(CUR_DIR)/tb_spi_flash.v
