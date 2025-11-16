@@ -188,42 +188,53 @@ module tb_spi_flash_controller;
 
         $display("开始测试序列...");
 
-        // 简化测试：先测试最基本的读操作
-        $display("\n=== 简化测试 ===");
+        // 完整测试序列：包含读操作、写操作和读-写-读验证
+        $display("\n=== 完整测试序列 ===");
 
-        // 测试1：手动执行读操作，避免使用任务
-        $display("测试1：手动读操作");
-        req_i = 1'b1;
-        addr_i = 32'h00000000;
-        we_i = 1'b0;
-        $display("设置请求: req_i=1, addr_i=0x00000000, we_i=0");
+        // 测试1：读取初始数据
+        $display("测试1：读取初始数据（地址0）");
+        verify_data(32'h00000000, 32'hFFFFFFFF, "初始数据读取");
 
-        // 等待授权
-        repeat (10) @(posedge clk);
-        `ifdef DEBUG
-        $display("等待后: gnt_o=%b, rvalid_o=%b", gnt_o, rvalid_o);
-        `endif
-
-        // 如果获得授权，等待读完成
-        if (gnt_o) begin
-            $display("获得授权，等待读完成...");
-            repeat (100) @(posedge clk);
-            $display("读数据: rdata_o=0x%08X", rdata_o);
-        end
-
-        req_i = 1'b0;
-        $display("清除请求");
-
-        // 测试2：尝试使用任务
-        $display("\n测试2：尝试使用read_flash任务");
+        // 测试2：写操作测试 - 写入测试数据
+        $display("\n测试2：执行写操作");
         begin
-            reg [31:0] test_data;
-            $display("调用read_flash任务...");
-            read_flash(32'h00000000, test_data);
-            $display("read_flash完成: data=0x%08X", test_data);
+            reg [31:0] write_data = 32'hA5A5A5A5;
+            $display("写入数据: 0x%08X 到地址: 0x%08X", write_data, 32'h00000000);
+            write_flash(32'h00000000, write_data);
+            $display("写操作完成");
         end
 
-        $display("\n=== 测试结束 ===");
+        // 测试3：验证写入后的数据
+        $display("\n测试3：验证写入后的数据");
+        verify_data(32'h00000000, 32'hA5A5A5A5, "写后读验证");
+
+        // 测试4：读取另一个地址
+        $display("\n测试4：读取另一个地址（地址16）");
+        verify_data(32'h00000010, 32'hFFFFFFFF, "不同地址读取");
+
+        // 测试5：写-读不同地址
+        $display("\n测试5：写-读不同地址");
+        begin
+            reg [31:0] write_data = 32'h5A5A5A5A;
+            $display("写入数据: 0x%08X 到地址: 0x%08X", write_data, 32'h00000010);
+            write_flash(32'h00000010, write_data);
+            verify_data(32'h00000010, 32'h5A5A5A5A, "不同地址写后读验证");
+        end
+
+        // 测试6：交叉验证 - 确保地址0的数据没有被地址16的写入操作改变
+        $display("\n测试6：交叉验证");
+        verify_data(32'h00000000, 32'hA5A5A5A5, "地址0交叉验证");
+        verify_data(32'h00000010, 32'h5A5A5A5A, "地址16交叉验证");
+
+        $display("\n=== 测试结果统计 ===");
+        $display("总测试数: %d", test_total_count);
+        $display("通过测试: %d", test_pass_count);
+        $display("失败测试: %d", test_fail_count);
+        if (test_fail_count == 0) begin
+            $display("[PASS] 所有测试通过！");
+        end else begin
+            $display("[FAIL] 部分测试失败，请检查SPI Flash控制器实现。");
+        end
         #1000;
         $finish;
     end
