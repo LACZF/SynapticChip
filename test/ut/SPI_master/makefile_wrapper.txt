@@ -1,0 +1,9 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+TEST_TARGET := tb_SPI_master
+
+TEST_ARGS ?= -g2005-sv
+TEST_INCLUDE_DIR +=
+
+# TEST_SRC += $(CUR_DIR)/spi_wrapper.v
+# TEST_SRC += $(CUR_DIR)/spi_flash_master.v
+TEST_SRC += $(CUR_DIR)/spi_flash_master_tb.v
