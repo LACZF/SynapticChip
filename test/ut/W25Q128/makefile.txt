@@ -5,4 +5,6 @@ TEST_ARGS ?= -g2005-sv
 TEST_INCLUDE_DIR +=
 
 TEST_SRC += $(CUR_DIR)/W25Q128JVxIM.v
-TEST_SRC += $(CUR_DIR)/W25Q128JVxIM_test.v
+TEST_SRC += $(CUR_DIR)/spi_flash_controller.v
+# TEST_SRC += $(CUR_DIR)/W25Q128JVxIM_test.v
+TEST_SRC += $(CUR_DIR)/tb_spi_flash_controller.v

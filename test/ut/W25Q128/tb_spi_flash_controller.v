@@ -1,0 +1,255 @@
+`timescale 1ns/1ps
+
+module tb_spi_flash_controller;
+    // 时钟和复位
+    reg         clk;
+    reg         rst_n;
+
+    // OBI总线接口
+    reg         req_i;
+    wire        gnt_o;
+    wire        rvalid_o;
+    reg  [31:0] addr_i;
+    reg         we_i;
+    reg  [3:0]  be_i;
+    reg  [31:0] wdata_i;
+    wire [31:0] rdata_o;
+
+    // SPI接口
+    wire        spi_cs_n_o;
+    wire        spi_sck_o;
+    wire        spi_mosi_o;
+    wire        spi_miso_i;
+
+    // Flash模型inout端口连接
+    wire        wpn_wire;
+    wire        holdn_wire;
+
+    // 测试控制信号
+    reg  [31:0] test_addr;
+    reg  [31:0] test_data;
+    reg  [31:0] expected_data;
+    integer     test_pass_count;
+    integer     test_fail_count;
+    integer     test_total_count;
+
+    // 时钟生成
+    always #5 clk = ~clk;  // 100MHz时钟
+
+    // 实例化SPI Flash控制器
+    spi_flash_ctrl u_spi_flash_ctrl (
+        .clk(clk),
+        .rst_n(rst_n),
+        .req_i(req_i),
+        .gnt_o(gnt_o),
+        .rvalid_o(rvalid_o),
+        .addr_i(addr_i),
+        .we_i(we_i),
+        .be_i(be_i),
+        .wdata_i(wdata_i),
+        .rdata_o(rdata_o),
+        .spi_cs_n_o(spi_cs_n_o),
+        .spi_sck_o(spi_sck_o),
+        .spi_mosi_o(spi_mosi_o),
+        .spi_miso_i(spi_miso_i)
+    );
+
+    // 声明Flash模型的控制信号
+    wire flash_wpn;
+    wire flash_holdn;
+
+    // 实例化W25Q128JVxIM Flash模型
+    W25Q128JVxIM u_flash (
+        .CSn(spi_cs_n_o),
+        .CLK(spi_sck_o),
+        .DIO(spi_mosi_o),     // 标准SPI模式：DIO作为MOSI输入
+        .DO(spi_miso_i),      // 标准SPI模式：DO作为MISO输出
+        .WPn(flash_wpn),      // 写保护
+        .HOLDn(flash_holdn)   // 保持
+    );
+
+    // 连接Flash模型的控制信号
+    assign flash_wpn = 1'b1;    // 写保护禁用
+    assign flash_holdn = 1'b1;  // 保持禁用
+
+    // 测试任务：等待授权
+    task wait_for_grant;
+        integer timeout_counter;
+        begin
+            // 等待至少一个时钟周期，让SPI控制器有时间响应
+            @(posedge clk);
+            timeout_counter = 0;
+            while (!gnt_o) begin
+                @(posedge clk);
+                timeout_counter = timeout_counter + 1;
+                if (timeout_counter > 1000) begin
+                    $display("[ERROR] wait_for_grant超时！req_i=%b, gnt_o=%b", req_i, gnt_o);
+                    $finish;
+                end
+            end
+        `ifdef DEBUG
+            $display("[DEBUG] 获得授权: gnt_o=%b", gnt_o);
+        `endif
+        end
+    endtask
+
+    // 测试任务：等待读完成
+    task wait_for_read_complete;
+        begin
+            while (!rvalid_o) @(posedge clk);
+        end
+    endtask
+
+    // 测试任务：等待写完成
+    task wait_for_write_complete;
+        begin
+            while (!rvalid_o) @(posedge clk);
+        end
+    endtask
+
+    // 测试任务：执行读操作
+    task read_flash;
+        input [31:0] addr;
+        output [31:0] data;
+        begin
+            req_i = 1'b1;
+            addr_i = addr;
+            we_i = 1'b0;
+            wait_for_grant();
+            req_i = 1'b0;
+            wait_for_read_complete();
+            data = rdata_o;
+            #20;  // 等待一段时间
+        end
+    endtask
+
+    // 测试任务：执行写操作
+    task write_flash;
+        input [31:0] addr;
+        input [31:0] data;
+        begin
+            req_i = 1'b1;
+            addr_i = addr;
+            we_i = 1'b1;
+            wdata_i = data;
+            wait_for_grant();
+            req_i = 1'b0;
+            wait_for_write_complete();
+            #1000000;  // 等待写操作完成（Flash需要时间，页编程时间tPP=700us）
+        end
+    endtask
+
+    // 测试任务：验证数据
+    task verify_data;
+        input [31:0] addr;
+        input [31:0] expected;
+        input string test_name;
+        reg [31:0] read_data;
+        begin
+            read_flash(addr, read_data);
+            if (read_data === expected) begin
+                $display("[PASS] %s: Addr=0x%08X, Expected=0x%08X, Read=0x%08X",
+                         test_name, addr, expected, read_data);
+                test_pass_count = test_pass_count + 1;
+            end else begin
+                $display("[FAIL] %s: Addr=0x%08X, Expected=0x%08X, Read=0x%08X",
+                         test_name, addr, expected, read_data);
+                test_fail_count = test_fail_count + 1;
+            end
+            test_total_count = test_total_count + 1;
+        end
+    endtask
+
+    // 主测试流程
+    initial begin
+        // 初始化
+        clk = 0;
+        rst_n = 0;
+        req_i = 0;
+        addr_i = 32'h0;
+        we_i = 0;
+        be_i = 4'hF;
+        wdata_i = 32'h0;
+        test_pass_count = 0;
+        test_fail_count = 0;
+        test_total_count = 0;
+
+        // 复位
+        #20;
+        rst_n = 1;
+        #100;  // 等待控制器初始化完成
+
+        $display("=== SPI Flash控制器测试开始 ===");
+        $display("等待Flash初始化完成...");
+
+        // 等待Flash初始化完成
+        $display("等待控制器初始化...");
+        #200000;  // 延长等待时间，确保控制器有足够时间初始化
+
+        $display("开始测试序列...");
+
+        // 简化测试：先测试最基本的读操作
+        $display("\n=== 简化测试 ===");
+
+        // 测试1：手动执行读操作，避免使用任务
+        $display("测试1：手动读操作");
+        req_i = 1'b1;
+        addr_i = 32'h00000000;
+        we_i = 1'b0;
+        $display("设置请求: req_i=1, addr_i=0x00000000, we_i=0");
+
+        // 等待授权
+        repeat (10) @(posedge clk);
+        `ifdef DEBUG
+        $display("等待后: gnt_o=%b, rvalid_o=%b", gnt_o, rvalid_o);
+        `endif
+
+        // 如果获得授权，等待读完成
+        if (gnt_o) begin
+            $display("获得授权，等待读完成...");
+            repeat (100) @(posedge clk);
+            $display("读数据: rdata_o=0x%08X", rdata_o);
+        end
+
+        req_i = 1'b0;
+        $display("清除请求");
+
+        // 测试2：尝试使用任务
+        $display("\n测试2：尝试使用read_flash任务");
+        begin
+            reg [31:0] test_data;
+            $display("调用read_flash任务...");
+            read_flash(32'h00000000, test_data);
+            $display("read_flash完成: data=0x%08X", test_data);
+        end
+
+        $display("\n=== 测试结束 ===");
+        #1000;
+        $finish;
+    end
+
+`ifdef DEBUG
+    // 监控OBI总线
+    initial begin
+        forever begin
+            @(posedge clk);
+            if (req_i) begin
+                $display("[OBI] Time=%0t, REQ=%b, GNT=%b, ADDR=0x%08X, WE=%b, WDATA=0x%08X",
+                         $time, req_i, gnt_o, addr_i, we_i, wdata_i);
+            end
+            if (rvalid_o) begin
+                $display("[OBI] Time=%0t, RVALID=%b, RDATA=0x%08X",
+                         $time, rvalid_o, rdata_o);
+            end
+        end
+    end
+`endif
+
+    // 仿真超时保护
+    initial begin
+        #50000000;  // 50ms超时
+        $display("仿真超时！");
+        $finish;
+    end
+
+endmodule
