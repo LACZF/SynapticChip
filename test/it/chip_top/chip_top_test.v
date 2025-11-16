@@ -15,6 +15,10 @@
     `endif
 `endif
 
+`ifndef BOOT_TYPE
+`define BOOT_TYPE 0
+`endif
+
 module chip_top_test;
     /********** 输入/输出信号 **********/
     reg                       clk;
@@ -35,7 +39,7 @@ module chip_top_test;
     localparam UART_NUM             = 1;
     localparam SAMPLE_CYCLES        = 4;
     localparam UART_DIV_RATE        = 2;
-    localparam BOOT_TYPE            = 0;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
+    localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
     localparam IMPLEMENT_JTAG       = 1;
     localparam IMPLEMENT_UART       = 1;
     localparam IMPLEMENT_GPIO       = 1;
