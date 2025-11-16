@@ -32,25 +32,6 @@ module spi_flash_ctrl (
     localparam WRITE_WAIT   = 4'b0111;
     localparam WRITE_STATUS = 4'b1000; // 写状态检查
 
-    // 状态名称函数
-    function string state_name;
-        input [3:0] state_val;
-        begin
-            case (state_val)
-                INIT:         state_name = "INIT";
-                IDLE:         state_name = "IDLE";
-                READ_CMD:     state_name = "READ_CMD";
-                READ_ADDR:    state_name = "READ_ADDR";
-                READ_DATA:    state_name = "READ_DATA";
-                WRITE_CMD:    state_name = "WRITE_CMD";
-                WRITE_DATA:   state_name = "WRITE_DATA";
-                WRITE_WAIT:   state_name = "WRITE_WAIT";
-                WRITE_STATUS: state_name = "WRITE_STATUS";
-                default:      state_name = "UNKNOWN";
-            endcase
-        end
-    endfunction
-
     // SPI Flash命令定义
     localparam CMD_READ        = 8'h03;  // 读数据
     localparam CMD_WRITE_EN    = 8'h06;  // 写使能
@@ -204,14 +185,9 @@ module spi_flash_ctrl (
             // 读完成响应
             if (state == READ_CMD && spi_done) begin
                 rvalid_reg <= 1'b1;
-                // 根据不同地址返回不同的测试数据，模拟从MEM.TXT读取
-                case (flash_addr)
-                    32'h00000000: rdata_reg <= 32'h11111111; // 地址0的数据
-                    32'h00000010: rdata_reg <= 32'h22222222; // 地址16的数据
-                    32'h00000020: rdata_reg <= 32'h88888888; // 地址32的数据
-                    32'h00000040: rdata_reg <= 32'hA0A0A0A0; // 地址64的数据
-                    default:      rdata_reg <= 32'h33333333; // 默认数据
-                endcase
+                // 直接使用从W25Q128模型读取的实际数据
+                rdata_reg <= spi_rdata;
+                $display("[SPI_CTRL] 实际从W25Q128读取数据: 地址=0x%08X, 数据=0x%08X", flash_addr, spi_rdata);
             end
             // 写完成响应
             else if (state == WRITE_STATUS && spi_done && (spi_rdata[0] == 1'b0)) begin
