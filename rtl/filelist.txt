@@ -117,8 +117,8 @@ RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
 RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart16550.v
 RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart_top.v
 RTL_SRC += $(TOP_DIR)/rtl/io/irq/irq_controller.v
-RTL_SRC += $(TOP_DIR)/rtl/io/dma/dma_controller.v
 RTL_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_flash_controller.v
+RTL_SRC += $(TOP_DIR)/rtl/io/obi_to_apb_bridge/obi_to_apb_bridge.v
 RTL_SRC += $(TOP_DIR)/rtl/io/io_top.v
 
 RTL_SRC += $(TOP_DIR)/rtl/top/chip_top.v

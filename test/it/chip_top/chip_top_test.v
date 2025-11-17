@@ -39,7 +39,7 @@ module chip_top_test;
     localparam UART_NUM             = 1;
     localparam SAMPLE_CYCLES        = 4;
     localparam UART_DIV_RATE        = 2;
-    localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
+    localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB
     localparam IMPLEMENT_JTAG       = 1;
     localparam IMPLEMENT_UART       = 1;
     localparam IMPLEMENT_GPIO       = 1;
@@ -48,6 +48,15 @@ module chip_top_test;
     localparam IMPLEMENT_SPI_FLASH  = 1;
     localparam IMPLEMENT_TIMER      = 1;
     localparam IMPLEMENT_I2C        = 1;
+
+    wire                      apb_psel;
+    wire                      apb_penable;
+    wire [31:0]               apb_paddr;
+    wire                      apb_pwrite;
+    wire [31:0]               apb_pwdata;
+    wire [31:0]               apb_prdata;
+    wire                      apb_pready;
+    wire                      apb_pslverr;
 
     // UART
     reg                       uart_rx;       // UART接收信号
@@ -208,6 +217,14 @@ module chip_top_test;
         .clk         (clk),
         .rst_n       (rst_n),
 
+        .apb_psel_o   (apb_psel),
+        .apb_penable_o(apb_penable),
+        .apb_paddr_o  (apb_paddr),
+        .apb_pwrite_o (apb_pwrite),
+        .apb_pwdata_o (apb_pwdata),
+        .apb_prdata_i (apb_prdata),
+        .apb_pready_i (apb_pready),
+
         /********** UART **********/
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
@@ -250,6 +267,25 @@ module chip_top_test;
             .io_in          (qspi_flash_dq_in),
             .io_out         (qspi_flash_dq_out),
             .io_oe          (qspi_flash_dq_oe[0])
+        );
+    end
+
+    if (BOOT_TYPE == 3) begin
+        apb_ram #(
+            .MEM_SIZE(8192),
+            .ADDR_WIDTH(32),
+            .INIT_FILE(`ROM_PRG)
+        ) memory (
+            .clk(clk),
+            .rst_n(rst_n),
+            .apb_psel_i(apb_psel),
+            .apb_penable_i(apb_penable),
+            .apb_paddr_i(apb_paddr),
+            .apb_pwrite_i(apb_pwrite),
+            .apb_pwdata_i(apb_pwdata),
+            .apb_pready_o(apb_pready),
+            .apb_prdata_o(apb_prdata),
+            .apb_pslverr_o(apb_pslverr)
         );
     end
 

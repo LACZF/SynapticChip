@@ -17,7 +17,7 @@ module chip_top #(
     parameter PE_ID_WIDTH               = 4,
     parameter PE_ARRAY_X                = 4,
     parameter PE_ARRAY_Y                = 4,
-    parameter BOOT_TYPE                 = 2,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH
+    parameter BOOT_TYPE                 = 2,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
@@ -26,18 +26,23 @@ module chip_top #(
     parameter IMPLEMENT_SPI_FLASH       = 1,
     parameter IMPLEMENT_TIMER           = 1,
     parameter IMPLEMENT_I2C             = 1,
-    parameter IMPLEMENT_DMA             = 1,           // DMA控制器使能
     parameter GPIO_IN_NUM               = 14,
     parameter GPIO_OUT_NUM              = 8,
     parameter GPIO_INOUT_NUM            = 66,
     parameter I2C_NUM                   = 2,
     parameter UART_NUM                  = 3,
-    parameter SPI_NUM                   = 1,
-    parameter DMA_FIFO_DEPTH            = 16,          // DMA FIFO深度
-    parameter DMA_BURST_LENGTH          = 8            // DMA突发传输长度
+    parameter SPI_NUM                   = 1
 )(
     input  wire                         clk,
     input  wire                         rst_n,
+
+    output wire                         apb_psel_o,
+    output wire                         apb_penable_o,
+    output wire [31:0]                  apb_paddr_o,
+    output wire                         apb_pwrite_o,
+    output wire [31:0]                  apb_pwdata_o,
+    input  wire [31:0]                  apb_prdata_i,
+    input  wire                         apb_pready_i,
 
     /********** UART  **********/
     input  wire                         uart_rx,
@@ -150,16 +155,6 @@ module chip_top #(
     // PE IRQ信号
     wire [NUM_PES-1:0]                                    pe_irq;
     wire [(NUM_PES*8)-1:0]                                pe_irq_id;
-
-    // DMA相关信号
-    wire                                                  dma_irq;                    // DMA中断信号
-    wire [7:0]                                            dma_irq_id;                 // DMA中断ID
-    wire                                                  dma_pe_req;                 // DMA到PE的请求信号
-    wire                                                  dma_pe_we;                  // DMA到PE的写使能
-    wire [ADDR_WIDTH-1:0]                                 dma_pe_addr;                // DMA到PE的地址
-    wire [DATA_WIDTH-1:0]                                 dma_pe_data;                // DMA到PE的数据（32位）
-    wire                                                  dma_pe_ack;                 // DMA到PE的应答信号
-    wire [DATA_WIDTH-1:0]                                 dma_pe_rdata;               // DMA从PE读取的数据（32位）
 
     // 高带宽内存接口信号（用于PE直接内存访问）
     wire                                                  pe_mem_req;                 // 高带宽内存请求信号
@@ -327,8 +322,6 @@ module chip_top #(
         .IMPLEMENT_TIMER        (IMPLEMENT_TIMER),
         .IMPLEMENT_XIP          (IMPLEMENT_XIP),
         .IMPLEMENT_SPI_FLASH    (IMPLEMENT_SPI_FLASH),
-        .IMPLEMENT_DMA          (IMPLEMENT_DMA),
-        .DMA_FIFO_DEPTH         (DMA_FIFO_DEPTH),
         .SPI_NUM                (SPI_NUM),
         .GPIO_IN_NUM            (GPIO_IN_NUM),
         .GPIO_OUT_NUM           (GPIO_OUT_NUM),
@@ -337,6 +330,14 @@ module chip_top #(
     ) u_io (
         .clk              (clk),
         .rst_n            (rst_n),
+
+        .apb_psel_o       (apb_psel_o),
+        .apb_penable_o    (apb_penable_o),
+        .apb_paddr_o      (apb_paddr_o),
+        .apb_pwrite_o     (apb_pwrite_o),
+        .apb_pwdata_o     (apb_pwdata_o),
+        .apb_prdata_i     (apb_prdata_i),
+        .apb_pready_i     (apb_pready_i),
 
         // 总线接口
         .slave_req        (io_slave_req),
@@ -358,14 +359,6 @@ module chip_top #(
         // PE IRQ输入信号
         .pe_irq_i         (pe_irq),
         .pe_irq_id_i      (pe_irq_id),
-
-        // DMA到PE接口信号（32位）
-        .dma_pe_req_o     (dma_pe_req),
-        .dma_pe_we_o      (dma_pe_we),
-        .dma_pe_addr_o    (dma_pe_addr),
-        .dma_pe_data_o    (dma_pe_data),
-        .dma_pe_ack_i     (dma_pe_ack),
-        .dma_pe_data_i    (dma_pe_rdata),
 
         // UART接口
         .uart_rx          (uart_rx),

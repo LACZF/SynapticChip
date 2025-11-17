@@ -13,6 +13,7 @@ TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
 TEST_SRC += $(RTL_SRC)
 
+TEST_SRC += $(TOP_DIR)/test/common/apb_ram.v
 TEST_SRC += $(CUR_DIR)/test_spi_slave.v
 TEST_SRC += $(CUR_DIR)/qspi_flash_model.v
 TEST_SRC += $(CUR_DIR)/MX25L6436F.v

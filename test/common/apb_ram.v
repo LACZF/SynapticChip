@@ -48,15 +48,18 @@ module apb_ram #(
                         // 写操作 - 直接存储32位字
                         memory[word_addr] <= apb_pwdata_i;
                         read_data_reg <= 32'b0;
-
+                    `ifdef DEBUG
                         $display("APB RAM Write: Word_Addr=0x%h, Data=0x%h",
                                  word_addr, apb_pwdata_i);
+                    `endif
                     end else begin
                         // 读操作 - 直接读取32位字
                         read_data_reg <= memory[word_addr];
 
+                    `ifdef DEBUG
                         $display("APB RAM Read: Word_Addr=0x%h, Data=0x%h",
                                  word_addr, read_data_reg);
+                    `endif
                     end
                 end else begin
                     // 地址错误
@@ -85,19 +88,27 @@ module apb_ram #(
 
         // 如果指定了初始化文件，则从文件加载
         if (INIT_FILE != "none") begin
+        `ifdef DEBUG
             $display("Initializing APB RAM from file: %s", INIT_FILE);
+        `endif
             // 使用$readmemh直接加载32位字
             $readmemh(INIT_FILE, memory);
+        `ifdef DEBUG
             $display("APB RAM initialization completed");
+        `endif
         end else begin
+        `ifdef DEBUG
             $display("APB RAM initialized with zeros");
+        `endif
         end
 
-        // 打印前几个内存位置的内容用于调试
-        $display("First 4 words of APB RAM:");
-        for (i = 0; i < 4; i = i + 1) begin
-            $display("memory[%0d] = 0x%h", i, memory[i]);
-        end
+        `ifdef DEBUG
+            // 打印前几个内存位置的内容用于调试
+            $display("First 4 words of APB RAM:");
+            for (i = 0; i < 4; i = i + 1) begin
+                $display("memory[%0d] = 0x%h", i, memory[i]);
+            end
+        `endif
     end
 
 endmodule
