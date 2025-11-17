@@ -9,7 +9,7 @@ module chip_top #(
     parameter TRACE_ENABLE              = 0,
     parameter CPU_NUM                   = 1,
     parameter ROM_DEPTH                 = 1024,
-    parameter RAM_DEPTH                 = 512,
+    parameter RAM_DEPTH                 = 256,
     parameter ADDR_WIDTH                = 32,
     parameter DATA_WIDTH                = 32,
     parameter NUM_PES                   = 16,

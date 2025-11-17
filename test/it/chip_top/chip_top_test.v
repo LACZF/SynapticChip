@@ -52,7 +52,7 @@ module chip_top_test;
     localparam IMPLEMENT_EXT_APB    = 0;
     localparam TRACE_ENABLE         = 0;
     localparam ROM_DEPTH            = 8192;
-    localparam RAM_DEPTH            = 8192;
+    localparam RAM_DEPTH            = 256;
     localparam ADDR_WIDTH           = 32;
     localparam DATA_WIDTH           = 32;
     localparam NUM_PES              = 16;
