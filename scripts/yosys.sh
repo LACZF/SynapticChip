@@ -216,25 +216,26 @@ function gen_read_verilog_ys() {
 	> $filelist
 	> $rtl_all
 	args+=" -I$SRC_DIR"
+	args+=" --top $TOP_MODULE"
+	# args+=" -keep-hierarchy --compat=vcs --ignore-assertions --no-implicit-memories"
 
 	# 使用slang命令读取SystemVerilog文件
 	local sv_files=""
 	local v_files=""
 
+	echo "plugin -i slang" >> $script
 	# 分离.sv和.v文件
 	for f in $(ls $SRC_DIR/*.sv 2>/dev/null); do
 		sv_files+=" $SRC_DIR/$(basename $f)"
 		echo "$(basename $f)" >> $filelist
-		echo "# SystemVerilog file: $(basename $f)" >> $script
-		echo "read_slang $args $SRC_DIR/$(basename $f)" >> $script
 	done
 
 	for f in $(ls $SRC_DIR/*.v 2>/dev/null); do
 		v_files+=" $SRC_DIR/$(basename $f)"
 		echo "$(basename $f)" >> $filelist
-		echo "# Verilog file: $(basename $f)" >> $script
-		echo "read_verilog $args $SRC_DIR/$(basename $f)" >> $script
 	done
+
+	echo "read_slang $args $sv_files $v_files" >> $script
 
 	# 合并所有文件用于后续处理
 	for f in $(ls $SRC_DIR/*.v $SRC_DIR/*.sv 2>/dev/null);
@@ -311,7 +312,7 @@ EOF
 	fi
 
 	log DEBUG "do_synth_behave for $RTL_SRC_DIR start."
-	run_cmd $YOSYS -m slang $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
+	run_cmd $YOSYS $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
 	dot2png "$prefix.dot" "$prefix.png" 2>$LOG_DIR/$sub_prefix.dot2png.err.log 1>$LOG_DIR/$sub_prefix.dot2png.output.log
 	dot2svg "$prefix.dot" "$prefix.svg" 2>$LOG_DIR/$sub_prefix.dot2svg.err.log 1>$LOG_DIR/$sub_prefix.dot2svg.output.log
 	do_netlistsvg $prefix.json -o $prefix.netlist2svg.svg 2>$LOG_DIR/$sub_prefix.netlist2svg.err.log 1>$LOG_DIR/$sub_prefix.netlist2svg.output.log
@@ -352,7 +353,7 @@ EOF
 	fi
 
 	log DEBUG "do_synth_rtl for $RTL_SRC_DIR start."
-	run_cmd $YOSYS -m slang $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
+	run_cmd $YOSYS $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
 	dot2png "$prefix.dot" "$prefix.png" 2>$LOG_DIR/$sub_prefix.dot2png.err.log 1>$LOG_DIR/$sub_prefix.dot2png.output.log
 	dot2svg "$prefix.dot" "$prefix.svg" 2>$LOG_DIR/$sub_prefix.dot2svg.err.log 1>$LOG_DIR/$sub_prefix.dot2svg.output.log
 	do_netlistsvg $prefix.json -o $prefix.netlist2svg.svg 2>$LOG_DIR/$sub_prefix.netlist2svg.err.log 1>$LOG_DIR/$sub_prefix.netlist2svg.output.log
