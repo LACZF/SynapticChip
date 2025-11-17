@@ -16,7 +16,7 @@
 `endif
 
 `ifndef BOOT_TYPE
-`define BOOT_TYPE 0
+`define BOOT_TYPE 4
 `endif
 
 module chip_top_test;
@@ -32,9 +32,9 @@ module chip_top_test;
     localparam TEST_CMD_END         = 8'h04;
     localparam CPU_NUM              = 1;
     localparam SPI_NUM              = 2;
-    localparam GPIO_IN_NUM          = 14;
+    localparam GPIO_IN_NUM          = 8;
     localparam GPIO_OUT_NUM         = 8;
-    localparam GPIO_INOUT_NUM       = 66;
+    localparam GPIO_INOUT_NUM       = 8;
     localparam I2C_NUM              = 1;
     localparam UART_NUM             = 1;
     localparam SAMPLE_CYCLES        = 4;
@@ -47,8 +47,9 @@ module chip_top_test;
     localparam IMPLEMENT_XIP        = 0;
     localparam IMPLEMENT_SPI_FLASH  = 0;
     localparam IMPLEMENT_TIMER      = 1;
-    localparam IMPLEMENT_I2C        = 1;
+    localparam IMPLEMENT_I2C        = 0;
     localparam IMPLEMENT_EXT_OBI    = 1;
+    localparam IMPLEMENT_EXT_APB    = 0;
     localparam TRACE_ENABLE         = 0;
     localparam ROM_DEPTH            = 8192;
     localparam RAM_DEPTH            = 8192;

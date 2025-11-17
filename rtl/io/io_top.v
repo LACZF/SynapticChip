@@ -13,6 +13,7 @@ module io_top #(
     parameter IMPLEMENT_TIMER      = 1,
     parameter IMPLEMENT_XIP        = 1,
     parameter IMPLEMENT_SPI_FLASH  = 1,
+    parameter IMPLEMENT_EXT_APB    = 1,
     parameter SPI_NUM              = 1,
     parameter NUM_IRQ_SOURCES      = 32,
     parameter GPIO_IN_NUM          = 1,
@@ -379,28 +380,36 @@ module io_top #(
     );
 
     /********** OBI到APB桥接器 **********/
-    assign slave_addr_base[SLAVE_APB_BRIDGE_INDEX] = APB_BRIDGE_ADDR_BASE;
-    assign slave_addr_mask[SLAVE_APB_BRIDGE_INDEX] = APB_BRIDGE_ADDR_MASK;
-    obi_to_apb_bridge u_obi_to_apb_bridge (
-        .clk(clk),
-        .rst_n(rst_n),
+    generate
+        if (IMPLEMENT_EXT_APB) begin : apb_bridge_gen
+            assign slave_addr_base[SLAVE_APB_BRIDGE_INDEX] = APB_BRIDGE_ADDR_BASE;
+            assign slave_addr_mask[SLAVE_APB_BRIDGE_INDEX] = APB_BRIDGE_ADDR_MASK;
+            obi_to_apb_bridge u_obi_to_apb_bridge (
+                .clk(clk),
+                .rst_n(rst_n),
 
-        .obi_req_i(slave_req[SLAVE_APB_BRIDGE_INDEX]),
-        .obi_addr_i(slave_addr[SLAVE_APB_BRIDGE_INDEX]),
-        .obi_we_i(slave_we[SLAVE_APB_BRIDGE_INDEX]),
-        .obi_wdata_i(slave_wdata[SLAVE_APB_BRIDGE_INDEX]),
-        .obi_be_i(slave_be[SLAVE_APB_BRIDGE_INDEX]),
-        .obi_gnt_o(slave_gnt[SLAVE_APB_BRIDGE_INDEX]),
-        .obi_rvalid_o(slave_rvalid[SLAVE_APB_BRIDGE_INDEX]),
-        .obi_rdata_o(slave_rdata[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_req_i(slave_req[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_addr_i(slave_addr[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_we_i(slave_we[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_wdata_i(slave_wdata[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_be_i(slave_be[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_gnt_o(slave_gnt[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_rvalid_o(slave_rvalid[SLAVE_APB_BRIDGE_INDEX]),
+                .obi_rdata_o(slave_rdata[SLAVE_APB_BRIDGE_INDEX]),
 
-        .apb_psel_o(apb_psel_o),
-        .apb_penable_o(apb_penable_o),
-        .apb_paddr_o(apb_paddr_o),
-        .apb_pwrite_o(apb_pwrite_o),
-        .apb_pwdata_o(apb_pwdata_o),
-        .apb_prdata_i(apb_prdata_i),
-        .apb_pready_i(apb_pready_i)
-    );
+                .apb_psel_o(apb_psel_o),
+                .apb_penable_o(apb_penable_o),
+                .apb_paddr_o(apb_paddr_o),
+                .apb_pwrite_o(apb_pwrite_o),
+                .apb_pwdata_o(apb_pwdata_o),
+                .apb_prdata_i(apb_prdata_i),
+                .apb_pready_i(apb_pready_i)
+            );
+        end else begin
+            assign slave_rdata[SLAVE_APB_BRIDGE_INDEX]      = 32'h0;
+            assign slave_rvalid[SLAVE_APB_BRIDGE_INDEX]     = 1'b0;
+            assign slave_gnt[SLAVE_APB_BRIDGE_INDEX]        = 1'b0;
+        end
+    endgenerate
 
 endmodule

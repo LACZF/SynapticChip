@@ -9,7 +9,7 @@ module chip_top #(
     parameter TRACE_ENABLE              = 0,
     parameter CPU_NUM                   = 1,
     parameter ROM_DEPTH                 = 1024,
-    parameter RAM_DEPTH                 = 1024,
+    parameter RAM_DEPTH                 = 512,
     parameter ADDR_WIDTH                = 32,
     parameter DATA_WIDTH                = 32,
     parameter NUM_PES                   = 16,
@@ -17,19 +17,20 @@ module chip_top #(
     parameter PE_ID_WIDTH               = 4,
     parameter PE_ARRAY_X                = 4,
     parameter PE_ARRAY_Y                = 4,
-    parameter BOOT_TYPE                 = 2,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
+    parameter BOOT_TYPE                 = 4,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
     parameter IMPLEMENT_SPI             = 1,
-    parameter IMPLEMENT_XIP             = 1,
-    parameter IMPLEMENT_SPI_FLASH       = 1,
+    parameter IMPLEMENT_XIP             = 0,
+    parameter IMPLEMENT_SPI_FLASH       = 0,
     parameter IMPLEMENT_TIMER           = 1,
-    parameter IMPLEMENT_I2C             = 1,
+    parameter IMPLEMENT_I2C             = 0,
     parameter IMPLEMENT_EXT_OBI         = 1,
-    parameter GPIO_IN_NUM               = 14,
+    parameter IMPLEMENT_EXT_APB         = 0,
+    parameter GPIO_IN_NUM               = 8,
     parameter GPIO_OUT_NUM              = 8,
-    parameter GPIO_INOUT_NUM            = 66,
+    parameter GPIO_INOUT_NUM            = 8,
     parameter I2C_NUM                   = 2,
     parameter UART_NUM                  = 3,
     parameter SPI_NUM                   = 1
@@ -39,7 +40,7 @@ module chip_top #(
 
     output wire                         obi_req_o,
     output wire                         obi_we_o,
-    output wire [31:0]                  obi_addr_o,
+    output wire [ADDR_WIDTH-1:0]        obi_addr_o,
     output wire [DATA_WIDTH-1:0]        obi_wdata_o,
     input  wire                         obi_gnt_i,
     input  wire                         obi_rvalid_i,
@@ -47,10 +48,10 @@ module chip_top #(
 
     output wire                         apb_psel_o,
     output wire                         apb_penable_o,
-    output wire [31:0]                  apb_paddr_o,
+    output wire [ADDR_WIDTH-1:0]        apb_paddr_o,
     output wire                         apb_pwrite_o,
-    output wire [31:0]                  apb_pwdata_o,
-    input  wire [31:0]                  apb_prdata_i,
+    output wire [DATA_WIDTH-1:0]        apb_pwdata_o,
+    input  wire [DATA_WIDTH-1:0]        apb_prdata_i,
     input  wire                         apb_pready_i,
 
     /********** UART  **********/

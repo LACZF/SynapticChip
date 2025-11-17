@@ -4,7 +4,7 @@ CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SIM_CYCLE ?= 1000000
 ROM_PRG   ?= program.hex
 RAM_PRG   ?= data_bss.hex
-BOOT_TYPE ?= 0
+BOOT_TYPE ?= 4
 
 TEST_TARGET := top_system
 TEST_ARGS ?= -g2005-sv -DROM_PRG=\"$(ROM_PRG)\" -DRAM_PRG=\"$(RAM_PRG)\" -DSIM_CYCLE=$(SIM_CYCLE) -DBOOT_TYPE=$(BOOT_TYPE)
