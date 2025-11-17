@@ -270,12 +270,12 @@ module chip_top_test;
         );
     end
 
-    if (BOOT_TYPE == 3) begin
+    if (BOOT_TYPE == 3) begin : apb_ram_gen
         apb_ram #(
             .MEM_SIZE(8192),
             .ADDR_WIDTH(32),
             .INIT_FILE(`ROM_PRG)
-        ) memory (
+        ) u_apb_ram (
             .clk(clk),
             .rst_n(rst_n),
             .apb_psel_i(apb_psel),
