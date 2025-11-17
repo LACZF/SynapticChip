@@ -113,16 +113,18 @@ module irq_controller #(
 
     // 中断仲裁逻辑 - 选择最高优先级的中断
     integer i;
+    reg found;
     always @(*) begin
         current_irq_id = 8'h00;
         current_irq_valid = 1'b0;
+        found = 1'b0;
 
         // 简单的固定优先级仲裁（低编号中断优先级高）
         for (i = 0; i < NUM_IRQ_SOURCES; i = i + 1) begin
-            if (irq_pending[i] && irq_enable[i]) begin
+            if (!found && irq_pending[i] && irq_enable[i]) begin
                 current_irq_id = i[7:0];
                 current_irq_valid = 1'b1;
-                i = NUM_IRQ_SOURCES; // 退出循环：固定优先级，低编号优先
+                found = 1'b1;
             end
         end
     end

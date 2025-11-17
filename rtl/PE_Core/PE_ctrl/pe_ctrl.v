@@ -346,29 +346,25 @@ module pe_control #(
 
     // 内存初始化
     integer k;
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
-            // 初始化内存为0
-            for (k = 0; k < MEM_DEPTH; k = k + 1) begin
-                memory[k] <= {DATA_WIDTH{1'b0}};
-            end
+            // 初始化内存为0 - 使用简单赋值避免复杂循环
+            // 注意：这里简化了复位逻辑，实际使用时需要确保MEM_DEPTH大小合理
+            memory <= {MEM_DEPTH*DATA_WIDTH{1'b0}};
         end
     end
 
     // PE输出写入内存逻辑 - 优化版本
     // 使用并行写入和条件更新，提高效率
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
-            // 复位时清零PE输出区域
-            for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
-                memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= {DATA_WIDTH{1'b0}};
-            end
+            // 复位时清零PE输出区域 - 使用简单赋值避免复杂循环
+            // 注意：这里简化了复位逻辑，实际使用时需要确保PE_ARRAY_X*PE_ARRAY_Y大小合理
+            memory[3*PE_ARRAY_X*PE_ARRAY_Y +: PE_ARRAY_X*PE_ARRAY_Y] <= {PE_ARRAY_X*PE_ARRAY_Y*DATA_WIDTH{1'b0}};
         end else begin
             // 在PE开始计算之前清零PE输出区域
             if (start_computation) begin
-                for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
-                    memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= {DATA_WIDTH{1'b0}};
-                end
+                memory[3*PE_ARRAY_X*PE_ARRAY_Y +: PE_ARRAY_X*PE_ARRAY_Y] <= {PE_ARRAY_X*PE_ARRAY_Y*DATA_WIDTH{1'b0}};
             end else begin
                 // 并行写入有效的PE结果
                 for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
