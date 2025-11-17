@@ -261,7 +261,9 @@ module chip_top_test;
         /********** 通用输入/输出端口 **********/
         .gpio_in     (gpio_in),
         .gpio_out    (gpio_out),
+    `ifdef GPIO_IO_ENABLE
         .gpio_io     (gpio_io),
+    `endif
 
         /********** SPI **********/
         .spi_cs_n    (spi_cs_n),
@@ -468,7 +470,9 @@ module chip_top_test;
         send_test(TEST_CMD_GPIO);
         $display($time, " gpio_in  : %b", gpio_in);
         $display($time, " gpio_out : %b", gpio_out);
+    `ifdef GPIO_IO_ENABLE
         $display($time, " gpio_io  : %b", gpio_io);
+    `endif
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP

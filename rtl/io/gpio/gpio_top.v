@@ -19,8 +19,10 @@ module gpio_top #(
 
     // GPIO接口
     input  wire [GPIO_IN_NUM-1:0]      gpio_in,
-    output wire [GPIO_OUT_NUM-1:0]     gpio_out,
-    inout  wire [GPIO_INOUT_NUM-1:0]   gpio_io
+    output wire [GPIO_OUT_NUM-1:0]     gpio_out
+`ifdef GPIO_IO_ENABLE
+    , inout  wire [GPIO_INOUT_NUM-1:0]   gpio_io
+`endif
 );
 
     // 寄存器地址定义
@@ -45,6 +47,7 @@ module gpio_top #(
     // 双向IO控制
     reg [GPIO_INOUT_NUM-1:0]   io_out;            // IO输出数据
 
+`ifdef GPIO_IO_ENABLE
     // 双向IO引脚连接
     generate
         genvar i;
@@ -52,6 +55,7 @@ module gpio_top #(
             assign gpio_io[i] = dir_reg[i] ? io_out[i] : 1'bz;
         end
     endgenerate
+`endif
 
     // 输出寄存器连接到输出引脚
     assign gpio_out = out_reg;
@@ -119,6 +123,7 @@ module gpio_top #(
                                 data_out_o_reg[31:GPIO_INOUT_NUM] <= {(32-GPIO_INOUT_NUM){1'b0}};
                             end
                         end
+                    `ifdef GPIO_IO_ENABLE
                         GPIO_IO_REG_ADDR: begin
                             // 读取IO寄存器时，根据方向读取相应的值
                             data_out_o_reg[GPIO_INOUT_NUM-1:0] <= dir_reg ? io_data_reg : gpio_io;
@@ -126,6 +131,7 @@ module gpio_top #(
                                 data_out_o_reg[31:GPIO_INOUT_NUM] <= {(32-GPIO_INOUT_NUM){1'b0}};
                             end
                         end
+                    `endif
                         default: begin
                             data_out_o_reg <= 32'h00000000;
                         end

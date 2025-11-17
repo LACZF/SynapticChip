@@ -60,7 +60,9 @@ module io_top #(
     // GPIO接口
     input  wire [GPIO_IN_NUM-1:0]             gpio_in,
     output wire [GPIO_OUT_NUM-1:0]            gpio_out,
+`ifdef GPIO_IO_ENABLE
     inout  wire [GPIO_INOUT_NUM-1:0]          gpio_io,
+`endif
 
     // SPI接口
     output wire [SPI_NUM-1:0]                 spi_cs_n,
@@ -207,9 +209,10 @@ module io_top #(
                 .gnt_o           (slave_gnt[SLAVE_GPIO_INDEX]),
                 .rvalid_o        (slave_rvalid[SLAVE_GPIO_INDEX]),
 
-                .gpio_in         (gpio_in),
-                .gpio_out        (gpio_out),
-                .gpio_io         (gpio_io)
+                .gpio_in         (gpio_in)
+            `ifdef GPIO_IO_ENABLE
+                , .gpio_out      (gpio_out)
+            `endif
              );
         end else begin
             assign slave_rdata[SLAVE_GPIO_INDEX]     = 32'h0;
