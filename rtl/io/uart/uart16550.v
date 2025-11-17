@@ -331,6 +331,7 @@ module uart16550 #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             tx_start <= 1'b0;
+            tx_buffer <= 8'b0;
         end else if (!tx_busy && !tx_fifo_empty && !tx_start) begin
             tx_buffer <= tx_fifo_data_out;
             tx_start  <= 1'b1;

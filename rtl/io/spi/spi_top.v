@@ -190,13 +190,7 @@ module spi_top #(
                                 state        <= SPI_STATE_TRANSFER;
                                 bit_counter  <= 8'h0;
                                 byte_counter <= 8'h0;
-                                if (SPI_NUM > 1) begin
-                                    // Multi-chip select mode: only pull down selected CS
-                                    spi_cs_n_o <= ~(1 << cs_sel_reg[$clog2(SPI_NUM)-1:0]);
-                                end else begin
-                                    // Single-chip select mode: compatible with previous behavior
-                                    spi_cs_n_o <= 1'b0;
-                                end
+                                spi_cs_n_o   <= ~(1 << cs_sel_reg[0 +: ($clog2(SPI_NUM) > 0 ? $clog2(SPI_NUM) : 1)]);
                                 status_reg[SPI_STATUS_BUSY]     <= 1'b1;
                                 status_reg[SPI_STATUS_TX_READY] <= 1'b0;
                             end
