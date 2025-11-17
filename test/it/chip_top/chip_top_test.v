@@ -39,7 +39,7 @@ module chip_top_test;
     localparam UART_NUM             = 1;
     localparam SAMPLE_CYCLES        = 4;
     localparam UART_DIV_RATE        = 2;
-    localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB
+    localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     localparam IMPLEMENT_JTAG       = 1;
     localparam IMPLEMENT_UART       = 1;
     localparam IMPLEMENT_GPIO       = 1;
@@ -48,6 +48,25 @@ module chip_top_test;
     localparam IMPLEMENT_SPI_FLASH  = 0;
     localparam IMPLEMENT_TIMER      = 1;
     localparam IMPLEMENT_I2C        = 1;
+    localparam IMPLEMENT_EXT_OBI    = 1;
+    localparam TRACE_ENABLE         = 0;
+    localparam ROM_DEPTH            = 8192;
+    localparam RAM_DEPTH            = 8192;
+    localparam ADDR_WIDTH           = 32;
+    localparam DATA_WIDTH           = 32;
+    localparam NUM_PES              = 16;
+    localparam INST_WIDTH           = 32;
+    localparam PE_ID_WIDTH          = 4;
+    localparam PE_ARRAY_X           = 4;
+    localparam PE_ARRAY_Y           = 4;
+
+    wire                      obi_req;
+    wire                      obi_we;
+    wire [31:0]               obi_addr;
+    wire [DATA_WIDTH-1:0]     obi_wdata;
+    wire                      obi_gnt;
+    wire                      obi_rvalid;
+    wire [DATA_WIDTH-1:0]     obi_rdata;
 
     wire                      apb_psel;
     wire                      apb_penable;
@@ -187,17 +206,17 @@ module chip_top_test;
 
     /********** 实例化chip_top **********/
     chip_top #(
-        .TRACE_ENABLE(0),
-        .CPU_NUM(1),
-        .ROM_DEPTH(8192),
-        .RAM_DEPTH(8192),
-        .ADDR_WIDTH(32),
-        .DATA_WIDTH(32),
-        .NUM_PES(16),
-        .INST_WIDTH(32),
-        .PE_ID_WIDTH(4),
-        .PE_ARRAY_X(4),
-        .PE_ARRAY_Y(4),
+        .TRACE_ENABLE(TRACE_ENABLE),
+        .CPU_NUM(CPU_NUM),
+        .ROM_DEPTH(ROM_DEPTH),
+        .RAM_DEPTH(RAM_DEPTH),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .NUM_PES(NUM_PES),
+        .INST_WIDTH(INST_WIDTH),
+        .PE_ID_WIDTH(PE_ID_WIDTH),
+        .PE_ARRAY_X(PE_ARRAY_X),
+        .PE_ARRAY_Y(PE_ARRAY_Y),
         .BOOT_TYPE(BOOT_TYPE),
         .IMPLEMENT_JTAG(IMPLEMENT_JTAG),
         .IMPLEMENT_UART(IMPLEMENT_UART),
@@ -207,6 +226,7 @@ module chip_top_test;
         .IMPLEMENT_SPI_FLASH(IMPLEMENT_SPI_FLASH),
         .IMPLEMENT_TIMER(IMPLEMENT_TIMER),
         .IMPLEMENT_I2C(IMPLEMENT_I2C),
+        .IMPLEMENT_EXT_OBI(IMPLEMENT_EXT_OBI),
         .GPIO_IN_NUM(GPIO_IN_NUM),
         .GPIO_OUT_NUM(GPIO_OUT_NUM),
         .GPIO_INOUT_NUM(GPIO_INOUT_NUM),
@@ -216,6 +236,14 @@ module chip_top_test;
     ) u_chip_top (
         .clk         (clk),
         .rst_n       (rst_n),
+
+        .obi_req_o    (obi_req),
+        .obi_we_o     (obi_we),
+        .obi_addr_o   (obi_addr),
+        .obi_wdata_o  (obi_wdata),
+        .obi_gnt_i    (obi_gnt),
+        .obi_rvalid_i (obi_rvalid),
+        .obi_rdata_i  (obi_rdata),
 
         .apb_psel_o   (apb_psel),
         .apb_penable_o(apb_penable),
@@ -286,6 +314,23 @@ module chip_top_test;
             .apb_pready_o(apb_pready),
             .apb_prdata_o(apb_prdata),
             .apb_pslverr_o(apb_pslverr)
+        );
+    end
+
+    if (BOOT_TYPE == 4) begin : ext_rom_gen
+        rom #(
+            .DP(ROM_DEPTH)
+        ) u_rom (
+            .clk_i      (clk),
+            .rst_ni     (ndmreset_n),
+            .req_i      (obi_req),
+            .addr_i     (obi_addr),
+            .data_i     (obi_wdata),
+            .be_i       (4'b1),
+            .we_i       (obi_we),
+            .gnt_o      (obi_gnt),
+            .rvalid_o   (obi_rvalid),
+            .data_o     (obi_rdata)
         );
     end
 
@@ -382,6 +427,8 @@ module chip_top_test;
 
         if (BOOT_TYPE == 0) begin
             $readmemh(`ROM_PRG, u_chip_top.rom_gen.u_rom.u_gen_ram.ram);
+        end else if (BOOT_TYPE == 4) begin
+            $readmemh(`ROM_PRG, ext_rom_gen.u_rom.u_gen_ram.ram);
         end
         $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;

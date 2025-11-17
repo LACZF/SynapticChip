@@ -17,7 +17,7 @@ module chip_top #(
     parameter PE_ID_WIDTH               = 4,
     parameter PE_ARRAY_X                = 4,
     parameter PE_ARRAY_Y                = 4,
-    parameter BOOT_TYPE                 = 2,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB
+    parameter BOOT_TYPE                 = 2,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
@@ -26,6 +26,7 @@ module chip_top #(
     parameter IMPLEMENT_SPI_FLASH       = 1,
     parameter IMPLEMENT_TIMER           = 1,
     parameter IMPLEMENT_I2C             = 1,
+    parameter IMPLEMENT_EXT_OBI         = 1,
     parameter GPIO_IN_NUM               = 14,
     parameter GPIO_OUT_NUM              = 8,
     parameter GPIO_INOUT_NUM            = 66,
@@ -35,6 +36,14 @@ module chip_top #(
 )(
     input  wire                         clk,
     input  wire                         rst_n,
+
+    output wire                         obi_req_o,
+    output wire                         obi_we_o,
+    output wire [31:0]                  obi_addr_o,
+    output wire [DATA_WIDTH-1:0]        obi_wdata_o,
+    input  wire                         obi_gnt_i,
+    input  wire                         obi_rvalid_i,
+    input  wire [DATA_WIDTH-1:0]        obi_rdata_i,
 
     output wire                         apb_psel_o,
     output wire                         apb_penable_o,
@@ -90,7 +99,8 @@ module chip_top #(
     localparam int SLAVE_RAM_INDEX          = 1;
     localparam int SLAVE_JTAG_INDEX         = 2;
     localparam int SLAVE_PE_TOP_INDEX       = 3;
-    localparam int SLAVE_PE_MEM_INDEX       = 4;  // PE直接内存控制器
+    localparam int SLAVE_PE_MEM_INDEX       = 4;
+    localparam int SLAVE_EXT_OBI_INDEX      = 5;
     localparam int IO_SLAVES                = 8;
     localparam int SLAVE_IO_START_INDEX     = 8;
     localparam int SLAVE_IO_END_INDEX       = SLAVE_IO_START_INDEX + IO_SLAVES - 1;
@@ -109,6 +119,9 @@ module chip_top #(
 
     localparam int IO_ADDR_BASE             = 32'h40000000;
     localparam int IO_ADDR_MASK             = `CALC_ADDR_MASK_BY_END_ADDR(IO_ADDR_BASE, 32'h4FFFFFFF);
+
+    localparam int EXT_OBI_ADDR_BASE        = (BOOT_TYPE == 4) ?  32'h00000000 : 32'h50000000;
+    localparam int EXT_OBI_ADDR_MASK        = `CALC_ADDR_MASK_BY_END_ADDR(EXT_OBI_ADDR_BASE, 32'h0FFFFFFF);
 
     wire [MASTERS-1:0]                      master_req;
     wire [MASTERS-1:0]                      master_gnt;
@@ -201,6 +214,26 @@ module chip_top #(
 
                 .debug_req_i    (debug_req)
             );
+        end
+    endgenerate
+
+    generate
+        if (IMPLEMENT_EXT_OBI == 1) begin : ext_obi_gen
+            assign slave_addr_mask[SLAVE_EXT_OBI_INDEX] = EXT_OBI_ADDR_MASK;
+            assign slave_addr_base[SLAVE_EXT_OBI_INDEX] = EXT_OBI_ADDR_BASE;
+            assign obi_req_o                            = slave_req[SLAVE_EXT_OBI_INDEX];
+            assign obi_we_o                             = slave_we[SLAVE_EXT_OBI_INDEX];
+            assign obi_addr_o                           = slave_addr[SLAVE_EXT_OBI_INDEX];
+            assign obi_wdata_o                          = slave_wdata[SLAVE_EXT_OBI_INDEX];
+            assign slave_gnt[SLAVE_EXT_OBI_INDEX]       = obi_gnt_i;
+            assign slave_rvalid[SLAVE_EXT_OBI_INDEX]    = obi_rvalid_i;
+            assign slave_rdata[SLAVE_EXT_OBI_INDEX]     = obi_rdata_i;
+        end else begin
+            assign slave_addr_mask[SLAVE_EXT_OBI_INDEX] = 32'h0;
+            assign slave_addr_base[SLAVE_EXT_OBI_INDEX] = 32'h0;
+            assign slave_gnt[SLAVE_EXT_OBI_INDEX]       = 1'b0;
+            assign slave_rvalid[SLAVE_EXT_OBI_INDEX]    = 1'b0;
+            assign slave_rdata[SLAVE_EXT_OBI_INDEX]     = 32'h0;
         end
     endgenerate
 
