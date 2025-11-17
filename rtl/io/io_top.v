@@ -209,9 +209,10 @@ module io_top #(
                 .gnt_o           (slave_gnt[SLAVE_GPIO_INDEX]),
                 .rvalid_o        (slave_rvalid[SLAVE_GPIO_INDEX]),
 
-                .gpio_in         (gpio_in)
+                .gpio_in         (gpio_in),
+                .gpio_out        (gpio_out)
             `ifdef GPIO_IO_ENABLE
-                , .gpio_out      (gpio_out)
+                , .gpio_io       (gpio_io)
             `endif
              );
         end else begin

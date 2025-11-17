@@ -95,7 +95,7 @@ module spi_top #(
     wire [7:0] clk_div     = clk_div_reg[7:0];
 
     // SPI clock generation
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             clk_divider <= 4'h0;
             clk_gen     <= 1'b0;
@@ -125,7 +125,7 @@ module spi_top #(
                         (clk_divider == clk_div && clk_gen);
 
     // OBI handshake logic
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             req_accepted <= 1'b0;
             gnt_o        <= 1'b0;
@@ -147,7 +147,7 @@ module spi_top #(
     end
 
     // Register read/write logic
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             control_reg <= 32'h0;
             status_reg  <= 32'h0;
@@ -251,15 +251,19 @@ module spi_top #(
     end
 
     // SPI master state machine
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             state        <= SPI_STATE_IDLE;
             bit_counter  <= 8'h0;
             byte_counter <= 8'h0;
-            spi_cs_n_o   <= 1'b1;
+            spi_cs_n_o   <= {SPI_NUM{1'b1}};
             spi_mosi_o   <= 1'b0;
             rx_data      <= 32'h0;
             status_reg   <= 32'h0;
+            current_cmd  <= 8'h0;
+            current_addr <= 24'h0;
+            tx_data      <= 32'h0;
+            cs_sel_reg   <= 32'h0;
         end else if (spi_en) begin
             case (state)
                 SPI_STATE_IDLE:

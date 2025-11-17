@@ -46,6 +46,7 @@ module uart_rx (
             baud_clk_prev <= 1'b0;
             rx_sync1 <= 1'b1;
             rx_sync2 <= 1'b1;
+            busy_o <= 1'b0;
         end else begin
             // 输入同步
             rx_sync1 <= rx_i;

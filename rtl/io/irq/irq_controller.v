@@ -55,7 +55,7 @@ module irq_controller #(
     assign reg_addr = addr_i[7:0];
 
     // OBI总线握手逻辑
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             gnt_o <= 1'b0;
             rvalid_o <= 1'b0;
@@ -80,7 +80,7 @@ module irq_controller #(
     end
 
     // 同步中断源信号
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             irq_sources_sync0 <= {NUM_IRQ_SOURCES{1'b0}};
             irq_sources_sync1 <= {NUM_IRQ_SOURCES{1'b0}};
@@ -96,7 +96,7 @@ module irq_controller #(
     assign irq_rising_edge = irq_sources_sync1 & ~irq_sources_prev;
 
     // 中断挂起逻辑
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             irq_pending <= {NUM_IRQ_SOURCES{1'b0}};
         end else begin
@@ -134,7 +134,7 @@ module irq_controller #(
     assign int_id_o = current_irq_id;
 
     // OBI总线寄存器写操作处理
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             irq_enable <= {NUM_IRQ_SOURCES{1'b0}};
             irq_priority <= {NUM_IRQ_SOURCES*4{1'b0}};

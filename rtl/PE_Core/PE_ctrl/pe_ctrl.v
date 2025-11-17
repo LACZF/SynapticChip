@@ -112,14 +112,19 @@ module pe_control #(
     reg [ADDR_WIDTH-1:0] read_addr_reg;
 
     // OBI Bus Control - 优化版本：单周期完成内存访问
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
-            obi_state       <= IDLE;
-            gnt_o           <= 1'b0;
-            rvalid_o        <= 1'b0;
-            rdata_o         <= {DATA_WIDTH{1'b0}};
-            control_reg     <= {DATA_WIDTH{1'b0}};
-            read_addr_reg   <= {ADDR_WIDTH{1'b0}};
+            obi_state               <= IDLE;
+            gnt_o                   <= 1'b0;
+            rvalid_o                <= 1'b0;
+            rdata_o                 <= {DATA_WIDTH{1'b0}};
+            control_reg             <= {DATA_WIDTH{1'b0}};
+            read_addr_reg           <= {ADDR_WIDTH{1'b0}};
+            high_bw_we_o            <= 1'b0;
+            high_bw_transfer_length <= 16'b0;
+            high_bw_current_addr    <= 16'b0;
+            high_bw_transfer_count  <= 16'b0;
+            high_bw_start           <= 1'b0;
         end else begin
             case (obi_state)
                 IDLE: begin
@@ -207,7 +212,7 @@ module pe_control #(
 
     // 高带宽内存状态机控制 - 优化版本
     // 流水线化处理，提高传输效率
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             high_bw_state          <= HIGH_BW_IDLE;
             high_bw_req_o          <= 1'b0;
@@ -215,6 +220,9 @@ module pe_control #(
             high_bw_data_o         <= {HIGH_BW_DW{1'b0}};
             high_bw_transfer_count <= 16'b0;
             high_bw_start          <= 1'b0;
+            high_bw_we_o           <= 1'b0;
+            high_bw_transfer_length <= 16'b0;
+            high_bw_current_addr    <= 16'b0;
         end else begin
             case (high_bw_state)
                 HIGH_BW_IDLE: begin
@@ -276,7 +284,7 @@ module pe_control #(
     end
 
     // PE结果写回控制
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             write_back_state    <= WRITE_BACK_IDLE;
             pe_write_back_index <= 8'b0;
@@ -328,7 +336,7 @@ module pe_control #(
 
     // Computation control - 产生启动脉冲
     reg start_delay;
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             start_computation <= 1'b0;
             start_delay       <= 1'b0;
