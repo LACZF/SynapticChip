@@ -45,7 +45,7 @@ module chip_top_test;
     localparam IMPLEMENT_GPIO       = 1;
     localparam IMPLEMENT_SPI        = SPI_NUM > 0 ? 1 : 0;
     localparam IMPLEMENT_XIP        = 0;
-    localparam IMPLEMENT_SPI_FLASH  = 1;
+    localparam IMPLEMENT_SPI_FLASH  = 0;
     localparam IMPLEMENT_TIMER      = 1;
     localparam IMPLEMENT_I2C        = 1;
 
