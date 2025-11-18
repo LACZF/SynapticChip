@@ -9,14 +9,11 @@ module chip_top #(
     parameter TRACE_ENABLE              = 0,
     parameter CPU_NUM                   = 1,
     parameter ROM_DEPTH                 = 1024,
-    parameter RAM_DEPTH                 = 256,
+    parameter RAM_DEPTH                 = 512,
     parameter ADDR_WIDTH                = 32,
     parameter DATA_WIDTH                = 32,
-    parameter NUM_PES                   = 16,
-    parameter INST_WIDTH                = 32,
-    parameter PE_ID_WIDTH               = 4,
-    parameter PE_ARRAY_X                = 4,
-    parameter PE_ARRAY_Y                = 4,
+    parameter PE_ARRAY_X                = 8,
+    parameter PE_ARRAY_Y                = 8,
     parameter BOOT_TYPE                 = 4,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
@@ -90,6 +87,8 @@ module chip_top #(
     input  wire                         jtag_tdi_pin,
     output wire                         jtag_tdo_pin
 );
+    localparam NUM_PES                      = PE_ARRAY_X * PE_ARRAY_Y;
+
     /* (instruction + data) * CPU_NUM + jtag */
     localparam int MASTERS                  = (IMPLEMENT_JTAG ? (CPU_NUM * 2 + 1) : (CPU_NUM * 2));
     localparam int SLAVES                   = 16; // Number of slave ports

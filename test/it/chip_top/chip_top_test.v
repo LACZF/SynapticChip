@@ -52,14 +52,11 @@ module chip_top_test;
     localparam IMPLEMENT_EXT_APB    = 0;
     localparam TRACE_ENABLE         = 0;
     localparam ROM_DEPTH            = 8192;
-    localparam RAM_DEPTH            = 256;
+    localparam RAM_DEPTH            = 512;
     localparam ADDR_WIDTH           = 32;
     localparam DATA_WIDTH           = 32;
-    localparam NUM_PES              = 16;
-    localparam INST_WIDTH           = 32;
-    localparam PE_ID_WIDTH          = 4;
-    localparam PE_ARRAY_X           = 4;
-    localparam PE_ARRAY_Y           = 4;
+    localparam PE_ARRAY_X           = 8;
+    localparam PE_ARRAY_Y           = 8;
 
     wire                      obi_req;
     wire                      obi_we;
@@ -213,9 +210,6 @@ module chip_top_test;
         .RAM_DEPTH(RAM_DEPTH),
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
-        .NUM_PES(NUM_PES),
-        .INST_WIDTH(INST_WIDTH),
-        .PE_ID_WIDTH(PE_ID_WIDTH),
         .PE_ARRAY_X(PE_ARRAY_X),
         .PE_ARRAY_Y(PE_ARRAY_Y),
         .BOOT_TYPE(BOOT_TYPE),

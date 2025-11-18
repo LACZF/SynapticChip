@@ -5,8 +5,8 @@
 // Disassembly of section .text.vector:
 
 // 0000000000000000 <_start>:
-20000137  // [00000000]: lui	sp,0x20000
-4001011b  // [00000004]: addiw	sp,sp,1024 # 20000400 <STACK_TOP>
+20001137  // [00000000]: lui	sp,0x20001
+8001011b  // [00000004]: addiw	sp,sp,-2048 # 20000800 <STACK_TOP>
 114010ef  // [00000008]: jal	111c <irq_init>
 018000ef  // [0000000c]: jal	24 <uart_init>
 
@@ -208,7 +208,7 @@ fe0916e3  // [0000027c]: bnez	s2,268 <load_operand1_loop>
 20000417  // [00000280]: auipc	s0,0x20000
 dc040413  // [00000284]: addi	s0,s0,-576 # 20000040 <pe_operand2_data>
 300004b7  // [00000288]: lui	s1,0x30000
-0404849b  // [0000028c]: addiw	s1,s1,64 # 30000040 <PE_OPERAND2_BASE>
+1004849b  // [0000028c]: addiw	s1,s1,256 # 30000100 <PE_OPERAND2_BASE>
 01000913  // [00000290]: li	s2,16
 
 // 0000000000000294 <load_operand2_loop>:
@@ -221,7 +221,7 @@ fe0916e3  // [000002a8]: bnez	s2,294 <load_operand2_loop>
 20000417  // [000002ac]: auipc	s0,0x20000
 dd440413  // [000002b0]: addi	s0,s0,-556 # 20000080 <pe_config_data>
 300004b7  // [000002b4]: lui	s1,0x30000
-0804849b  // [000002b8]: addiw	s1,s1,128 # 30000080 <PE_CONFIG_BASE>
+2004849b  // [000002b8]: addiw	s1,s1,512 # 30000200 <PE_CONFIG_BASE>
 01000913  // [000002bc]: li	s2,16
 
 // 00000000000002c0 <load_config_loop>:
@@ -237,7 +237,7 @@ fe0916e3  // [000002d4]: bnez	s2,2c0 <load_config_loop>
 324000ef  // [000002e4]: jal	608 <delay>
 00100b13  // [000002e8]: li	s6,1
 30000437  // [000002ec]: lui	s0,0x30000
-0c04041b  // [000002f0]: addiw	s0,s0,192 # 300000c0 <PE_OUTPUT_BASE>
+3004041b  // [000002f0]: addiw	s0,s0,768 # 30000300 <PE_OUTPUT_BASE>
 20000497  // [000002f4]: auipc	s1,0x20000
 dcc48493  // [000002f8]: addi	s1,s1,-564 # 200000c0 <pe_expected_results>
 00400913  // [000002fc]: li	s2,4
