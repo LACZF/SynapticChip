@@ -2,7 +2,7 @@
 
 CURR_DIR="$(realpath $(dirname $(readlink -f $0)))"
 TOP_DIR="$(realpath $CURR_DIR/../)"
-WORK_DIR="."
+WORK_DIR="$TOP_DIR"
 MODULE_NAME=""
 BUILD_DIR=$WORK_DIR/build/$MODULE_NAME
 SRC_DIR=$BUILD_DIR/src
@@ -362,12 +362,9 @@ EOF
 }
 
 function synth_all() {
-	cd ${CURR_DIR}/r2g_synth/; ./run.sh; cd -
-	return
 	local sub_prefix=${MODULE_NAME}_rtl
 	local prefix=$BUILD_DIR/$sub_prefix
 	local script=${CURR_DIR}/r2g_synth/yosys/scripts/yosys_synthesis.tcl
-	local top=$(get_vulue "-top " "" "$TOP_MODULE")
 
 	export BUILD_SRC_DIR="${SRC_DIR}"
 
@@ -376,7 +373,7 @@ function synth_all() {
 	export TOP_NAME="$TOP_MODULE"
 	export CLK_FREQ_MHZ="100"
 
-	export RESULT_DIR="$WORK_DIR/result"
+	export RESULT_DIR="$BUILD_DIR/result"
 	export NETLIST_FILE="${RESULT_DIR}/${TOP_NAME}_synth.v"
 	export TIMING_CELL_STAT_RPT="${RESULT_DIR}/timing_cell_stat.rpt"
 	export TIMING_CELL_COUNT_RPT="${RESULT_DIR}/timing_cell_count.rpt"
@@ -393,7 +390,7 @@ function synth_all() {
 	export LIB_STDCELL="${CURR_DIR}/r2g_synth/lib_ics55/ics55_LLSC_H7CL_ss_rcworst_1p08_125_nldm.lib ${CURR_DIR}/r2g_synth/lib_ics55/ics55_LLSC_H7CR_ss_rcworst_1p08_125_nldm.lib"
 	export LIB_ALL=$LIB_STDCELL
 
-	yosys $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
+	yosys $script # 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
 }
 
 function synth_behave() { # RTL_SRC_DIR
