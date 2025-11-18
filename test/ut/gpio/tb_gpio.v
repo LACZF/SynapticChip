@@ -49,8 +49,10 @@ module tb_gpio;
         .rvalid_o      (rvalid_o),
 
         .gpio_in       (gpio_in),
-        .gpio_out      (gpio_out),
-        .gpio_io       (gpio_io)
+        .gpio_out      (gpio_out)
+    `ifdef GPIO_IO_ENABLE
+        , .gpio_io     (gpio_io)
+    `endif
     );
 
     // 时钟生成
