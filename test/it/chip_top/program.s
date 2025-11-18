@@ -65,8 +65,8 @@
 .equ PE_HIGH_BW_READ_ADDR,  PE_TOP_BASE + 0x100010   # 高带宽读取地址
 
 # PE阵列尺寸定义
-.equ PE_ARRAY_X,            10                         # PE阵列X方向尺寸
-.equ PE_ARRAY_Y,            10                         # PE阵列Y方向尺寸
+.equ PE_ARRAY_X,            8                          # PE阵列X方向尺寸
+.equ PE_ARRAY_Y,            8                          # PE阵列Y方向尺寸
 .equ PE_TOTAL_COUNT,        PE_ARRAY_X * PE_ARRAY_Y    # PE总数
 
 # PE内存映射 - 操作数和配置存储在PE_mem中

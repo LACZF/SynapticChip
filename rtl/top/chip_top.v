@@ -12,8 +12,8 @@ module chip_top #(
     parameter RAM_DEPTH                 = 1024,
     parameter ADDR_WIDTH                = 32,
     parameter DATA_WIDTH                = 32,
-    parameter PE_ARRAY_X                = 10,
-    parameter PE_ARRAY_Y                = 10,
+    parameter PE_ARRAY_X                = 8,
+    parameter PE_ARRAY_Y                = 8,
     parameter BOOT_TYPE                 = 4,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,

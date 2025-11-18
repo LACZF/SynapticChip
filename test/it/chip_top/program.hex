@@ -207,7 +207,7 @@ fe0916e3  // [00000278]: bnez	s2,264 <load_operand1_loop>
 20000417  // [0000027c]: auipc	s0,0x20000
 dc440413  // [00000280]: addi	s0,s0,-572 # 20000040 <pe_operand2_data>
 300004b7  // [00000284]: lui	s1,0x30000
-1904849b  // [00000288]: addiw	s1,s1,400 # 30000190 <PE_OPERAND2_BASE>
+1004849b  // [00000288]: addiw	s1,s1,256 # 30000100 <PE_OPERAND2_BASE>
 01000913  // [0000028c]: li	s2,16
 
 // 0000000000000290 <load_operand2_loop>:
@@ -220,7 +220,7 @@ fe0916e3  // [000002a4]: bnez	s2,290 <load_operand2_loop>
 20000417  // [000002a8]: auipc	s0,0x20000
 dd840413  // [000002ac]: addi	s0,s0,-552 # 20000080 <pe_config_data>
 300004b7  // [000002b0]: lui	s1,0x30000
-3204849b  // [000002b4]: addiw	s1,s1,800 # 30000320 <PE_CONFIG_BASE>
+2004849b  // [000002b4]: addiw	s1,s1,512 # 30000200 <PE_CONFIG_BASE>
 01000913  // [000002b8]: li	s2,16
 
 // 00000000000002bc <load_config_loop>:
@@ -236,7 +236,7 @@ fe0916e3  // [000002d0]: bnez	s2,2bc <load_config_loop>
 324000ef  // [000002e0]: jal	604 <delay>
 00100b13  // [000002e4]: li	s6,1
 30000437  // [000002e8]: lui	s0,0x30000
-4b04041b  // [000002ec]: addiw	s0,s0,1200 # 300004b0 <PE_OUTPUT_BASE>
+3004041b  // [000002ec]: addiw	s0,s0,768 # 30000300 <PE_OUTPUT_BASE>
 20000497  // [000002f0]: auipc	s1,0x20000
 dd048493  // [000002f4]: addi	s1,s1,-560 # 200000c0 <pe_expected_results>
 00400913  // [000002f8]: li	s2,4
