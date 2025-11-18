@@ -94,21 +94,9 @@ module irq_controller #(
     // 检测上升沿
     assign irq_rising_edge = irq_sources_sync1 & ~irq_sources_prev;
 
-    // 中断挂起逻辑
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            irq_pending <= {NUM_IRQ_SOURCES{1'b0}};
-        end else begin
-            // 清除已处理的中断（通过OBI总线写操作）
-            if (req_accepted && we_i && reg_addr == 8'h04) begin
-                irq_pending <= irq_pending & ~wr_data_i[NUM_IRQ_SOURCES-1:0];
-            end
-            // 检测新的中断并设置挂起位
-            else begin
-                irq_pending <= irq_pending | (irq_rising_edge & irq_enable);
-            end
-        end
-    end
+    // 中断挂起逻辑 - 修复Yosys综合错误（合并到单一always块中）
+    wire [NUM_IRQ_SOURCES-1:0] new_irq_mask;
+    assign new_irq_mask = irq_rising_edge & irq_enable;
 
     // 中断仲裁逻辑 - 选择最高优先级的中断
     integer i;
@@ -132,19 +120,26 @@ module irq_controller #(
     assign int_req_o = current_irq_valid;
     assign int_id_o = current_irq_id;
 
-    // OBI总线寄存器写操作处理
+    // 合并的寄存器控制和中断挂起逻辑 - 修复Yosys综合错误
     always @(posedge clk) begin
         if (!rst_n) begin
             irq_enable <= {NUM_IRQ_SOURCES{1'b0}};
             irq_priority <= {NUM_IRQ_SOURCES*4{1'b0}};
-        end else if (req_accepted && we_i) begin
-            case (reg_addr)
-                8'h00: irq_enable <= wr_data_i[NUM_IRQ_SOURCES-1:0];  // 中断使能寄存器
-                8'h04: irq_pending <= irq_pending & ~wr_data_i[NUM_IRQ_SOURCES-1:0]; // 中断挂起寄存器（清除指定的挂起位）
-                8'h08: irq_priority[31:0] <= wr_data_i;              // 优先级寄存器0
-                8'h0C: irq_priority[63:32] <= wr_data_i;              // 优先级寄存器1
-                // 可以继续添加更多优先级寄存器
-            endcase
+            irq_pending <= {NUM_IRQ_SOURCES{1'b0}};
+        end else begin
+            // 优先处理OBI总线写操作
+            if (req_accepted && we_i) begin
+                case (reg_addr)
+                    8'h00: irq_enable <= wr_data_i[NUM_IRQ_SOURCES-1:0];  // 中断使能寄存器
+                    8'h04: irq_pending <= irq_pending & (~wr_data_i[NUM_IRQ_SOURCES-1:0]); // 中断挂起寄存器（清除指定的挂起位）
+                    8'h08: irq_priority[31:0] <= wr_data_i;              // 优先级寄存器0
+                    8'h0C: irq_priority[63:32] <= wr_data_i;              // 优先级寄存器1
+                    // 可以继续添加更多优先级寄存器
+                endcase
+            end else begin
+                // 检测新的中断并设置挂起位
+                irq_pending <= irq_pending | new_irq_mask;
+            end
         end
     end
 
