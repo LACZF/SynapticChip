@@ -1,6 +1,7 @@
 #!/bin/bash
 
-TOP_DIR="$(realpath $(dirname $(readlink -f $0))/../)"
+CURR_DIR="$(realpath $(dirname $(readlink -f $0)))"
+TOP_DIR="$(realpath $CURR_DIR/../)"
 WORK_DIR="."
 MODULE_NAME=""
 BUILD_DIR=$WORK_DIR/build/$MODULE_NAME
@@ -360,6 +361,41 @@ EOF
 	log DEBUG "do_synth_rtl for $RTL_SRC_DIR done."
 }
 
+function synth_all() {
+	cd ${CURR_DIR}/r2g_synth/; ./run.sh; cd -
+	return
+	local sub_prefix=${MODULE_NAME}_rtl
+	local prefix=$BUILD_DIR/$sub_prefix
+	local script=${CURR_DIR}/r2g_synth/yosys/scripts/yosys_synthesis.tcl
+	local top=$(get_vulue "-top " "" "$TOP_MODULE")
+
+	export BUILD_SRC_DIR="${SRC_DIR}"
+
+	export RTL_FILE="${BUILD_SRC_DIR}/*.sv ${BUILD_SRC_DIR}/*.v"
+	# export FILELIST=""
+	export TOP_NAME="$TOP_MODULE"
+	export CLK_FREQ_MHZ="100"
+
+	export RESULT_DIR="$WORK_DIR/result"
+	export NETLIST_FILE="${RESULT_DIR}/${TOP_NAME}_synth.v"
+	export TIMING_CELL_STAT_RPT="${RESULT_DIR}/timing_cell_stat.rpt"
+	export TIMING_CELL_COUNT_RPT="${RESULT_DIR}/timing_cell_count.rpt"
+	export GENERIC_STAT_JSON="${RESULT_DIR}/generic_stat.json"
+	export SYNTH_STAT_JSON="${RESULT_DIR}/synth_stat.json"
+	export SYNTH_CHECK_RPT="${RESULT_DIR}/synth_check.rpt"
+
+	export KEEP_HIERARCHY="false"
+	export CELL_DONT_USE=""
+	export CELL_TIE_LOW="TIELOH7R"
+	export CELL_TIE_LOW_PORT="Z"
+	export CELL_TIE_HIGH="TIEHIH7R"
+	export CELL_TIE_HIGH_PORT="Z"
+	export LIB_STDCELL="${CURR_DIR}/r2g_synth/lib_ics55/ics55_LLSC_H7CL_ss_rcworst_1p08_125_nldm.lib ${CURR_DIR}/r2g_synth/lib_ics55/ics55_LLSC_H7CR_ss_rcworst_1p08_125_nldm.lib"
+	export LIB_ALL=$LIB_STDCELL
+
+	yosys $script 2>$LOG_DIR/$sub_prefix.yosys.err.log 1>$LOG_DIR/$sub_prefix.yosys.output.log
+}
+
 function synth_behave() { # RTL_SRC_DIR
 	prepare $@
 	do_synth_behave
@@ -372,8 +408,9 @@ function synth_rtl() { # RTL_SRC_DIR
 
 function synth() { # RTL_SRC_DIR
 	prepare $@
-	do_synth_behave
-	do_synth_rtl
+	synth_all
+	# do_synth_behave
+	# do_synth_rtl
 }
 
 function env_list { # do_not_function_help

@@ -1,8 +1,10 @@
 #!/bin/bash
 PWD=$(cd "$(dirname "$0")";pwd)
 
+export WORK_DIR="${PWD}/../../build/chip_top"
+
 # 定义RTL文件路径变量
-export BUILD_SRC_DIR="${PWD}/../build/chip_top/src"
+export BUILD_SRC_DIR="${WORK_DIR}/src"
 
 # 定义RTL文件列表，包含原始rtl目录和build/src目录下的所有.sv和.v文件
 export RTL_FILE="${BUILD_SRC_DIR}/*.sv ${BUILD_SRC_DIR}/*.v"
@@ -10,7 +12,7 @@ export RTL_FILE="${BUILD_SRC_DIR}/*.sv ${BUILD_SRC_DIR}/*.v"
 export TOP_NAME="chip_top"
 export CLK_FREQ_MHZ="100"
 
-export RESULT_DIR="${PWD}/result"
+export RESULT_DIR="${WORK_DIR}/result"
 export NETLIST_FILE="${RESULT_DIR}/${TOP_NAME}_synth.v"
 export TIMING_CELL_STAT_RPT="${RESULT_DIR}/timing_cell_stat.rpt"
 export TIMING_CELL_COUNT_RPT="${RESULT_DIR}/timing_cell_count.rpt"
