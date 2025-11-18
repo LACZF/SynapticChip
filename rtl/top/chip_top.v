@@ -172,6 +172,7 @@ module chip_top #(
     wire [NUM_PES-1:0]                                    pe_irq;
     wire [(NUM_PES*8)-1:0]                                pe_irq_id;
 
+`ifdef PE_SUPPORT_HIGHT_MEM
     // 高带宽内存接口信号（用于PE直接内存访问）
     wire                                                  pe_mem_req;                 // 高带宽内存请求信号
     wire                                                  pe_mem_we;                  // 高带宽内存写使能
@@ -179,6 +180,7 @@ module chip_top #(
     wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_o;              // 高带宽内存写入数据
     wire                                                  pe_mem_ack;                 // 高带宽内存应答信号
     wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_i;              // 高带宽内存读取数据
+`endif
 
     // CPU实例化
     generate
@@ -280,6 +282,17 @@ module chip_top #(
     ) u_ram (
         .clk_i          (clk),
         .rst_ni         (ndmreset_n),
+
+`ifdef PE_SUPPORT_HIGHT_MEM
+        // 高带宽内存接口 - 连接到PE_TOP的宽位宽接口
+        .high_bw_req_i  (pe_mem_req),
+        .high_bw_we_i   (pe_mem_we),
+        .high_bw_addr_i (pe_mem_addr),
+        .high_bw_data_i (pe_mem_data_o),
+        .high_bw_ack_o  (pe_mem_ack),
+        .high_bw_data_o (pe_mem_data_i),
+`endif
+
         .req_i          (slave_req[SLAVE_RAM_INDEX]),
         .addr_i         (slave_addr[SLAVE_RAM_INDEX]),
         .data_i         (slave_wdata[SLAVE_RAM_INDEX]),
@@ -287,14 +300,7 @@ module chip_top #(
         .we_i           (slave_we[SLAVE_RAM_INDEX]),
         .gnt_o          (slave_gnt[SLAVE_RAM_INDEX]),
         .rvalid_o       (slave_rvalid[SLAVE_RAM_INDEX]),
-        .data_o         (slave_rdata[SLAVE_RAM_INDEX]),
-        // 高带宽内存接口 - 连接到PE_TOP的宽位宽接口
-        .high_bw_req_i  (pe_mem_req),
-        .high_bw_we_i   (pe_mem_we),
-        .high_bw_addr_i (pe_mem_addr),
-        .high_bw_data_i (pe_mem_data_o),
-        .high_bw_ack_o  (pe_mem_ack),
-        .high_bw_data_o (pe_mem_data_i)
+        .data_o         (slave_rdata[SLAVE_RAM_INDEX])
     );
 
 
@@ -310,20 +316,24 @@ module chip_top #(
     ) u_pe_top (
         .clk        (clk),
         .rst_n      (rst_n),
-        .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
-        .we_i       (slave_we[SLAVE_PE_TOP_INDEX]),
-        .addr_i     (slave_addr[SLAVE_PE_TOP_INDEX]),
-        .wdata_i    (slave_wdata[SLAVE_PE_TOP_INDEX]),
-        .rdata_o    (slave_rdata[SLAVE_PE_TOP_INDEX]),
-        .gnt_o      (slave_gnt[SLAVE_PE_TOP_INDEX]),
-        .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX]),
+
+`ifdef PE_SUPPORT_HIGHT_MEM
         // 直接内存接口 - 连接到高带宽内存接口信号
         .mem_req_o  (pe_mem_req),
         .mem_we_o   (pe_mem_we),
         .mem_addr_o (pe_mem_addr),
         .mem_data_o (pe_mem_data_o),
         .mem_ack_i  (pe_mem_ack),
-        .mem_data_i (pe_mem_data_i)
+        .mem_data_i (pe_mem_data_i),
+`endif
+
+        .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
+        .we_i       (slave_we[SLAVE_PE_TOP_INDEX]),
+        .addr_i     (slave_addr[SLAVE_PE_TOP_INDEX]),
+        .wdata_i    (slave_wdata[SLAVE_PE_TOP_INDEX]),
+        .rdata_o    (slave_rdata[SLAVE_PE_TOP_INDEX]),
+        .gnt_o      (slave_gnt[SLAVE_PE_TOP_INDEX]),
+        .rvalid_o   (slave_rvalid[SLAVE_PE_TOP_INDEX])
     );
 
     generate
