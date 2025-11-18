@@ -9,7 +9,7 @@
                 `define PE_TEST_FOR_CHIP_TOP
                 `define GPIO_TEST_FOR_CHIP_TOP
                 `define TIMER_TEST_FOR_CHIP_TOP
-                `define SPI_TEST_FOR_CHIP_TOP
+                // `define SPI_TEST_FOR_CHIP_TOP
             `endif
         `endif
     `endif

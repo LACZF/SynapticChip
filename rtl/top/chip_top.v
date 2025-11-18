@@ -21,7 +21,7 @@ module chip_top #(
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
-    parameter IMPLEMENT_SPI             = 1,
+    parameter IMPLEMENT_SPI             = 0,
     parameter IMPLEMENT_XIP             = 0,
     parameter IMPLEMENT_SPI_FLASH       = 0,
     parameter IMPLEMENT_TIMER           = 1,
