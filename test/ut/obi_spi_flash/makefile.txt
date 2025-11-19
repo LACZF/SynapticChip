@@ -1,0 +1,19 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := tb_obi_spi_flash
+TEST_ARGS ?= -g2005-sv
+
+TEST_INCLUDE_DIR +=
+
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_apb_if.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_clkgen.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_core.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_ctrl.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_fifo.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_obi_core.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_obi_if.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_rx.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_tx.sv
+
+TEST_SRC += $(CUR_DIR)/w25q128jvxim.sv
+TEST_SRC += $(CUR_DIR)/spi_obi_core_tb.sv
