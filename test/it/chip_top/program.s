@@ -246,9 +246,11 @@ process_command:
 
     # 检查是否为GPIO模块相关命令
     li s1, 'g'
-    beq s0, s1, gpio_test_command
+    beq s0, s1, gpio_in_test_command
     li s1, 'G'
-    beq s0, s1, gpio_test_command
+    beq s0, s1, gpio_out_test_command
+    li s1, 'i'
+    beq s0, s1, gpio_io_test_command
 
     # 检查是否为SPI模块相关命令
     li s1, 's'
@@ -866,11 +868,73 @@ delay_loop:
     addi sp, sp, 4
     ret
 
-# GPIO模块测试命令处理
-gpio_test_command:
+# GPIO输入测试命令处理
+gpio_in_test_command:
     li a0, 'G'
     call uart_write_byte
     li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    call print_newline
+
+    # 执行GPIO输入测试
+    call test_gpio_in
+
+    j process_end
+
+# GPIO输出测试命令处理
+gpio_out_test_command:
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    call print_newline
+
+    # 执行GPIO输出测试
+    call test_gpio_out
+
+    j process_end
+
+# GPIO双向测试命令处理
+gpio_io_test_command:
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
     call uart_write_byte
     li a0, 'I'
     call uart_write_byte
@@ -882,13 +946,13 @@ gpio_test_command:
     call uart_write_byte
     call print_newline
 
-    # 执行GPIO模块测试
-    call test_gpio_module
+    # 执行GPIO双向测试
+    call test_gpio_io
 
     j process_end
 
-# GPIO模块测试函数
-test_gpio_module:
+# GPIO输入测试函数
+test_gpio_in:
     addi sp, sp, -16
     sw ra, 12(sp)
     sw s0, 8(sp)
@@ -896,15 +960,19 @@ test_gpio_module:
     sw s2, 0(sp)
 
     # 打印测试标题
-    # li a0, '-'
-    # call uart_write_byte
-    # li a0, ' '
-    # call uart_write_byte
     # li a0, 'G'
     # call uart_write_byte
     # li a0, 'P'
     # call uart_write_byte
     # li a0, 'I'
+    # call uart_write_byte
+    # li a0, 'O'
+    # call uart_write_byte
+    # li a0, ' '
+    # call uart_write_byte
+    # li a0, 'I'
+    # call uart_write_byte
+    # li a0, 'N'
     # call uart_write_byte
     # li a0, ' '
     # call uart_write_byte
@@ -916,24 +984,177 @@ test_gpio_module:
     # call uart_write_byte
     # li a0, 'T'
     # call uart_write_byte
-    # li a0, ' '
-    # call uart_write_byte
-    # li a0, '-'
-    # call uart_write_byte
     # call print_newline
 
-    # 1. 测试GPIO输出配置
+    # 读取GPIO输入数据
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    li s0, GPIO_IN_DATA
+    lw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 测试完成
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
     li a0, 'C'
     call uart_write_byte
     li a0, 'O'
     call uart_write_byte
-    li a0, 'N'
+    li a0, 'M'
     call uart_write_byte
-    li a0, 'F'
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    call print_newline
+
+    lw ra, 12(sp)
+    lw s0, 8(sp)
+    lw s1, 4(sp)
+    lw s2, 0(sp)
+    addi sp, sp, 16
+    ret
+
+# GPIO输出测试函数
+test_gpio_out:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw s0, 8(sp)
+    sw s1, 4(sp)
+    sw s2, 0(sp)
+
+    # 打印测试标题
+    # li a0, 'G'
+    # call uart_write_byte
+    # li a0, 'P'
+    # call uart_write_byte
+    # li a0, 'I'
+    # call uart_write_byte
+    # li a0, 'O'
+    # call uart_write_byte
+    # li a0, ' '
+    # call uart_write_byte
+    # li a0, 'O'
+    # call uart_write_byte
+    # li a0, 'U'
+    # call uart_write_byte
+    # li a0, 'T'
+    # call uart_write_byte
+    # li a0, ' '
+    # call uart_write_byte
+    # li a0, 'T'
+    # call uart_write_byte
+    # li a0, 'E'
+    # call uart_write_byte
+    # li a0, 'S'
+    # call uart_write_byte
+    # li a0, 'T'
+    # call uart_write_byte
+    # call print_newline
+
+    # 测试GPIO输出数据
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'U'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    # 设置GPIO输出数据 - 测试所有8个输出引脚
+    li s0, GPIO_OUT_DATA
+    li s1, 0x000000FF  # 设置所有8位为高电平
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 测试完成
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
     call uart_write_byte
     li a0, 'I'
     call uart_write_byte
-    li a0, 'G'
+    li a0, 'O'
     call uart_write_byte
     li a0, ' '
     call uart_write_byte
@@ -943,89 +1164,67 @@ test_gpio_module:
     call uart_write_byte
     li a0, 'T'
     call uart_write_byte
-    li a0, '='
+    li a0, ' '
     call uart_write_byte
-
-    # 设置GPIO输出方向 (假设测试第0位)
-    li s0, GPIO_IO_DIR
-    li s1, 0x00000001  # 设置第0位为输出
-    sw s1, 0(s0)
-
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 2. 测试GPIO输出数据
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
     li a0, 'O'
     call uart_write_byte
-    li a0, 'U'
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
     call uart_write_byte
     li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
     call uart_write_byte
     li a0, 'D'
     call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-
-    # 设置GPIO输出数据
-    li s0, GPIO_IO_DATA
-    li s1, 0x00000001  # 设置第0位为高电平
-    sw s1, 0(s0)
-
-    mv a0, s1
-    call print_hex
     call print_newline
 
-    li s0, GPIO_OUT_DATA
-    li s1, 0x00000010  # 设置第4位为高电平
-    sw s1, 0(s0)
+    lw ra, 12(sp)
+    lw s0, 8(sp)
+    lw s1, 4(sp)
+    lw s2, 0(sp)
+    addi sp, sp, 16
+    ret
 
-    mv a0, s1
-    call print_hex
-    call print_newline
+# GPIO双向测试函数
+test_gpio_io:
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw s0, 8(sp)
+    sw s1, 4(sp)
+    sw s2, 0(sp)
 
-    # 3. 读取GPIO输入数据
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, '='
-    call uart_write_byte
-
-    # 读取GPIO输入数据
-    li s0, GPIO_IN_DATA
-    lw s1, 0(s0)
-
-    mv a0, s1
-    call print_hex
-    call print_newline
-
-    # 4. 测试完成
-    # li a0, '\n'
-    # call uart_write_byte
-    # li a0, '-'
-    # call uart_write_byte
-    # li a0, ' '
-    # call uart_write_byte
+    # 打印测试标题
     # li a0, 'G'
     # call uart_write_byte
     # li a0, 'P'
     # call uart_write_byte
     # li a0, 'I'
+    # call uart_write_byte
+    # li a0, 'O'
+    # call uart_write_byte
+    # li a0, ' '
+    # call uart_write_byte
+    # li a0, 'I'
+    # call uart_write_byte
+    # li a0, 'O'
     # call uart_write_byte
     # li a0, ' '
     # call uart_write_byte
@@ -1037,31 +1236,122 @@ test_gpio_module:
     # call uart_write_byte
     # li a0, 'T'
     # call uart_write_byte
-    # li a0, ' '
-    # call uart_write_byte
-    # li a0, 'C'
-    # call uart_write_byte
-    # li a0, 'O'
-    # call uart_write_byte
-    # li a0, 'M'
-    # call uart_write_byte
-    # li a0, 'P'
-    # call uart_write_byte
-    # li a0, 'L'
-    # call uart_write_byte
-    # li a0, 'E'
-    # call uart_write_byte
-    # li a0, 'T'
-    # call uart_write_byte
-    # li a0, 'E'
-    # call uart_write_byte
-    # li a0, 'D'
-    # call uart_write_byte
-    # li a0, ' '
-    # call uart_write_byte
-    # li a0, '-'
-    # call uart_write_byte
     # call print_newline
+
+    # 设置GPIO双向引脚方向
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'R'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'N'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    # 设置GPIO双向引脚为输出方向
+    li s0, GPIO_IO_DIR
+    li s1, 0x000000FF  # 设置所有8位为输出
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 设置GPIO双向引脚数据
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'A'
+    call uart_write_byte
+    li a0, ':'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+
+    # 设置GPIO双向引脚数据 - 测试所有8个双向引脚
+    li s0, GPIO_IO_DATA
+    li s1, 0x000000AA  # 设置交替模式：10101010
+    sw s1, 0(s0)
+
+    mv a0, s1
+    call print_hex
+    call print_newline
+
+    # 测试完成
+    li a0, 'G'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'I'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'S'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, ' '
+    call uart_write_byte
+    li a0, 'C'
+    call uart_write_byte
+    li a0, 'O'
+    call uart_write_byte
+    li a0, 'M'
+    call uart_write_byte
+    li a0, 'P'
+    call uart_write_byte
+    li a0, 'L'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'T'
+    call uart_write_byte
+    li a0, 'E'
+    call uart_write_byte
+    li a0, 'D'
+    call uart_write_byte
+    call print_newline
 
     lw ra, 12(sp)
     lw s0, 8(sp)

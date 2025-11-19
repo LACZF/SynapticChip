@@ -18,14 +18,16 @@
 `define BOOT_TYPE 4
 `endif
 
-module chip_top_test;
+module SynapticChip_test;
     /********** 输入/输出信号 **********/
     reg                       clk;
     reg                       rst_n;
 
     localparam TIMEOUT_CYCLES       = 10000;
     localparam TEST_CMD_PE          = 8'h70; // 'p'
-    localparam TEST_CMD_GPIO        = 8'h67; // 'g'
+    localparam TEST_CMD_GPIO_IN     = 8'h67; // 'g' - GPIO输入测试
+    localparam TEST_CMD_GPIO_OUT    = 8'h47; // 'G' - GPIO输出测试
+    localparam TEST_CMD_GPIO_IO     = 8'h69; // 'i' - GPIO双向测试
     localparam TEST_CMD_SPI         = 8'h73; // 's'
     localparam TEST_CMD_TIMER       = 8'h74; // 't'
     localparam TEST_CMD_END         = 8'h04;
@@ -232,7 +234,6 @@ module chip_top_test;
         .rst_n       (rst_n),
 
         .obi_req_o    (obi_req),
-        .obi_we_o     (obi_we),
         .obi_addr_o   (obi_addr),
         .obi_gnt_i    (obi_gnt),
         .obi_rvalid_i (obi_rvalid),
@@ -241,8 +242,7 @@ module chip_top_test;
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
 
-        .gpio_in     (gpio_in),
-        .gpio_out    (gpio_out)
+        .gpio_io     (gpio_io)
     );
 
     if (IMPLEMENT_XIP == 1) begin : xip_gen
@@ -290,7 +290,7 @@ module chip_top_test;
             .addr_i     (obi_addr),
             .data_i     (obi_wdata),
             .be_i       (4'b1),
-            .we_i       (obi_we),
+            .we_i       (1'b0),
             .gnt_o      (obi_gnt),
             .rvalid_o   (obi_rvalid),
             .data_o     (obi_rdata)
@@ -426,13 +426,9 @@ module chip_top_test;
 `endif
 
 `ifdef GPIO_TEST_FOR_CHIP_TOP
-        // 发送GPIO模块测试命令
-        send_test(TEST_CMD_GPIO);
-        $display($time, " gpio_in  : %b", gpio_in);
-        $display($time, " gpio_out : %b", gpio_out);
-    `ifdef GPIO_IO_ENABLE
+        // 发送GPIO双向测试命令
+        send_test(TEST_CMD_GPIO_IO);
         $display($time, " gpio_io  : %b", gpio_io);
-    `endif
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP
@@ -453,8 +449,8 @@ module chip_top_test;
 
     /********** 输出波形 **********/
     initial begin
-        $dumpfile("chip_top_test.vcd");
-        $dumpvars(0, chip_top_test);
+        $dumpfile("SynapticChip_test.vcd");
+        $dumpvars(0, SynapticChip_test);
     end
 
 endmodule

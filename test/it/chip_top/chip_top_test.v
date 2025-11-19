@@ -26,7 +26,9 @@ module chip_top_test;
 
     localparam TIMEOUT_CYCLES       = 10000;
     localparam TEST_CMD_PE          = 8'h70; // 'p'
-    localparam TEST_CMD_GPIO        = 8'h67; // 'g'
+    localparam TEST_CMD_GPIO_IN     = 8'h67; // 'g' - GPIO输入测试
+    localparam TEST_CMD_GPIO_OUT    = 8'h47; // 'G' - GPIO输出测试
+    localparam TEST_CMD_GPIO_IO     = 8'h69; // 'i' - GPIO双向测试
     localparam TEST_CMD_SPI         = 8'h73; // 's'
     localparam TEST_CMD_TIMER       = 8'h74; // 't'
     localparam TEST_CMD_END         = 8'h04;
@@ -255,9 +257,7 @@ module chip_top_test;
         /********** 通用输入/输出端口 **********/
         .gpio_in     (gpio_in),
         .gpio_out    (gpio_out),
-    `ifdef GPIO_IO_ENABLE
         .gpio_io     (gpio_io),
-    `endif
 
         /********** SPI **********/
         .spi_cs_n    (spi_cs_n),
@@ -460,13 +460,17 @@ module chip_top_test;
 `endif
 
 `ifdef GPIO_TEST_FOR_CHIP_TOP
-        // 发送GPIO模块测试命令
-        send_test(TEST_CMD_GPIO);
+        // 发送GPIO输入测试命令
+        send_test(TEST_CMD_GPIO_IN);
         $display($time, " gpio_in  : %b", gpio_in);
+
+        // 发送GPIO输出测试命令
+        send_test(TEST_CMD_GPIO_OUT);
         $display($time, " gpio_out : %b", gpio_out);
-    `ifdef GPIO_IO_ENABLE
+
+        // 发送GPIO双向测试命令
+        send_test(TEST_CMD_GPIO_IO);
         $display($time, " gpio_io  : %b", gpio_io);
-    `endif
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP

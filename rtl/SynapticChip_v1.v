@@ -3,9 +3,7 @@ module SynapticChip (
     input  wire                         rst_n,
 
     output wire                         obi_req_o,
-    output wire                         obi_we_o,
     output wire [31:0]                  obi_addr_o,
-    output wire [31:0]                  obi_wdata_o,
     input  wire                         obi_gnt_i,
     input  wire                         obi_rvalid_i,
     input  wire [31:0]                  obi_rdata_i,
@@ -13,8 +11,7 @@ module SynapticChip (
     input  wire                         uart_rx,
     output wire                         uart_tx,
 
-    input  wire [7:0]                   gpio_in,
-    output wire [7:0]                   gpio_out,
+    inout  wire [7:0]                   gpio_io,
 
     input  wire                         jtag_tck_pin,
     input  wire                         jtag_tms_pin,
@@ -40,8 +37,8 @@ module SynapticChip (
     localparam IMPLEMENT_I2C             = 0;
     localparam IMPLEMENT_EXT_OBI         = 1;
     localparam IMPLEMENT_EXT_APB         = 0;
-    localparam GPIO_IN_NUM               = 8;
-    localparam GPIO_OUT_NUM              = 8;
+    localparam GPIO_IN_NUM               = 1;
+    localparam GPIO_OUT_NUM              = 1;
     localparam GPIO_INOUT_NUM            = 8;
     localparam I2C_NUM                   = 2;
     localparam UART_NUM                  = 3;
@@ -77,9 +74,9 @@ module SynapticChip (
         .rst_n       (rst_n),
 
         .obi_req_o    (obi_req_o),
-        .obi_we_o     (obi_we_o),
+        .obi_we_o     (),
         .obi_addr_o   (obi_addr_o),
-        .obi_wdata_o  (obi_wdata_o),
+        .obi_wdata_o  (),
         .obi_gnt_i    (obi_gnt_i),
         .obi_rvalid_i (obi_rvalid_i),
         .obi_rdata_i  (obi_rdata_i),
@@ -87,8 +84,9 @@ module SynapticChip (
         .uart_rx      (uart_rx),
         .uart_tx      (uart_tx),
 
-        .gpio_in      (gpio_in),
-        .gpio_out     (gpio_out),
+        .gpio_in      ({GPIO_IN_NUM{1'b0}}),
+        .gpio_out     (),
+        .gpio_io      (gpio_io),
 
         .jtag_tck_pin (jtag_tck_pin),
         .jtag_tms_pin (jtag_tms_pin),
