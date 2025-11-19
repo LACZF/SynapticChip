@@ -122,3 +122,4 @@ RTL_SRC += $(TOP_DIR)/rtl/io/obi_to_apb_bridge/obi_to_apb_bridge.v
 RTL_SRC += $(TOP_DIR)/rtl/io/io_top.v
 
 RTL_SRC += $(TOP_DIR)/rtl/top/chip_top.v
+RTL_SRC += $(TOP_DIR)/rtl/SynapticChip_v1.v
