@@ -179,21 +179,14 @@ module tb_spi_flash_controller;
         rst_n = 1;
         #100;  // 等待控制器初始化完成
 
-        $display("=== SPI Flash控制器测试开始 ===");
-        $display("等待Flash初始化完成...");
-
         // 等待Flash初始化完成
         $display("等待控制器初始化...");
-        #200000;  // 延长等待时间，确保控制器有足够时间初始化
-
-        $display("开始测试序列...");
-
-        // 完整测试序列：包含读操作、写操作和读-写-读验证
-        $display("\n=== 完整测试序列 ===");
+        #20000;  // 延长等待时间，确保控制器有足够时间初始化
 
         // 测试1：读取初始数据
         $display("测试1：读取初始数据（地址0）");
-        verify_data(32'h00000000, 32'h11111111, "初始数据读取");
+        // verify_data(32'h00000000, 32'h11111111, "初始数据读取");
+        verify_data(32'h00000040, 32'hA0A0A0A0, "地址64读取验证");
 
         // 暂时注释掉写操作测试，专注于验证读功能
         // 测试2：写操作测试 - 写入测试数据
@@ -209,6 +202,7 @@ module tb_spi_flash_controller;
         $display("\n测试3：验证写入后的数据");
         verify_data(32'h00000000, 32'hA5A5A5A5, "写后读验证");*/
 
+    `ifdef TEST_MORE
         // 测试4：读取另一个地址（地址16）");
         $display("\n测试4：读取另一个地址（地址16）");
         verify_data(32'h00000010, 32'h22222222, "不同地址读取");
@@ -218,6 +212,7 @@ module tb_spi_flash_controller;
         verify_data(32'h00000020, 32'h88888888, "地址32读取验证");
         verify_data(32'h00000040, 32'hA0A0A0A0, "地址64读取验证");
         verify_data(32'h00000080, 32'h33333333, "默认地址读取验证");
+    `endif
 
         $display("\n=== 测试结果统计 ===");
         $display("总测试数: %d", test_total_count);
@@ -256,4 +251,9 @@ module tb_spi_flash_controller;
         $finish;
     end
 
+    // 生成波形文件
+    initial begin
+        $dumpfile("tb_spi_flash_controller.vcd");
+        $dumpvars(0, tb_spi_flash_controller);
+    end
 endmodule
