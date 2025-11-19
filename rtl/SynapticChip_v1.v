@@ -24,7 +24,7 @@ module SynapticChip (
     localparam TRACE_ENABLE              = 0;
     localparam CPU_NUM                   = 1;
     localparam ROM_DEPTH                 = 1024;
-    localparam RAM_DEPTH                 = 1024;
+    localparam RAM_DEPTH                 = 512;
     localparam ADDR_WIDTH                = 32;
     localparam DATA_WIDTH                = 32;
     localparam PE_ARRAY_X                = 16;
