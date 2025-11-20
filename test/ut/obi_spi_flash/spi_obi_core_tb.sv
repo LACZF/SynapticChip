@@ -216,8 +216,11 @@ module spi_obi_core_tb;
   // 配置SPI控制器任务
   task configure_spi;
     begin
+      // 设置CS寄存器
+      obi_write(REG_STATUS, 32'h00000F13); // CS0使能
+
       // 设置时钟分频器 (分频系数=4)
-      obi_write(REG_CLKDIV, 32'h00000004);
+      obi_write(REG_CLKDIV, 32'h00000001);
 
       // 设置SPI命令 (读命令=0x03)
       obi_write(REG_SPICMD, 32'h00000003);
@@ -233,9 +236,6 @@ module spi_obi_core_tb;
 
       // 设置读dummy周期
       obi_write(REG_SPIDUM, 32'h00000000);
-
-      // 设置CS寄存器
-      obi_write(REG_STATUS, 32'h00000100); // CS0使能
     end
   endtask
 

@@ -118,7 +118,7 @@ module spi_ctrl (
   spi_clkgen u_clkgen (
       .clk_i          (clk),
       .rst_n_i        (rstn),
-      .en_i           (spi_clock_en),
+      .en_i           (1'b1),
       .clk_div_i      (spi_clk_div),
       .clk_div_valid_i(spi_clk_div_valid),
       .spi_clk_o      (spi_clk),
