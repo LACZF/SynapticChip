@@ -169,7 +169,6 @@ module chip_top #(
     wire [NUM_PES-1:0]                                    pe_irq;
     wire [(NUM_PES*8)-1:0]                                pe_irq_id;
 
-`ifdef PE_SUPPORT_HIGHT_MEM
     // 高带宽内存接口信号（用于PE直接内存访问）
     wire                                                  pe_mem_req;                 // 高带宽内存请求信号
     wire                                                  pe_mem_we;                  // 高带宽内存写使能
@@ -177,7 +176,6 @@ module chip_top #(
     wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_o;              // 高带宽内存写入数据
     wire                                                  pe_mem_ack;                 // 高带宽内存应答信号
     wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_i;              // 高带宽内存读取数据
-`endif
 
     // CPU实例化
     generate
@@ -288,6 +286,13 @@ module chip_top #(
         .high_bw_data_i (pe_mem_data_o),
         .high_bw_ack_o  (pe_mem_ack),
         .high_bw_data_o (pe_mem_data_i),
+`else
+        .high_bw_req_i  (1'b0),
+        .high_bw_we_i   (1'b0),
+        .high_bw_addr_i ({ADDR_WIDTH{1'b0}}),
+        .high_bw_data_i ({(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH{1'b0}}),
+        .high_bw_ack_o  (pe_mem_ack),
+        .high_bw_data_o (pe_mem_data_i),
 `endif
 
         .req_i          (slave_req[SLAVE_RAM_INDEX]),
@@ -322,6 +327,13 @@ module chip_top #(
         .mem_data_o (pe_mem_data_o),
         .mem_ack_i  (pe_mem_ack),
         .mem_data_i (pe_mem_data_i),
+`else
+        .mem_req_o  (pe_mem_req),
+        .mem_we_o   (pe_mem_we),
+        .mem_addr_o (pe_mem_addr),
+        .mem_data_o (pe_mem_data_o),
+        .mem_ack_i  (1'b0),
+        .mem_data_i ({(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH{1'b0}}),
 `endif
 
         .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
