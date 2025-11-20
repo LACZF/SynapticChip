@@ -33,8 +33,8 @@ module SynapticChip_test;
     localparam TEST_CMD_END         = 8'h04;
     localparam CPU_NUM              = 1;
     localparam SPI_NUM              = 1;
-    localparam GPIO_IN_NUM          = 8;
-    localparam GPIO_OUT_NUM         = 8;
+    localparam GPIO_IN_NUM          = 4;
+    localparam GPIO_OUT_NUM         = 4;
     localparam GPIO_INOUT_NUM       = 8;
     localparam I2C_NUM              = 1;
     localparam UART_NUM             = 1;
@@ -242,7 +242,8 @@ module SynapticChip_test;
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
 
-        .gpio_io     (gpio_io)
+        .gpio_in     (gpio_in),
+        .gpio_out    (gpio_out)
     );
 
     if (IMPLEMENT_XIP == 1) begin : xip_gen
@@ -426,9 +427,17 @@ module SynapticChip_test;
 `endif
 
 `ifdef GPIO_TEST_FOR_CHIP_TOP
-        // 发送GPIO双向测试命令
-        send_test(TEST_CMD_GPIO_IO);
-        $display($time, " gpio_io  : %b", gpio_io);
+        // 发送GPIO输入测试命令
+        send_test(TEST_CMD_GPIO_IN);
+        $display($time, " gpio_in  : %b", gpio_in);
+
+        // 发送GPIO输出测试命令
+        send_test(TEST_CMD_GPIO_OUT);
+        $display($time, " gpio_out : %b", gpio_out);
+
+        // // 发送GPIO双向测试命令
+        // send_test(TEST_CMD_GPIO_IO);
+        // $display($time, " gpio_io  : %b", gpio_io);
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP

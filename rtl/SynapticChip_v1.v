@@ -11,7 +11,8 @@ module SynapticChip (
     input  wire                         uart_rx,
     output wire                         uart_tx,
 
-    inout  wire [7:0]                   gpio_io,
+    input  wire [3:0]                   gpio_in,
+    output wire [3:0]                   gpio_out,
 
     input  wire                         jtag_tck_pin,
     input  wire                         jtag_tms_pin,
@@ -37,9 +38,9 @@ module SynapticChip (
     localparam IMPLEMENT_I2C             = 0;
     localparam IMPLEMENT_EXT_OBI         = 1;
     localparam IMPLEMENT_EXT_APB         = 0;
-    localparam GPIO_IN_NUM               = 1;
-    localparam GPIO_OUT_NUM              = 1;
-    localparam GPIO_INOUT_NUM            = 8;
+    localparam GPIO_IN_NUM               = 4;
+    localparam GPIO_OUT_NUM              = 4;
+    localparam GPIO_INOUT_NUM            = 1;
     localparam I2C_NUM                   = 2;
     localparam UART_NUM                  = 3;
     localparam SPI_NUM                   = 1;
@@ -55,6 +56,8 @@ module SynapticChip (
 
     wire                                 obi_we;
     wire [DATA_WIDTH-1:0]                obi_wdata;
+
+    wire [GPIO_INOUT_NUM-1:0]            gpio_io;
 
     wire [SPI_NUM-1:0]                   spi_cs_n;
     wire                                 spi_clk;
@@ -123,8 +126,8 @@ module SynapticChip (
         .uart_rx      (uart_rx),
         .uart_tx      (uart_tx),
 
-        .gpio_in      ({GPIO_IN_NUM{1'b0}}),
-        .gpio_out     (),
+        .gpio_in      (gpio_in),
+        .gpio_out     (gpio_out),
         .gpio_io      (gpio_io),
 
         .spi_cs_n    (spi_cs_n),
