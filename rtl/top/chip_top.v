@@ -58,7 +58,6 @@ module chip_top #(
     /********** GPIO  **********/
     input  wire [GPIO_IN_NUM-1:0]       gpio_in,
     output wire [GPIO_OUT_NUM-1:0]      gpio_out,
-    inout  wire [GPIO_INOUT_NUM-1:0]    gpio_io,
 
     /********** SPI **********/
     output wire [SPI_NUM-1:0]           spi_cs_n,
@@ -404,7 +403,6 @@ module chip_top #(
         // GPIO接口
         .gpio_in          (gpio_in),
         .gpio_out         (gpio_out),
-        .gpio_io          (gpio_io),
 
         // SPI接口
         .spi_cs_n         (spi_cs_n),

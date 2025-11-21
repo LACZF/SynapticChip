@@ -141,7 +141,6 @@ module SynapticChip_test;
     // 通用输入/输出端口
     wire [GPIO_IN_NUM-1:0]       gpio_in = {GPIO_IN_NUM{1'b1}};
     wire [GPIO_OUT_NUM-1:0]      gpio_out;
-    wire [GPIO_INOUT_NUM-1:0]    gpio_io = {GPIO_INOUT_NUM{1'bz}};
 
     /********** UART模型 **********/
     wire                      rx_busy;          // 接收中标志
@@ -434,10 +433,6 @@ module SynapticChip_test;
         // 发送GPIO输出测试命令
         send_test(TEST_CMD_GPIO_OUT);
         $display($time, " gpio_out : %b", gpio_out);
-
-        // // 发送GPIO双向测试命令
-        // send_test(TEST_CMD_GPIO_IO);
-        // $display($time, " gpio_io  : %b", gpio_io);
 `endif
 
 `ifdef SPI_TEST_FOR_CHIP_TOP

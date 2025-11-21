@@ -22,14 +22,10 @@ module tb_gpio;
     // GPIO接口信号
     reg  [3:0] gpio_in;
     wire [3:0] gpio_out;
-    wire [3:0] gpio_io;
 
     // 测试用双向IO引脚
     reg [3:0]  gpio_io_test;
     reg [3:0]  gpio_io_dir;
-
-    // 连接双向IO引脚
-    assign gpio_io = gpio_io_dir ? gpio_io_test : {4{1'bz}};
 
     // 实例化GPIO模块
     gpio_top #(
@@ -49,8 +45,7 @@ module tb_gpio;
         .rvalid_o      (rvalid_o),
 
         .gpio_in       (gpio_in),
-        .gpio_out      (gpio_out),
-        .gpio_io       (gpio_io)
+        .gpio_out      (gpio_out)
     );
 
     // 时钟生成
@@ -207,13 +202,6 @@ module tb_gpio;
             // 设置IO方向为输出
             write_register(32'h08, 32'h0000000F); // 所有IO设置为输出
             write_register(32'h0C, 32'h000000CC); // 设置IO输出值
-
-            // 验证IO输出
-            @(posedge clk);
-            if (gpio_io !== 4'hC) begin
-                $display("ERROR: GPIO IO output does not match expected value. Expected: %h, Actual: %h", 4'hC, gpio_io);
-                error_count = error_count + 1;
-            end
 
             // 部分IO设置为输入，部分为输出
             write_register(32'h08, 32'h00000005); // IO0和IO2设置为输出，IO1和IO3设置为输入

@@ -57,8 +57,6 @@ module SynapticChip (
     wire                                 obi_we;
     wire [DATA_WIDTH-1:0]                obi_wdata;
 
-    wire [GPIO_INOUT_NUM-1:0]            gpio_io;
-
     wire [SPI_NUM-1:0]                   spi_cs_n;
     wire                                 spi_clk;
     wire                                 spi_mosi;
@@ -128,7 +126,6 @@ module SynapticChip (
 
         .gpio_in      (gpio_in),
         .gpio_out     (gpio_out),
-        .gpio_io      (gpio_io),
 
         .spi_cs_n    (spi_cs_n),
         .spi_clk     (spi_clk),
