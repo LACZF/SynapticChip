@@ -15,5 +15,5 @@ TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_obi_if.sv
 TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_rx.sv
 TEST_SRC += $(TOP_DIR)/rtl/io/spi_flash/spi_tx.sv
 
-TEST_SRC += $(CUR_DIR)/w25q128jvxim.sv
+TEST_SRC += $(TOP_DIR)/test/common/w25q128jvxim.sv
 TEST_SRC += $(CUR_DIR)/spi_obi_core_tb.sv
