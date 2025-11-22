@@ -88,6 +88,12 @@ module pe_control #(
     reg  [15:0] high_bw_transfer_count;
     reg         high_bw_start;
 
+    // 高带宽启动请求信号
+    reg         high_bw_start_request;
+    reg         high_bw_start_we;
+    reg  [15:0] high_bw_start_length;
+    reg  [15:0] high_bw_start_addr;
+
     // 地址拆分
     wire [23:0] addr_base       = (addr_i[23:0] >> 2);
 
@@ -151,11 +157,10 @@ module pe_control #(
                             CONTROL_REG_ADDR: control_reg <= wdata_i;
                             HIGH_BW_WRITE_ADDR: begin
                                 // 高带宽内存写入请求
-                                high_bw_transfer_length <= wdata_i[31:16];
-                                high_bw_current_addr    <= wdata_i[15:0];
-                                high_bw_transfer_count  <= 16'b0;
-                                high_bw_we_o            <= 1'b1;
-                                high_bw_start           <= 1'b1;
+                                high_bw_start_request <= 1'b1;
+                                high_bw_start_we      <= 1'b1;
+                                high_bw_start_length  <= wdata_i[31:16];
+                                high_bw_start_addr    <= wdata_i[15:0];
                             end
                             default: begin
                                 // 直接写入内存
@@ -175,11 +180,10 @@ module pe_control #(
                             STATUS_REG_ADDR:  rdata_o <= status_reg;
                             HIGH_BW_READ_ADDR: begin
                                 // 高带宽内存读取请求
-                                high_bw_transfer_length <= wdata_i[31:16];
-                                high_bw_current_addr    <= wdata_i[15:0];
-                                high_bw_transfer_count  <= 16'b0;
-                                high_bw_we_o            <= 1'b0;
-                                high_bw_start           <= 1'b1;
+                                high_bw_start_request <= 1'b1;
+                                high_bw_start_we      <= 1'b0;
+                                high_bw_start_length  <= wdata_i[31:16];
+                                high_bw_start_addr    <= wdata_i[15:0];
                                 rdata_o <= {DATA_WIDTH{1'b0}};  // 高带宽读取返回0
                             end
                             default: begin
@@ -210,6 +214,30 @@ module pe_control #(
         end
     end
 
+    // 高带宽启动请求处理 - 统一控制逻辑
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            high_bw_start          <= 1'b0;
+            high_bw_we_o           <= 1'b0;
+            high_bw_transfer_length <= 16'b0;
+            high_bw_current_addr    <= 16'b0;
+            high_bw_transfer_count <= 16'b0;
+        end else begin
+            // 清除启动信号，除非有新的请求
+            high_bw_start <= 1'b0;
+
+            // 处理高带宽启动请求
+            if (high_bw_start_request) begin
+                high_bw_start          <= 1'b1;
+                high_bw_we_o           <= high_bw_start_we;
+                high_bw_transfer_length <= high_bw_start_length;
+                high_bw_current_addr    <= high_bw_start_addr;
+                high_bw_transfer_count  <= 16'b0;
+                high_bw_start_request   <= 1'b0;  // 清除请求
+            end
+        end
+    end
+
     // 高带宽内存状态机控制 - 优化版本
     // 流水线化处理，提高传输效率
     always @(posedge clk) begin
@@ -218,11 +246,6 @@ module pe_control #(
             high_bw_req_o          <= 1'b0;
             high_bw_addr_o         <= 32'b0;
             high_bw_data_o         <= {HIGH_BW_DW{1'b0}};
-            high_bw_transfer_count <= 16'b0;
-            high_bw_start          <= 1'b0;
-            high_bw_we_o           <= 1'b0;
-            high_bw_transfer_length <= 16'b0;
-            high_bw_current_addr    <= 16'b0;
         end else begin
             case (high_bw_state)
                 HIGH_BW_IDLE: begin
@@ -230,7 +253,6 @@ module pe_control #(
                     // 等待高带宽请求启动信号
                     if (high_bw_start) begin
                         high_bw_state <= HIGH_BW_REQUEST;
-                        high_bw_start <= 1'b0;  // 清除启动信号
 
                         // 预计算第一个地址
                         high_bw_addr_o <= {16'b0, high_bw_current_addr};
@@ -302,12 +324,11 @@ module pe_control #(
 
                 WRITE_BACK_START: begin
                     // 启动高带宽内存写入请求
-                    high_bw_transfer_length <= PE_ARRAY_X * PE_ARRAY_Y;
-                    high_bw_current_addr    <= pe_write_back_addr;
-                    high_bw_transfer_count  <= 16'b0;
-                    high_bw_we_o            <= 1'b1;  // 写操作
-                    high_bw_start           <= 1'b1;  // 启动高带宽传输
-                    write_back_state        <= WRITE_BACK_ACTIVE;
+                    high_bw_start_request <= 1'b1;
+                    high_bw_start_we      <= 1'b1;  // 写操作
+                    high_bw_start_length <= PE_ARRAY_X * PE_ARRAY_Y;
+                    high_bw_start_addr    <= pe_write_back_addr;
+                    write_back_state      <= WRITE_BACK_ACTIVE;
                 end
 
                 WRITE_BACK_ACTIVE: begin

@@ -278,7 +278,6 @@ module chip_top #(
         .clk_i          (clk),
         .rst_ni         (ndmreset_n),
 
-`ifdef PE_SUPPORT_HIGHT_MEM
         // 高带宽内存接口 - 连接到PE_TOP的宽位宽接口
         .high_bw_req_i  (pe_mem_req),
         .high_bw_we_i   (pe_mem_we),
@@ -286,14 +285,6 @@ module chip_top #(
         .high_bw_data_i (pe_mem_data_o),
         .high_bw_ack_o  (pe_mem_ack),
         .high_bw_data_o (pe_mem_data_i),
-`else
-        .high_bw_req_i  (1'b0),
-        .high_bw_we_i   (1'b0),
-        .high_bw_addr_i ({ADDR_WIDTH{1'b0}}),
-        .high_bw_data_i ({(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH{1'b0}}),
-        .high_bw_ack_o  (pe_mem_ack),
-        .high_bw_data_o (pe_mem_data_i),
-`endif
 
         .req_i          (slave_req[SLAVE_RAM_INDEX]),
         .addr_i         (slave_addr[SLAVE_RAM_INDEX]),
@@ -319,7 +310,6 @@ module chip_top #(
         .clk        (clk),
         .rst_n      (rst_n),
 
-`ifdef PE_SUPPORT_HIGHT_MEM
         // 直接内存接口 - 连接到高带宽内存接口信号
         .mem_req_o  (pe_mem_req),
         .mem_we_o   (pe_mem_we),
@@ -327,14 +317,6 @@ module chip_top #(
         .mem_data_o (pe_mem_data_o),
         .mem_ack_i  (pe_mem_ack),
         .mem_data_i (pe_mem_data_i),
-`else
-        .mem_req_o  (pe_mem_req),
-        .mem_we_o   (pe_mem_we),
-        .mem_addr_o (pe_mem_addr),
-        .mem_data_o (pe_mem_data_o),
-        .mem_ack_i  (1'b0),
-        .mem_data_i ({(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH{1'b0}}),
-`endif
 
         .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
         .we_i       (slave_we[SLAVE_PE_TOP_INDEX]),
