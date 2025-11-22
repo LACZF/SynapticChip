@@ -129,7 +129,6 @@ module spi_top #(
         if (!rst_n) begin
             req_accepted <= 1'b0;
             gnt_o        <= 1'b0;
-            rvalid_o     <= 1'b0;
         end else begin
             // Grant logic
             if (req_i && !req_accepted) begin
