@@ -41,15 +41,14 @@ ifneq (,$(filter yosys_synthesis,$(MAKECMDGOALS)))
 ifeq ($(M),)
 M=$(TOP_DIR)/rtl
 include $(TOP_DIR)/rtl/filelist.txt
-TOP_MODULE_ARG := TOP_MODULE=SynapticChip
 $(warning "M is not set, synth for $(M).")
 else ifeq ($(TOP_MODULE),)
 $(warning "TOP_MODULE is not set.")
-TOP_MODULE_ARG :=
-else
+endif
+endif
+
+TOP_MODULE     ?= SynapticChip
 TOP_MODULE_ARG := TOP_MODULE=$(TOP_MODULE)
-endif
-endif
 
 ifeq ($(DEBUG),1)
 TEST_ARGS += -D DEBUG=1
