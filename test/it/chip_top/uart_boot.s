@@ -26,7 +26,7 @@
 .equ UART_SIMPLE_CYCLES, 0x4           # 仿真场景下速率较慢，配置采样率为4倍
 
 # 指令长度（字节数）
-.equ INSTRUCTION_LENGTH, 64  # 固定指令长度
+.equ INSTRUCTION_LENGTH, 3072  # 固定指令长度
 
 .section .text.vector
 _start:
@@ -93,14 +93,16 @@ uart_init:
 
 # 接收指令并写入RAM
 receive_instructions:
-    addi sp, sp, -16
-    sw ra, 12(sp)
-    sw s0, 8(sp)  # 字节计数器
-    sw s1, 4(sp)  # RAM地址指针
+    addi sp, sp, -20
+    sw ra, 16(sp)
+    sw s0, 12(sp)  # 字节计数器
+    sw s1, 8(sp)   # RAM地址指针
+    sw s2, 4(sp)   # 临时数据累积寄存器
 
     # 初始化计数器
     li s0, 0
     li s1, RAM_BASE
+    li s2, 0        # 清零临时数据寄存器
 
 receive_loop:
     # 检查是否已接收完所有指令
@@ -114,20 +116,50 @@ receive_loop:
     # 读取UART数据
     call uart_read_byte
 
-    # 将数据写入RAM
-    sb a0, 0(s1)
+    # 累积数据到临时寄存器
+    # s2寄存器按字节位置存储数据：
+    # 字节0 -> s2[7:0], 字节1 -> s2[15:8], 字节2 -> s2[23:16], 字节3 -> s2[31:24]
+    andi a0, a0, 0xFF     # 确保只使用低8位
+    li t1, 3
+    and t2, s0, t1        # t2 = s0 % 4 (当前字节在字中的位置)
+    slli t2, t2, 3        # 乘以8得到位移位数
+    sll a0, a0, t2        # 将字节移动到正确位置
+    or s2, s2, a0         # 累积到临时寄存器
 
+    # 检查是否累积满4个字节（32位）
+    andi t3, s0, 0x3      # 检查是否是4字节边界
+    li t4, 0x3
+    bne t3, t4, not_word_boundary
+
+    # 累积满4个字节，写入32位字到RAM
+    sw s2, 0(s1)
+    li s2, 0              # 清零临时寄存器
+    addi s1, s1, 4        # 地址递增4字节
+    j increment_counter
+
+not_word_boundary:
+    # 未满4个字节，继续累积
+    # 不写入RAM，只递增计数器
+
+increment_counter:
     # 发送确认字符
     li a0, '.'
     call uart_write_byte
 
-    # 递增计数器和地址
+    # 递增计数器
     addi s0, s0, 1
-    addi s1, s1, 1
 
     j receive_loop
 
 receive_done:
+    # 检查是否还有未写入的累积数据
+    andi t0, s0, 0x3      # 检查剩余字节数
+    beqz t0, no_remaining_data
+
+    # 将剩余的累积数据写入RAM（不足4字节的部分）
+    sw s2, 0(s1)
+
+no_remaining_data:
     # 发送接收完成消息
     li a0, '\n'
     call uart_write_byte
@@ -144,10 +176,11 @@ receive_done:
     li a0, '\n'
     call uart_write_byte
 
-    lw ra, 12(sp)
-    lw s0, 8(sp)
-    lw s1, 4(sp)
-    addi sp, sp, 16
+    lw ra, 16(sp)
+    lw s0, 12(sp)
+    lw s1, 8(sp)
+    lw s2, 4(sp)
+    addi sp, sp, 20
     ret
 
 # 检查UART是否有数据可读

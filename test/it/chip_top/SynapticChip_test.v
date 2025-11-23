@@ -459,7 +459,7 @@ module SynapticChip_test;
         if (uart_boot_test_enable) begin
             $display("\n----- Starting UART Boot Test -----");
 
-            send_rom_instructions(RAM_DEPTH);
+            send_rom_instructions(768); // 最大3k指令空间
 
             // 监测跳转执行
             monitor_jump_execution(5000);
