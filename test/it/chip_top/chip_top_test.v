@@ -419,7 +419,7 @@ module chip_top_test;
         integer timeout;
 
         $readmemh(`ROM_PRG, u_ext_rom.u_gen_ram.ram);
-        $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
+        $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram, 768);
         clk      <= 0;
         rst_n    <= 0;
         tx_start <= 1'b0;

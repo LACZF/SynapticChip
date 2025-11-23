@@ -203,32 +203,7 @@ module SynapticChip_test;
     always #2 clk = ~clk;
 
     /********** 实例化chip_top **********/
-    SynapticChip #(
-        // .TRACE_ENABLE(TRACE_ENABLE),
-        // .CPU_NUM(CPU_NUM),
-        // .ROM_DEPTH(ROM_DEPTH),
-        // .RAM_DEPTH(RAM_DEPTH),
-        // .ADDR_WIDTH(ADDR_WIDTH),
-        // .DATA_WIDTH(DATA_WIDTH),
-        // .PE_ARRAY_X(PE_ARRAY_X),
-        // .PE_ARRAY_Y(PE_ARRAY_Y),
-        // .BOOT_TYPE(BOOT_TYPE),
-        // .IMPLEMENT_JTAG(IMPLEMENT_JTAG),
-        // .IMPLEMENT_UART(IMPLEMENT_UART),
-        // .IMPLEMENT_GPIO(IMPLEMENT_GPIO),
-        // .IMPLEMENT_SPI(IMPLEMENT_SPI),
-        // .IMPLEMENT_XIP(IMPLEMENT_XIP),
-        // .IMPLEMENT_SPI_FLASH(IMPLEMENT_SPI_FLASH),
-        // .IMPLEMENT_TIMER(IMPLEMENT_TIMER),
-        // .IMPLEMENT_I2C(IMPLEMENT_I2C),
-        // .IMPLEMENT_EXT_OBI(IMPLEMENT_EXT_OBI),
-        // .GPIO_IN_NUM(GPIO_IN_NUM),
-        // .GPIO_OUT_NUM(GPIO_OUT_NUM),
-        // .GPIO_INOUT_NUM(GPIO_INOUT_NUM),
-        // .I2C_NUM(I2C_NUM),
-        // .UART_NUM(UART_NUM),
-        // .SPI_NUM(SPI_NUM)
-    ) u_SynapticChip (
+    SynapticChip u_SynapticChip (
         .clk         (clk),
         .rst_n       (rst_n),
 
@@ -456,7 +431,7 @@ module SynapticChip_test;
     initial begin
         integer timeout;
         $readmemh(`ROM_PRG, u_ext_rom.u_gen_ram.ram);
-        $readmemh(`RAM_PRG, u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram);
+        $readmemh(`RAM_PRG, u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram, 768);
         clk      <= 0;
         rst_n    <= 0;
         tx_start <= 1'b0;
