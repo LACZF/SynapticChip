@@ -383,7 +383,7 @@ module SynapticChip_test;
     end
 
     /********** UART引导程序测试相关信号 **********/
-    reg                       uart_boot_test_enable = 1'b1;
+    reg                       uart_boot_test_enable = 1'b0;
     reg                       uart_boot_jump_detected = 1'b0;
 
     /********** 发送32位指令任务 **********/

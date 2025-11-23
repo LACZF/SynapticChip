@@ -57,8 +57,8 @@ module chip_top_test;
     localparam RAM_DEPTH            = 8192;
     localparam ADDR_WIDTH           = 32;
     localparam DATA_WIDTH           = 32;
-    localparam PE_ARRAY_X           = 8;
-    localparam PE_ARRAY_Y           = 8;
+    localparam PE_ARRAY_X           = 16;
+    localparam PE_ARRAY_Y           = 16;
 
     wire                      obi_req;
     wire                      obi_we;
@@ -205,30 +205,30 @@ module chip_top_test;
 
     /********** 实例化chip_top **********/
     chip_top #(
-        // .TRACE_ENABLE(TRACE_ENABLE),
-        // .CPU_NUM(CPU_NUM),
-        // .ROM_DEPTH(ROM_DEPTH),
-        // .RAM_DEPTH(RAM_DEPTH),
-        // .ADDR_WIDTH(ADDR_WIDTH),
-        // .DATA_WIDTH(DATA_WIDTH),
-        // .PE_ARRAY_X(PE_ARRAY_X),
-        // .PE_ARRAY_Y(PE_ARRAY_Y),
-        // .BOOT_TYPE(BOOT_TYPE),
-        // .IMPLEMENT_JTAG(IMPLEMENT_JTAG),
-        // .IMPLEMENT_UART(IMPLEMENT_UART),
-        // .IMPLEMENT_GPIO(IMPLEMENT_GPIO),
-        // .IMPLEMENT_SPI(IMPLEMENT_SPI),
-        // .IMPLEMENT_XIP(IMPLEMENT_XIP),
-        // .IMPLEMENT_SPI_FLASH(IMPLEMENT_SPI_FLASH),
-        // .IMPLEMENT_TIMER(IMPLEMENT_TIMER),
-        // .IMPLEMENT_I2C(IMPLEMENT_I2C),
-        // .IMPLEMENT_EXT_OBI(IMPLEMENT_EXT_OBI),
-        // .GPIO_IN_NUM(GPIO_IN_NUM),
-        // .GPIO_OUT_NUM(GPIO_OUT_NUM),
-        // .GPIO_INOUT_NUM(GPIO_INOUT_NUM),
-        // .I2C_NUM(I2C_NUM),
-        // .UART_NUM(UART_NUM),
-        // .SPI_NUM(SPI_NUM)
+        .TRACE_ENABLE(TRACE_ENABLE),
+        .CPU_NUM(CPU_NUM),
+        .ROM_DEPTH(ROM_DEPTH),
+        .RAM_DEPTH(RAM_DEPTH),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .PE_ARRAY_X(PE_ARRAY_X),
+        .PE_ARRAY_Y(PE_ARRAY_Y),
+        .BOOT_TYPE(BOOT_TYPE),
+        .IMPLEMENT_JTAG(IMPLEMENT_JTAG),
+        .IMPLEMENT_UART(IMPLEMENT_UART),
+        .IMPLEMENT_GPIO(IMPLEMENT_GPIO),
+        .IMPLEMENT_SPI(IMPLEMENT_SPI),
+        .IMPLEMENT_XIP(IMPLEMENT_XIP),
+        .IMPLEMENT_SPI_FLASH(IMPLEMENT_SPI_FLASH),
+        .IMPLEMENT_TIMER(IMPLEMENT_TIMER),
+        .IMPLEMENT_I2C(IMPLEMENT_I2C),
+        .IMPLEMENT_EXT_OBI(IMPLEMENT_EXT_OBI),
+        .GPIO_IN_NUM(GPIO_IN_NUM),
+        .GPIO_OUT_NUM(GPIO_OUT_NUM),
+        .GPIO_INOUT_NUM(GPIO_INOUT_NUM),
+        .I2C_NUM(I2C_NUM),
+        .UART_NUM(UART_NUM),
+        .SPI_NUM(SPI_NUM)
     ) u_chip_top (
         .clk         (clk),
         .rst_n       (rst_n),

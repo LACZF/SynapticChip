@@ -27,7 +27,7 @@ module SynapticChip (
     localparam DATA_WIDTH                = 32;
     localparam PE_ARRAY_X                = 16;
     localparam PE_ARRAY_Y                = 16;
-    localparam BOOT_TYPE                 = 0;
+    localparam BOOT_TYPE                 = 4;
     localparam IMPLEMENT_JTAG            = 1;
     localparam IMPLEMENT_UART            = 1;
     localparam IMPLEMENT_GPIO            = 1;
