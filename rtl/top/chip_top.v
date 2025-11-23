@@ -265,21 +265,10 @@ module chip_top #(
     assign slave_addr_base[SLAVE_RAM_INDEX] = RAM_ADDR_BASE;
     // 数据存储器
     ram #(
-        .DP(RAM_DEPTH),
-        .DATA_WIDTH(DATA_WIDTH),
-        .HIGH_BW_DW((PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH),
-        .HIGH_BW_MW(((PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH)/32)
+        .DP(RAM_DEPTH)
     ) u_ram (
         .clk_i          (clk),
         .rst_ni         (ndmreset_n),
-
-        // 高带宽内存接口 - 连接到PE_TOP的宽位宽接口
-        .high_bw_req_i  (pe_mem_req),
-        .high_bw_we_i   (pe_mem_we),
-        .high_bw_addr_i (pe_mem_addr),
-        .high_bw_data_i (pe_mem_data_o),
-        .high_bw_ack_o  (pe_mem_ack),
-        .high_bw_data_o (pe_mem_data_i),
 
         .req_i          (slave_req[SLAVE_RAM_INDEX]),
         .addr_i         (slave_addr[SLAVE_RAM_INDEX]),
