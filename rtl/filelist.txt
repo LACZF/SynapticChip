@@ -73,7 +73,7 @@ RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/debug/jtag_top.sv
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/ram.sv
 
 # rom
-RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
+# RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
 
 # sys_bus
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/sys_bus/obi_interconnect_master_sel.sv
@@ -119,6 +119,8 @@ RTL_SRC += $(TOP_DIR)/rtl/io/uart/uart_top.v
 RTL_SRC += $(TOP_DIR)/rtl/io/irq/irq_controller.v
 RTL_SRC += $(TOP_DIR)/rtl/io/obi_to_apb_bridge/obi_to_apb_bridge.v
 RTL_SRC += $(TOP_DIR)/rtl/io/io_top.v
+
+RTL_SRC += $(TOP_DIR)/rtl/boot_rom/bootrom_top.v
 
 RTL_SRC += $(TOP_DIR)/rtl/top/chip_top.v
 RTL_SRC += $(TOP_DIR)/rtl/SynapticChip_v1.v

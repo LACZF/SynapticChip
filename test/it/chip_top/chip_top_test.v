@@ -312,22 +312,20 @@ module chip_top_test;
         );
     end
 
-    if (BOOT_TYPE == 4) begin : ext_rom_gen
-        rom #(
-            .DP(ROM_DEPTH)
-        ) u_rom (
-            .clk_i      (clk),
-            .rst_ni     (ndmreset_n),
-            .req_i      (obi_req),
-            .addr_i     (obi_addr),
-            .data_i     (obi_wdata),
-            .be_i       (4'b1),
-            .we_i       (obi_we),
-            .gnt_o      (obi_gnt),
-            .rvalid_o   (obi_rvalid),
-            .data_o     (obi_rdata)
-        );
-    end
+    rom #(
+        .DP(ROM_DEPTH)
+    ) u_ext_rom (
+        .clk_i      (clk),
+        .rst_ni     (ndmreset_n),
+        .req_i      (obi_req),
+        .addr_i     (obi_addr),
+        .data_i     (obi_wdata),
+        .be_i       (4'b1),
+        .we_i       (obi_we),
+        .gnt_o      (obi_gnt),
+        .rvalid_o   (obi_rvalid),
+        .data_o     (obi_rdata)
+    );
 
     /********** UART发送相关信号 **********/
     reg                       tx_start;     // 发送开始信号
@@ -420,11 +418,7 @@ module chip_top_test;
     initial begin
         integer timeout;
 
-        if (BOOT_TYPE == 0) begin
-            $readmemh(`ROM_PRG, u_chip_top.rom_gen.u_rom.u_gen_ram.ram);
-        end else if (BOOT_TYPE == 4) begin
-            $readmemh(`ROM_PRG, ext_rom_gen.u_rom.u_gen_ram.ram);
-        end
+        $readmemh(`ROM_PRG, u_ext_rom.u_gen_ram.ram);
         $readmemh(`RAM_PRG, u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;

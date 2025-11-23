@@ -13,6 +13,8 @@ TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
 TEST_SRC += $(RTL_SRC)
 
+TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
+
 TEST_SRC += $(TOP_DIR)/test/common/apb_ram.v
 TEST_SRC += $(TOP_DIR)/test/common/MX25L6436F.v
 TEST_SRC += $(CUR_DIR)/test_spi_slave.v

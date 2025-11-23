@@ -14,7 +14,7 @@ module chip_top #(
     parameter DATA_WIDTH                = 32,
     parameter PE_ARRAY_X                = 16,
     parameter PE_ARRAY_Y                = 16,
-    parameter BOOT_TYPE                 = 4,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
+    parameter BOOT_TYPE                 = 0,           // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     parameter IMPLEMENT_JTAG            = 1,
     parameter IMPLEMENT_UART            = 1,
     parameter IMPLEMENT_GPIO            = 1,
@@ -236,25 +236,21 @@ module chip_top #(
         end
     endgenerate
 
-    // ROM实例化 - 条件编译
     generate
         if (BOOT_TYPE == 0) begin : rom_gen
             assign slave_addr_mask[SLAVE_ROM_INDEX] = ROM_ADDR_MASK;
             assign slave_addr_base[SLAVE_ROM_INDEX] = ROM_ADDR_BASE;
-            // 指令存储器
-            rom #(
-                .DP(ROM_DEPTH)
-            ) u_rom (
-                .clk_i      (clk),
-                .rst_ni     (ndmreset_n),
-                .req_i      (slave_req[SLAVE_ROM_INDEX]),
-                .addr_i     (slave_addr[SLAVE_ROM_INDEX]),
-                .data_i     (slave_wdata[SLAVE_ROM_INDEX]),
-                .be_i       (slave_be[SLAVE_ROM_INDEX]),
-                .we_i       (slave_we[SLAVE_ROM_INDEX]),
-                .gnt_o      (slave_gnt[SLAVE_ROM_INDEX]),
-                .rvalid_o   (slave_rvalid[SLAVE_ROM_INDEX]),
-                .data_o     (slave_rdata[SLAVE_ROM_INDEX])
+            bootrom_top u_rom(
+                .clk     (clk),
+                .rst_n   (ndmreset_n),
+                .req_i   (slave_req[SLAVE_ROM_INDEX]),
+                .we_i    (slave_we[SLAVE_ROM_INDEX]),
+                .be_i    (slave_be[SLAVE_ROM_INDEX]),
+                .addr_i  (slave_addr[SLAVE_ROM_INDEX]),
+                .data_i  (slave_wdata[SLAVE_ROM_INDEX]),
+                .gnt_o   (slave_gnt[SLAVE_ROM_INDEX]),
+                .rvalid_o(slave_rvalid[SLAVE_ROM_INDEX]),
+                .data_o  (slave_rdata[SLAVE_ROM_INDEX])
             );
         end else begin
             assign slave_addr_mask[SLAVE_ROM_INDEX] = 32'h0;
@@ -307,7 +303,7 @@ module chip_top #(
         .HIGH_BW_DW((PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH)
     ) u_pe_top (
         .clk        (clk),
-        .rst_n      (rst_n),
+        .rst_n      (ndmreset_n),
 
         // 直接内存接口 - 连接到高带宽内存接口信号
         .mem_req_o  (pe_mem_req),
@@ -365,7 +361,7 @@ module chip_top #(
         .NUM_PES                (NUM_PES)
     ) u_io (
         .clk              (clk),
-        .rst_n            (rst_n),
+        .rst_n            (ndmreset_n),
 
         .apb_psel_o       (apb_psel_o),
         .apb_penable_o    (apb_penable_o),

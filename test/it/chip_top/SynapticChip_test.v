@@ -38,7 +38,7 @@ module SynapticChip_test;
     localparam GPIO_INOUT_NUM       = 8;
     localparam I2C_NUM              = 1;
     localparam UART_NUM             = 1;
-    localparam SAMPLE_CYCLES        = 4;
+    localparam SAMPLE_CYCLES        = 4; // TODO : 芯片中有跟采样频率和时钟分频相关的硬件配置，需要修改一致后验证
     localparam UART_DIV_RATE        = 2;
     localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     localparam IMPLEMENT_JTAG       = 1;
@@ -53,7 +53,7 @@ module SynapticChip_test;
     localparam IMPLEMENT_EXT_APB    = 0;
     localparam TRACE_ENABLE         = 0;
     localparam ROM_DEPTH            = 8192;
-    localparam RAM_DEPTH            = 8192;
+    localparam RAM_DEPTH            = 512;
     localparam ADDR_WIDTH           = 32;
     localparam DATA_WIDTH           = 32;
     localparam PE_ARRAY_X           = 8;
@@ -280,22 +280,20 @@ module SynapticChip_test;
         );
     end
 
-    if (BOOT_TYPE == 4) begin : ext_rom_gen
-        rom #(
-            .DP(ROM_DEPTH)
-        ) u_rom (
-            .clk_i      (clk),
-            .rst_ni     (ndmreset_n),
-            .req_i      (obi_req),
-            .addr_i     (obi_addr),
-            .data_i     (obi_wdata),
-            .be_i       (4'b1),
-            .we_i       (1'b0),
-            .gnt_o      (obi_gnt),
-            .rvalid_o   (obi_rvalid),
-            .data_o     (obi_rdata)
-        );
-    end
+    rom #(
+        .DP(ROM_DEPTH)
+    ) u_ext_rom (
+        .clk_i      (clk),
+        .rst_ni     (ndmreset_n),
+        .req_i      (obi_req),
+        .addr_i     (obi_addr),
+        .data_i     (obi_wdata),
+        .be_i       (4'b1),
+        .we_i       (1'b0),
+        .gnt_o      (obi_gnt),
+        .rvalid_o   (obi_rvalid),
+        .data_o     (obi_rdata)
+    );
 
     /********** UART发送相关信号 **********/
     reg                       tx_start;     // 发送开始信号
@@ -384,15 +382,80 @@ module SynapticChip_test;
         end
     end
 
+    /********** UART引导程序测试相关信号 **********/
+    reg                       uart_boot_test_enable = 1'b1;
+    reg                       uart_boot_jump_detected = 1'b0;
+
+    /********** 发送32位指令任务 **********/
+    task send_32bit_instruction;
+        input [31:0] instruction;
+        integer i;
+        begin
+            // 将32位指令拆分为4个字节发送（小端序）
+            for (i = 0; i < 4; i = i + 1) begin
+                // 等待发送空闲
+                wait(tx_busy == 1'b0);
+                @(posedge clk);
+                tx_data  <= instruction[i*8 +: 8]; // 提取字节
+                tx_start <= 1'b1;
+                @(posedge clk);
+                tx_start <= 1'b0;
+                // 等待发送完成
+                wait(tx_end == 1'b1);
+                @(posedge clk);
+                #100; // 字节间延迟
+            end
+        end
+    endtask;
+
+    /********** 发送ROM指令序列任务 **********/
+    task send_rom_instructions;
+        input integer instruction_count;
+        integer i;
+        begin
+            $display($time, " Sending %0d instructions from ROM", instruction_count);
+            for (i = 0; i < instruction_count; i = i + 1) begin
+                send_32bit_instruction(u_ext_rom.u_gen_ram.ram[i]);
+            end
+            $display($time, " ROM instructions sent successfully");
+        end
+    endtask;
+
+    /********** 监测跳转执行任务 **********/
+    task monitor_jump_execution;
+        input integer timeout_cycles;
+        integer timeout_count;
+        begin
+            timeout_count = 0;
+            uart_boot_jump_detected = 1'b0;
+
+            $display($time, " Monitoring for jump execution...");
+
+            while (!uart_boot_jump_detected && timeout_count < timeout_cycles) begin
+                @(posedge clk);
+                timeout_count = timeout_count + 1;
+
+                // 检测是否跳转到RAM执行（通过观察PC变化或其他指标）
+                // 这里可以添加更具体的跳转检测逻辑
+                if (timeout_count > 1000 && rx_end == 1'b1 && rx_data == "D") begin
+                    // 检测到"Done!"消息，表示引导程序完成
+                    uart_boot_jump_detected = 1'b1;
+                    $display($time, " Jump execution detected!");
+                end
+            end
+
+            if (uart_boot_jump_detected) begin
+                $display($time, " UART boot test PASSED");
+            end else begin
+                $display($time, " UART boot test FAILED - Jump not detected within timeout");
+            end
+        end
+    endtask;
+
     /********** 测试用例 **********/
     initial begin
         integer timeout;
-
-        if (BOOT_TYPE == 0) begin
-            $readmemh(`ROM_PRG, u_chip_top.rom_gen.u_rom.u_gen_ram.ram);
-        end else if (BOOT_TYPE == 4) begin
-            $readmemh(`ROM_PRG, ext_rom_gen.u_rom.u_gen_ram.ram);
-        end
+        $readmemh(`ROM_PRG, u_ext_rom.u_gen_ram.ram);
         $readmemh(`RAM_PRG, u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;
@@ -416,6 +479,18 @@ module SynapticChip_test;
             $finish;
         end
         # 500;
+
+        // UART引导程序测试
+        if (uart_boot_test_enable) begin
+            $display("\n----- Starting UART Boot Test -----");
+
+            send_rom_instructions(RAM_DEPTH);
+
+            // 监测跳转执行
+            monitor_jump_execution(5000);
+
+            $display("----- UART Boot Test Completed -----\n");
+        end
 
         // 发送测试命令
         $display("\n----- Starting Module Tests -----");
