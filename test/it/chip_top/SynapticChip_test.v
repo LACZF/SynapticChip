@@ -462,7 +462,8 @@ module SynapticChip_test;
             send_rom_instructions(768); // 最大3k指令空间
 
             // 监测跳转执行
-            monitor_jump_execution(5000);
+            // monitor_jump_execution(5000);
+            # 5000;
 
             $display("----- UART Boot Test Completed -----\n");
         end

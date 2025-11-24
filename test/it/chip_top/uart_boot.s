@@ -152,14 +152,6 @@ increment_counter:
     j receive_loop
 
 receive_done:
-    # 检查是否还有未写入的累积数据
-    andi t0, s0, 0x3      # 检查剩余字节数
-    beqz t0, no_remaining_data
-
-    # 将剩余的累积数据写入RAM（不足4字节的部分）
-    sw s2, 0(s1)
-
-no_remaining_data:
     # 发送接收完成消息
     li a0, '\n'
     call uart_write_byte
