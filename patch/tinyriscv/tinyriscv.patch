@@ -59,6 +59,74 @@ index 70e62e8..f81cbf4 100644
 -`define CSR_SCONTEXT    12'h7AA
 +`define CSR_SCONTEXT    12'h7AA
 \ No newline at end of file
+diff --git a/rtl/core/exception.sv b/rtl/core/exception.sv
+index 8e7d468..d67a11d 100644
+--- a/rtl/core/exception.sv
++++ b/rtl/core/exception.sv
+@@ -1,17 +1,17 @@
+- /*                                                                      
++ /*
+  Copyright 2021 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+@@ -24,7 +24,9 @@
+ `define DCSR_CAUSE_TRIGGER      3'h2
+ 
+ 
+-module exception (
++module exception #(
++    parameter              CPU_RESET_ADDR       = 32'h00000000
++)(
+ 
+     input wire clk,
+     input wire rst_n,
+@@ -157,7 +159,7 @@ module exception (
+         end else if (inst_ebreak_i & inst_valid_i) begin
+             enter_debug_cause_ebreak = 1'b1;
+             dcsr_cause_d = `DCSR_CAUSE_EBREAK;
+-        end else if ((inst_addr_i == `CPU_RESET_ADDR) & inst_valid_i & debug_req_i) begin
++        end else if ((inst_addr_i == CPU_RESET_ADDR) & inst_valid_i & debug_req_i) begin
+             enter_debug_cause_reset_halt = 1'b1;
+             dcsr_cause_d = `DCSR_CAUSE_HALT;
+         end else if ((~debug_mode_q) & debug_req_i & inst_valid_i) begin
+@@ -212,11 +214,11 @@ module exception (
+                         enter_debug_cause_reset_halt) begin
+                         csr_we = 1'b1;
+                         csr_waddr = {20'h0, `CSR_DPC};
+-                        csr_wdata = enter_debug_cause_reset_halt ? (`CPU_RESET_ADDR) : inst_addr_i;
++                        csr_wdata = enter_debug_cause_reset_halt ? (CPU_RESET_ADDR) : inst_addr_i;
+                         // when run openocd compliance test, use it.
+                         // openocd compliance test bug: It report test fail when the reset address is 0x0:
+                         // "NDMRESET should move DPC to reset value."
+-                        //csr_wdata = enter_debug_cause_reset_halt ? (`CPU_RESET_ADDR + 4'h4) : inst_addr_i;
++                        //csr_wdata = enter_debug_cause_reset_halt ? (CPU_RESET_ADDR + 4'h4) : inst_addr_i;
+                     end
+                     if (enter_debug_cause_trigger) begin
+                         trigger_match_d = 1'b1;
 diff --git a/rtl/core/exu.sv b/rtl/core/exu.sv
 index 355eaeb..9ddc48f 100644
 --- a/rtl/core/exu.sv
@@ -618,8 +686,58 @@ index 2390993..dbebc44 100644
 -endmodule
 +endmodule
 \ No newline at end of file
+diff --git a/rtl/core/ifu.sv b/rtl/core/ifu.sv
+index f55e309..794384e 100644
+--- a/rtl/core/ifu.sv
++++ b/rtl/core/ifu.sv
+@@ -1,23 +1,24 @@
+- /*                                                                      
++ /*
+  Copyright 2020 Blue Liang, liangkangnan@163.com
+-                                                                         
+- Licensed under the Apache License, Version 2.0 (the "License");         
+- you may not use this file except in compliance with the License.        
+- You may obtain a copy of the License at                                 
+-                                                                         
+-     http://www.apache.org/licenses/LICENSE-2.0                          
+-                                                                         
+- Unless required by applicable law or agreed to in writing, software    
+- distributed under the License is distributed on an "AS IS" BASIS,       
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and     
+- limitations under the License.                                          
++ See the License for the specific language governing permissions and
++ limitations under the License.
+  */
+ 
+ `include "defines.sv"
+ 
+ // 取指模块
+ module ifu #(
++    parameter              CPU_RESET_ADDR       = 32'h00000000,
+     parameter bit          BranchPredictor      = 1'b1
+     )(
+ 
+@@ -126,7 +127,7 @@ module ifu #(
+     always @ (posedge clk or negedge rst_n) begin
+         if (!rst_n) begin
+             state_q <= S_RESET;
+-            fetch_addr_q <= `CPU_RESET_ADDR;
++            fetch_addr_q <= CPU_RESET_ADDR;
+         end else begin
+             state_q <= state_d;
+             // 取指有效时保存当前取指地址
 diff --git a/rtl/core/tinyriscv_core.sv b/rtl/core/tinyriscv_core.sv
-index ff7eac3..2e30496 100644
+index ff7eac3..8340e67 100644
 --- a/rtl/core/tinyriscv_core.sv
 +++ b/rtl/core/tinyriscv_core.sv
 @@ -1,17 +1,17 @@
@@ -652,7 +770,15 @@ index ff7eac3..2e30496 100644
   */
  
  `include "defines.sv"
-@@ -112,6 +112,8 @@ module tinyriscv_core #(
+@@ -20,6 +20,7 @@
+ module tinyriscv_core #(
+     parameter int unsigned DEBUG_HALT_ADDR      = 32'h10000800,
+     parameter int unsigned DEBUG_EXCEPTION_ADDR = 32'h10000808,
++    parameter              CPU_RESET_ADDR       = 32'h00000000,
+     parameter bit          BranchPredictor      = 1'b1,
+     parameter bit          TRACE_ENABLE         = 1'b0
+     )(
+@@ -112,6 +113,8 @@ module tinyriscv_core #(
      wire ex_csr_we_o;
      wire[31:0] ex_csr_waddr_o;
      wire[31:0] ex_csr_raddr_o;
@@ -661,7 +787,15 @@ index ff7eac3..2e30496 100644
      wire ex_inst_ecall_o;
      wire ex_inst_ebreak_o;
      wire ex_inst_mret_o;
-@@ -186,8 +188,14 @@ module tinyriscv_core #(
+@@ -149,6 +152,7 @@ module tinyriscv_core #(
+ 
+ 
+     ifu #(
++        .CPU_RESET_ADDR(CPU_RESET_ADDR),
+         .BranchPredictor(BranchPredictor)
+     ) u_ifu (
+         .clk(clk),
+@@ -186,8 +190,14 @@ module tinyriscv_core #(
          .clk(clk),
          .rst_n(rst_n),
          .we_i(ex_reg_we_o),
@@ -676,7 +810,7 @@ index ff7eac3..2e30496 100644
          .raddr1_i(id_rs1_raddr_o),
          .rdata1_o(regs_rdata1_o),
          .raddr2_i(id_rs2_raddr_o),
-@@ -313,6 +321,8 @@ module tinyriscv_core #(
+@@ -313,6 +323,8 @@ module tinyriscv_core #(
          .csr_waddr_o(ex_csr_waddr_o),
          .inst_valid_o(ex_inst_valid_o),
          .inst_valid_i(ie_inst_valid_o),
@@ -685,7 +819,18 @@ index ff7eac3..2e30496 100644
          .inst_executed_o(ex_inst_executed_o),
          .inst_i(ie_inst_o),
          .dec_info_bus_i(ie_dec_info_bus_o),
-@@ -353,6 +363,7 @@ module tinyriscv_core #(
+@@ -323,7 +335,9 @@ module tinyriscv_core #(
+         .rd_we_i(ie_rd_we_o)
+     );
+ 
+-    exception u_exception(
++    exception #(
++        .CPU_RESET_ADDR(CPU_RESET_ADDR)
++    ) u_exception(
+         .clk(clk),
+         .rst_n(rst_n),
+         .illegal_inst_i(id_illegal_inst_o),
+@@ -353,6 +367,7 @@ module tinyriscv_core #(
          .int_assert_o(excep_int_assert_o)
      );
  
@@ -693,7 +838,7 @@ index ff7eac3..2e30496 100644
      if (TRACE_ENABLE) begin: instr_trace
          tracer u_tracer(
              .clk(clk),
-@@ -362,5 +373,6 @@ module tinyriscv_core #(
+@@ -362,5 +377,6 @@ module tinyriscv_core #(
              .inst_valid_i(ex_inst_valid_o)
          );
      end

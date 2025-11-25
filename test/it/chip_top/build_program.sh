@@ -24,10 +24,11 @@ function compile_asm() {
 
 function disassemble() {
     local elf_file=$1
-    local dis_file=$2
+    local section=$2
+    local dis_file=$3
 
     # 仅反汇编.text.vector段（代码段）
-    ${RISCV_PREFIX}objdump -D -j .text.vector $elf_file > $dis_file
+    ${RISCV_PREFIX}objdump -D -j $section $elf_file > $dis_file
 }
 
 function clean_compile_gen_files() {
@@ -74,11 +75,12 @@ function asm_to_readmemh_file() {
 function build_program() {
     local asm_file=$1
     local elf_file=$2
-    local dis_file=$3
-    local hex_file=$4
+    local section=$3
+    local dis_file=$4
+    local hex_file=$5
 
     compile_asm $asm_file $elf_file
-    disassemble $elf_file $dis_file
+    disassemble $elf_file $section $dis_file
     asm_to_readmemh_file $dis_file $hex_file
 }
 
@@ -191,8 +193,8 @@ function update_bootrom() {
     fi
 }
 
-build_program program.s program.elf program.dis program.hex
+build_program program.s program.elf ".text.vector" program.dis program.hex
 extract_data_bss program.elf data_bss.hex
 
-build_program uart_boot.s uart_boot.elf uart_boot.dis uart_boot.hex
+build_program uart_boot.s uart_boot.elf ".bootrom" uart_boot.dis uart_boot.hex
 update_bootrom uart_boot.hex

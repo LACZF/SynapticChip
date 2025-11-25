@@ -1,3 +1,7 @@
+`ifndef BOOT_TYPE
+`define BOOT_TYPE 0
+`endif
+
 module SynapticChip (
     input  wire                         clk,
     input  wire                         rst_n,
@@ -22,12 +26,12 @@ module SynapticChip (
     localparam TRACE_ENABLE              = 0;
     localparam CPU_NUM                   = 1;
     localparam ROM_DEPTH                 = 1024;
-    localparam RAM_DEPTH                 = 1024;   // 修改RAM大小要修改program.s和uarta_boot.s中对应的sp基地值
+    localparam RAM_DEPTH                 = 256;   // 修改RAM大小要修改program.s和uarta_boot.s中对应的sp基地值
     localparam ADDR_WIDTH                = 32;
     localparam DATA_WIDTH                = 32;
     localparam PE_ARRAY_X                = 16;
     localparam PE_ARRAY_Y                = 16;
-    localparam BOOT_TYPE                 = 4;
+    localparam BOOT_TYPE                 = `BOOT_TYPE;
     localparam IMPLEMENT_JTAG            = 1;
     localparam IMPLEMENT_UART            = 1;
     localparam IMPLEMENT_GPIO            = 1;

@@ -113,7 +113,7 @@
 .equ PE_SRC_OPERAND2,  0x6     # 外部操作数2 (3'b110)
 
 # 栈指针初始地址
-.equ STACK_TOP,      RAM_BASE + 0x1000
+.equ STACK_TOP,      RAM_BASE + 0x400
 
 # 中断向量表
 # RISC-V中断向量表索引规则：

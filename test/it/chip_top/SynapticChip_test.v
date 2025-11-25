@@ -259,7 +259,7 @@ module SynapticChip_test;
         .DP(ROM_DEPTH)
     ) u_ext_rom (
         .clk_i      (clk),
-        .rst_ni     (ndmreset_n),
+        .rst_ni     (rst_n),
         .req_i      (obi_req),
         .addr_i     (obi_addr),
         .data_i     (obi_wdata),
@@ -358,7 +358,7 @@ module SynapticChip_test;
     end
 
     /********** UART引导程序测试相关信号 **********/
-    reg                       uart_boot_test_enable = 1'b0;
+    reg                       uart_boot_test_enable = (BOOT_TYPE == 0) ? 1'b1 : 1'b0;
     reg                       uart_boot_jump_detected = 1'b0;
 
     /********** 发送32位指令任务 **********/
@@ -431,7 +431,7 @@ module SynapticChip_test;
     initial begin
         integer timeout;
         $readmemh(`ROM_PRG, u_ext_rom.u_gen_ram.ram);
-        $readmemh(`RAM_PRG, u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram, 768);
+        $readmemh(`RAM_PRG, u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;
         tx_start <= 1'b0;
@@ -459,7 +459,7 @@ module SynapticChip_test;
         if (uart_boot_test_enable) begin
             $display("\n----- Starting UART Boot Test -----");
 
-            send_rom_instructions(768); // 最大3k指令空间
+            send_rom_instructions(1024); // 最大4k指令空间
 
             // 监测跳转执行
             // monitor_jump_execution(5000);

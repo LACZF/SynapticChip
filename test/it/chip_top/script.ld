@@ -3,8 +3,8 @@ ENTRY(_start)
 
 MEMORY {
     rom (rwx) : ORIGIN = 0x00000000, LENGTH = 32K
+    bootrom (rwx) : ORIGIN = 0x01000000, LENGTH = 4K
     ram (rwx) : ORIGIN = 0x20000000, LENGTH = 4K
-    data (rwx) : ORIGIN = 0x20000C00, LENGTH = 4K
 }
 
 SECTIONS {
@@ -14,7 +14,11 @@ SECTIONS {
 
     .data : {
         *(.data)
-    } > data
+    } > ram
+
+    .bootrom : {
+        *(.bootrom)
+    } > bootrom
 
     .bss : {
         *(.bss)

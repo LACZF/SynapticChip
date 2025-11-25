@@ -100,6 +100,7 @@ module chip_top #(
     localparam int SLAVE_PE_TOP_INDEX       = 3;
     localparam int SLAVE_PE_MEM_INDEX       = 4;
     localparam int SLAVE_EXT_OBI_INDEX      = 5;
+    localparam int SLAVE_BOOT_ROM           = 6;
     localparam int IO_SLAVES                = 8;
     localparam int SLAVE_IO_START_INDEX     = 8;
     localparam int SLAVE_IO_END_INDEX       = SLAVE_IO_START_INDEX + IO_SLAVES - 1;
@@ -121,6 +122,10 @@ module chip_top #(
 
     localparam int EXT_OBI_ADDR_BASE        = (BOOT_TYPE == 4) ?  32'h00000000 : 32'h50000000;
     localparam int EXT_OBI_ADDR_MASK        = `CALC_ADDR_MASK_BY_END_ADDR(EXT_OBI_ADDR_BASE, 32'h0FFFFFFF);
+
+    localparam int BOOTROM_ADDR_MASK        = ~32'hffffff;
+    localparam int BOOTROM_ADDR_BASE        = 32'h01000000;
+    localparam     CPU_RESET_ADDR           = (BOOT_TYPE == 0) ?  BOOTROM_ADDR_BASE : 32'h00000000;
 
     wire [MASTERS-1:0]                      master_req;
     wire [MASTERS-1:0]                      master_gnt;
@@ -185,6 +190,7 @@ module chip_top #(
             tinyriscv_core #(
                 .DEBUG_HALT_ADDR(DEBUG_ADDR_BASE + `HaltAddress),
                 .DEBUG_EXCEPTION_ADDR(DEBUG_ADDR_BASE + `ExceptionAddress),
+                .CPU_RESET_ADDR(CPU_RESET_ADDR),
                 .BranchPredictor(1'b1),
                 .TRACE_ENABLE(TRACE_ENABLE)
             ) u_tinyriscv_core (
@@ -237,27 +243,53 @@ module chip_top #(
     endgenerate
 
     generate
-        if (BOOT_TYPE == 0) begin : rom_gen
+        if (BOOT_TYPE == 0) begin : bootrom_gen
+            // 只有bootrom需要将启动代码加载到rom，其余场景可直接读取指令，不需要rom
             assign slave_addr_mask[SLAVE_ROM_INDEX] = ROM_ADDR_MASK;
             assign slave_addr_base[SLAVE_ROM_INDEX] = ROM_ADDR_BASE;
-            bootrom_top u_rom(
+            // 数据存储器
+            ram #(
+                .DP(ROM_DEPTH)
+            ) u_rom (
+                .clk_i          (clk),
+                .rst_ni         (ndmreset_n),
+
+                .req_i          (slave_req[SLAVE_ROM_INDEX]),
+                .addr_i         (slave_addr[SLAVE_ROM_INDEX]),
+                .data_i         (slave_wdata[SLAVE_ROM_INDEX]),
+                .be_i           (slave_be[SLAVE_ROM_INDEX]),
+                .we_i           (slave_we[SLAVE_ROM_INDEX]),
+                .gnt_o          (slave_gnt[SLAVE_ROM_INDEX]),
+                .rvalid_o       (slave_rvalid[SLAVE_ROM_INDEX]),
+                .data_o         (slave_rdata[SLAVE_ROM_INDEX])
+            );
+
+            assign slave_addr_mask[SLAVE_BOOT_ROM] = BOOTROM_ADDR_MASK;
+            assign slave_addr_base[SLAVE_BOOT_ROM] = BOOTROM_ADDR_BASE;
+            bootrom_top u_bootrom(
                 .clk     (clk),
                 .rst_n   (ndmreset_n),
-                .req_i   (slave_req[SLAVE_ROM_INDEX]),
-                .we_i    (slave_we[SLAVE_ROM_INDEX]),
-                .be_i    (slave_be[SLAVE_ROM_INDEX]),
-                .addr_i  (slave_addr[SLAVE_ROM_INDEX]),
-                .data_i  (slave_wdata[SLAVE_ROM_INDEX]),
-                .gnt_o   (slave_gnt[SLAVE_ROM_INDEX]),
-                .rvalid_o(slave_rvalid[SLAVE_ROM_INDEX]),
-                .data_o  (slave_rdata[SLAVE_ROM_INDEX])
+                .req_i   (slave_req[SLAVE_BOOT_ROM]),
+                .we_i    (slave_we[SLAVE_BOOT_ROM]),
+                .be_i    (slave_be[SLAVE_BOOT_ROM]),
+                .addr_i  (slave_addr[SLAVE_BOOT_ROM]),
+                .data_i  (slave_wdata[SLAVE_BOOT_ROM]),
+                .gnt_o   (slave_gnt[SLAVE_BOOT_ROM]),
+                .rvalid_o(slave_rvalid[SLAVE_BOOT_ROM]),
+                .data_o  (slave_rdata[SLAVE_BOOT_ROM])
             );
         end else begin
             assign slave_addr_mask[SLAVE_ROM_INDEX] = 32'h0;
             assign slave_addr_base[SLAVE_ROM_INDEX] = 32'h0;
-            assign slave_gnt[SLAVE_ROM_INDEX]       = 1'b0;
-            assign slave_rvalid[SLAVE_ROM_INDEX]    = 1'b0;
-            assign slave_rdata[SLAVE_ROM_INDEX]     = 32'h0;
+            assign slave_gnt      [SLAVE_ROM_INDEX] = 1'b0;
+            assign slave_rvalid   [SLAVE_ROM_INDEX] = 1'b0;
+            assign slave_rdata    [SLAVE_ROM_INDEX] = 32'h0;
+
+            // assign slave_addr_mask[SLAVE_BOOT_ROM]  = 32'h0;
+            // assign slave_addr_base[SLAVE_BOOT_ROM]  = 32'h0;
+            // assign slave_gnt      [SLAVE_BOOT_ROM]  = 1'b0;
+            // assign slave_rvalid   [SLAVE_BOOT_ROM]  = 1'b0;
+            // assign slave_rdata    [SLAVE_BOOT_ROM]  = 32'h0;
         end
     endgenerate
 

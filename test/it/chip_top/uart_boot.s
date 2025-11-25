@@ -3,6 +3,7 @@
 
 # 地址定义
 .equ IO_BASE,        0x40000000
+.equ ROM_BASE,       0x00000000
 .equ RAM_BASE,       0x20000000
 
 # 内存映射地址定义
@@ -26,12 +27,12 @@
 .equ UART_SIMPLE_CYCLES, 0x4           # 仿真场景下速率较慢，配置采样率为4倍
 
 # 指令长度（字节数）
-.equ INSTRUCTION_LENGTH, 3072  # 固定指令长度
+.equ INSTRUCTION_LENGTH, 4096  # 固定指令长度
 
-.section .text.vector
+.section .bootrom
 _start:
     # 初始化堆栈指针
-    li sp, RAM_BASE + 0x1000
+    li sp, RAM_BASE + 0x200
 
     # UART初始化
     call uart_init
@@ -40,7 +41,7 @@ _start:
     call receive_instructions
 
     # 跳转到RAM执行指令
-    li a0, RAM_BASE
+    li a0, ROM_BASE
     jr a0
 
 # UART初始化
@@ -101,7 +102,7 @@ receive_instructions:
 
     # 初始化计数器
     li s0, 0
-    li s1, RAM_BASE
+    li s1, ROM_BASE
     li s2, 0        # 清零临时数据寄存器
 
 receive_loop:
