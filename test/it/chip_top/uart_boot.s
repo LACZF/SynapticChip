@@ -22,9 +22,9 @@
 .equ UART_SMPR,      UART_BASE + 0x24  # 采样率寄存器
 .equ UART_BDV_L,     UART_BASE + 0x28  # 分频系数低字节
 .equ UART_BDV_H,     UART_BASE + 0x2C  # 分频系数高字节
-.equ UART_BDV_VALUE_L,   0x2           # 仿真场景下速率较慢，设置为2分频
+.equ UART_BDV_VALUE_L,   0x36
 .equ UART_BDV_VALUE_H,   0x0
-.equ UART_SIMPLE_CYCLES, 0x4           # 仿真场景下速率较慢，配置采样率为4倍
+.equ UART_SIMPLE_CYCLES, 0x10
 
 # 指令长度（字节数）
 .equ INSTRUCTION_LENGTH, 4096  # 固定指令长度

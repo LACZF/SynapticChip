@@ -21,6 +21,10 @@ module uart16550 #(
     input  wire        uart_rx,            // UART接收信号
     output wire        uart_tx,            // UART发送信号
 
+    input  wire        ext_buad_sample_valid_i,
+    input  wire [7:0]  ext_buad_reg_i,
+    input  wire [7:0]  ext_sample_reg_i,
+
     // 中断信号
     output wire        irq_o               // 中断输出信号
 );
@@ -229,6 +233,8 @@ module uart16550 #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             sample_cycles_reg <= SAMPLE_CYCLES;
+        end else if (ext_buad_sample_valid_i == 1'b1) begin
+            sample_cycles_reg <= ext_sample_reg_i;
         end else if (sample_cycles_sel && !wr_n_i) begin
             sample_cycles_reg <= wr_data_i;
         end
@@ -241,7 +247,9 @@ module uart16550 #(
         if (!rst_n) begin
             baud_div_reg <= (SYS_CLK_FREQ / BAUD_RATE / SAMPLE_CYCLES);  // 默认值根据参数的系统时钟和波特率确定
         end else begin
-            if (baud_div_sel && !wr_n_i && (addr_i == 8'h28)) begin
+            if (ext_buad_sample_valid_i == 1'b1) begin
+                baud_div_reg[7:0] <= ext_buad_reg_i;
+            end else if (baud_div_sel && !wr_n_i && (addr_i == 8'h28)) begin
                 baud_div_reg[7:0] <= wr_data_i;
             end
             if (baud_div_sel && !wr_n_i && (addr_i == 8'h2C)) begin

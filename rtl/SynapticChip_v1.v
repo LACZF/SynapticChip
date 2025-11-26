@@ -15,6 +15,10 @@ module SynapticChip (
     input  wire                         uart_rx,
     output wire                         uart_tx,
 
+    input  wire                         ext_buad_sample_valid_i,
+    input  wire [7:0]                   ext_buad_reg_i,
+    input  wire [7:0]                   ext_sample_reg_i,
+
     input  wire [3:0]                   gpio_in,
     output wire [3:0]                   gpio_out,
 
@@ -127,6 +131,10 @@ module SynapticChip (
 
         .uart_rx      (uart_rx),
         .uart_tx      (uart_tx),
+
+        .ext_buad_sample_valid_i (ext_buad_sample_valid_i),
+        .ext_buad_reg_i          (ext_buad_reg_i),
+        .ext_sample_reg_i        (ext_sample_reg_i),
 
         .gpio_in      (gpio_in),
         .gpio_out     (gpio_out),

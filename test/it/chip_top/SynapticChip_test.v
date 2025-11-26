@@ -23,7 +23,6 @@ module SynapticChip_test;
     reg                       clk;
     reg                       rst_n;
 
-    localparam TIMEOUT_CYCLES       = 10000;
     localparam TEST_CMD_PE          = 8'h70; // 'p'
     localparam TEST_CMD_GPIO_IN     = 8'h67; // 'g' - GPIO输入测试
     localparam TEST_CMD_GPIO_OUT    = 8'h47; // 'G' - GPIO输出测试
@@ -38,8 +37,6 @@ module SynapticChip_test;
     localparam GPIO_INOUT_NUM       = 8;
     localparam I2C_NUM              = 1;
     localparam UART_NUM             = 1;
-    localparam SAMPLE_CYCLES        = 4; // TODO : 芯片中有跟采样频率和时钟分频相关的硬件配置，需要修改一致后验证
-    localparam UART_DIV_RATE        = 2;
     localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     localparam IMPLEMENT_JTAG       = 1;
     localparam IMPLEMENT_UART       = 1;
@@ -58,6 +55,23 @@ module SynapticChip_test;
     localparam DATA_WIDTH           = 32;
     localparam PE_ARRAY_X           = 8;
     localparam PE_ARRAY_Y           = 8;
+    localparam SYS_CLK_FREQ         = 100_000_000;
+    localparam BAUD_RATE            = 115_200;
+
+`ifdef ASIC_VERSION
+    /*
+     * ASIC版本直接通过代码配置，外部波特率分频寄存器和采样率不可用，此时时需要与program.s和uart_boot.s中定义的一致
+     */
+    localparam BUAD_SAMPLE_VALID    = 1'b0;
+    localparam SAMPLE_CYCLES        = 16;
+    localparam UART_DIV_RATE        = (SYS_CLK_FREQ / BAUD_RATE / SAMPLE_CYCLES);
+    localparam TIMEOUT_CYCLES       = 1000000;
+`else
+    localparam BUAD_SAMPLE_VALID    = 1'b1;
+    localparam SAMPLE_CYCLES        = 4;
+    localparam UART_DIV_RATE        = 2;
+    localparam TIMEOUT_CYCLES       = 10000;
+`endif
 
     wire                      obi_req;
     wire                      obi_we;
@@ -215,6 +229,10 @@ module SynapticChip_test;
 
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
+
+        .ext_buad_sample_valid_i (1'(BUAD_SAMPLE_VALID)),
+        .ext_buad_reg_i          (8'(UART_DIV_RATE)),
+        .ext_sample_reg_i        (8'(SAMPLE_CYCLES)),
 
         .gpio_in     (gpio_in),
         .gpio_out    (gpio_out)
@@ -470,10 +488,12 @@ module SynapticChip_test;
         $finish;
     end
 
+`ifdef ASIC_VERSION
     /********** 输出波形 **********/
     initial begin
         $dumpfile("SynapticChip_test.vcd");
         $dumpvars(0, SynapticChip_test);
     end
+`endif
 
 endmodule

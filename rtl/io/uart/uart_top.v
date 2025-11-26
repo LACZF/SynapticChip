@@ -17,6 +17,10 @@ module uart_top (
     input  wire                     uart_rx,         // UART接收信号
     output wire                     uart_tx,         // UART发送信号
 
+    input  wire                     ext_buad_sample_valid_i,
+    input  wire [7:0]               ext_buad_reg_i,
+    input  wire [7:0]               ext_sample_reg_i,
+
     // 中断信号
     output wire                     irq_o            // 中断输出信号
 );
@@ -90,6 +94,10 @@ module uart_top (
 
         .uart_rx    (uart_rx),
         .uart_tx    (uart_tx),
+
+        .ext_buad_sample_valid_i (ext_buad_sample_valid_i),
+        .ext_buad_reg_i          (ext_buad_reg_i),
+        .ext_sample_reg_i        (ext_sample_reg_i),
 
         .irq_o      (irq_o)
     );

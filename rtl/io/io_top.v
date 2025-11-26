@@ -57,6 +57,10 @@ module io_top #(
     input  wire                               uart_rx,
     output wire                               uart_tx,
 
+    input  wire                               ext_buad_sample_valid_i,
+    input  wire [7:0]                         ext_buad_reg_i,
+    input  wire [7:0]                         ext_sample_reg_i,
+
     // GPIO接口
     input  wire [GPIO_IN_NUM-1:0]             gpio_in,
     output wire [GPIO_OUT_NUM-1:0]            gpio_out,
@@ -173,6 +177,10 @@ module io_top #(
 
                 .uart_rx         (uart_rx),
                 .uart_tx         (uart_tx),
+
+                .ext_buad_sample_valid_i (ext_buad_sample_valid_i),
+                .ext_buad_reg_i          (ext_buad_reg_i),
+                .ext_sample_reg_i        (ext_sample_reg_i),
 
                 .irq_o           (irq_uart_rx)
              );
