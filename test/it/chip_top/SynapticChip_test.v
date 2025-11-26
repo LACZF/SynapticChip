@@ -200,7 +200,7 @@ module SynapticChip_test;
     assign qspi_flash_dq_in[3] = qspi_flash_dq_oe[3] ? qspi_flash_dq_out[3] : 1'bz;
 
     /********** 时钟生成 **********/
-    always #2 clk = ~clk;
+    always #5 clk = ~clk;
 
     /********** 实例化chip_top **********/
     SynapticChip u_SynapticChip (
