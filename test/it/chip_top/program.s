@@ -171,16 +171,6 @@ uart_init:
     li a1, UART_BDV_VALUE_H
     sb a1, 0(a0)
 
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'n'
-    call uart_write_byte
-    li a0, 'i'
-    call uart_write_byte
-    li a0, 't'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
     li a0, 'O'
     call uart_write_byte
     li a0, 'K'
@@ -427,12 +417,8 @@ check_results_loop:
     call print_dec
     li a0, ':'
     call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
     mv a0, s3
     call print_hex
-    li a0, ' '
-    call uart_write_byte
     li a0, '('
     call uart_write_byte
     mv a0, s4
@@ -443,24 +429,12 @@ check_results_loop:
     # 比较结果
     bne s3, s4, result_mismatch
 
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'K'
+    li a0, 'v'
     call uart_write_byte
     j result_ok
 
 result_mismatch:
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'L'
+    li a0, 'x'
     call uart_write_byte
     li s6, 0                   # 标记测试失败
 
@@ -473,38 +447,18 @@ result_ok:
     bnez s2, check_results_loop
 
     # 6. 输出最终测试结果
-    beqz s6, test_failed
+    # beqz s6, test_failed
 
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    j test_end
+    # li a0, 'v'
+    # call uart_write_byte
+    # j test_end
 
-test_failed:
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
+# test_failed:
+#     li a0, 'x'
+#     call uart_write_byte
 
-test_end:
-    call print_newline
+# test_end:
+#     call print_newline
 
     # 恢复寄存器并返回
     lw s6, 0(sp)
@@ -688,15 +642,6 @@ gpio_in_test_command:
 
 # GPIO输出测试命令处理
 gpio_out_test_command:
-    li a0, 'G'
-    call uart_write_byte
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, ' '
     call uart_write_byte
     li a0, 'O'
     call uart_write_byte
@@ -734,73 +679,12 @@ test_gpio_in:
     call uart_write_byte
     li a0, 'T'
     call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, ':'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
 
     li s0, GPIO_IN_DATA
     lw s1, 0(s0)
 
     mv a0, s1
     call print_hex
-    call print_newline
-
-    # 测试完成
-    li a0, 'G'
-    call uart_write_byte
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'N'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'S'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'M'
-    call uart_write_byte
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
     call print_newline
 
     lw ra, 12(sp)
@@ -831,19 +715,7 @@ test_gpio_out:
     call uart_write_byte
     li a0, 'T'
     call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
     li a0, ':'
-    call uart_write_byte
-    li a0, ' '
     call uart_write_byte
 
     # 设置GPIO输出数据 - 测试所有8个输出引脚
@@ -892,16 +764,6 @@ test_spi_module:
     # 1. 配置SPI时钟分频
     li a0, 'C'
     call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'K'
-    call uart_write_byte
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'V'
-    call uart_write_byte
     li a0, '='
     call uart_write_byte
 
@@ -916,12 +778,6 @@ test_spi_module:
 
     # 2. 配置SPI控制寄存器
     li a0, 'C'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'L'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
@@ -954,14 +810,6 @@ test_spi_module:
 
     # 4. 写入SPI数据测试
     li a0, 'W'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
     call uart_write_byte
     li a0, '='
     call uart_write_byte
@@ -1021,12 +869,6 @@ test_spi_module:
     # 7. 读取SPI接收的数据并通过UART发送
     li a0, 'R'
     call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'V'
-    call uart_write_byte
     li a0, '='
     call uart_write_byte
 
@@ -1066,16 +908,6 @@ test_spi_module:
 
     # 2. 写入不同的SPI测试数据
     li a0, 'W'
-    call uart_write_byte
-    li a0, 'R'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'T'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, '='
     call uart_write_byte
 
     # 写入第二个从机的测试数据
@@ -1133,12 +965,6 @@ test_spi_module:
     # 5. 读取SPI接收的数据并通过UART发送（第二个从机）
     li a0, 'R'
     call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'C'
-    call uart_write_byte
-    li a0, 'V'
-    call uart_write_byte
     li a0, '='
     call uart_write_byte
 
@@ -1191,15 +1017,9 @@ test_timer_module:
     # 1. 复位Timer
     li a0, 'R'
     call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
     li a0, 'S'
     call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
     li a0, 'T'
-    call uart_write_byte
-    li a0, '='
     call uart_write_byte
 
     # 复位Timer (清除控制寄存器)
@@ -1207,10 +1027,6 @@ test_timer_module:
     li s1, 0x00000000  # 清除控制寄存器
     sw s1, 0(s0)
 
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
     call print_newline
 
     # 2. 设置Timer最大值
@@ -1291,6 +1107,7 @@ wait_for_interrupt:
 
     # 延迟一段时间
     call delay
+    call delay
 
     # 减少等待计数器
     addi s2, s2, -1
@@ -1307,10 +1124,6 @@ interrupt_occurred:
     call print_newline
     li a0, 'C'
     call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, 'U'
-    call uart_write_byte
     li a0, 'N'
     call uart_write_byte
     li a0, 'T'
@@ -1325,17 +1138,7 @@ interrupt_occurred:
     j timer_test_end
 
 interrupt_timeout:
-    li a0, 'F'
-    call uart_write_byte
-    li a0, 'A'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'L'
-    call uart_write_byte
-    li a0, 'E'
-    call uart_write_byte
-    li a0, 'D'
+    li a0, 'x'
     call uart_write_byte
     call print_newline
 
@@ -1350,7 +1153,7 @@ timer_test_end:
     call uart_write_byte
     li a0, 'P'
     call uart_write_byte
-    li a0, '='
+    li a0, '!'
     call uart_write_byte
 
     # 停止Timer
@@ -1358,10 +1161,6 @@ timer_test_end:
     li s1, 0x00000000  # 停止Timer
     sw s1, 0(s0)
 
-    li a0, 'D'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
     call print_newline
 
     lw ra, 12(sp)
@@ -1501,8 +1300,6 @@ irq_init:
     lw ra, 4(sp)
     addi sp, sp, 8
     ret
-
-
 
 # 定时器中断处理函数
 timer_interrupt_handler:

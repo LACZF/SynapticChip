@@ -396,37 +396,6 @@ module SynapticChip_test;
         end
     endtask;
 
-    /********** 监测跳转执行任务 **********/
-    task monitor_jump_execution;
-        input integer timeout_cycles;
-        integer timeout_count;
-        begin
-            timeout_count = 0;
-            uart_boot_jump_detected = 1'b0;
-
-            $display($time, " Monitoring for jump execution...");
-
-            while (!uart_boot_jump_detected && timeout_count < timeout_cycles) begin
-                @(posedge clk);
-                timeout_count = timeout_count + 1;
-
-                // 检测是否跳转到RAM执行（通过观察PC变化或其他指标）
-                // 这里可以添加更具体的跳转检测逻辑
-                if (timeout_count > 1000 && rx_end == 1'b1 && rx_data == "D") begin
-                    // 检测到"Done!"消息，表示引导程序完成
-                    uart_boot_jump_detected = 1'b1;
-                    $display($time, " Jump execution detected!");
-                end
-            end
-
-            if (uart_boot_jump_detected) begin
-                $display($time, " UART boot test PASSED");
-            end else begin
-                $display($time, " UART boot test FAILED - Jump not detected within timeout");
-            end
-        end
-    endtask;
-
     /********** 测试用例 **********/
     initial begin
         integer timeout;
@@ -462,8 +431,7 @@ module SynapticChip_test;
             send_rom_instructions(1024); // 最大4k指令空间
 
             // 监测跳转执行
-            // monitor_jump_execution(5000);
-            # 5000;
+            wait ((rx_end == 1'b1) && (rx_data == TEST_CMD_END));
 
             $display("----- UART Boot Test Completed -----\n");
         end
