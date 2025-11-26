@@ -1011,7 +1011,7 @@ index 2a51e6c..a7711d6 100644
 +endmodule
 \ No newline at end of file
 diff --git a/rtl/perips/ram.sv b/rtl/perips/ram.sv
-index 8f0d318..eb9f0c9 100644
+index 8f0d318..4924289 100644
 --- a/rtl/perips/ram.sv
 +++ b/rtl/perips/ram.sv
 @@ -1,20 +1,20 @@
@@ -1048,32 +1048,21 @@ index 8f0d318..eb9f0c9 100644
  
  
  module ram #(
-@@ -34,6 +34,7 @@ module ram #(
-     );
+@@ -47,6 +47,14 @@ module ram #(
+         end
+     end
  
-     reg rvalid_q;
-+    reg rvalid_d;
-     wire[31:0] addr;
- 
-     assign addr = {6'h0, addr_i[27:2]};
-@@ -44,8 +45,17 @@ module ram #(
-             rvalid_q <= 1'b0;
-         end else begin
-             rvalid_q <= req_i;
-+            rvalid_d <= rvalid_q;
-+        end
-+    end
-+
 +`ifdef DEBUG
 +    always @(posedge clk_i) begin
 +        if (req_i && we_i && addr_i[19:0] < 20'hc00) begin
 +            $display("[RAM] write : %08h = %08h", addr_i, data_i);
-         end
-     end
++        end
++    end
 +`endif
- 
++
      assign rvalid_o = rvalid_q;
  
+     gen_ram #(
 diff --git a/rtl/perips/rom.sv b/rtl/perips/rom.sv
 index 601f3f1..7247048 100644
 --- a/rtl/perips/rom.sv
