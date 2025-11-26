@@ -470,7 +470,7 @@ module chip_top_test;
         // 发送Timer模块测试命令
         send_test(TEST_CMD_TIMER);
 `endif
-        // #`SIM_CYCLE;
+        #`SIM_CYCLE;
 
         $display("\n----- All Tests Completed -----");
 
