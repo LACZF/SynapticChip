@@ -2,9 +2,9 @@
 module uart16550 #(
     parameter SYS_CLK_FREQ   = 100_000_000,
     parameter BAUD_RATE      = 115_200,
-    parameter RX_FIFO_DEPTH  = 16,           // 接收FIFO深度
-    parameter TX_FIFO_DEPTH  = 16,           // 发送FIFO深度
-    parameter SAMPLE_CYCLES  = 16            // 每个位周期的采样次数
+    parameter RX_FIFO_DEPTH  = 128,        // 接收FIFO深度
+    parameter TX_FIFO_DEPTH  = 128,        // 发送FIFO深度
+    parameter SAMPLE_CYCLES  = 16          // 每个位周期的采样次数
 )(
     input  wire        clk,                // 时钟信号
     input  wire        rst_n,              // 复位信号，低电平有效
