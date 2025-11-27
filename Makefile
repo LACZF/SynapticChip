@@ -116,6 +116,29 @@ patch_apply:
 patch_revert:
 	$(QUITE)cd $(TOP_DIR) && $(SCRIPT_DIR)/tools.sh top_patch_revert
 
+ifneq (,$(filter openroad_flow,$(MAKECMDGOALS)))
+ifeq ($(OPENROAD_FLOW_DIR),)
+$(error "OPENROAD_FLOW_DIR is not set.")
+endif
+KLAYOUT_EXE   ?= $(shell which klayout)
+OPENROAD_EXE  ?= $(shell which openroad)
+YOSYS_EXE     ?= $(shell which yosys)
+DESIGN_CONFIG ?= $(TOP_DIR)/OpenRoad_designs/SynapticChip/config.mk
+OPENROAD_FLOW_ARGS += OPENROAD_EXE=$(OPENROAD_EXE)
+OPENROAD_FLOW_ARGS += YOSYS_EXE=$(YOSYS_EXE)
+OPENROAD_FLOW_ARGS += KLAYOUT_CMD=$(KLAYOUT_EXE)
+OPENROAD_FLOW_ARGS += PROJECT_TOP_DIR=$(TOP_DIR)
+OPENROAD_FLOW_ARGS += DESIGN_CONFIG=$(DESIGN_CONFIG)
+ifeq ($(shell uname -s),Darwin)
+OPENROAD_FLOW_ENV  += QT_QPA_PLATFORM=cocoa
+endif
+include $(TOP_DIR)/rtl/filelist.txt
+endif
+openroad_flow: # make openroad_flow [M=gui_final|clean_all]
+	$(QUITE)RTL_SRC_DIR="$(RTL_SRC_DIR)" MODULE_NAME="$(MODULE_NAME)" RTL_SRC="$(RTL_SRC)" \
+		$(YOSYS_ENV) $(TOP_MODULE_ARG) $(SCRIPT_DIR)/yosys.sh prepare $(TOP_DIR)/rtl
+	$(QUITE)$(OPENROAD_FLOW_ENV) make -C $(OPENROAD_FLOW_DIR)/flow/ $(OPENROAD_FLOW_ARGS) $(M)
+
 all:
 	$(QUITE)echo "Start ut."
 	make -C $(TOP_DIR) all_ut
@@ -126,6 +149,9 @@ all:
 	$(QUITE)echo "Start yosys synthesis."
 	make -C $(TOP_DIR) yosys_synthesis
 	$(QUITE)echo "yosys synthesis done."
+	$(QUITE)echo "Start OpenROAD flow."
+	make -C $(TOP_DIR) openroad_flow
+	$(QUITE)echo "OpenROAD flow done."
 	$(QUITE)echo "All done."
 
 help:
