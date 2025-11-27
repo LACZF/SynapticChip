@@ -617,14 +617,6 @@ delay_loop:
 gpio_in_test_command:
     li a0, 'G'
     call uart_write_byte
-    li a0, 'P'
-    call uart_write_byte
-    li a0, 'I'
-    call uart_write_byte
-    li a0, 'O'
-    call uart_write_byte
-    li a0, ' '
-    call uart_write_byte
     li a0, 'I'
     call uart_write_byte
     li a0, 'N'
@@ -642,6 +634,7 @@ gpio_in_test_command:
 
 # GPIO输出测试命令处理
 gpio_out_test_command:
+    li a0, 'G'
     call uart_write_byte
     li a0, 'O'
     call uart_write_byte
@@ -678,6 +671,8 @@ test_gpio_in:
     li a0, 'U'
     call uart_write_byte
     li a0, 'T'
+    call uart_write_byte
+    li a0, ':'
     call uart_write_byte
 
     li s0, GPIO_IN_DATA
