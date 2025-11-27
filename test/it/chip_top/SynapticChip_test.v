@@ -56,12 +56,12 @@ module SynapticChip_test;
     localparam PE_ARRAY_X           = 8;
     localparam PE_ARRAY_Y           = 8;
     localparam SYS_CLK_FREQ         = 100_000_000;
-    localparam BAUD_RATE            = 115_200;
 
 `ifdef ASIC_VERSION
     /*
      * ASIC版本直接通过代码配置，外部波特率分频寄存器和采样率不可用，此时时需要与program.s和uart_boot.s中定义的一致
      */
+    localparam BAUD_RATE            = 115_200;
     localparam BUAD_SAMPLE_VALID    = 1'b0;
     localparam SAMPLE_CYCLES        = 16;
     localparam UART_DIV_RATE        = (SYS_CLK_FREQ / BAUD_RATE / 2 / SAMPLE_CYCLES);
@@ -70,6 +70,7 @@ module SynapticChip_test;
     localparam BUAD_SAMPLE_VALID    = 1'b1;
     localparam SAMPLE_CYCLES        = 4;
     localparam UART_DIV_RATE        = 2;
+    localparam BAUD_RATE            = (SYS_CLK_FREQ / UART_DIV_RATE / 2 / SAMPLE_CYCLES);
     localparam TIMEOUT_CYCLES       = 10000;
 `endif
 
@@ -303,30 +304,17 @@ module SynapticChip_test;
         .clk_o            (baud_clk)
     );
 
-    uart_rx u_uart_rx (
-        .clk              (clk),
-        .rst_n            (rst_n),
-        .baud_clk_i       (baud_clk),
-        .rx_i             (uart_tx),
-        .busy_o           (rx_busy),
-        .data_o           (rx_data),
-        .ready_o          (rx_end),
-        .error_o          (),
-        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
-        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
-    );
+    rs232 #(BAUD_RATE, 0) u_rs232 (
+        .rs232_rx_i        (uart_tx),
+        .rs232_rx_data_o   (rx_data),
+        .rs232_rx_busy_o   (rx_busy),
+        .rs232_rx_ready_o  (rx_end),
 
-    uart_tx u_uart_tx (
-        .clk              (clk),
-        .rst_n            (rst_n),
-        .baud_clk_i       (baud_clk),
-        .data_i           (tx_data),
-        .start_i          (tx_start),
-        .busy_o           (tx_busy),
-        .tx_o             (uart_rx),
-        .tx_end_o         (tx_end),
-        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
-        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
+        .rs232_tx_data_i   (tx_data),
+        .rs232_tx_start_i  (tx_start),
+        .rs232_tx_busy_o   (tx_busy),
+        .rs232_tx_end_o    (tx_end),
+        .rs232_tx_o        (uart_rx)
     );
 
     /********** UART发送字符任务 **********/
