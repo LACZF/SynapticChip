@@ -64,7 +64,7 @@ module SynapticChip_test;
      */
     localparam BUAD_SAMPLE_VALID    = 1'b0;
     localparam SAMPLE_CYCLES        = 16;
-    localparam UART_DIV_RATE        = (SYS_CLK_FREQ / BAUD_RATE / SAMPLE_CYCLES);
+    localparam UART_DIV_RATE        = (SYS_CLK_FREQ / BAUD_RATE / 2 / SAMPLE_CYCLES);
     localparam TIMEOUT_CYCLES       = 1000000;
 `else
     localparam BUAD_SAMPLE_VALID    = 1'b1;

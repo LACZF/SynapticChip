@@ -245,7 +245,7 @@ module uart16550 #(
     //--------------------------------------------------------------------
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            baud_div_reg <= (SYS_CLK_FREQ / BAUD_RATE / SAMPLE_CYCLES);  // 默认值根据参数的系统时钟和波特率确定
+            baud_div_reg <= (SYS_CLK_FREQ / BAUD_RATE / 2 / SAMPLE_CYCLES);  // 默认值根据参数的系统时钟和波特率确定
         end else begin
             if (ext_buad_sample_valid_i == 1'b1) begin
                 baud_div_reg[7:0] <= ext_buad_reg_i;

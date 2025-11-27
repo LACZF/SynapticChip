@@ -20,9 +20,9 @@
 .equ UART_SMPR,      UART_BASE + 0x24  # 采样率寄存器
 .equ UART_BDV_L,     UART_BASE + 0x28  # 分频系数低字节
 .equ UART_BDV_H,     UART_BASE + 0x2C  # 分频系数高字节
-.equ UART_BDV_VALUE_L,   0x36
-.equ UART_BDV_VALUE_H,   0x0
 .equ UART_SIMPLE_CYCLES, 0x10
+.equ UART_BDV_VALUE_L,   0x1B          # 100MHz / 115200 / 2 / UART_SIMPLE_CYCLES = 0x1B
+.equ UART_BDV_VALUE_H,   0x0
 
 # GPIO模块地址定义
 .equ GPIO_BASE,      IO_BASE   + 0x00030000
