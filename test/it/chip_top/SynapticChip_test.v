@@ -304,7 +304,11 @@ module SynapticChip_test;
         .clk_o            (baud_clk)
     );
 
-    rs232 #(BAUD_RATE, 0) u_rs232 (
+    rs232 #(
+        .SYS_CLK_FREQ  (SYS_CLK_FREQ * 10), // TODO : CHECK
+        .BAUD_RATE     (BAUD_RATE),
+        .LOOPBACK      (0)
+    ) u_rs232 (
         .rs232_rx_i        (uart_tx),
         .rs232_rx_data_o   (rx_data),
         .rs232_rx_busy_o   (rx_busy),
