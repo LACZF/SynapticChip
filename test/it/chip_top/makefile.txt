@@ -1,16 +1,20 @@
 
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-SIM_CYCLE ?= 200000
-ROM_PRG   ?= program.hex
-RAM_PRG   ?= data_bss.hex
-BOOT_TYPE ?= 4
+SIM_CYCLE    ?= 200000
+ROM_PRG      ?= program.hex
+RAM_PRG      ?= data_bss.hex
+BOOT_TYPE    ?= 0
 ASIC_VERSION ?= 0
 
 TEST_TARGET := top_system
 TEST_ARGS ?= -g2005-sv -DROM_PRG=\"$(ROM_PRG)\" -DRAM_PRG=\"$(RAM_PRG)\" -DSIM_CYCLE=$(SIM_CYCLE) -DBOOT_TYPE=$(BOOT_TYPE)
 ifeq ($(ASIC_VERSION),1)
 TEST_ARGS += -DASIC_VERSION
+else
+TEST_ARGS += -DEXT_BUAD_SAMPLE_VALID=1
+TEST_ARGS += -DEXT_SAMPLE_REG=4
+TEST_ARGS += -DEXT_BUAD_REG=2
 endif
 
 TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)

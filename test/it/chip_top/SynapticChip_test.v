@@ -14,8 +14,14 @@
     `endif
 `endif
 
-`ifndef BOOT_TYPE
-`define BOOT_TYPE 4
+`ifndef EXT_BUAD_SAMPLE_VALID
+`define EXT_BUAD_SAMPLE_VALID 1'b0
+`endif
+`ifndef EXT_SAMPLE_REG
+`define EXT_SAMPLE_REG        16
+`endif
+`ifndef EXT_BUAD_REG
+`define EXT_BUAD_REG          (100_000_000 / 115_200 / 2 / `EXT_SAMPLE_REG)
 `endif
 
 module SynapticChip_test;
@@ -37,7 +43,7 @@ module SynapticChip_test;
     localparam GPIO_INOUT_NUM       = 8;
     localparam I2C_NUM              = 1;
     localparam UART_NUM             = 1;
-    localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
+    localparam BOOT_TYPE            = 0;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     localparam IMPLEMENT_JTAG       = 1;
     localparam IMPLEMENT_UART       = 1;
     localparam IMPLEMENT_GPIO       = 1;
@@ -68,8 +74,8 @@ module SynapticChip_test;
     localparam TIMEOUT_CYCLES       = 1000000;
 `else
     localparam BUAD_SAMPLE_VALID    = 1'b1;
-    localparam SAMPLE_CYCLES        = 4;
-    localparam UART_DIV_RATE        = 2;
+    localparam SAMPLE_CYCLES        = `EXT_SAMPLE_REG;
+    localparam UART_DIV_RATE        = `EXT_BUAD_REG;
     localparam BAUD_RATE            = (SYS_CLK_FREQ / UART_DIV_RATE / 2 / SAMPLE_CYCLES);
     localparam TIMEOUT_CYCLES       = 10000;
 `endif
@@ -222,18 +228,8 @@ module SynapticChip_test;
         .clk         (clk),
         .rst_n       (rst_n),
 
-        .obi_req_o    (obi_req),
-        .obi_addr_o   (obi_addr),
-        .obi_gnt_i    (obi_gnt),
-        .obi_rvalid_i (obi_rvalid),
-        .obi_rdata_i  (obi_rdata),
-
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
-
-        .ext_buad_sample_valid_i (1'(BUAD_SAMPLE_VALID)),
-        .ext_buad_reg_i          (8'(UART_DIV_RATE)),
-        .ext_sample_reg_i        (8'(SAMPLE_CYCLES)),
 
         .gpio_in     (gpio_in),
         .gpio_out    (gpio_out)
@@ -295,6 +291,7 @@ module SynapticChip_test;
     wire                      tx_busy;      // 发送中标志
     wire                      tx_end;       // 发送完成标志
 
+`ifdef USE_RS232_TEST
     wire                      baud_clk;        // 波特率时钟
 
     clk_gen u_uart_clk_gen(
@@ -304,6 +301,32 @@ module SynapticChip_test;
         .clk_o            (baud_clk)
     );
 
+    uart_rx u_uart_rx (
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .baud_clk_i       (baud_clk),
+        .rx_i             (uart_tx),
+        .busy_o           (rx_busy),
+        .data_o           (rx_data),
+        .ready_o          (rx_end),
+        .error_o          (),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
+    );
+
+    uart_tx u_uart_tx (
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .baud_clk_i       (baud_clk),
+        .data_i           (tx_data),
+        .start_i          (tx_start),
+        .busy_o           (tx_busy),
+        .tx_o             (uart_rx),
+        .tx_end_o         (tx_end),
+        .sample_cycles_i  (8'(SAMPLE_CYCLES)),
+        .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
+    );
+`else
     rs232 #(
         .SYS_CLK_FREQ  (SYS_CLK_FREQ * 10), // TODO : CHECK
         .BAUD_RATE     (BAUD_RATE),
@@ -320,6 +343,7 @@ module SynapticChip_test;
         .rs232_tx_end_o    (tx_end),
         .rs232_tx_o        (uart_rx)
     );
+`endif
 
     /********** UART发送字符任务 **********/
     task send_char;
@@ -473,7 +497,9 @@ module SynapticChip_test;
         // 发送Timer模块测试命令
         send_test(TEST_CMD_TIMER);
 `endif
-        #`SIM_CYCLE;
+`ifdef ASIC_VERSION
+        #`SIM_CYCLE * 100;
+`endif
 
         $display("\n----- All Tests Completed -----");
 

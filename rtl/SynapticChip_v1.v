@@ -2,22 +2,22 @@
 `define BOOT_TYPE 0
 `endif
 
+`ifndef EXT_BUAD_SAMPLE_VALID
+`define EXT_BUAD_SAMPLE_VALID 1'b0
+`endif
+`ifndef EXT_SAMPLE_REG
+`define EXT_SAMPLE_REG        16
+`endif
+`ifndef EXT_BUAD_REG
+`define EXT_BUAD_REG          (100_000_000 / 115_200 / 2 / `EXT_SAMPLE_REG)
+`endif
+
 module SynapticChip (
     input  wire                         clk,
     input  wire                         rst_n,
 
-    output wire                         obi_req_o,
-    output wire [31:0]                  obi_addr_o,
-    input  wire                         obi_gnt_i,
-    input  wire                         obi_rvalid_i,
-    input  wire [31:0]                  obi_rdata_i,
-
     input  wire                         uart_rx,
     output wire                         uart_tx,
-
-    input  wire                         ext_buad_sample_valid_i,
-    input  wire [7:0]                   ext_buad_reg_i,
-    input  wire [7:0]                   ext_sample_reg_i,
 
     input  wire [3:0]                   gpio_in,
     output wire [3:0]                   gpio_out,
@@ -62,8 +62,13 @@ module SynapticChip (
     wire                                 apb_pready;
     wire                                 apb_pslverr;
 
+    wire                                 obi_req;
     wire                                 obi_we;
+    wire [31:0]                          obi_addr;
     wire [DATA_WIDTH-1:0]                obi_wdata;
+    wire                                 obi_gnt;
+    wire                                 obi_rvalid;
+    wire [31:0]                          obi_rdata;
 
     wire [SPI_NUM-1:0]                   spi_cs_n;
     wire                                 spi_clk;
@@ -113,13 +118,13 @@ module SynapticChip (
         .clk         (clk),
         .rst_n       (rst_n),
 
-        .obi_req_o    (obi_req_o),
+        .obi_req_o    (obi_req),
         .obi_we_o     (obi_we),
-        .obi_addr_o   (obi_addr_o),
+        .obi_addr_o   (obi_addr),
         .obi_wdata_o  (obi_wdata),
-        .obi_gnt_i    (obi_gnt_i),
-        .obi_rvalid_i (obi_rvalid_i),
-        .obi_rdata_i  (obi_rdata_i),
+        .obi_gnt_i    (obi_gnt),
+        .obi_rvalid_i (obi_rvalid),
+        .obi_rdata_i  (obi_rdata),
 
         .apb_psel_o   (apb_psel),
         .apb_penable_o(apb_penable),
@@ -132,9 +137,9 @@ module SynapticChip (
         .uart_rx      (uart_rx),
         .uart_tx      (uart_tx),
 
-        .ext_buad_sample_valid_i (ext_buad_sample_valid_i),
-        .ext_buad_reg_i          (ext_buad_reg_i),
-        .ext_sample_reg_i        (ext_sample_reg_i),
+        .ext_buad_sample_valid_i (1'(`EXT_BUAD_SAMPLE_VALID)),
+        .ext_buad_reg_i          (8'(`EXT_BUAD_REG)),
+        .ext_sample_reg_i        (8'(`EXT_SAMPLE_REG)),
 
         .gpio_in      (gpio_in),
         .gpio_out     (gpio_out),
