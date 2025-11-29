@@ -110,13 +110,13 @@ module chip_top #(
     localparam int SLAVE_IO_END_INDEX       = SLAVE_IO_START_INDEX + IO_SLAVES - 1;
 
     localparam int ROM_ADDR_BASE            = 32'h00000000;
-    localparam int ROM_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(ROM_ADDR_BASE, ROM_DEPTH * 4);
+    localparam int ROM_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(ROM_ADDR_BASE, 1 * 1024 * 1024);
 
     localparam int DEBUG_ADDR_BASE          = 32'h10000000;
-    localparam int DEBUG_ADDR_MASK          = `CALC_ADDR_MASK_BY_LENGTH(DEBUG_ADDR_BASE, 8*1024);
+    localparam int DEBUG_ADDR_MASK          = `CALC_ADDR_MASK_BY_LENGTH(DEBUG_ADDR_BASE, 8 * 1024);
 
     localparam int RAM_ADDR_BASE            = 32'h20000000;
-    localparam int RAM_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(RAM_ADDR_BASE, RAM_DEPTH * 4);
+    localparam int RAM_ADDR_MASK            = `CALC_ADDR_MASK_BY_LENGTH(RAM_ADDR_BASE, 1 * 1024 * 1024);
 
     localparam int PE_ADDR_BASE             = 32'h30000000;
     localparam int PE_ADDR_MASK             = `CALC_ADDR_MASK_BY_LENGTH(PE_ADDR_BASE, 128 * 1024 * 1024);
