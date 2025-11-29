@@ -477,11 +477,12 @@ module chip_top_test;
 `ifdef ASIC_VERSION
         # (5000 * 30);
 `else
-        # 5000;
+        # 20000;
 `endif
 
         // 发送GPIO输出测试命令
         send_test(TEST_CMD_GPIO_OUT);
+        # 20000;
         $display($time, " gpio_out : %b", gpio_out);
 `endif
 

@@ -412,7 +412,7 @@ module SynapticChip_test;
                 // 等待发送完成
                 wait(tx_end == 1'b1);
                 @(posedge clk);
-                #100; // 字节间延迟
+                #1000; // 字节间延迟
             end
         end
     endtask;
@@ -489,10 +489,11 @@ module SynapticChip_test;
 `ifdef ASIC_VERSION
         # (5000 * 30);
 `else
-        # 5000;
+        # 50000;
 `endif
         // 发送GPIO输出测试命令
         send_test(TEST_CMD_GPIO_OUT);
+        # 50000;
         $display($time, " gpio_out : %b", gpio_out);
 `endif
 
