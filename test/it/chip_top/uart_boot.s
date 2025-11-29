@@ -27,7 +27,7 @@
 .equ UART_BDV_VALUE_H,   0x0
 
 # 指令长度（字节数）
-.equ INSTRUCTION_LENGTH, 4096  # 固定指令长度
+.equ INSTRUCTION_LENGTH, 3072  # 固定指令长度
 
 .section .bootrom
 _start:

@@ -29,7 +29,7 @@ module SynapticChip (
 );
     localparam TRACE_ENABLE              = 0;
     localparam CPU_NUM                   = 1;
-    localparam ROM_DEPTH                 = 1024;
+    localparam ROM_DEPTH                 = 768;
     localparam RAM_DEPTH                 = 256;   // 修改RAM大小要修改program.s和uarta_boot.s中对应的sp基地值
     localparam ADDR_WIDTH                = 32;
     localparam DATA_WIDTH                = 32;
