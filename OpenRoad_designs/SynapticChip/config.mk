@@ -1,5 +1,5 @@
-# export PLATFORM               = sky130hd
-export PLATFORM               = asap7
+export PLATFORM               = sky130hd
+# export PLATFORM               = asap7
 
 export DESIGN_NICKNAME        = SynapticChip
 export DESIGN_NAME            = SynapticChip
@@ -11,15 +11,9 @@ export VERILOG_FILES          = $(sort $(wildcard $(PROJECT_VERILOG_SRC)/*.v)) $
 
 export VERILOG_INCLUDE_DIRS   = $(PROJECT_VERILOG_SRC)
 
-# export SYNTH_HDL_FRONTEND = slang
+export SYNTH_HDL_FRONTEND     = slang
 
-# if FLOW_VARIANT == pos_slack, use an SDC file that has a larger clock
-# resulting in positive slack
-ifeq ($(FLOW_VARIANT),pos_slack)
-export SDC_FILE               = $(PROJECT_DESIGNS_DIR)/constraint_pos_slack.sdc
-else
 export SDC_FILE               = $(PROJECT_DESIGNS_DIR)/constraint.sdc
-endif
 
 export CORE_UTILIZATION       = 40
 export CORE_ASPECT_RATIO      = 1
