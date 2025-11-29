@@ -475,9 +475,9 @@ module chip_top_test;
         $display($time, " gpio_in  : %b", gpio_in);
 
 `ifdef ASIC_VERSION
-        # 5000;
-`else
         # (5000 * 30);
+`else
+        # 5000;
 `endif
 
         // 发送GPIO输出测试命令
@@ -506,7 +506,7 @@ module chip_top_test;
         $finish;
     end
 
-`ifdef ASIC_VERSION
+`ifndef ASIC_VERSION
     /********** 输出波形 **********/
     initial begin
         $dumpfile("chip_top_test.vcd");

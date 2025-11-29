@@ -424,6 +424,9 @@ module SynapticChip_test;
         begin
             $display($time, " Sending %0d instructions from ROM", instruction_count);
             for (i = 0; i < instruction_count; i = i + 1) begin
+            `ifdef DEBUG
+                $display($time, " Sending %04h : %08h", i*4, u_ext_rom.u_gen_ram.ram[i]);
+            `endif
                 send_32bit_instruction(u_ext_rom.u_gen_ram.ram[i]);
             end
             $display($time, " ROM instructions sent successfully");
@@ -484,9 +487,9 @@ module SynapticChip_test;
         $display($time, " gpio_in  : %b", gpio_in);
 
 `ifdef ASIC_VERSION
-        # 5000;
-`else
         # (5000 * 30);
+`else
+        # 5000;
 `endif
         // 发送GPIO输出测试命令
         send_test(TEST_CMD_GPIO_OUT);
@@ -514,7 +517,7 @@ module SynapticChip_test;
         $finish;
     end
 
-`ifdef ASIC_VERSION
+`ifndef ASIC_VERSION
     /********** 输出波形 **********/
     initial begin
         $dumpfile("SynapticChip_test.vcd");
