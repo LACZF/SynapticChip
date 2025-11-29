@@ -462,7 +462,7 @@ module SynapticChip_test;
         if (uart_boot_test_enable) begin
             $display("\n----- Starting UART Boot Test -----");
 
-            send_rom_instructions(1024); // 最大4k指令空间
+            send_rom_instructions(768); // 最大4k指令空间
 
             // 监测跳转执行
             wait ((rx_end == 1'b1) && (rx_data == TEST_CMD_END));
@@ -483,6 +483,11 @@ module SynapticChip_test;
         send_test(TEST_CMD_GPIO_IN);
         $display($time, " gpio_in  : %b", gpio_in);
 
+`ifdef ASIC_VERSION
+        # 5000;
+`else
+        # (5000 * 30);
+`endif
         // 发送GPIO输出测试命令
         send_test(TEST_CMD_GPIO_OUT);
         $display($time, " gpio_out : %b", gpio_out);
@@ -497,8 +502,11 @@ module SynapticChip_test;
         // 发送Timer模块测试命令
         send_test(TEST_CMD_TIMER);
 `endif
+
 `ifdef ASIC_VERSION
-        #`SIM_CYCLE * 100;
+        #(`SIM_CYCLE * 30);
+`else
+        #`SIM_CYCLE;
 `endif
 
         $display("\n----- All Tests Completed -----");
