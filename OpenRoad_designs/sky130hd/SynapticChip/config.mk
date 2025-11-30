@@ -4,7 +4,7 @@ export DESIGN_NICKNAME        = SynapticChip
 export DESIGN_NAME            = SynapticChip
 
 # PROJECT_TOP_DIR is a manually set environment variable.
-export PROJECT_DESIGNS_DIR    = $(PROJECT_TOP_DIR)/OpenRoad_designs/$(DESIGN_NICKNAME)/
+export PROJECT_DESIGNS_DIR    = $(PROJECT_TOP_DIR)/OpenRoad_designs/sky130hd/$(DESIGN_NICKNAME)/
 export PROJECT_VERILOG_SRC   ?= $(PROJECT_TOP_DIR)/build/$(DESIGN_NICKNAME)/src
 export VERILOG_FILES          = $(sort $(wildcard $(PROJECT_VERILOG_SRC)/*.v)) $(sort $(wildcard $(PROJECT_VERILOG_SRC)/*.sv))
 

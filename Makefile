@@ -123,7 +123,7 @@ endif
 KLAYOUT_EXE   ?= $(shell which klayout)
 OPENROAD_EXE  ?= $(shell which openroad)
 YOSYS_EXE     ?= $(shell which yosys)
-DESIGN_CONFIG ?= $(TOP_DIR)/OpenRoad_designs/SynapticChip/config.mk
+DESIGN_CONFIG ?= $(TOP_DIR)/OpenRoad_designs/sky130hd/SynapticChip/config.mk
 OPENROAD_FLOW_ARGS += OPENROAD_EXE=$(OPENROAD_EXE)
 OPENROAD_FLOW_ARGS += YOSYS_EXE=$(YOSYS_EXE)
 OPENROAD_FLOW_ARGS += KLAYOUT_CMD=$(KLAYOUT_EXE)
