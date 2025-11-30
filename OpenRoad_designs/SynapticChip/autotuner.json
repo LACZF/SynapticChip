@@ -3,24 +3,24 @@
     "_SDC_CLK_PERIOD": {
         "type": "float",
         "minmax": [
-            1200,
-            2000
+            9.0,
+            16.0
         ],
         "step": 0
     },
     "CORE_UTILIZATION": {
         "type": "int",
         "minmax": [
-            5,
-            10
+            20,
+            50
         ],
         "step": 1
     },
     "CORE_ASPECT_RATIO": {
         "type": "float",
         "minmax": [
-            0.9,
-            1.1
+            0.5,
+            2.0
         ],
         "step": 0
     },
@@ -43,8 +43,8 @@
     "_FR_LAYER_ADJUST": {
         "type": "float",
         "minmax": [
-            0.0,
-            0.1
+            0.1,
+            0.3
         ],
         "step": 0
     },
@@ -72,5 +72,5 @@
         ],
         "step": 1
     },
-    "_FR_FILE_PATH": ""
+    "_FR_FILE_PATH": "../../../platforms/sky130hd/fastroute.tcl"
 }
