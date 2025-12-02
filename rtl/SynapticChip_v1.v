@@ -44,7 +44,7 @@ module SynapticChip (
     localparam IMPLEMENT_SPI_FLASH       = 0;
     localparam IMPLEMENT_TIMER           = 1;
     localparam IMPLEMENT_I2C             = 0;
-    localparam IMPLEMENT_EXT_OBI         = 1;
+    localparam IMPLEMENT_EXT_OBI         = 0;
     localparam IMPLEMENT_EXT_APB         = 0;
     localparam GPIO_IN_NUM               = 4;
     localparam GPIO_OUT_NUM              = 4;
