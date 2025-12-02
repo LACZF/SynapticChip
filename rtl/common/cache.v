@@ -1,4 +1,4 @@
-module ip0_cache #(
+module ip4_cache #(
     parameter CACHE_LINE_SIZE               = 64,       // Cache line size in bytes
     parameter CACHE_SIZE                    = 4096,     // Cache size in bytes
     parameter ASSOCIATIVITY                 = 4,        // Cache associativity (1=direct mapped, 2=2-way, etc.)

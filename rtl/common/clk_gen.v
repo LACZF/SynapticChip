@@ -1,5 +1,5 @@
 
-module ip0_clk_gen (
+module ip4_clk_gen (
     input  wire                     clk,
     input  wire                     rst_n,
 

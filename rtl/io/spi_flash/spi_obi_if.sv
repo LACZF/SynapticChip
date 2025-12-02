@@ -27,7 +27,7 @@
 `define REG_INTCFG 4'b1001 // BASEREG + 0x24
 `define REG_INTSTA 4'b1010 // BASEREG + 0x28
 
-module ip0_spi_obi_if #(
+module ip4_spi_obi_if #(
     parameter BUFFER_DEPTH     = 10,
     parameter LOG_BUFFER_DEPTH = `log2(BUFFER_DEPTH)
 ) (

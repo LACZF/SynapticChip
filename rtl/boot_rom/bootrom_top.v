@@ -1,4 +1,4 @@
-module ip0_bootrom_top(
+module ip4_bootrom_top(
     input  wire           clk,
     input  wire           rst_n,
 

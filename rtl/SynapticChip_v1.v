@@ -12,7 +12,7 @@
 `define EXT_BUAD_REG          (100_000_000 / 115_200 / 2 / `EXT_SAMPLE_REG)
 `endif
 
-module ip0_SynapticChip (
+module ip4_SynapticChip (
     input  wire                         clk,
     input  wire                         rst_n,
 
@@ -89,7 +89,7 @@ module ip0_SynapticChip (
     wire                                 spi_flash_wp;
     wire                                 spi_flash_sio3;
 
-    ip0_chip_top #(
+    ip4_chip_top #(
         .TRACE_ENABLE(TRACE_ENABLE),
         .CPU_NUM(CPU_NUM),
         .ROM_DEPTH(ROM_DEPTH),

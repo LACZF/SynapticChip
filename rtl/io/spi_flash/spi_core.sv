@@ -20,7 +20,7 @@
 `define SPI_QUAD_TX 2'b01
 `define SPI_QUAD_RX 2'b10
 
-module ip0_spi_core #(
+module ip4_spi_core #(
     parameter BUFFER_DEPTH   = 10,
     parameter APB_ADDR_WIDTH = 12   //APB slaves are 4KB by default
 ) (
@@ -146,7 +146,7 @@ module ip0_spi_core #(
     endcase
   end
 
-  ip0_spi_apb_if #(
+  ip4_spi_apb_if #(
       .BUFFER_DEPTH  (BUFFER_DEPTH),
       .APB_ADDR_WIDTH(APB_ADDR_WIDTH)
   ) u_axiregs (
@@ -189,7 +189,7 @@ module ip0_spi_core #(
       .spi_data_rx_ready(spi_data_rx_ready)
   );
 
-  ip0_spi_fifo #(
+  ip4_spi_fifo #(
       .DATA_WIDTH  (32),
       .BUFFER_DEPTH(BUFFER_DEPTH)
   ) u_txfifo (
@@ -208,7 +208,7 @@ module ip0_spi_core #(
       .ready_o(spi_data_tx_ready)
   );
 
-  ip0_spi_fifo #(
+  ip4_spi_fifo #(
       .DATA_WIDTH  (32),
       .BUFFER_DEPTH(BUFFER_DEPTH)
   ) u_rxfifo (
@@ -227,7 +227,7 @@ module ip0_spi_core #(
       .ready_o(spi_ctrl_data_rx_ready)
   );
 
-  ip0_spi_ctrl u_spictrl (
+  ip4_spi_ctrl u_spictrl (
       .clk                   (HCLK),
       .rstn                  (HRESETn),
       .eot                   (s_eot),

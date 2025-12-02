@@ -1,5 +1,5 @@
 
-module ip0_uart16550 #(
+module ip4_uart16550 #(
     parameter SYS_CLK_FREQ   = 100_000_000,
     parameter BAUD_RATE      = 115_200,
     parameter RX_FIFO_DEPTH  = 128,        // 接收FIFO深度
@@ -258,14 +258,14 @@ module ip0_uart16550 #(
         end
     end
 
-    ip0_clk_gen u_uart_clk_gen(
+    ip4_clk_gen u_uart_clk_gen(
         .clk            (clk),
         .rst_n          (rst_n),
         .div_i          (baud_div_reg),
         .clk_o          (baud_clk)
     );
 
-    ip0_fifo #(
+    ip4_fifo #(
         .DATA_WIDTH  (8),
         .FIFO_DEPTH  (RX_FIFO_DEPTH)
     ) u_rx_fifo (
@@ -280,7 +280,7 @@ module ip0_uart16550 #(
         .empty_o     (rx_fifo_empty)
     );
 
-    ip0_fifo #(
+    ip4_fifo #(
         .DATA_WIDTH  (8),
         .FIFO_DEPTH  (TX_FIFO_DEPTH)
     ) u_tx_fifo (
@@ -313,7 +313,7 @@ module ip0_uart16550 #(
     //--------------------------------------------------------------------
     // 发送部分
     //--------------------------------------------------------------------
-    ip0_uart_tx u_uart_tx (
+    ip4_uart_tx u_uart_tx (
         .clk             (clk),
         .rst_n           (rst_n),
         .baud_clk_i      (baud_clk),
@@ -351,7 +351,7 @@ module ip0_uart16550 #(
     //--------------------------------------------------------------------
     // 接收部分
     //--------------------------------------------------------------------
-    ip0_uart_rx u_uart_rx (
+    ip4_uart_rx u_uart_rx (
         .clk             (clk),
         .rst_n           (rst_n),
         .baud_clk_i      (baud_clk),

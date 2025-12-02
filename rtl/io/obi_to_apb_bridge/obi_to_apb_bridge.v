@@ -1,4 +1,4 @@
-module ip0_obi_to_apb_bridge (
+module ip4_obi_to_apb_bridge (
     // OBI接口信号
     input  wire        clk,
     input  wire        rst_n,

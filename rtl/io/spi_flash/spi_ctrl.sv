@@ -16,7 +16,7 @@
 `define SPI_QUAD_TX 2'b01
 `define SPI_QUAD_RX 2'b10
 
-module ip0_spi_ctrl (
+module ip4_spi_ctrl (
     input  wire        clk,
     input  wire        rstn,
     output reg         eot,
@@ -115,7 +115,7 @@ module ip0_spi_ctrl (
 
   assign en_quad = (spi_qrd | spi_qwr) | en_quad_int;
 
-  ip0_spi_clkgen u_clkgen (
+  ip4_spi_clkgen u_clkgen (
       .clk_i          (clk),
       .rst_n_i        (rstn),
       .en_i           (1'b1),
@@ -126,7 +126,7 @@ module ip0_spi_ctrl (
       .spi_rise_o     (spi_rise)
   );
 
-  ip0_spi_tx u_txreg (
+  ip4_spi_tx u_txreg (
       .clk           (clk),
       .rstn          (rstn),
       .en            (spi_en_tx),
@@ -145,7 +145,7 @@ module ip0_spi_ctrl (
       .clk_en_o      (tx_clk_en)
   );
 
-  ip0_spi_rx u_rxreg (
+  ip4_spi_rx u_rxreg (
       .clk           (clk),
       .rstn          (rstn),
       .en            (spi_en_rx),
