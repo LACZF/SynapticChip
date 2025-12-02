@@ -35,6 +35,10 @@ module fifo #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             wr_ptr <= 0;
+            // 复位FIFO数组
+            for (integer i = 0; i < FIFO_DEPTH; i = i + 1) begin
+                fifo[i] <= {DATA_WIDTH{1'b0}};
+            end
         end else if (wr_en_i && !full_o) begin
             fifo[wr_ptr] <= data_in_i;
             wr_ptr       <= (wr_ptr + 1) % FIFO_DEPTH;
