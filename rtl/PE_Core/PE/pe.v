@@ -1,4 +1,4 @@
-module pe #(
+module ip0_pe #(
     parameter DATA_WIDTH = 32
 )(
     input  wire                  clk,

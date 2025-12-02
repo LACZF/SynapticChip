@@ -1,5 +1,5 @@
 `define GPIO_REG_ADDR_LEN 8
-module gpio_top #(
+module ip0_gpio_top #(
     parameter GPIO_IN_NUM      = 1,
     parameter GPIO_OUT_NUM     = 1,
     parameter GPIO_INOUT_NUM   = 1

@@ -1,6 +1,6 @@
 `include "common.v"
 
-module io_top #(
+module ip0_io_top #(
     parameter ADDR_WIDTH           = 32,
     parameter DATA_WIDTH           = 32,
     parameter IO_SLAVES            = 9,
@@ -136,7 +136,7 @@ module io_top #(
         if (IMPLEMENT_TIMER) begin : timer_gen
             assign slave_addr_base[SLAVE_TIMER_INDEX] = TIMER_ADDR_BASE;
             assign slave_addr_mask[SLAVE_TIMER_INDEX] = TIMER_ADDR_MASK;
-            timer_top u_timer (
+            ip0_timer_top u_timer (
                 .clk             (clk),
                 .rst_n           (rst_n),
 
@@ -163,7 +163,7 @@ module io_top #(
         if (IMPLEMENT_UART) begin : uart_gen
             assign slave_addr_base[SLAVE_UART_INDEX]  = UART_ADDR_BASE;
             assign slave_addr_mask[SLAVE_UART_INDEX]  = UART_ADDR_MASK;
-            uart_top u_uart (
+            ip0_uart_top u_uart (
                 .clk             (clk),
                 .rst_n           (rst_n),
 
@@ -198,7 +198,7 @@ module io_top #(
         if (IMPLEMENT_GPIO) begin : gpio_gen
             assign slave_addr_base[SLAVE_GPIO_INDEX]  = GPIO_ADDR_BASE;
             assign slave_addr_mask[SLAVE_GPIO_INDEX]  = GPIO_ADDR_MASK;
-            gpio_top #(
+            ip0_gpio_top #(
                 .GPIO_IN_NUM     (GPIO_IN_NUM),
                 .GPIO_OUT_NUM    (GPIO_OUT_NUM),
                 .GPIO_INOUT_NUM  (GPIO_INOUT_NUM)
@@ -230,7 +230,7 @@ module io_top #(
         if (IMPLEMENT_SPI) begin : spi_gen
             assign slave_addr_base[SLAVE_SPI_INDEX]   = SPI_ADDR_BASE;
             assign slave_addr_mask[SLAVE_SPI_INDEX]   = SPI_ADDR_MASK;
-            spi_top #(
+            ip0_spi_top #(
                 .ADDR_WIDTH    (ADDR_WIDTH),
                 .DATA_WIDTH    (DATA_WIDTH),
                 .SPI_NUM       (SPI_NUM)
@@ -268,7 +268,7 @@ module io_top #(
         if (IMPLEMENT_SPI_FLASH) begin : spi_flash_gen
             assign slave_addr_base[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_BASE;
             assign slave_addr_mask[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_MASK;
-            spi_flash_controller u_spi_flash_ctrl (
+            ip0_spi_flash_controller u_spi_flash_ctrl (
                 .clk           (clk),
                 .rst_n         (rst_n),
 
@@ -300,7 +300,7 @@ module io_top #(
         if (IMPLEMENT_XIP) begin : flash_gen
             assign slave_addr_base[SLAVE_FLASH_INDEX]  = XIP_ADDR_BASE;
             assign slave_addr_mask[SLAVE_FLASH_INDEX]  = XIP_ADDR_MASK;
-            xip_top u_xip (
+            ip0_xip_top u_xip (
                 .clk_i          (clk),
                 .rst_ni         (rst_n),
                 .req_i          (slave_req[SLAVE_FLASH_INDEX]),
@@ -361,7 +361,7 @@ module io_top #(
     // 中断控制器实例化
     assign slave_addr_base[SLAVE_IRQ_INDEX] = IRQ_CTRL_ADDR_BASE;
     assign slave_addr_mask[SLAVE_IRQ_INDEX] = IRQ_CTRL_ADDR_MASK;
-    irq_controller #(
+    ip0_irq_controller #(
         .NUM_IRQ_SOURCES(NUM_IRQ_SOURCES)
     ) u_irq_controller (
         .clk           (clk),
@@ -389,7 +389,7 @@ module io_top #(
         if (IMPLEMENT_EXT_APB) begin : apb_bridge_gen
             assign slave_addr_base[SLAVE_APB_BRIDGE_INDEX] = APB_BRIDGE_ADDR_BASE;
             assign slave_addr_mask[SLAVE_APB_BRIDGE_INDEX] = APB_BRIDGE_ADDR_MASK;
-            obi_to_apb_bridge u_obi_to_apb_bridge (
+            ip0_obi_to_apb_bridge u_obi_to_apb_bridge (
                 .clk(clk),
                 .rst_n(rst_n),
 

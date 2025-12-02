@@ -224,7 +224,7 @@ module SynapticChip_test;
     always #5 clk = ~clk;
 
     /********** 实例化chip_top **********/
-    SynapticChip u_SynapticChip (
+    ip0_SynapticChip u_SynapticChip (
         .clk         (clk),
         .rst_n       (rst_n),
 
@@ -270,7 +270,7 @@ module SynapticChip_test;
         );
     end
 
-    rom #(
+    ip0_rom #(
         .DP(ROM_DEPTH)
     ) u_ext_rom (
         .clk_i      (clk),
@@ -294,14 +294,14 @@ module SynapticChip_test;
 `ifdef USE_RS232_TEST
     wire                      baud_clk;        // 波特率时钟
 
-    clk_gen u_uart_clk_gen(
+    ip0_clk_gen u_uart_clk_gen(
         .clk              (clk),
         .rst_n            (rst_n),
         .div_i            (16'(UART_DIV_RATE)),
         .clk_o            (baud_clk)
     );
 
-    uart_rx u_uart_rx (
+    ip0_uart_rx u_uart_rx (
         .clk              (clk),
         .rst_n            (rst_n),
         .baud_clk_i       (baud_clk),
@@ -314,7 +314,7 @@ module SynapticChip_test;
         .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
     );
 
-    uart_tx u_uart_tx (
+    ip0_uart_tx u_uart_tx (
         .clk              (clk),
         .rst_n            (rst_n),
         .baud_clk_i       (baud_clk),

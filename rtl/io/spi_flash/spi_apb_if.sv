@@ -27,7 +27,7 @@
 `define REG_INTCFG 4'b1001 // BASEREG + 0x24
 `define REG_INTSTA 4'b1010 // BASEREG + 0x28
 
-module spi_apb_if #(
+module ip0_spi_apb_if #(
     parameter BUFFER_DEPTH     = 10,
     parameter APB_ADDR_WIDTH   = 12,                  //APB slaves are 4KB by default
     parameter LOG_BUFFER_DEPTH = `log2(BUFFER_DEPTH)

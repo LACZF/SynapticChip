@@ -5,7 +5,7 @@
 
 `include "defines.sv"
 
-module chip_top #(
+module ip0_chip_top #(
     parameter TRACE_ENABLE              = 0,
     parameter CPU_NUM                   = 1,
     parameter ROM_DEPTH                 = 1024,
@@ -191,7 +191,7 @@ module chip_top #(
         for (i = 0; i < CPU_NUM; i = i + 1) begin : cpu_gen
             assign master_we[2*i + 1] = '0;
             assign master_be[2*i + 1] = '0;
-            tinyriscv_core #(
+            ip0_tinyriscv_core #(
                 .DEBUG_HALT_ADDR(DEBUG_ADDR_BASE + `HaltAddress),
                 .DEBUG_EXCEPTION_ADDR(DEBUG_ADDR_BASE + `ExceptionAddress),
                 .CPU_RESET_ADDR(CPU_RESET_ADDR),
@@ -252,7 +252,7 @@ module chip_top #(
             assign slave_addr_mask[SLAVE_ROM_INDEX] = ROM_ADDR_MASK;
             assign slave_addr_base[SLAVE_ROM_INDEX] = ROM_ADDR_BASE;
             // 数据存储器
-            ram #(
+            ip0_ram #(
                 .DP(ROM_DEPTH)
             ) u_rom (
                 .clk_i          (clk),
@@ -270,7 +270,7 @@ module chip_top #(
 
             assign slave_addr_mask[SLAVE_BOOT_ROM] = BOOTROM_ADDR_MASK;
             assign slave_addr_base[SLAVE_BOOT_ROM] = BOOTROM_ADDR_BASE;
-            bootrom_top u_bootrom(
+            ip0_bootrom_top u_bootrom(
                 .clk     (clk),
                 .rst_n   (ndmreset_n),
                 .req_i   (slave_req[SLAVE_BOOT_ROM]),
@@ -300,7 +300,7 @@ module chip_top #(
     assign slave_addr_mask[SLAVE_RAM_INDEX] = RAM_ADDR_MASK;
     assign slave_addr_base[SLAVE_RAM_INDEX] = RAM_ADDR_BASE;
     // 数据存储器
-    ram #(
+    ip0_ram #(
         .DP(RAM_DEPTH)
     ) u_ram (
         .clk_i          (clk),
@@ -320,7 +320,7 @@ module chip_top #(
     assign slave_addr_mask[SLAVE_PE_TOP_INDEX] = PE_ADDR_MASK;
     assign slave_addr_base[SLAVE_PE_TOP_INDEX] = PE_ADDR_BASE;
     // PE_TOP实例化
-    pe_top #(
+    ip0_pe_top #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
         .PE_ARRAY_X(PE_ARRAY_X),
@@ -366,7 +366,7 @@ module chip_top #(
         end
     endgenerate
 
-    io_top #(
+    ip0_io_top #(
         .ADDR_WIDTH             (ADDR_WIDTH),
         .DATA_WIDTH             (DATA_WIDTH),
         .IO_SLAVES              (IO_SLAVES),
@@ -450,7 +450,7 @@ module chip_top #(
     );
 
     // 内部总线
-    obi_interconnect #(
+    ip0_obi_interconnect #(
         .MASTERS(MASTERS),
         .SLAVES(SLAVES)
     ) bus (
@@ -477,7 +477,7 @@ module chip_top #(
     );
 
     // 复位信号产生
-    rst_gen #(
+    ip0_rst_gen #(
         .RESET_FIFO_DEPTH(5)
     ) u_rst (
         .clk    (clk),
@@ -491,7 +491,7 @@ module chip_top #(
             assign slave_addr_mask[SLAVE_JTAG_INDEX] = DEBUG_ADDR_MASK;
             assign slave_addr_base[SLAVE_JTAG_INDEX] = DEBUG_ADDR_BASE;
             // JTAG模块
-            jtag_top #(
+            ip0_jtag_top #(
 
             ) u_jtag (
                 .clk_i              (clk),

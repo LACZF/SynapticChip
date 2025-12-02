@@ -12,7 +12,7 @@
 `define EXT_BUAD_REG          (100_000_000 / 115_200 / 2 / `EXT_SAMPLE_REG)
 `endif
 
-module SynapticChip (
+module ip0_SynapticChip (
     input  wire                         clk,
     input  wire                         rst_n,
 
@@ -44,7 +44,7 @@ module SynapticChip (
     localparam IMPLEMENT_SPI_FLASH       = 0;
     localparam IMPLEMENT_TIMER           = 1;
     localparam IMPLEMENT_I2C             = 0;
-    localparam IMPLEMENT_EXT_OBI         = 0;
+    localparam IMPLEMENT_EXT_OBI         = 1;
     localparam IMPLEMENT_EXT_APB         = 0;
     localparam GPIO_IN_NUM               = 4;
     localparam GPIO_OUT_NUM              = 4;
@@ -89,7 +89,7 @@ module SynapticChip (
     wire                                 spi_flash_wp;
     wire                                 spi_flash_sio3;
 
-    chip_top #(
+    ip0_chip_top #(
         .TRACE_ENABLE(TRACE_ENABLE),
         .CPU_NUM(CPU_NUM),
         .ROM_DEPTH(ROM_DEPTH),

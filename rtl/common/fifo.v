@@ -1,4 +1,4 @@
-module fifo #(
+module ip0_fifo #(
     parameter DATA_WIDTH                = 32,
     parameter FIFO_DEPTH                = 8
 )(

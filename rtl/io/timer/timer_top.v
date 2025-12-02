@@ -1,7 +1,7 @@
 
 
 
-module timer_top(
+module ip0_timer_top(
     input  wire                    clk,
     input  wire                    rst_n,
 

@@ -20,7 +20,7 @@
 `define SPI_QUAD_TX 2'b01
 `define SPI_QUAD_RX 2'b10
 
-module spi_obi_core #(
+module ip0_spi_obi_core #(
     parameter BUFFER_DEPTH   = 10
 ) (
     // OBI总线接口
@@ -150,7 +150,7 @@ module spi_obi_core #(
   end
 
   // OBI接口模块
-  spi_obi_if #(
+  ip0_spi_obi_if #(
       .BUFFER_DEPTH(BUFFER_DEPTH)
   ) u_obiregs (
       .clk_i(clk_i),
@@ -193,7 +193,7 @@ module spi_obi_core #(
   );
 
   // TX FIFO
-  spi_fifo #(
+  ip0_spi_fifo #(
       .DATA_WIDTH  (32),
       .BUFFER_DEPTH(BUFFER_DEPTH)
   ) u_txfifo (
@@ -213,7 +213,7 @@ module spi_obi_core #(
   );
 
   // RX FIFO
-  spi_fifo #(
+  ip0_spi_fifo #(
       .DATA_WIDTH  (32),
       .BUFFER_DEPTH(BUFFER_DEPTH)
   ) u_rxfifo (
@@ -233,7 +233,7 @@ module spi_obi_core #(
   );
 
   // SPI控制器
-  spi_ctrl u_spictrl (
+  ip0_spi_ctrl u_spictrl (
       .clk                   (clk_i),
       .rstn                  (rst_ni),
       .eot                   (s_eot),

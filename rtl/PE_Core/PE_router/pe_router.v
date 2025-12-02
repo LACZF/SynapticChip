@@ -1,4 +1,4 @@
-module pe_router #(
+module ip0_pe_router #(
     parameter DATA_WIDTH = 32
 )(
     input  wire                  clk,

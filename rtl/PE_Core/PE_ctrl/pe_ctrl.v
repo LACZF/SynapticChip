@@ -1,4 +1,4 @@
-module pe_control #(
+module ip0_pe_control #(
     parameter PE_ARRAY_X = 4,
     parameter PE_ARRAY_Y = 4,
     parameter DATA_WIDTH = 32,

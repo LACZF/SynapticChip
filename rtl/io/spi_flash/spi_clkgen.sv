@@ -12,7 +12,7 @@
 // MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 // See the Mulan PSL v2 for more details.
 
-module spi_clkgen (
+module ip0_spi_clkgen (
     input  logic       clk_i,
     input  logic       rst_n_i,
     input  logic       en_i,

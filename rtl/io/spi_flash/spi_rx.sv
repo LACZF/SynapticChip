@@ -12,7 +12,7 @@
 // MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 // See the Mulan PSL v2 for more details.
 
-module spi_rx (
+module ip0_spi_rx (
     input  wire        clk,
     input  wire        rstn,
     input  wire        en,

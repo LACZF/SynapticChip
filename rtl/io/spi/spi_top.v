@@ -1,5 +1,5 @@
 
-module spi_top #(
+module ip0_spi_top #(
     parameter DATA_WIDTH             = 32,
     parameter ADDR_WIDTH             = 32,
     parameter SPI_NUM                = 1
