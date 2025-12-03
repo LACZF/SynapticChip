@@ -20,14 +20,6 @@ module ip4_pe_control #(
     output reg                                              start_computation,
     input  wire                                             computation_done,
 
-    // 高带宽内存接口
-    output reg                                              high_bw_req_o,
-    output reg                                              high_bw_we_o,
-    output reg  [31:0]                                      high_bw_addr_o,
-    output reg  [HIGH_BW_DW-1:0]                            high_bw_data_o,
-    input  wire                                             high_bw_ack_i,
-    input  wire [HIGH_BW_DW-1:0]                            high_bw_data_i,
-
     // PE结果接口 - 直接写入内存
     input  wire [0:PE_ARRAY_X*PE_ARRAY_Y-1][DATA_WIDTH-1:0] pe_result,
     input  wire [0:PE_ARRAY_X*PE_ARRAY_Y-1]                 pe_result_valid,
@@ -58,16 +50,6 @@ module ip4_pe_control #(
     localparam HIGH_BW_WRITE_ADDR = 24'h10000C >> 2;
     localparam HIGH_BW_READ_ADDR  = 24'h100010 >> 2;
 
-    // 高带宽内存控制状态机
-    typedef enum logic [1:0] {
-        HIGH_BW_IDLE     = 2'b00,
-        HIGH_BW_REQUEST  = 2'b01,
-        HIGH_BW_WAIT_ACK = 2'b10,
-        HIGH_BW_DONE     = 2'b11
-    } high_bw_state_t;
-
-    high_bw_state_t high_bw_state;
-
     // PE结果写回状态机
     typedef enum logic [1:0] {
         WRITE_BACK_IDLE   = 2'b00,
@@ -81,18 +63,6 @@ module ip4_pe_control #(
     // PE结果写回计数器
     reg  [7:0]  pe_write_back_index;
     reg  [15:0] pe_write_back_addr;
-
-    // 高带宽内存传输控制
-    reg  [15:0] high_bw_transfer_length;
-    reg  [15:0] high_bw_current_addr;
-    reg  [15:0] high_bw_transfer_count;
-    reg         high_bw_start;
-
-    // 高带宽启动请求信号
-    reg         high_bw_start_request;
-    reg         high_bw_start_we;
-    reg  [15:0] high_bw_start_length;
-    reg  [15:0] high_bw_start_addr;
 
     // 地址拆分
     wire [23:0] addr_base       = (addr_i[23:0] >> 2);
@@ -126,11 +96,6 @@ module ip4_pe_control #(
             rdata_o                 <= {DATA_WIDTH{1'b0}};
             control_reg             <= {DATA_WIDTH{1'b0}};
             read_addr_reg           <= {ADDR_WIDTH{1'b0}};
-            high_bw_we_o            <= 1'b0;
-            high_bw_transfer_length <= 16'b0;
-            high_bw_current_addr    <= 16'b0;
-            high_bw_transfer_count  <= 16'b0;
-            high_bw_start           <= 1'b0;
         end else begin
             case (obi_state)
                 IDLE: begin
@@ -155,13 +120,6 @@ module ip4_pe_control #(
                     if (we_i) begin
                         case (addr_base)
                             CONTROL_REG_ADDR: control_reg <= wdata_i;
-                            HIGH_BW_WRITE_ADDR: begin
-                                // 高带宽内存写入请求
-                                high_bw_start_request <= 1'b1;
-                                high_bw_start_we      <= 1'b1;
-                                high_bw_start_length  <= wdata_i[31:16];
-                                high_bw_start_addr    <= wdata_i[15:0];
-                            end
                             default: begin
                                 // 直接写入内存
                                 if (addr_base < MEM_DEPTH) begin
@@ -178,14 +136,6 @@ module ip4_pe_control #(
                         case (addr_base)
                             CONTROL_REG_ADDR: rdata_o <= control_reg;
                             STATUS_REG_ADDR:  rdata_o <= status_reg;
-                            HIGH_BW_READ_ADDR: begin
-                                // 高带宽内存读取请求
-                                high_bw_start_request <= 1'b1;
-                                high_bw_start_we      <= 1'b0;
-                                high_bw_start_length  <= wdata_i[31:16];
-                                high_bw_start_addr    <= wdata_i[15:0];
-                                rdata_o <= {DATA_WIDTH{1'b0}};  // 高带宽读取返回0
-                            end
                             default: begin
                                 // 内存读取 - 直接读取当前值
                                 if (addr_base < MEM_DEPTH) begin
@@ -209,147 +159,6 @@ module ip4_pe_control #(
                         obi_state <= IDLE;
                     end
                     // 如果请求仍然有效，保持响应状态
-                end
-            endcase
-        end
-    end
-
-    // 高带宽启动请求处理 - 统一控制逻辑
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            high_bw_start          <= 1'b0;
-            high_bw_we_o           <= 1'b0;
-            high_bw_transfer_length <= 16'b0;
-            high_bw_current_addr    <= 16'b0;
-            high_bw_transfer_count <= 16'b0;
-        end else begin
-            // 清除启动信号，除非有新的请求
-            high_bw_start <= 1'b0;
-
-            // 处理高带宽启动请求
-            if (high_bw_start_request) begin
-                high_bw_start          <= 1'b1;
-                high_bw_we_o           <= high_bw_start_we;
-                high_bw_transfer_length <= high_bw_start_length;
-                high_bw_current_addr    <= high_bw_start_addr;
-                high_bw_transfer_count  <= 16'b0;
-                high_bw_start_request   <= 1'b0;  // 清除请求
-            end
-        end
-    end
-
-    // 高带宽内存状态机控制 - 优化版本
-    // 流水线化处理，提高传输效率
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            high_bw_state          <= HIGH_BW_IDLE;
-            high_bw_req_o          <= 1'b0;
-            high_bw_addr_o         <= 32'b0;
-            high_bw_data_o         <= {HIGH_BW_DW{1'b0}};
-        end else begin
-            case (high_bw_state)
-                HIGH_BW_IDLE: begin
-                    high_bw_req_o <= 1'b0;
-                    // 等待高带宽请求启动信号
-                    if (high_bw_start) begin
-                        high_bw_state <= HIGH_BW_REQUEST;
-
-                        // 预计算第一个地址
-                        high_bw_addr_o <= {16'b0, high_bw_current_addr};
-                    end
-                end
-
-                HIGH_BW_REQUEST: begin
-                    // 设置高带宽内存请求
-                    high_bw_req_o  <= 1'b1;
-
-                    // 如果是写操作，准备数据
-                    if (high_bw_we_o) begin
-                        // 从PE结果或内存准备数据
-                        if (high_bw_transfer_count < PE_ARRAY_X * PE_ARRAY_Y) begin
-                            high_bw_data_o <= {HIGH_BW_DW/DATA_WIDTH{pe_result[high_bw_transfer_count]}};
-                        end else begin
-                            high_bw_data_o <= {HIGH_BW_DW{1'b1}};  // 默认数据
-                        end
-                    end
-
-                    high_bw_state <= HIGH_BW_WAIT_ACK;
-                end
-
-                HIGH_BW_WAIT_ACK: begin
-                    if (high_bw_ack_i) begin
-                        high_bw_req_o          <= 1'b0;
-                        high_bw_transfer_count <= high_bw_transfer_count + 1;
-
-                        // 如果是读操作，处理返回数据
-                        if (!high_bw_we_o) begin
-                            // 将读取的数据写入内存对应位置
-                            // 这里可以扩展为处理高带宽数据
-                        end
-
-                        // 检查传输是否完成
-                        if (high_bw_transfer_count >= high_bw_transfer_length) begin
-                            high_bw_state <= HIGH_BW_DONE;
-                        end else begin
-                            high_bw_state <= HIGH_BW_REQUEST;
-                            // 预计算下一个地址 - 修复宽度不确定问题
-                            high_bw_addr_o <= {16'b0, (high_bw_current_addr + high_bw_transfer_count + 16'd1)};
-                        end
-                    end
-                end
-
-                HIGH_BW_DONE: begin
-                    high_bw_state <= HIGH_BW_IDLE;
-                end
-            endcase
-        end
-    end
-
-    // PE结果写回控制
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            write_back_state    <= WRITE_BACK_IDLE;
-            pe_write_back_index <= 8'b0;
-            pe_write_back_addr  <= 16'b0;
-        end else begin
-            case (write_back_state)
-                WRITE_BACK_IDLE: begin
-                    // 当所有PE计算完成时启动结果写回
-                    if (computation_done) begin
-                        write_back_state    <= WRITE_BACK_START;
-                        pe_write_back_index <= 8'b0;
-                        pe_write_back_addr  <= 16'h8000;  // PE结果写回起始地址
-                    end
-                end
-
-                WRITE_BACK_START: begin
-                    // 启动高带宽内存写入请求
-                    high_bw_start_request <= 1'b1;
-                    high_bw_start_we      <= 1'b1;  // 写操作
-                    high_bw_start_length <= PE_ARRAY_X * PE_ARRAY_Y;
-                    high_bw_start_addr    <= pe_write_back_addr;
-                    write_back_state      <= WRITE_BACK_ACTIVE;
-                end
-
-                WRITE_BACK_ACTIVE: begin
-                    // 监控高带宽传输状态
-                    if (high_bw_state == HIGH_BW_DONE) begin
-                        write_back_state <= WRITE_BACK_DONE;
-                    end
-
-                    // 在传输过程中准备PE结果数据
-                    if (high_bw_state == HIGH_BW_REQUEST && high_bw_we_o) begin
-                        // 准备当前PE的结果数据
-                        if (pe_write_back_index < PE_ARRAY_X * PE_ARRAY_Y) begin
-                            // 将PE结果扩展到高带宽数据宽度
-                            high_bw_data_o      <= {HIGH_BW_DW/DATA_WIDTH{pe_result[pe_write_back_index]}};
-                            pe_write_back_index <= pe_write_back_index + 1;
-                        end
-                    end
-                end
-
-                WRITE_BACK_DONE: begin
-                    write_back_state <= WRITE_BACK_IDLE;
                 end
             endcase
         end
