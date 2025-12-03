@@ -9,7 +9,6 @@
 // See the Mulan PSL v2 for more details.
 
 module rs232 #(
-    parameter int SYS_CLK_FREQ = 10_0000_0000,
     parameter int BAUD_RATE    = 115200,
     parameter int LOOPBACK     = 0
 ) (
@@ -26,7 +25,7 @@ module rs232 #(
 );
 
   // unit: ns
-  localparam DELAY_TIME = (SYS_CLK_FREQ / BAUD_RATE);
+  localparam DELAY_TIME = (10_0000_0000 / BAUD_RATE);
   logic [7:0] data;
 
   initial begin

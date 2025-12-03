@@ -328,7 +328,6 @@ module SynapticChip_test;
     );
 `else
     rs232 #(
-        .SYS_CLK_FREQ  (SYS_CLK_FREQ * 10), // TODO : CHECK
         .BAUD_RATE     (BAUD_RATE),
         .LOOPBACK      (0)
     ) u_rs232 (
