@@ -41,7 +41,7 @@ module ip4_pe_control #(
 
     // Control registers
     reg [DATA_WIDTH-1:0] control_reg;
-    reg [DATA_WIDTH-1:0] status_reg;
+    reg                  start_delay;
 
     // Address mapping
     localparam CONTROL_REG_ADDR   = 24'h100000 >> 2;
@@ -70,11 +70,6 @@ module ip4_pe_control #(
     // Control register bits
     wire start_bit = control_reg[0];
 
-    // Status register bits
-    always @(*) begin
-        status_reg = {31'b0, computation_done};
-    end
-
     // OBI Bus FSM - 优化版本：单周期内存访问
     typedef enum logic [1:0] {
         IDLE      = 2'b00,
@@ -97,7 +92,16 @@ module ip4_pe_control #(
             control_reg             <= {DATA_WIDTH{1'b0}};
             read_addr_reg           <= {ADDR_WIDTH{1'b0}};
             memory                  <= {MEM_DEPTH*DATA_WIDTH{1'b0}};
+            start_computation       <= 1'b0;
+            start_delay             <= 1'b0;
         end else begin
+            start_delay       <= start_bit;
+            if (start_bit && !start_delay) begin
+                start_computation <= 1'b1;
+            end else begin
+                start_computation <= 1'b0;
+            end
+
             if (start_computation) begin
                 memory[3*PE_ARRAY_X*PE_ARRAY_Y +: PE_ARRAY_X*PE_ARRAY_Y] <= {PE_ARRAY_X*PE_ARRAY_Y*DATA_WIDTH{1'b0}};
             end else begin
@@ -106,6 +110,12 @@ module ip4_pe_control #(
                         memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= pe_result[k];
                     end
                 end
+            end
+
+            for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
+                pe_operand1[k] = memory[k];
+                pe_operand2[k] = memory[PE_ARRAY_X*PE_ARRAY_Y + k];
+                pe_config[k]   = memory[2*PE_ARRAY_X*PE_ARRAY_Y + k];
             end
 
             case (obi_state)
@@ -146,7 +156,7 @@ module ip4_pe_control #(
                     else begin
                         case (addr_base)
                             CONTROL_REG_ADDR: rdata_o <= control_reg;
-                            STATUS_REG_ADDR:  rdata_o <= status_reg;
+                            STATUS_REG_ADDR:  rdata_o <= {31'b0, computation_done};
                             default: begin
                                 // 内存读取 - 直接读取当前值
                                 if (addr_base < MEM_DEPTH) begin
@@ -172,32 +182,6 @@ module ip4_pe_control #(
                     // 如果请求仍然有效，保持响应状态
                 end
             endcase
-        end
-    end
-
-    // Computation control - 产生启动脉冲
-    reg start_delay;
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            start_computation <= 1'b0;
-            start_delay       <= 1'b0;
-        end else begin
-            start_delay       <= start_bit;
-
-            // 产生一个时钟周期的启动脉冲
-            if (start_bit && !start_delay) begin
-                start_computation <= 1'b1;
-            end else begin
-                start_computation <= 1'b0;
-            end
-        end
-    end
-
-    always @(*) begin
-        for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
-            pe_operand1[k] = memory[k];
-            pe_operand2[k] = memory[PE_ARRAY_X*PE_ARRAY_Y + k];
-            pe_config[k]   = memory[2*PE_ARRAY_X*PE_ARRAY_Y + k];
         end
     end
 
