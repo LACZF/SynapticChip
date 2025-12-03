@@ -53,13 +53,7 @@ module tb_pe_top;
         .wdata_i(wdata_i),
         .gnt_o(gnt_o),
         .rvalid_o(rvalid_o),
-        .rdata_o(rdata_o),
-        .mem_req_o(mem_req_o),
-        .mem_we_o(mem_we_o),
-        .mem_addr_o(mem_addr_o),
-        .mem_data_o(mem_data_o),
-        .mem_ack_i(mem_ack_i),
-        .mem_data_i(mem_data_i)
+        .rdata_o(rdata_o)
     );
 
     // Clock Generation

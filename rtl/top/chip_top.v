@@ -177,14 +177,6 @@ module ip4_chip_top #(
     wire [NUM_PES-1:0]                                    pe_irq;
     wire [(NUM_PES*8)-1:0]                                pe_irq_id;
 
-    // 高带宽内存接口信号（用于PE直接内存访问）
-    wire                                                  pe_mem_req;                 // 高带宽内存请求信号
-    wire                                                  pe_mem_we;                  // 高带宽内存写使能
-    wire [ADDR_WIDTH-1:0]                                 pe_mem_addr;                // 高带宽内存地址
-    wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_o;              // 高带宽内存写入数据
-    wire                                                  pe_mem_ack;                 // 高带宽内存应答信号
-    wire [(PE_ARRAY_X+3)*PE_ARRAY_Y*DATA_WIDTH-1:0]       pe_mem_data_i;              // 高带宽内存读取数据
-
     // CPU实例化
     generate
         genvar i;
@@ -316,7 +308,6 @@ module ip4_chip_top #(
         .data_o         (slave_rdata[SLAVE_RAM_INDEX])
     );
 
-
     assign slave_addr_mask[SLAVE_PE_TOP_INDEX] = PE_ADDR_MASK;
     assign slave_addr_base[SLAVE_PE_TOP_INDEX] = PE_ADDR_BASE;
     // PE_TOP实例化
@@ -329,14 +320,6 @@ module ip4_chip_top #(
     ) u_pe_top (
         .clk        (clk),
         .rst_n      (ndmreset_n),
-
-        // 直接内存接口 - 连接到高带宽内存接口信号
-        .mem_req_o  (pe_mem_req),
-        .mem_we_o   (pe_mem_we),
-        .mem_addr_o (pe_mem_addr),
-        .mem_data_o (pe_mem_data_o),
-        .mem_ack_i  (pe_mem_ack),
-        .mem_data_i (pe_mem_data_i),
 
         .req_i      (slave_req[SLAVE_PE_TOP_INDEX]),
         .we_i       (slave_we[SLAVE_PE_TOP_INDEX]),

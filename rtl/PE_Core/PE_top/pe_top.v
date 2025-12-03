@@ -15,15 +15,7 @@ module ip4_pe_top #(
     input  wire [DATA_WIDTH-1:0] wdata_i,
     output wire                  gnt_o,
     output wire                  rvalid_o,
-    output wire [DATA_WIDTH-1:0] rdata_o,
-
-    // 高带宽内存接口（直接与RAM对接）
-    output wire                  mem_req_o,
-    output wire                  mem_we_o,
-    output wire [31:0]           mem_addr_o,
-    output wire [HIGH_BW_DW-1:0] mem_data_o,
-    input  wire                  mem_ack_i,
-    input  wire [HIGH_BW_DW-1:0] mem_data_i
+    output wire [DATA_WIDTH-1:0] rdata_o
 );
 
     // Internal signals - 简化信号连接
