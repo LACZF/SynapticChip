@@ -4668,7 +4668,7 @@ index 1c873f9..68f8a7b 100644
      ) u_clk_div (
          .clk_i(clk_i),
 diff --git a/rtl/perips/xip/spi_master_transmit.sv b/rtl/perips/xip/spi_master_transmit.sv
-index 2193e36..7a93c4c 100644
+index 2193e36..2d27ed7 100644
 --- a/rtl/perips/xip/spi_master_transmit.sv
 +++ b/rtl/perips/xip/spi_master_transmit.sv
 @@ -1,21 +1,21 @@
@@ -4706,6 +4706,15 @@ index 2193e36..7a93c4c 100644
      input  logic        clk_i,
      input  logic        rst_ni,
  
+@@ -592,7 +592,7 @@ module spi_master_transmit (
+ 
+     logic [15:0] ratio = 1 << div_ratio_q;
+ 
+-    clk_div #(
++    ip4_clk_div #(
+         .RATIO_WIDTH(16)
+     ) u_clk_div (
+         .clk_i(clk_i),
 diff --git a/rtl/perips/xip/xip_core.sv b/rtl/perips/xip/xip_core.sv
 index 5a8d7de..978ae1a 100644
 --- a/rtl/perips/xip/xip_core.sv
