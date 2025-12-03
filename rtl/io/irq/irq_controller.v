@@ -26,7 +26,6 @@ module ip4_irq_controller #(
 );
 
     // OBI总线握手信号
-    reg req_accepted;           // 请求已接受标志
     wire [7:0] reg_addr;       // 寄存器地址
 
     // 中断使能寄存器
@@ -54,29 +53,18 @@ module ip4_irq_controller #(
     assign reg_addr = addr_i[7:0];
 
     // OBI总线握手逻辑
-    always @(posedge clk) begin
+    reg                             rvalid_q;
+    assign gnt_o = req_i;
+
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            gnt_o <= 1'b0;
-            rvalid_o <= 1'b0;
-            req_accepted <= 1'b0;
+            rvalid_q <= 1'b0;
         end else begin
-            // 授权信号：当没有挂起的请求时立即授权
-            if (req_i && !req_accepted) begin
-                gnt_o <= 1'b1;
-                req_accepted <= 1'b1;
-            end else begin
-                gnt_o <= 1'b0;
-            end
-
-            // 读有效信号：在请求被接受后的下一个周期置位
-            rvalid_o <= req_accepted;
-
-            // 清除请求接受标志
-            if (req_accepted) begin
-                req_accepted <= 1'b0;
-            end
+            rvalid_q <= req_i;
         end
     end
+
+    assign rvalid_o = rvalid_q;
 
     // 同步中断源信号
     always @(posedge clk) begin
@@ -127,34 +115,26 @@ module ip4_irq_controller #(
             irq_priority <= {NUM_IRQ_SOURCES*4{1'b0}};
             irq_pending <= {NUM_IRQ_SOURCES{1'b0}};
         end else begin
-            // 优先处理OBI总线写操作
-            if (req_accepted && we_i) begin
-                case (reg_addr)
-                    8'h00: irq_enable <= wr_data_i[NUM_IRQ_SOURCES-1:0];  // 中断使能寄存器
-                    8'h04: irq_pending <= irq_pending & (~wr_data_i[NUM_IRQ_SOURCES-1:0]); // 中断挂起寄存器（清除指定的挂起位）
-                    8'h08: irq_priority[31:0] <= wr_data_i;              // 优先级寄存器0
-                    8'h0C: irq_priority[63:32] <= wr_data_i;              // 优先级寄存器1
-                    // 可以继续添加更多优先级寄存器
-                endcase
-            end else begin
-                // 检测新的中断并设置挂起位
-                irq_pending <= irq_pending | new_irq_mask;
+            irq_pending <= irq_pending | new_irq_mask;
+            if (req_i) begin
+                if (we_i) begin
+                    case (reg_addr)
+                        8'h00: irq_enable <= wr_data_i[NUM_IRQ_SOURCES-1:0];  // 中断使能寄存器
+                        8'h04: irq_pending <= irq_pending & (~wr_data_i[NUM_IRQ_SOURCES-1:0]); // 中断挂起寄存器（清除指定的挂起位）
+                        8'h08: irq_priority[31:0] <= wr_data_i;              // 优先级寄存器0
+                        8'h0C: irq_priority[63:32] <= wr_data_i;              // 优先级寄存器1
+                        // 可以继续添加更多优先级寄存器
+                    endcase
+                end else begin
+                    case (reg_addr)
+                        8'h00: data_out_o = {{(32-NUM_IRQ_SOURCES){1'b0}}, irq_enable};  // 中断使能寄存器
+                        8'h04: data_out_o = {{(32-NUM_IRQ_SOURCES){1'b0}}, irq_pending}; // 中断挂起寄存器
+                        8'h08: data_out_o = irq_priority[31:0];                          // 优先级寄存器0
+                        8'h0C: data_out_o = irq_priority[63:32];                          // 优先级寄存器1
+                        default: data_out_o = 32'h0;
+                    endcase
+                end
             end
         end
     end
-
-    // OBI总线寄存器读操作处理
-    always @(*) begin
-        data_out_o = 32'h0;
-        if (req_accepted && !we_i) begin
-            case (reg_addr)
-                8'h00: data_out_o = {{(32-NUM_IRQ_SOURCES){1'b0}}, irq_enable};  // 中断使能寄存器
-                8'h04: data_out_o = {{(32-NUM_IRQ_SOURCES){1'b0}}, irq_pending}; // 中断挂起寄存器
-                8'h08: data_out_o = irq_priority[31:0];                          // 优先级寄存器0
-                8'h0C: data_out_o = irq_priority[63:32];                          // 优先级寄存器1
-                default: data_out_o = 32'h0;
-            endcase
-        end
-    end
-
 endmodule
