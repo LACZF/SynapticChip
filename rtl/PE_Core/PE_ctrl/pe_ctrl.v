@@ -87,7 +87,7 @@ module ip4_pe_control #(
     // 地址寄存器，用于保持读取地址
     reg [ADDR_WIDTH-1:0] read_addr_reg;
 
-    // OBI Bus Control - 优化版本：单周期完成内存访问
+    integer k;
     always @(posedge clk) begin
         if (!rst_n) begin
             obi_state               <= IDLE;
@@ -96,7 +96,18 @@ module ip4_pe_control #(
             rdata_o                 <= {DATA_WIDTH{1'b0}};
             control_reg             <= {DATA_WIDTH{1'b0}};
             read_addr_reg           <= {ADDR_WIDTH{1'b0}};
+            memory                  <= {MEM_DEPTH*DATA_WIDTH{1'b0}};
         end else begin
+            if (start_computation) begin
+                memory[3*PE_ARRAY_X*PE_ARRAY_Y +: PE_ARRAY_X*PE_ARRAY_Y] <= {PE_ARRAY_X*PE_ARRAY_Y*DATA_WIDTH{1'b0}};
+            end else begin
+                for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
+                    if (pe_result_valid[k]) begin
+                        memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= pe_result[k];
+                    end
+                end
+            end
+
             case (obi_state)
                 IDLE: begin
                     rvalid_o <= 1'b0;
@@ -182,41 +193,6 @@ module ip4_pe_control #(
         end
     end
 
-    // 内存初始化
-    integer k;
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            // 初始化内存为0 - 使用简单赋值避免复杂循环
-            // 注意：这里简化了复位逻辑，实际使用时需要确保MEM_DEPTH大小合理
-            memory <= {MEM_DEPTH*DATA_WIDTH{1'b0}};
-        end
-    end
-
-    // PE输出写入内存逻辑 - 优化版本
-    // 使用并行写入和条件更新，提高效率
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            // 复位时清零PE输出区域 - 使用简单赋值避免复杂循环
-            // 注意：这里简化了复位逻辑，实际使用时需要确保PE_ARRAY_X*PE_ARRAY_Y大小合理
-            memory[3*PE_ARRAY_X*PE_ARRAY_Y +: PE_ARRAY_X*PE_ARRAY_Y] <= {PE_ARRAY_X*PE_ARRAY_Y*DATA_WIDTH{1'b0}};
-        end else begin
-            // 在PE开始计算之前清零PE输出区域
-            if (start_computation) begin
-                memory[3*PE_ARRAY_X*PE_ARRAY_Y +: PE_ARRAY_X*PE_ARRAY_Y] <= {PE_ARRAY_X*PE_ARRAY_Y*DATA_WIDTH{1'b0}};
-            end else begin
-                // 并行写入有效的PE结果
-                for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
-                    if (pe_result_valid[k]) begin
-                        memory[3*PE_ARRAY_X*PE_ARRAY_Y + k] <= pe_result[k];
-                    end
-                    // 如果PE结果无效，保持当前值不变，避免不必要的写入
-                end
-            end
-        end
-    end
-
-    // PE操作数和配置输出 - 优化版本
-    // 使用组合逻辑直接映射，零延迟输出
     always @(*) begin
         for (k = 0; k < PE_ARRAY_X * PE_ARRAY_Y; k = k + 1) begin
             pe_operand1[k] = memory[k];
