@@ -48,6 +48,7 @@ reg [23:0] addr_reg;
 reg [7:0] cmd_reg;
 reg [1:0] data_len_reg;
 reg [3:0] dummy_cnt;
+wire is_need_addr = ((cmd_reg != 8'h9F) && (cmd_reg != 8'h05)); // TODO
 
 // 状态寄存器
 always @(posedge clk or negedge rst_n) begin
@@ -71,7 +72,8 @@ always @(*) begin
 
         STATE_CMD: begin
             if (bit_cnt == 5'd7 && clk_rising) begin
-                next_state = STATE_ADDR;
+                next_state = is_need_addr ? STATE_ADDR :
+                    (cmd_reg == 8'h02 || cmd_reg == 8'h0A) ? STATE_DATA_WR : STATE_DUMMY;
             end
         end
 

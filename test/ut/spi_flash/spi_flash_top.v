@@ -117,7 +117,13 @@ always @(posedge clk or negedge rst_n) begin
                         dummy_cycle <= 4'h8;
                     end else begin
                         if (obi_addr_i[24]) begin
-                            ctrl_cmd <= 8'h9F;  // 读ID
+                            case (obi_addr_i[23:0])
+                                24'h04 : ctrl_cmd <= 8'h9F;  // 读ID
+                                24'h08 : ctrl_cmd <= 8'h05;  // 读status
+                                24'h0c : ctrl_cmd <= 8'h35;  // 读status2
+                                24'h10 : ctrl_cmd <= 8'h15;  // 读status3
+                                default: ctrl_cmd <= 8'h05;  // 读status
+                            endcase
                         end else begin
                             ctrl_cmd <= 8'h03;  // 读数据
                         end

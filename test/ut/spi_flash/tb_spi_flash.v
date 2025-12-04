@@ -143,17 +143,21 @@ initial begin
     $display("Starting SPI Flash Controller Test");
     $display("=========================================\n");
 
-/*
     // 测试1：读取Flash ID
     $display("Test 1: Reading Flash ID");
-    send_obi_read(32'h8000_0004);  // 读ID命令地址（bit24=1表示读ID）
-    verify_data(32'h0020BA16, read_data, "Flash ID Read");
+    send_obi_read(32'h100_0004);  // 读ID命令地址（bit24=1表示读ID）
+    verify_data(32'h001870ef, read_data, "Flash ID Read");
 
     // 测试2：读取状态寄存器
     $display("\nTest 2: Reading Status Register");
-    send_obi_read(32'h8000_000C);  // 读状态寄存器地址
+    send_obi_read(32'h100_0008);  // 读状态寄存器地址
     verify_data(32'h00000000, read_data, "Status Register Read");
-*/
+
+    send_obi_read(32'h100_000C);  // 读状态2寄存器地址
+    verify_data(32'h00000000, read_data, "Status2 Register Read");
+
+    send_obi_read(32'h100_00010);  // 读状态3寄存器地址
+    verify_data(32'h00000000, read_data, "Status3 Register Read");
 
     // 测试3：读取指令数据
     $display("\nTest 3: Reading Instructions from Flash");
