@@ -875,6 +875,11 @@ begin :read_opcode
                 input_byte(byte_address[23:16]);
                 input_byte(byte_address[15:8]);
                 input_byte(byte_address[7:0]);
+            `ifdef DEBUG
+                $display("read : %08h = %02h%02h%02h%02h", byte_address,
+                    memory[byte_address+3], memory[byte_address+2],
+                    memory[byte_address+1], memory[byte_address+0]);
+            `endif
                 forever
                 begin
                     byte_address = byte_address & ADDRESS_MASK;
