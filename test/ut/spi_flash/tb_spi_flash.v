@@ -6,30 +6,30 @@ module tb_spi_flash;
     parameter CLK_PERIOD = 10;  // 100MHz
 
     // 信号定义
-    reg clk;
-    reg rst_n;
+    reg         clk;
+    reg         rst_n;
 
     // OBI总线接口
-    reg obi_req_i;
-    reg obi_we_i;
-    reg [31:0] obi_addr_i;
-    reg [31:0] obi_wdata_i;
-    reg [3:0] obi_be_i;
-    wire obi_gnt_o;
-    wire obi_rvalid_o;
+    reg         obi_req_i;
+    reg         obi_we_i;
+    reg  [31:0] obi_addr_i;
+    reg  [31:0] obi_wdata_i;
+    reg  [3:0]  obi_be_i;
+    wire        obi_gnt_o;
+    wire        obi_rvalid_o;
     wire [31:0] obi_rdata_o;
-    wire obi_err_o;
+    wire        obi_err_o;
 
     // SPI接口
-    wire spi_cs_n;
-    wire spi_sck;
-    wire spi_mosi;
-    wire spi_miso;
+    wire        spi_cs_n;
+    wire        spi_sck;
+    wire        spi_mosi;
+    wire        spi_miso;
 
     // 测试控制
-    reg [31:0] read_data;
-    integer error_count;
-    integer test_count;
+    reg  [31:0] read_data;
+    integer     error_count;
+    integer     test_count;
 
     // 时钟生成
     initial begin

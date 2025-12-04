@@ -268,12 +268,13 @@ module ip4_io_top #(
         if (IMPLEMENT_SPI_FLASH) begin : spi_flash_gen
             assign slave_addr_base[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_BASE;
             assign slave_addr_mask[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_MASK;
-            ip4_spi_flash_controller u_spi_flash_ctrl (
+            spi_flash_top u_spi_flash_ctrl (
                 .clk           (clk),
                 .rst_n         (rst_n),
 
                 .req_i         (slave_req[SLAVE_SPI_FLASH_INDEX]),
                 .we_i          (slave_we[SLAVE_SPI_FLASH_INDEX]),
+                .be_i          (slave_be[SLAVE_SPI_FLASH_INDEX]),
                 .addr_i        (slave_addr[SLAVE_SPI_FLASH_INDEX]),
                 .wdata_i       (slave_wdata[SLAVE_SPI_FLASH_INDEX]),
                 .rdata_o       (slave_rdata[SLAVE_SPI_FLASH_INDEX]),
