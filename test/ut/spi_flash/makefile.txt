@@ -1,0 +1,14 @@
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+TEST_TARGET := tb_spi_flash
+# TEST_ARGS   ?= -g2005-sv
+TEST_ARGS   ?= -g2012
+
+# TEST_INCLUDE_DIR +=
+
+TEST_SRC += $(CUR_DIR)/spi_flash_ctrl.v
+TEST_SRC += $(CUR_DIR)/spi_flash_top.v
+TEST_SRC += spi_clk_gen.v
+# TEST_SRC += $(CUR_DIR)/spi_flash_model.v
+TEST_SRC += $(TOP_DIR)/test/common/w25q128jvxim.sv
+TEST_SRC += $(CUR_DIR)/tb_spi_flash.v
