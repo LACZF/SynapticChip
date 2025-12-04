@@ -268,7 +268,7 @@ module ip4_io_top #(
         if (IMPLEMENT_SPI_FLASH) begin : spi_flash_gen
             assign slave_addr_base[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_BASE;
             assign slave_addr_mask[SLAVE_SPI_FLASH_INDEX]  = SPI_FLASH_ADDR_MASK;
-            spi_flash_top u_spi_flash_ctrl (
+            spi_flash_top u_spi_flash (
                 .clk           (clk),
                 .rst_n         (rst_n),
 
