@@ -405,7 +405,9 @@ begin :read_opcode
     if(cmd_byte != `CMD_CHIP_RESET)
         flag_enable_reset = 0;     // Ensure that ENABLE_RESET immediately precedes CHIP_RESET
 
+`ifdef DEBUG
     $display("\nCommand = %h", cmd_byte);
+`endif
 
     case (cmd_byte)    // Now dispatch the correct function
 
