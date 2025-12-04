@@ -198,3 +198,73 @@ extract_data_bss program.elf data_bss.hex
 
 build_program uart_boot.s uart_boot.elf ".bootrom" uart_boot.dis uart_boot.hex
 update_bootrom uart_boot.hex
+
+# Convert program.hex to MEM.TXT format (Verilog readmemh)
+hex_to_mem_txt() {
+    local hex_file="$1"
+    local mem_txt_file="$2"
+
+    # Create MEM.TXT header
+    echo "/* Contents of Memory Array starting from address 0.  This is a standard Verilog readmemh format. */" > "$mem_txt_file"
+
+    # Process hex data and format for MEM.TXT
+    local line_count=0
+    local line=""
+
+    while IFS= read -r hex_line; do
+        # Skip comment lines and empty lines
+        if [[ "$hex_line" =~ ^// ]] || [[ -z "$hex_line" ]]; then
+            continue
+        fi
+
+        # Extract the hex value (first 8 characters before space)
+        local hex_word="${hex_line:0:8}"
+
+        # Skip if not a valid 8-character hex value
+        if ! [[ "$hex_word" =~ ^[0-9a-fA-F]{8}$ ]]; then
+            continue
+        fi
+
+        # Convert 32-bit word to 4 bytes (little-endian)
+        # 32-bit word: 0x12345678 -> bytes: 0x78 0x56 0x34 0x12
+        local byte1="${hex_word:6:2}"
+        local byte2="${hex_word:4:2}"
+        local byte3="${hex_word:2:2}"
+        local byte4="${hex_word:0:2}"
+
+        # Add bytes to current line
+        if [ -z "$line" ]; then
+            line="$byte1 $byte2 $byte3 $byte4"
+        else
+            line="$line $byte1 $byte2 $byte3 $byte4"
+        fi
+
+        # Every 4 words (16 bytes) = 1 line in MEM.TXT format
+        if [ $(( (line_count + 1) % 4 )) -eq 0 ]; then
+            echo "$line" >> "$mem_txt_file"
+            line=""
+        fi
+
+        line_count=$((line_count + 1))
+    done < "$hex_file"
+
+    # Add remaining bytes if any
+    if [ -n "$line" ]; then
+        echo "$line" >> "$mem_txt_file"
+    fi
+
+    # Pad with FF if needed to complete the last line
+    local remaining_bytes=$((16 - (line_count * 4) % 16))
+    if [ $remaining_bytes -ne 16 ] && [ $remaining_bytes -gt 0 ]; then
+        for ((i=0; i<remaining_bytes; i++)); do
+            line="$line ff"
+        done
+        echo "$line" >> "$mem_txt_file"
+    fi
+
+    echo "MEM.TXT file generated: $mem_txt_file"
+    echo "Converted $line_count words (32-bit) to MEM.TXT format"
+}
+
+# Convert program.hex to MEM.TXT
+hex_to_mem_txt program.hex MEM.TXT
