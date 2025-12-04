@@ -138,10 +138,10 @@ module chip_top_test;
         );
     `else
         W25Q128JVxIM u_w25 (
-            .CSn(spi_cs_n),
-            .CLK(spi_sck),
-            .DIO(spi_mosi),
-            .DO(spi_miso),
+            .CSn(spi_flash_cs_n),
+            .CLK(spi_flash_clk),
+            .DIO(spi_flash_mosi),
+            .DO(spi_flash_miso),
             .WPn(),  // 写保护禁用，悬空
             .HOLDn() // 保持禁用，悬空
         );
