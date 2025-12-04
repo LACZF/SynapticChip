@@ -45,7 +45,7 @@ module tb_spi_flash;
     end
 
     // DUT实例化
-    spi_flash_top u_spi_flash_top (
+    ip4_spi_flash_top u_spi_flash_top (
         .clk(clk),
         .rst_n(rst_n),
 
