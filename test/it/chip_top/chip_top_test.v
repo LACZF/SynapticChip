@@ -44,7 +44,7 @@ module chip_top_test;
     localparam IMPLEMENT_GPIO       = 1;
     localparam IMPLEMENT_SPI        = SPI_NUM > 0 ? 1 : 0;
     localparam IMPLEMENT_XIP        = 0;
-    localparam IMPLEMENT_SPI_FLASH  = 0;
+    localparam IMPLEMENT_SPI_FLASH  = 1;
     localparam IMPLEMENT_TIMER      = 1;
     localparam IMPLEMENT_I2C        = 0;
     localparam IMPLEMENT_EXT_OBI    = 1;
@@ -128,7 +128,7 @@ module chip_top_test;
         MX25L6436F #(
             .TOP_Add(23'hffff),
             .Init_File(`ROM_PRG)
-        ) u_spi_flash (
+        ) u_mx25 (
             .SCLK           (spi_flash_clk),
             .CS             (spi_flash_cs_n),
             .SI             (spi_flash_mosi),
@@ -137,7 +137,7 @@ module chip_top_test;
             .SIO3           (spi_flash_sio3)  // 保留引脚
         );
     `else
-        W25Q128JVxIM flash_model (
+        W25Q128JVxIM u_w25 (
             .CSn(spi_cs_n),
             .CLK(spi_sck),
             .DIO(spi_mosi),
@@ -145,7 +145,7 @@ module chip_top_test;
             .WPn(),  // 写保护禁用，悬空
             .HOLDn() // 保持禁用，悬空
         );
-    endif
+    `endif
     end
 
     // SPI从机MISO信号数组（用于多个从机）
