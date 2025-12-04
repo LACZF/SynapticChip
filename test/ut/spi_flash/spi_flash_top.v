@@ -45,6 +45,7 @@ localparam [2:0]
 
 reg [2:0] state;
 reg [2:0] next_state;
+reg [3:0] dummy_cycle;
 
 // SPI时钟生成器
 spi_clk_gen #(
@@ -73,6 +74,8 @@ spi_flash_ctrl u_spi_flash_ctrl (
     .done_o(ctrl_done),
     .data_len_i(ctrl_data_len),
 
+    .dummy_cycle(dummy_cycle),
+
     .spi_clk(spi_clk),
     .clk_rising(clk_rising),
     .clk_falling(clk_falling),
@@ -91,6 +94,7 @@ always @(posedge clk or negedge rst_n) begin
         obi_err_o <= 1'b0;
         obi_rdata_o <= 32'd0;
         ctrl_start <= 1'b0;
+        dummy_cycle <= 4'h0;
     end else begin
         state <= next_state;
 
@@ -110,12 +114,14 @@ always @(posedge clk or negedge rst_n) begin
                         end else begin
                             ctrl_cmd <= 8'h02;  // 页编程
                         end
+                        dummy_cycle <= 4'h8;
                     end else begin
                         if (obi_addr_i[24]) begin
                             ctrl_cmd <= 8'h9F;  // 读ID
                         end else begin
                             ctrl_cmd <= 8'h03;  // 读数据
                         end
+                        dummy_cycle <= 4'h1;
                     end
                 end
             end

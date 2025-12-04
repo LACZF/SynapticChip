@@ -153,26 +153,25 @@ initial begin
     $display("\nTest 2: Reading Status Register");
     send_obi_read(32'h8000_000C);  // 读状态寄存器地址
     verify_data(32'h00000000, read_data, "Status Register Read");
+*/
 
     // 测试3：读取指令数据
     $display("\nTest 3: Reading Instructions from Flash");
 
-    // 读取前4个字节 (FENCE指令: 0x00000013)
     send_obi_read(32'h0000_0000);
-    verify_data(32'h00000013, read_data, "Instruction 0 (FENCE)");
+    verify_data(32'h11111111, read_data, "Read 0x00 ");
 
-    // 读取接下来4个字节 (JAL指令: 0x0000006F)
     send_obi_read(32'h0000_0004);
-    verify_data(32'h0000006F, read_data, "Instruction 1 (JAL)");
+    verify_data(32'hffffffff, read_data, "Read 0x04 ");
 
-    // 读取接下来4个字节 (JAL指令: 0x000000EF)
-    send_obi_read(32'h0000_0008);
-    verify_data(32'h000000EF, read_data, "Instruction 2 (JAL)");
-*/
+    send_obi_read(32'h0000_0010);
+    verify_data(32'h22222222, read_data, "Read 0x10 ");
 
-    // 读取接下来4个字节 (LUI指令: 0x00000037)
+    send_obi_read(32'h0000_0020);
+    verify_data(32'h88888888, read_data, "Read 0x20 ");
+
     send_obi_read(32'h0000_0040);
-    verify_data(32'ha0a0a0a0, read_data, "Instruction 3 (LUI)");
+    verify_data(32'ha0a0a0a0, read_data, "Read 0x40 ");
 
     # 50000;
     $finish;

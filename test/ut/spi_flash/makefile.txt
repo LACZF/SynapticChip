@@ -2,7 +2,7 @@ CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 TEST_TARGET := tb_spi_flash
 # TEST_ARGS   ?= -g2005-sv
-TEST_ARGS   ?= -g2012
+TEST_ARGS   ?= -g2012 # -DDEBUG
 
 # TEST_INCLUDE_DIR +=
 

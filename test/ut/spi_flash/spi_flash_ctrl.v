@@ -13,6 +13,8 @@ module spi_flash_ctrl (
     output reg done_o,
     input [1:0] data_len_i,
 
+    input wire [3:0] dummy_cycle,
+
     // SPI时钟域接口
     input spi_clk,
     input clk_rising,
@@ -80,13 +82,13 @@ always @(*) begin
                 end else if (cmd_reg == 8'h02 || cmd_reg == 8'h0A) begin  // 写命令
                     next_state = STATE_DATA_WR;
                 end else begin
-                    next_state = STATE_DATA_RD;
+                    next_state = STATE_DUMMY;
                 end
             end
         end
 
         STATE_DUMMY: begin
-            if (dummy_cnt == 4'd7 && clk_rising) begin
+            if (dummy_cnt == (dummy_cycle - 1) && clk_rising) begin
                 next_state = STATE_DATA_RD;
             end
         end
@@ -198,7 +200,7 @@ always @(posedge clk or negedge rst_n) begin
                 if (clk_rising) begin
                     spi_mosi <= 1'b0;
 
-                    if (dummy_cnt == 4'd7) begin
+                    if (dummy_cnt == (dummy_cycle-1)) begin
                         dummy_cnt <= 4'd0;
                     end else begin
                         dummy_cnt <= dummy_cnt + 1;
@@ -226,7 +228,6 @@ always @(posedge clk or negedge rst_n) begin
                             (data_len_reg == 2'b01 && byte_cnt == 3'd1) ||
                             (data_len_reg == 2'b10 && byte_cnt == 3'd3)) begin
                             byte_cnt <= 3'd0;
-                            rdata_o <= data_buf;
                         end else begin
                             byte_cnt <= byte_cnt + 1;
                         end
@@ -267,6 +268,7 @@ always @(posedge clk or negedge rst_n) begin
             end
 
             STATE_FINISH: begin
+                rdata_o <= data_buf;
                 spi_cs_n <= 1'b1;
                 done_o <= 1'b1;
                 ready_o <= 1'b1;
