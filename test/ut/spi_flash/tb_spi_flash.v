@@ -58,7 +58,6 @@ spi_flash_top u_spi_flash_top (
     .obi_gnt_o(obi_gnt_o),
     .obi_rvalid_o(obi_rvalid_o),
     .obi_rdata_o(obi_rdata_o),
-    .obi_err_o(obi_err_o),
 
     .spi_cs_n(spi_cs_n),
     .spi_sck(spi_sck),
