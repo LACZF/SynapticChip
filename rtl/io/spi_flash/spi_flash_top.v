@@ -4,21 +4,21 @@ module spi_flash_top (
     input              rst_n,
 
     // OBI总线接口
-    input              obi_req_i,
-    input              obi_we_i,
-    input       [31:0] obi_addr_i,
-    input       [31:0] obi_wdata_i,
-    input       [3:0]  obi_be_i,
+    input              req_i,
+    input              we_i,
+    input       [31:0] addr_i,
+    input       [31:0] wdata_i,
+    input       [3:0]  be_i,
 
-    output reg         obi_gnt_o,
-    output reg         obi_rvalid_o,
-    output reg  [31:0] obi_rdata_o,
+    output reg         gnt_o,
+    output reg         rvalid_o,
+    output reg  [31:0] rdata_o,
 
     // SPI接口
-    output             spi_cs_n,
-    output             spi_sck,
-    output             spi_mosi,
-    input              spi_miso
+    output             spi_cs_n_o,
+    output             spi_sck_o,
+    output             spi_mosi_o,
+    input              spi_miso_i
 );
 
     // 内部信号
@@ -53,7 +53,7 @@ module spi_flash_top (
     ) u_spi_clk_gen (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(!spi_cs_n),  // 当CS为低时使能时钟
+        .enable(!spi_cs_n_o),  // 当CS为低时使能时钟
         .spi_clk(spi_clk),
         .clk_rising(clk_rising),
         .clk_falling(clk_falling)
@@ -75,22 +75,22 @@ module spi_flash_top (
 
         .dummy_cycle_i(dummy_cycle),
 
-        .spi_clk(spi_clk),
-        .clk_rising(clk_rising),
-        .clk_falling(clk_falling),
+        .spi_sck_o(spi_clk),
+        .clk_rising_i(clk_rising),
+        .clk_falling_i(clk_falling),
 
-        .spi_cs_n(spi_cs_n),
-        .spi_mosi(spi_mosi),
-        .spi_miso(spi_miso)
+        .spi_cs_n_o(spi_cs_n_o),
+        .spi_mosi_o(spi_mosi_o),
+        .spi_miso_i(spi_miso_i)
     );
 
     // OBI状态机
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state        <= OBI_IDLE;
-            obi_gnt_o    <= 1'b0;
-            obi_rvalid_o <= 1'b0;
-            obi_rdata_o  <= 32'd0;
+            gnt_o    <= 1'b0;
+            rvalid_o <= 1'b0;
+            rdata_o  <= 32'd0;
             ctrl_start   <= 1'b0;
             dummy_cycle  <= 4'h0;
         end else begin
@@ -98,24 +98,24 @@ module spi_flash_top (
 
             case (state)
                 OBI_IDLE: begin
-                    obi_rvalid_o <= 1'b0;
-                    if (obi_req_i && ctrl_ready) begin
-                        obi_gnt_o <= 1'b1;
-                        ctrl_addr <= obi_addr_i[23:0];
-                        ctrl_wdata <= obi_wdata_i;
+                    rvalid_o <= 1'b0;
+                    if (req_i && ctrl_ready) begin
+                        gnt_o <= 1'b1;
+                        ctrl_addr <= addr_i[23:0];
+                        ctrl_wdata <= wdata_i;
                         ctrl_data_len <= 2'b10;  // 32位数据
 
                         // 根据地址最高位确定命令
-                        if (obi_we_i) begin
-                            if (obi_addr_i[24]) begin
+                        if (we_i) begin
+                            if (addr_i[24]) begin
                                 ctrl_cmd <= 8'h20;  // 扇区擦除
                             end else begin
                                 ctrl_cmd <= 8'h02;  // 页编程
                             end
                             dummy_cycle <= 4'h8;
                         end else begin
-                            if (obi_addr_i[24]) begin
-                                case (obi_addr_i[23:0])
+                            if (addr_i[24]) begin
+                                case (addr_i[23:0])
                                     24'h04 : ctrl_cmd <= 8'h9F;  // 读ID
                                     24'h08 : ctrl_cmd <= 8'h05;  // 读status
                                     24'h0c : ctrl_cmd <= 8'h35;  // 读status2
@@ -131,7 +131,7 @@ module spi_flash_top (
                 end
 
                 OBI_CMD: begin
-                    obi_gnt_o <= 1'b0;
+                    gnt_o <= 1'b0;
                     if (ctrl_ready) begin
                         ctrl_start <= 1'b1;
                     end
@@ -140,12 +140,12 @@ module spi_flash_top (
                 OBI_WAIT: begin
                     ctrl_start <= 1'b0;
                     if (ctrl_done) begin
-                        obi_rdata_o <= ctrl_rdata;
+                        rdata_o <= ctrl_rdata;
                     end
                 end
 
                 OBI_RESPONSE: begin
-                    obi_rvalid_o <= 1'b1;
+                    rvalid_o <= 1'b1;
                 end
             endcase
         end
@@ -157,7 +157,7 @@ module spi_flash_top (
 
         case (state)
             OBI_IDLE: begin
-                if (obi_req_i && ctrl_ready) begin
+                if (req_i && ctrl_ready) begin
                     next_state = OBI_CMD;
                 end
             end
@@ -181,6 +181,6 @@ module spi_flash_top (
     end
 
     // 输出SPI时钟
-    assign spi_sck = spi_clk;
+    assign spi_sck_o = spi_clk;
 
 endmodule

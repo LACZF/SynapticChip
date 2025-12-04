@@ -16,14 +16,14 @@ module spi_flash_ctrl (
     input  wire [3:0]  dummy_cycle_i,
 
     // SPI时钟域接口
-    input spi_clk,
-    input clk_rising,
-    input clk_falling,
+    input              spi_sck_o,
+    input              clk_rising_i,
+    input              clk_falling_i,
 
     // SPI接口
-    output reg spi_cs_n,
-    output reg spi_mosi,
-    input spi_miso
+    output reg         spi_cs_n_o,
+    output reg         spi_mosi_o,
+    input              spi_miso_i
 );
 
     // 状态定义
@@ -71,14 +71,14 @@ module spi_flash_ctrl (
             end
 
             STATE_CMD: begin
-                if (bit_cnt == 5'd7 && clk_rising) begin
+                if (bit_cnt == 5'd7 && clk_rising_i) begin
                     next_state = is_need_addr ? STATE_ADDR :
                         (cmd_reg == 8'h02 || cmd_reg == 8'h0A) ? STATE_DATA_WR : STATE_DUMMY;
                 end
             end
 
             STATE_ADDR: begin
-                if (bit_cnt == 5'd23 && clk_rising) begin
+                if (bit_cnt == 5'd23 && clk_rising_i) begin
                     if (cmd_reg == 8'h0B) begin  // FAST_READ
                         next_state = STATE_DUMMY;
                     end else if (cmd_reg == 8'h02 || cmd_reg == 8'h0A) begin  // 写命令
@@ -90,7 +90,7 @@ module spi_flash_ctrl (
             end
 
             STATE_DUMMY: begin
-                if (dummy_cnt == (dummy_cycle_i - 1) && clk_rising) begin
+                if (dummy_cnt == (dummy_cycle_i - 1) && clk_rising_i) begin
                     next_state = STATE_DATA_RD;
                 end
             end
@@ -99,7 +99,7 @@ module spi_flash_ctrl (
                 if ((data_len_reg == 2'b00 && byte_cnt == 3'd0 && bit_cnt == 5'd7) ||
                     (data_len_reg == 2'b01 && byte_cnt == 3'd1 && bit_cnt == 5'd7) ||
                     (data_len_reg == 2'b10 && byte_cnt == 3'd3 && bit_cnt == 5'd7)) begin
-                    if (clk_falling) begin
+                    if (clk_falling_i) begin
                         next_state = STATE_FINISH;
                     end
                 end
@@ -109,7 +109,7 @@ module spi_flash_ctrl (
                 if ((data_len_reg == 2'b00 && byte_cnt == 3'd0 && bit_cnt == 5'd7) ||
                     (data_len_reg == 2'b01 && byte_cnt == 3'd1 && bit_cnt == 5'd7) ||
                     (data_len_reg == 2'b10 && byte_cnt == 3'd3 && bit_cnt == 5'd7)) begin
-                    if (clk_rising) begin
+                    if (clk_rising_i) begin
                         next_state = STATE_FINISH;
                     end
                 end
@@ -128,8 +128,8 @@ module spi_flash_ctrl (
     // 控制逻辑
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            spi_cs_n  <= 1'b1;
-            spi_mosi  <= 1'b0;
+            spi_cs_n_o  <= 1'b1;
+            spi_mosi_o  <= 1'b0;
             ready_o   <= 1'b1;
             done_o    <= 1'b0;
             shift_out <= 8'd0;
@@ -145,14 +145,14 @@ module spi_flash_ctrl (
             case (state)
                 STATE_IDLE: begin
                     ready_o <= 1'b1;
-                    spi_cs_n <= 1'b1;
+                    spi_cs_n_o <= 1'b1;
                     bit_cnt <= 5'd0;
                     byte_cnt <= 3'd0;
                     dummy_cnt <= 4'd0;
 
                     if (start_i && ready_o) begin
                         ready_o <= 1'b0;
-                        spi_cs_n <= 1'b0;
+                        spi_cs_n_o <= 1'b0;
                         cmd_reg <= cmd_i;
                         addr_reg <= addr_i;
                         data_len_reg <= data_len_i;
@@ -163,8 +163,8 @@ module spi_flash_ctrl (
                 end
 
                 STATE_CMD: begin
-                    if (clk_rising) begin
-                        spi_mosi <= shift_out[7];
+                    if (clk_rising_i) begin
+                        spi_mosi_o <= shift_out[7];
                         shift_out <= {shift_out[6:0], 1'b0};
 
                         if (bit_cnt == 5'd7) begin
@@ -178,8 +178,8 @@ module spi_flash_ctrl (
                 end
 
                 STATE_ADDR: begin
-                    if (clk_rising) begin
-                        spi_mosi <= shift_out[7];
+                    if (clk_rising_i) begin
+                        spi_mosi_o <= shift_out[7];
                         shift_out <= {shift_out[6:0], 1'b0};
 
                         if (bit_cnt == 5'd7) begin
@@ -199,8 +199,8 @@ module spi_flash_ctrl (
                 end
 
                 STATE_DUMMY: begin
-                    if (clk_rising) begin
-                        spi_mosi <= 1'b0;
+                    if (clk_rising_i) begin
+                        spi_mosi_o <= 1'b0;
 
                         if (dummy_cnt == (dummy_cycle_i-1)) begin
                             dummy_cnt <= 4'd0;
@@ -211,19 +211,19 @@ module spi_flash_ctrl (
                 end
 
                 STATE_DATA_RD: begin
-                    if (clk_falling) begin
+                    if (clk_falling_i) begin
                         // 在下降沿采样数据
-                        shift_in <= {shift_in[6:0], spi_miso};
+                        shift_in <= {shift_in[6:0], spi_miso_i};
 
                         if (bit_cnt == 5'd7) begin
                             bit_cnt <= 5'd0;
 
                             // 存储接收到的字节
                             case (byte_cnt)
-                                3'd0: data_buf[7:0] <= {shift_in[6:0], spi_miso};
-                                3'd1: data_buf[15:8] <= {shift_in[6:0], spi_miso};
-                                3'd2: data_buf[23:16] <= {shift_in[6:0], spi_miso};
-                                3'd3: data_buf[31:24] <= {shift_in[6:0], spi_miso};
+                                3'd0: data_buf[7:0] <= {shift_in[6:0], spi_miso_i};
+                                3'd1: data_buf[15:8] <= {shift_in[6:0], spi_miso_i};
+                                3'd2: data_buf[23:16] <= {shift_in[6:0], spi_miso_i};
+                                3'd3: data_buf[31:24] <= {shift_in[6:0], spi_miso_i};
                             endcase
 
                             if ((data_len_reg == 2'b00 && byte_cnt == 3'd0) ||
@@ -240,8 +240,8 @@ module spi_flash_ctrl (
                 end
 
                 STATE_DATA_WR: begin
-                    if (clk_rising) begin
-                        spi_mosi <= shift_out[7];
+                    if (clk_rising_i) begin
+                        spi_mosi_o <= shift_out[7];
                         shift_out <= {shift_out[6:0], 1'b0};
 
                         if (bit_cnt == 5'd7) begin
@@ -271,7 +271,7 @@ module spi_flash_ctrl (
 
                 STATE_FINISH: begin
                     rdata_o <= data_buf;
-                    spi_cs_n <= 1'b1;
+                    spi_cs_n_o <= 1'b1;
                     done_o <= 1'b1;
                     ready_o <= 1'b1;
                 end
