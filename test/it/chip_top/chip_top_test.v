@@ -123,6 +123,7 @@ module chip_top_test;
     assign spi_flash_sio3     = 1'b1;   // 保留引脚，设置为高电平
 
     if (IMPLEMENT_SPI_FLASH == 1) begin : spi_flash_gen
+    `ifdef USE_MX25
         /********** 实例化MX25L6436F SPI Flash模拟模块 **********/
         MX25L6436F #(
             .TOP_Add(23'hffff),
@@ -135,6 +136,16 @@ module chip_top_test;
             .WP             (spi_flash_wp),   // 写保护引脚
             .SIO3           (spi_flash_sio3)  // 保留引脚
         );
+    `else
+        W25Q128JVxIM flash_model (
+            .CSn(spi_cs_n),
+            .CLK(spi_sck),
+            .DIO(spi_mosi),
+            .DO(spi_miso),
+            .WPn(),  // 写保护禁用，悬空
+            .HOLDn() // 保持禁用，悬空
+        );
+    endif
     end
 
     // SPI从机MISO信号数组（用于多个从机）
