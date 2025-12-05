@@ -1253,7 +1253,7 @@ index efcd21d..167a2fe 100644
  
  endmodule
 diff --git a/rtl/core/ifu.sv b/rtl/core/ifu.sv
-index f55e309..8eaa04b 100644
+index f55e309..572c280 100644
 --- a/rtl/core/ifu.sv
 +++ b/rtl/core/ifu.sv
 @@ -1,23 +1,24 @@
@@ -1294,7 +1294,7 @@ index f55e309..8eaa04b 100644
      parameter bit          BranchPredictor      = 1'b1
      )(
  
-@@ -126,7 +127,7 @@ module ifu #(
+@@ -126,11 +127,11 @@ module ifu #(
      always @ (posedge clk or negedge rst_n) begin
          if (!rst_n) begin
              state_q <= S_RESET;
@@ -1303,6 +1303,11 @@ index f55e309..8eaa04b 100644
          end else begin
              state_q <= state_d;
              // 取指有效时保存当前取指地址
+-            if (req_valid | flush_i) begin
++            if (req_valid | flush_i | instr_rvalid_i) begin
+                 fetch_addr_q <= fetch_addr_n;
+             end
+         end
 @@ -138,7 +139,7 @@ module ifu #(
  
      // 分支预测
