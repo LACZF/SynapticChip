@@ -1,6 +1,10 @@
 
 `timescale 1ns/1ps
 
+`ifndef BOOT_TYPE
+`define BOOT_TYPE 2
+`endif
+
 // 当所有测试宏都未定义时，自动定义所有测试宏
 `ifndef PE_TEST_FOR_CHIP_TOP
     `ifndef GPIO_TEST_FOR_CHIP_TOP
@@ -43,13 +47,13 @@ module SynapticChip_test;
     localparam GPIO_INOUT_NUM       = 8;
     localparam I2C_NUM              = 1;
     localparam UART_NUM             = 1;
-    localparam BOOT_TYPE            = 0;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
+    localparam BOOT_TYPE            = `BOOT_TYPE;     // 0 : ROM, 1 : QSPI FLASH, 2 : SPI FLASH, 3 : APB, 4 : ext rom(OBI bus)
     localparam IMPLEMENT_JTAG       = 1;
     localparam IMPLEMENT_UART       = 1;
     localparam IMPLEMENT_GPIO       = 1;
     localparam IMPLEMENT_SPI        = SPI_NUM > 0 ? 1 : 0;
     localparam IMPLEMENT_XIP        = 0;
-    localparam IMPLEMENT_SPI_FLASH  = 0;
+    localparam IMPLEMENT_SPI_FLASH  = 1;
     localparam IMPLEMENT_TIMER      = 1;
     localparam IMPLEMENT_I2C        = 0;
     localparam IMPLEMENT_EXT_OBI    = 1;
@@ -77,7 +81,7 @@ module SynapticChip_test;
     localparam SAMPLE_CYCLES        = `EXT_SAMPLE_REG;
     localparam UART_DIV_RATE        = `EXT_BUAD_REG;
     localparam BAUD_RATE            = (SYS_CLK_FREQ / UART_DIV_RATE / 2 / SAMPLE_CYCLES);
-    localparam TIMEOUT_CYCLES       = 10000;
+    localparam TIMEOUT_CYCLES       = 1000000;
 `endif
 
     wire                      obi_req;
@@ -129,11 +133,12 @@ module SynapticChip_test;
     assign spi_flash_sio3     = 1'b1;   // 保留引脚，设置为高电平
 
     if (IMPLEMENT_SPI_FLASH == 1) begin : spi_flash_gen
+    `ifdef USE_MX25
         /********** 实例化MX25L6436F SPI Flash模拟模块 **********/
         MX25L6436F #(
             .TOP_Add(23'hffff),
             .Init_File(`ROM_PRG)
-        ) u_spi_flash (
+        ) u_mx25 (
             .SCLK           (spi_flash_clk),
             .CS             (spi_flash_cs_n),
             .SI             (spi_flash_mosi),
@@ -141,6 +146,16 @@ module SynapticChip_test;
             .WP             (spi_flash_wp),   // 写保护引脚
             .SIO3           (spi_flash_sio3)  // 保留引脚
         );
+    `else
+        W25Q128JVxIM u_w25 (
+            .CSn(spi_flash_cs_n),
+            .CLK(spi_flash_clk),
+            .DIO(spi_flash_mosi),
+            .DO(spi_flash_miso),
+            .WPn(),  // 写保护禁用，悬空
+            .HOLDn() // 保持禁用，悬空
+        );
+    `endif
     end
 
     // SPI从机MISO信号数组（用于多个从机）
@@ -162,6 +177,9 @@ module SynapticChip_test;
     // 通用输入/输出端口
     wire [GPIO_IN_NUM-1:0]       gpio_in = {GPIO_IN_NUM{1'b1}};
     wire [GPIO_OUT_NUM-1:0]      gpio_out;
+
+    wire [GPIO_IN_NUM-1:0]       chip_gpio_in;
+    wire [GPIO_OUT_NUM-1:0]      chip_gpio_out;
 
     /********** UART模型 **********/
     wire                      rx_busy;          // 接收中标志
@@ -223,6 +241,24 @@ module SynapticChip_test;
     /********** 时钟生成 **********/
     always #5 clk = ~clk;
 
+    /*
+     * spi flash启动场景，将gpio到信号修改为spi flash使用：
+     * 1. gpio_in[3]     -> spi_flash_miso
+     * 2. spi_flash_cs_n -> gpio_out[3]
+     * 3. spi_flash_clk  -> gpio_out[2]
+     * 4. spi_flash_mosi -> gpio_out[1]
+     */
+    if (BOOT_TYPE == 2) begin
+        assign spi_flash_cs_n     = chip_gpio_out[3];
+        assign spi_flash_clk      = chip_gpio_out[2];
+        assign spi_flash_mosi     = chip_gpio_out[1];
+        assign gpio_out[0]        = chip_gpio_out[0];
+        assign chip_gpio_in       = {spi_flash_miso, gpio_in[2:0]};
+    end else begin
+        assign chip_gpio_in       = gpio_in;
+        assign gpio_out           = chip_gpio_out;
+    end
+
     /********** 实例化chip_top **********/
     ip4_SynapticChip u_SynapticChip (
         .clk         (clk),
@@ -231,8 +267,8 @@ module SynapticChip_test;
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
 
-        .gpio_in     (gpio_in),
-        .gpio_out    (gpio_out)
+        .gpio_in     (chip_gpio_in),
+        .gpio_out    (chip_gpio_out)
     );
 
     if (IMPLEMENT_XIP == 1) begin : xip_gen
@@ -509,7 +545,7 @@ module SynapticChip_test;
 `ifdef ASIC_VERSION
         #(`SIM_CYCLE * 30);
 `else
-        #`SIM_CYCLE;
+        #(`SIM_CYCLE * 300);
 `endif
 
         $display("\n----- All Tests Completed -----");

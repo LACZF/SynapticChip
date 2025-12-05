@@ -1,5 +1,5 @@
 `ifndef BOOT_TYPE
-`define BOOT_TYPE 0
+`define BOOT_TYPE 2
 `endif
 
 `ifndef EXT_BUAD_SAMPLE_VALID
@@ -41,7 +41,7 @@ module ip4_SynapticChip (
     localparam IMPLEMENT_GPIO            = 1;
     localparam IMPLEMENT_SPI             = 0;
     localparam IMPLEMENT_XIP             = 0;
-    localparam IMPLEMENT_SPI_FLASH       = 0;
+    localparam IMPLEMENT_SPI_FLASH       = 1;
     localparam IMPLEMENT_TIMER           = 1;
     localparam IMPLEMENT_I2C             = 0;
     localparam IMPLEMENT_EXT_OBI         = 1;
@@ -88,6 +88,28 @@ module ip4_SynapticChip (
 
     wire                                 spi_flash_wp;
     wire                                 spi_flash_sio3;
+
+    wire [3:0]                           chip_gpio_in;
+    wire [3:0]                           chip_gpio_out;
+
+    /*
+     * spi flash启动场景，将gpio到信号修改为spi flash使用：
+     * 1. gpio_in[3]     -> spi_flash_miso
+     * 2. spi_flash_cs_n -> gpio_out[3]
+     * 3. spi_flash_clk  -> gpio_out[2]
+     * 4. spi_flash_mosi -> gpio_out[1]
+     */
+    if (BOOT_TYPE == 2) begin
+        assign gpio_out[3]        = spi_flash_cs_n;
+        assign gpio_out[2]        = spi_flash_clk;
+        assign gpio_out[1]        = spi_flash_mosi;
+        assign gpio_out[0]        = chip_gpio_out[0];
+        assign spi_flash_miso     = gpio_in[3];
+        assign chip_gpio_in       = {1'b0, gpio_in[2:0]};
+    end else begin
+        assign chip_gpio_in       = gpio_in;
+        assign gpio_out           = chip_gpio_out;
+    end
 
     ip4_chip_top #(
         .TRACE_ENABLE(TRACE_ENABLE),
@@ -141,8 +163,8 @@ module ip4_SynapticChip (
         .ext_buad_reg_i          (8'(`EXT_BUAD_REG)),
         .ext_sample_reg_i        (8'(`EXT_SAMPLE_REG)),
 
-        .gpio_in      (gpio_in),
-        .gpio_out     (gpio_out),
+        .gpio_in      (chip_gpio_in),
+        .gpio_out     (chip_gpio_out),
 
         .spi_cs_n    (spi_cs_n),
         .spi_clk     (spi_clk),

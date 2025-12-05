@@ -71,7 +71,7 @@ module chip_top_test;
     localparam BUAD_SAMPLE_VALID    = 1'b1;
     localparam SAMPLE_CYCLES        = 4;
     localparam UART_DIV_RATE        = 2;
-    localparam TIMEOUT_CYCLES       = 10000;
+    localparam TIMEOUT_CYCLES       = 1000000;
 `endif
 
     wire                      obi_req;
@@ -510,7 +510,7 @@ module chip_top_test;
 `ifdef ASIC_VERSION
         #(`SIM_CYCLE * 30);
 `else
-        #`SIM_CYCLE;
+        #(`SIM_CYCLE * 300);
 `endif
 
         $display("\n----- All Tests Completed -----");
