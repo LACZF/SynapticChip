@@ -33,8 +33,8 @@ module ip4_SynapticChip (
     localparam RAM_DEPTH                 = 256;   // 修改RAM大小要修改program.s和uarta_boot.s中对应的sp基地值
     localparam ADDR_WIDTH                = 32;
     localparam DATA_WIDTH                = 32;
-    localparam PE_ARRAY_X                = 16;
-    localparam PE_ARRAY_Y                = 16;
+    localparam PE_ARRAY_X                = 3;
+    localparam PE_ARRAY_Y                = 3;
     localparam BOOT_TYPE                 = `BOOT_TYPE;
     localparam IMPLEMENT_JTAG            = 1;
     localparam IMPLEMENT_UART            = 1;

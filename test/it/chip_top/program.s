@@ -65,8 +65,8 @@
 .equ PE_HIGH_BW_READ_ADDR,  PE_TOP_BASE + 0x100010   # 高带宽读取地址
 
 # PE阵列尺寸定义
-.equ PE_ARRAY_X,            16                         # PE阵列X方向尺寸
-.equ PE_ARRAY_Y,            16                         # PE阵列Y方向尺寸
+.equ PE_ARRAY_X,            3                         # PE阵列X方向尺寸
+.equ PE_ARRAY_Y,            3                         # PE阵列Y方向尺寸
 .equ PE_TOTAL_COUNT,        PE_ARRAY_X * PE_ARRAY_Y    # PE总数
 
 # PE内存映射 - 操作数和配置存储在PE_mem中
@@ -598,7 +598,7 @@ delay:
     addi sp, sp, -4
     sw ra, 0(sp)
 
-    li t0, 1000
+    li t0, 20
 delay_loop:
     addi t0, t0, -1
     bnez t0, delay_loop
