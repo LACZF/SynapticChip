@@ -87,12 +87,16 @@ module ip4_spi_flash_top (
     // OBI状态机
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state        <= OBI_IDLE;
-            gnt_o    <= 1'b0;
-            rvalid_o <= 1'b0;
-            rdata_o  <= 32'd0;
-            ctrl_start   <= 1'b0;
-            dummy_cycle  <= 4'h0;
+            state         <= OBI_IDLE;
+            gnt_o         <= 1'b0;
+            rvalid_o      <= 1'b0;
+            rdata_o       <= 32'd0;
+            ctrl_start    <= 1'b0;
+            dummy_cycle   <= 4'h0;
+            ctrl_addr     <= 24'd0;
+            ctrl_cmd      <= 8'd0;
+            ctrl_wdata    <= 32'd0;
+            ctrl_data_len <= 2'd0;
         end else begin
             state <= next_state;
 

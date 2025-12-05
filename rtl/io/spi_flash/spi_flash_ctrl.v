@@ -128,17 +128,20 @@ module ip4_spi_flash_ctrl (
     // 控制逻辑
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            spi_cs_n_o  <= 1'b1;
-            spi_mosi_o  <= 1'b0;
-            ready_o   <= 1'b1;
-            done_o    <= 1'b0;
-            shift_out <= 8'd0;
-            shift_in  <= 8'd0;
-            bit_cnt   <= 5'd0;
-            byte_cnt  <= 3'd0;
-            data_buf  <= 32'd0;
-            dummy_cnt <= 4'd0;
-            rdata_o   <= 32'd0;
+            spi_cs_n_o   <= 1'b1;
+            spi_mosi_o   <= 1'b0;
+            ready_o      <= 1'b1;
+            done_o       <= 1'b0;
+            shift_out    <= 8'd0;
+            shift_in     <= 8'd0;
+            bit_cnt      <= 5'd0;
+            byte_cnt     <= 3'd0;
+            data_buf     <= 32'd0;
+            dummy_cnt    <= 4'd0;
+            rdata_o      <= 32'd0;
+            addr_reg     <= 24'd0;
+            cmd_reg      <= 8'd0;
+            data_len_reg <= 2'd0;
         end else begin
             done_o <= 1'b0;
 
