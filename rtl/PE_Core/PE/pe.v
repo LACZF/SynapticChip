@@ -132,42 +132,75 @@ module ip4_pe #(
         endcase
     end
 
+    // 内部寄存器
+    reg  [7:0] opcode_reg;
+    reg  [DATA_WIDTH-1:0] src1_reg, src2_reg;
+    reg                   src1_valid_reg, src2_valid_reg;
+
+    // 乘法器实例化
+    wire [DATA_WIDTH*2-1:0] mul_result;
+    combinational_multiplier #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) mul_inst (
+        .a(src1_reg),
+        .b(src2_reg),
+        .result(mul_result)
+    );
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result             <= {DATA_WIDTH{1'b0}};
             result_valid       <= 1'b0;
             computation_active <= 1'b0;
+            opcode_reg         <= 8'h0;
+            src1_reg           <= {DATA_WIDTH{1'b0}};
+            src2_reg           <= {DATA_WIDTH{1'b0}};
+            src1_valid_reg     <= 1'b0;
+            src2_valid_reg     <= 1'b0;
         end else if (enable) begin
             // 启动计算
             if (start && !computation_active) begin
                 computation_active <= 1'b1;
                 result_valid       <= 1'b0;
+                opcode_reg         <= opcode;
             end
 
-            // 执行计算
-            if (computation_active && src1_valid && src2_valid) begin
-                case (opcode)
-                    OP_PASS:  result <= src1;
-                    OP_ADD:   result <= src1 + src2;
-                    OP_SUB:   result <= src1 - src2;
-                    OP_AND:   result <= src1 & src2;
-                    OP_OR:    result <= src1 | src2;
-                    OP_XOR:   result <= src1 ^ src2;
-                    OP_MUL:   result <= src1 * src2;
-                    OP_MIN:   result <= src1 < src2 ? src1 : src2;
-                    OP_MAX:   result <= src1 > src2 ? src1 : src2;
-                    OP_SHL:   result <= src1 << src2[4:0];
-                    OP_SHR:   result <= src1 >> src2[4:0];
-                    OP_ASHR:  result <= $signed(src1) >>> src2[4:0];
-                    OP_EQ:    result <= (src1 == src2) ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}};
-                    OP_LT:    result <= (src1 < src2) ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}};
-                    default:  result <= {DATA_WIDTH{1'b0}};
-                endcase
-                result_valid       <= 1'b1;
-                computation_active <= 1'b0; // 计算完成
-            end else if (computation_active && (!src1_valid || !src2_valid)) begin
-                // 等待输入数据有效
-                result_valid <= 1'b0;
+            // 在计算活跃时，持续采样输入数据和有效信号
+            if (computation_active) begin
+                src1_reg       <= src1;
+                src2_reg       <= src2;
+                src1_valid_reg <= src1_valid;
+                src2_valid_reg <= src2_valid;
+            end
+
+            // 执行计算 - 使用寄存器化的有效信号
+            if (computation_active) begin
+                // 检查输入数据是否有效
+                if (src1_valid_reg && src2_valid_reg) begin
+                    // 所有操作都是单周期完成
+                    case (opcode_reg)
+                        OP_PASS:  result <= src1_reg;
+                        OP_ADD:   result <= src1_reg + src2_reg;
+                        OP_SUB:   result <= src1_reg - src2_reg;
+                        OP_AND:   result <= src1_reg & src2_reg;
+                        OP_OR:    result <= src1_reg | src2_reg;
+                        OP_XOR:   result <= src1_reg ^ src2_reg;
+                        OP_MUL:   result <= mul_result[DATA_WIDTH-1:0];
+                        OP_MIN:   result <= src1_reg < src2_reg ? src1_reg : src2_reg;
+                        OP_MAX:   result <= src1_reg > src2_reg ? src1_reg : src2_reg;
+                        OP_SHL:   result <= src1_reg << src2_reg[4:0];
+                        OP_SHR:   result <= src1_reg >> src2_reg[4:0];
+                        OP_ASHR:  result <= $signed(src1_reg) >>> src2_reg[4:0];
+                        OP_EQ:    result <= (src1_reg == src2_reg) ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}};
+                        OP_LT:    result <= (src1_reg < src2_reg) ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}};
+                        default:  result <= {DATA_WIDTH{1'b0}};
+                    endcase
+                    result_valid       <= 1'b1;
+                    computation_active <= 1'b0; // 计算完成
+                end else begin
+                    // 等待输入数据有效
+                    result_valid <= 1'b0;
+                end
             end else begin
                 result_valid <= 1'b0;
             end

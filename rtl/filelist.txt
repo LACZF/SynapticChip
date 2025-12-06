@@ -102,8 +102,8 @@ RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_w25q64_ctrl.sv
 RTL_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/xip/xip_top.sv
 
 # PE
+RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE/combinational_multiplier.v
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE/pe.v
-# RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_mem/pe_mem.v
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_ctrl/pe_ctrl.v
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_router/pe_router.v
 RTL_SRC += $(TOP_DIR)/rtl/PE_Core/PE_top/pe_top.v
