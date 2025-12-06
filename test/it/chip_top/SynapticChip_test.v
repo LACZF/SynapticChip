@@ -545,12 +545,10 @@ module SynapticChip_test;
         $finish;
     end
 
-`ifndef ASIC_VERSION
     /********** 输出波形 **********/
     initial begin
         $dumpfile("SynapticChip_test.vcd");
         $dumpvars(0, SynapticChip_test);
     end
-`endif
 
 endmodule

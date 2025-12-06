@@ -485,15 +485,11 @@ module chip_top_test;
         send_test(TEST_CMD_GPIO_IN);
         $display($time, " gpio_in  : %b", gpio_in);
 
-`ifdef ASIC_VERSION
-        # (5000 * 30);
-`else
-        # 20000;
-`endif
+        # 5000000;
 
         // 发送GPIO输出测试命令
         send_test(TEST_CMD_GPIO_OUT);
-        # 20000;
+        # 5000000;
         $display($time, " gpio_out : %b", gpio_out);
 `endif
 
@@ -507,23 +503,17 @@ module chip_top_test;
         send_test(TEST_CMD_TIMER);
 `endif
 
-`ifdef ASIC_VERSION
-        #(`SIM_CYCLE * 30);
-`else
         #(`SIM_CYCLE * 300);
-`endif
 
         $display("\n----- All Tests Completed -----");
 
         $finish;
     end
 
-`ifndef ASIC_VERSION
     /********** 输出波形 **********/
     initial begin
         $dumpfile("chip_top_test.vcd");
         $dumpvars(0, chip_top_test);
     end
-`endif
 
 endmodule
