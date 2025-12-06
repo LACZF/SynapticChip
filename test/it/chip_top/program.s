@@ -311,6 +311,9 @@ send_response:
     call uart_write_byte
 
 process_end:
+    li a0, 0x04
+    call uart_write_byte
+
     lw ra, 12(sp)
     lw s0, 8(sp)
     lw s1, 4(sp)

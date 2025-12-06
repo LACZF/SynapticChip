@@ -67,11 +67,13 @@ module chip_top_test;
     localparam SAMPLE_CYCLES        = 16;
     localparam UART_DIV_RATE        = (SYS_CLK_FREQ / BAUD_RATE / 2 / SAMPLE_CYCLES);
     localparam TIMEOUT_CYCLES       = 1000000;
+    localparam ASIC_VERSION         = 1;
 `else
     localparam BUAD_SAMPLE_VALID    = 1'b1;
     localparam SAMPLE_CYCLES        = 4;
     localparam UART_DIV_RATE        = 2;
     localparam TIMEOUT_CYCLES       = 1000000;
+    localparam ASIC_VERSION         = 0;
 `endif
 
     wire                      obi_req;
@@ -423,10 +425,17 @@ module chip_top_test;
         input [7:0] char;
         begin
             send_char(char,  1'b1);
-            # 500;
-            send_char(TEST_CMD_END, 1'b0);
-            wait(rx_data == TEST_CMD_END);
-            # 500;
+            if (BOOT_TYPE == 4 && ASIC_VERSION == 0) begin
+                # 500;
+            end else begin
+                # 50000;
+            end
+            wait((rx_end == 1'b1) && (rx_data == TEST_CMD_END));
+            if (BOOT_TYPE == 4 && ASIC_VERSION == 0) begin
+                # 500;
+            end else begin
+                # 5000;
+            end
         end
     endtask;
 
@@ -485,11 +494,11 @@ module chip_top_test;
         send_test(TEST_CMD_GPIO_IN);
         $display($time, " gpio_in  : %b", gpio_in);
 
-        # 5000000;
+        # 5000;
 
         // 发送GPIO输出测试命令
         send_test(TEST_CMD_GPIO_OUT);
-        # 5000000;
+        # 5000;
         $display($time, " gpio_out : %b", gpio_out);
 `endif
 
@@ -503,7 +512,7 @@ module chip_top_test;
         send_test(TEST_CMD_TIMER);
 `endif
 
-        #(`SIM_CYCLE * 300);
+        #`SIM_CYCLE;
 
         $display("\n----- All Tests Completed -----");
 
