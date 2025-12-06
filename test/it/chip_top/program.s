@@ -1116,6 +1116,14 @@ exception_handler:
 
 .section .data
 
+# 未初始化数据段
+timer_interrupt_count:
+    .word 0  # Timer中断计数器
+
+# 测试结果标志
+pe_test_result:
+    .word 0x00000000  # 0=测试中, 1=成功, 2=失败
+
 # PE测试数据 - 源操作数1 (4x4 PE阵列，每个PE一个32位操作数)
 pe_operand1_data:
     .word 0x0000000A, 0x0000000B, 0x0000000C, 0x0000000D  # PE0-PE3
@@ -1159,12 +1167,3 @@ pe_expected_results:
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-
-# 测试结果标志
-pe_test_result:
-    .word 0x00000000  # 0=测试中, 1=成功, 2=失败
-
-.section .bss
-# 未初始化数据段
-timer_interrupt_count:
-    .word 0  # Timer中断计数器
