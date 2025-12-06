@@ -254,7 +254,7 @@ index 0dbf6bf..119cc00 100644
          ) tmatch_value_csr (
              .clk(clk),
 diff --git a/rtl/core/defines.sv b/rtl/core/defines.sv
-index 70e62e8..f81cbf4 100644
+index 70e62e8..3a49f8f 100644
 --- a/rtl/core/defines.sv
 +++ b/rtl/core/defines.sv
 @@ -1,17 +1,17 @@
@@ -307,13 +307,6 @@ index 70e62e8..f81cbf4 100644
  
  `define DECINFO_SYS_BUS_WIDTH     (`DECINFO_GRP_WIDTH+6)
  `define DECINFO_SYS_ECALL         (`DECINFO_GRP_WIDTH+0)
-@@ -193,4 +197,4 @@
- `define CSR_TDATA2      12'h7A2
- `define CSR_TDATA3      12'h7A3
- `define CSR_MCONTEXT    12'h7A8
--`define CSR_SCONTEXT    12'h7AA
-+`define CSR_SCONTEXT    12'h7AA
-\ No newline at end of file
 diff --git a/rtl/core/divider.sv b/rtl/core/divider.sv
 index 6152d05..de79f16 100644
 --- a/rtl/core/divider.sv
@@ -435,7 +428,7 @@ index 8e7d468..d5e14ca 100644
                      if (enter_debug_cause_trigger) begin
                          trigger_match_d = 1'b1;
 diff --git a/rtl/core/exu.sv b/rtl/core/exu.sv
-index 355eaeb..0a83980 100644
+index 355eaeb..8f523f6 100644
 --- a/rtl/core/exu.sv
 +++ b/rtl/core/exu.sv
 @@ -1,23 +1,23 @@
@@ -569,15 +562,8 @@ index 355eaeb..0a83980 100644
  
      reg inst_executed_q;
  
-@@ -425,4 +439,4 @@ module exu #(
- 
-     assign inst_executed_o = inst_executed_q;
- 
--endmodule
-+endmodule
-\ No newline at end of file
 diff --git a/rtl/core/exu_alu_datapath.sv b/rtl/core/exu_alu_datapath.sv
-index 5817d4f..4dbad7b 100644
+index 5817d4f..c5f333b 100644
 --- a/rtl/core/exu_alu_datapath.sv
 +++ b/rtl/core/exu_alu_datapath.sv
 @@ -1,17 +1,17 @@
@@ -631,13 +617,6 @@ index 5817d4f..4dbad7b 100644
      wire[31:0] srl_res = mux_op1 >> mux_op2[4:0];
      // 算数右移
      wire[31:0] sr_shift_mask = 32'hffffffff >> mux_op2[4:0];
-@@ -251,4 +251,4 @@ module exu_alu_datapath(
-                   1'b0
-                  });
- 
--endmodule
-+endmodule
-\ No newline at end of file
 diff --git a/rtl/core/exu_commit.sv b/rtl/core/exu_commit.sv
 index 5a91505..92de047 100644
 --- a/rtl/core/exu_commit.sv
@@ -680,7 +659,7 @@ index 5a91505..92de047 100644
      input wire clk,
      input wire rst_n,
 diff --git a/rtl/core/exu_dispatch.sv b/rtl/core/exu_dispatch.sv
-index 5b6cc8d..5742e2a 100644
+index 5b6cc8d..6cb1463 100644
 --- a/rtl/core/exu_dispatch.sv
 +++ b/rtl/core/exu_dispatch.sv
 @@ -1,23 +1,23 @@
@@ -742,15 +721,8 @@ index 5b6cc8d..5742e2a 100644
      assign mem_op1_o = op_mem? rs1_rdata_i: 32'h0;
      assign mem_op2_o = op_mem? dec_imm_i: 32'h0;
      assign mem_rs2_data_o = op_mem? rs2_rdata_i: 32'h0;
-@@ -211,4 +219,4 @@ module exu_dispatch(
-     assign sys_op_fence_o = sys_info[`DECINFO_SYS_FENCE];
-     assign sys_op_dret_o = sys_info[`DECINFO_SYS_DRET];
- 
--endmodule
-+endmodule
-\ No newline at end of file
 diff --git a/rtl/core/exu_mem.sv b/rtl/core/exu_mem.sv
-index eca5b41..bc26d40 100644
+index eca5b41..4a55179 100644
 --- a/rtl/core/exu_mem.sv
 +++ b/rtl/core/exu_mem.sv
 @@ -1,23 +1,23 @@
@@ -851,13 +823,6 @@ index eca5b41..bc26d40 100644
                                       (mem_op_sh_i | mem_op_lh_i | mem_op_lhu_i)? mem_addr_i[0]:
                                       0;
  
-@@ -211,4 +220,4 @@ module exu_mem(
-         end
-     end
- 
--endmodule
-+endmodule
-\ No newline at end of file
 diff --git a/rtl/core/exu_muldiv.sv b/rtl/core/exu_muldiv.sv
 index 1dd06f5..67361ad 100644
 --- a/rtl/core/exu_muldiv.sv
@@ -933,7 +898,7 @@ index 1dd06f5..67361ad 100644
      wire mul_start = (~mul_ready_r) & op_mul;
  
 diff --git a/rtl/core/gpr_reg.sv b/rtl/core/gpr_reg.sv
-index 79e0390..b0c01a9 100644
+index 79e0390..c21f9f2 100644
 --- a/rtl/core/gpr_reg.sv
 +++ b/rtl/core/gpr_reg.sv
 @@ -1,36 +1,42 @@
@@ -1001,17 +966,18 @@ index 79e0390..b0c01a9 100644
  
      );
  
-@@ -47,7 +53,7 @@ module gpr_reg(
+@@ -47,7 +53,8 @@ module gpr_reg(
                  assign regs[i] = 32'h0;
              end else begin: not_x0
                  assign we[i] = we_i & (waddr_i == i);
 -                gen_en_dffnr #(32) rf_dff(clk, we[i], wdata_i, regs[i]);
-+                ip4_gen_en_dffnr #(32) rf_dff(clk, we[i], wdata_i, regs[i]);
++                // 使用带复位功能的触发器，确保复位时初始化为0
++                ip4_gen_en_dff #(32) rf_dff(clk, rst_n, we[i], wdata_i, regs[i]);
              end
          end
      endgenerate
 diff --git a/rtl/core/idu.sv b/rtl/core/idu.sv
-index 2390993..16004c2 100644
+index 2390993..ea5a6de 100644
 --- a/rtl/core/idu.sv
 +++ b/rtl/core/idu.sv
 @@ -1,24 +1,24 @@
@@ -1147,13 +1113,6 @@ index 2390993..16004c2 100644
  
      assign rd_waddr_o = access_rd? rd: 5'h0;
      assign rd_we_o = access_rd;
-@@ -313,4 +328,4 @@ module idu(
-     //assign illegal_inst_o = ~(|dec_info_bus_o);
-     assign illegal_inst_o = 1'b0;
- 
--endmodule
-+endmodule
-\ No newline at end of file
 diff --git a/rtl/core/idu_exu.sv b/rtl/core/idu_exu.sv
 index efcd21d..167a2fe 100644
 --- a/rtl/core/idu_exu.sv
@@ -1639,7 +1598,7 @@ index ff7eac3..ff6a0e9 100644
  
  endmodule
 diff --git a/rtl/core/tracer.sv b/rtl/core/tracer.sv
-index 2a51e6c..d943a81 100644
+index 2a51e6c..d3fca76 100644
 --- a/rtl/core/tracer.sv
 +++ b/rtl/core/tracer.sv
 @@ -1,20 +1,20 @@
@@ -1800,13 +1759,6 @@ index 2a51e6c..d943a81 100644
  
          $display("Writing execution trace to %s", file_name);
          file_handle = $fopen(file_name, "w");
-@@ -610,4 +647,4 @@ module tracer(
-         end
-     end
- 
--endmodule
-+endmodule
-\ No newline at end of file
 diff --git a/rtl/debug/debug_rom.sv b/rtl/debug/debug_rom.sv
 index 9868212..8a5f1d6 100644
 --- a/rtl/debug/debug_rom.sv
@@ -3298,7 +3250,7 @@ index bec99c2..9571247 100644
          .I2C_NUM(I2C_NUM),
          .UART_NUM(UART_NUM),
 diff --git a/rtl/perips/ram.sv b/rtl/perips/ram.sv
-index 8f0d318..87971cc 100644
+index 8f0d318..71dc82d 100644
 --- a/rtl/perips/ram.sv
 +++ b/rtl/perips/ram.sv
 @@ -1,23 +1,23 @@
@@ -3339,7 +3291,7 @@ index 8f0d318..87971cc 100644
      parameter DP = 4096
      )(
      input  wire        clk_i,
-@@ -47,9 +47,17 @@ module ram #(
+@@ -47,15 +47,25 @@ module ram #(
          end
      end
  
@@ -3358,8 +3310,16 @@ index 8f0d318..87971cc 100644
          .DP(DP),
          .DW(32),
          .MW(4),
+         .AW(32)
+     ) u_gen_ram(
+         .clk(clk_i),
++        .rst_ni(rst_ni),
++        .req_i(req_i),
+         .addr_i(addr),
+         .data_i(data_i),
+         .sel_i(be_i),
 diff --git a/rtl/perips/rom.sv b/rtl/perips/rom.sv
-index 601f3f1..b03f1b4 100644
+index 601f3f1..b6f00ba 100644
 --- a/rtl/perips/rom.sv
 +++ b/rtl/perips/rom.sv
 @@ -1,23 +1,23 @@
@@ -3400,7 +3360,7 @@ index 601f3f1..b03f1b4 100644
      parameter DP = 4096
      )(
      input  wire        clk_i,
-@@ -49,7 +49,7 @@ module rom #(
+@@ -49,13 +49,15 @@ module rom #(
  
      assign rvalid_o = rvalid_q;
  
@@ -3409,6 +3369,14 @@ index 601f3f1..b03f1b4 100644
          .DP(DP),
          .DW(32),
          .MW(4),
+         .AW(32)
+     ) u_gen_ram(
+         .clk(clk_i),
++        .rst_ni(rst_ni),
++        .req_i(req_i),
+         .addr_i(addr),
+         .data_i(data_i),
+         .sel_i(be_i),
 diff --git a/rtl/perips/rvic/rvic_core.sv b/rtl/perips/rvic/rvic_core.sv
 index 29170fc..8c35dba 100644
 --- a/rtl/perips/rvic/rvic_core.sv
@@ -5377,10 +5345,10 @@ index d3e2ee8..4c5c040 100644
  
      input wire clk,
 diff --git a/rtl/utils/gen_ram.sv b/rtl/utils/gen_ram.sv
-index a487a83..b179ff7 100644
+index a487a83..278343d 100644
 --- a/rtl/utils/gen_ram.sv
 +++ b/rtl/utils/gen_ram.sv
-@@ -1,23 +1,23 @@
+@@ -1,29 +1,33 @@
 - /*                                                                      
 + /*
   Copyright 2020 Blue Liang, liangkangnan@163.com
@@ -5418,6 +5386,82 @@ index a487a83..b179ff7 100644
      parameter DP = 512,
      parameter DW = 32,
      parameter MW = 4,
+     parameter AW = 32)(
+ 
+     input wire clk,
++    input wire rst_ni,
++
++    input wire         req_i,
++
+     input wire[AW-1:0] addr_i,
+     input wire[DW-1:0] data_i,
+     input wire[MW-1:0] sel_i,
+@@ -47,26 +51,46 @@ module gen_ram #(
+         end
+     end
+ 
+-    assign data_o = ram[addr_r];
+-
+-    genvar i;
+-
+-    generate
+-        for (i = 0; i < MW; i = i + 1) begin: sel_width
+-            if ((8 * i + 8) > DW) begin: i_gt_8
+-                always @ (posedge clk) begin: i_gt_8_ff
+-                    if (wen[i]) begin: gt_8_wen
+-                        ram[addr_i][DW-1:8*i] <= data_i[DW-1:8*i];
+-                    end
+-                end
+-            end else begin: i_lt_8
+-                always @ (posedge clk) begin: i_lt_8_ff
+-                    if (wen[i]) begin: lt_8_wen
+-                        ram[addr_i][8*i+7:8*i] <= data_i[8*i+7:8*i];
+-                    end
+-                end
++    assign data_o = ram[addr_i];
++`ifdef DEBUG
++    integer i;
++    always @(posedge clk) begin
++        if (!rst_ni) begin
++            for (i = 0; i < DP; i = i + 1) begin
++                $display("Init RAM  : %08h = %08h", i, ram[i]);
++            end
++        end else if (req_i) begin
++            if (wen != 0) begin
++                $display("write : %08h = %08h", addr_i, data_i);
++            end else begin
++                $display("read  : %08h = %08h", addr_i, ram[addr_i]);
+             end
+         end
+-    endgenerate
++    end
++`endif
++
++    // Combined reset and write logic using case statement
++    integer k;
++    always @(posedge clk or negedge rst_ni) begin
++        if (!rst_ni) begin
++            // Initialize entire RAM to all zeros on reset
++            for (k = 0; k < DP; k = k + 1) begin
++                ram[k] <= {DW{1'b0}};
++            end
++        end else begin
++            // Normal write operations using case statement for byte selection
++            case (wen)
++                4'b0001: ram[addr_i][7:0]   <= data_i[7:0];
++                4'b0010: ram[addr_i][15:8]  <= data_i[15:8];
++                4'b0100: ram[addr_i][23:16] <= data_i[23:16];
++                4'b1000: ram[addr_i][31:24] <= data_i[31:24];
++                // Handle multiple byte writes
++                4'b0011: ram[addr_i][15:0]  <= data_i[15:0];
++                4'b1100: ram[addr_i][31:16] <= data_i[31:16];
++                4'b1111: ram[addr_i]        <= data_i;
++                default: ; // No write
++            endcase
++        end
++    end
+ 
+ endmodule
 diff --git a/rtl/utils/prim_filter.sv b/rtl/utils/prim_filter.sv
 index 59795cc..ab9862c 100644
 --- a/rtl/utils/prim_filter.sv

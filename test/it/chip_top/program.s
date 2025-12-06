@@ -783,7 +783,7 @@ test_timer_module:
 
     # 设置Timer最大值
     li s0, TIMER_EXPR
-    li s1, 0x00001000  # 设置最大值
+    li s1, 0x0000FFFF  # 设置最大值
     sw s1, 0(s0)
 
     mv a0, s1
@@ -839,14 +839,13 @@ test_timer_module:
     sw s1, 0(s0)
 
     # 等待中断发生（最多等待一定时间）
-    li s2, 1000  # 最大等待循环次数
+    li s2, 10  # 最大等待循环次数
 wait_for_interrupt:
     # 检查中断计数器是否增加
     lw s1, 0(s0)
     bnez s1, interrupt_occurred
 
     # 延迟一段时间
-    call delay
     call delay
 
     # 减少等待计数器
