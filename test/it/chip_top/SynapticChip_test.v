@@ -329,7 +329,7 @@ module SynapticChip_test;
     wire                      tx_busy;      // 发送中标志
     wire                      tx_end;       // 发送完成标志
 
-`ifdef USE_RS232_TEST
+`ifndef USE_RS232_TEST
     wire                      baud_clk;        // 波特率时钟
 
     ip4_clk_gen u_uart_clk_gen(
