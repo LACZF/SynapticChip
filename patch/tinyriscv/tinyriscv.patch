@@ -3250,7 +3250,7 @@ index bec99c2..9571247 100644
          .I2C_NUM(I2C_NUM),
          .UART_NUM(UART_NUM),
 diff --git a/rtl/perips/ram.sv b/rtl/perips/ram.sv
-index 8f0d318..71dc82d 100644
+index 8f0d318..87971cc 100644
 --- a/rtl/perips/ram.sv
 +++ b/rtl/perips/ram.sv
 @@ -1,23 +1,23 @@
@@ -3291,7 +3291,7 @@ index 8f0d318..71dc82d 100644
      parameter DP = 4096
      )(
      input  wire        clk_i,
-@@ -47,15 +47,25 @@ module ram #(
+@@ -47,9 +47,17 @@ module ram #(
          end
      end
  
@@ -3310,16 +3310,8 @@ index 8f0d318..71dc82d 100644
          .DP(DP),
          .DW(32),
          .MW(4),
-         .AW(32)
-     ) u_gen_ram(
-         .clk(clk_i),
-+        .rst_ni(rst_ni),
-+        .req_i(req_i),
-         .addr_i(addr),
-         .data_i(data_i),
-         .sel_i(be_i),
 diff --git a/rtl/perips/rom.sv b/rtl/perips/rom.sv
-index 601f3f1..b6f00ba 100644
+index 601f3f1..b03f1b4 100644
 --- a/rtl/perips/rom.sv
 +++ b/rtl/perips/rom.sv
 @@ -1,23 +1,23 @@
@@ -3360,7 +3352,7 @@ index 601f3f1..b6f00ba 100644
      parameter DP = 4096
      )(
      input  wire        clk_i,
-@@ -49,13 +49,15 @@ module rom #(
+@@ -49,7 +49,7 @@ module rom #(
  
      assign rvalid_o = rvalid_q;
  
@@ -3369,14 +3361,6 @@ index 601f3f1..b6f00ba 100644
          .DP(DP),
          .DW(32),
          .MW(4),
-         .AW(32)
-     ) u_gen_ram(
-         .clk(clk_i),
-+        .rst_ni(rst_ni),
-+        .req_i(req_i),
-         .addr_i(addr),
-         .data_i(data_i),
-         .sel_i(be_i),
 diff --git a/rtl/perips/rvic/rvic_core.sv b/rtl/perips/rvic/rvic_core.sv
 index 29170fc..8c35dba 100644
 --- a/rtl/perips/rvic/rvic_core.sv
@@ -5345,10 +5329,10 @@ index d3e2ee8..4c5c040 100644
  
      input wire clk,
 diff --git a/rtl/utils/gen_ram.sv b/rtl/utils/gen_ram.sv
-index a487a83..278343d 100644
+index a487a83..b179ff7 100644
 --- a/rtl/utils/gen_ram.sv
 +++ b/rtl/utils/gen_ram.sv
-@@ -1,29 +1,33 @@
+@@ -1,23 +1,23 @@
 - /*                                                                      
 + /*
   Copyright 2020 Blue Liang, liangkangnan@163.com
@@ -5386,82 +5370,6 @@ index a487a83..278343d 100644
      parameter DP = 512,
      parameter DW = 32,
      parameter MW = 4,
-     parameter AW = 32)(
- 
-     input wire clk,
-+    input wire rst_ni,
-+
-+    input wire         req_i,
-+
-     input wire[AW-1:0] addr_i,
-     input wire[DW-1:0] data_i,
-     input wire[MW-1:0] sel_i,
-@@ -47,26 +51,46 @@ module gen_ram #(
-         end
-     end
- 
--    assign data_o = ram[addr_r];
--
--    genvar i;
--
--    generate
--        for (i = 0; i < MW; i = i + 1) begin: sel_width
--            if ((8 * i + 8) > DW) begin: i_gt_8
--                always @ (posedge clk) begin: i_gt_8_ff
--                    if (wen[i]) begin: gt_8_wen
--                        ram[addr_i][DW-1:8*i] <= data_i[DW-1:8*i];
--                    end
--                end
--            end else begin: i_lt_8
--                always @ (posedge clk) begin: i_lt_8_ff
--                    if (wen[i]) begin: lt_8_wen
--                        ram[addr_i][8*i+7:8*i] <= data_i[8*i+7:8*i];
--                    end
--                end
-+    assign data_o = ram[addr_i];
-+`ifdef DEBUG
-+    integer i;
-+    always @(posedge clk) begin
-+        if (!rst_ni) begin
-+            for (i = 0; i < DP; i = i + 1) begin
-+                $display("Init RAM  : %08h = %08h", i, ram[i]);
-+            end
-+        end else if (req_i) begin
-+            if (wen != 0) begin
-+                $display("write : %08h = %08h", addr_i, data_i);
-+            end else begin
-+                $display("read  : %08h = %08h", addr_i, ram[addr_i]);
-             end
-         end
--    endgenerate
-+    end
-+`endif
-+
-+    // Combined reset and write logic using case statement
-+    integer k;
-+    always @(posedge clk or negedge rst_ni) begin
-+        if (!rst_ni) begin
-+            // Initialize entire RAM to all zeros on reset
-+            for (k = 0; k < DP; k = k + 1) begin
-+                ram[k] <= {DW{1'b0}};
-+            end
-+        end else begin
-+            // Normal write operations using case statement for byte selection
-+            case (wen)
-+                4'b0001: ram[addr_i][7:0]   <= data_i[7:0];
-+                4'b0010: ram[addr_i][15:8]  <= data_i[15:8];
-+                4'b0100: ram[addr_i][23:16] <= data_i[23:16];
-+                4'b1000: ram[addr_i][31:24] <= data_i[31:24];
-+                // Handle multiple byte writes
-+                4'b0011: ram[addr_i][15:0]  <= data_i[15:0];
-+                4'b1100: ram[addr_i][31:16] <= data_i[31:16];
-+                4'b1111: ram[addr_i]        <= data_i;
-+                default: ; // No write
-+            endcase
-+        end
-+    end
- 
- endmodule
 diff --git a/rtl/utils/prim_filter.sv b/rtl/utils/prim_filter.sv
 index 59795cc..ab9862c 100644
 --- a/rtl/utils/prim_filter.sv
