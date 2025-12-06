@@ -61,6 +61,7 @@ default: help
 TEST_ARGS += $(APPEND_ARGS)
 $(COMPLETE_TEST_TARGET):
 	$(QUITE)echo "test : $(M)"
+	$(QUITE)rm -rf $(TEST_BUILD_DIR)
 	$(QUITE)mkdir -p $(TEST_BUILD_DIR)
 	$(QUITE)if [ -d $(ABS_M) ]; then \
 			cp -rf $(ABS_M)/* $(TEST_BUILD_DIR); \
