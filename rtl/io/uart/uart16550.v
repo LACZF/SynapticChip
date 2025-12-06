@@ -340,11 +340,14 @@ module ip4_uart16550 #(
         if (!rst_n) begin
             tx_start <= 1'b0;
             tx_buffer <= 8'b0;
-        end else if (!tx_busy && !tx_fifo_empty && !tx_start) begin
-            tx_buffer <= tx_fifo_data_out;
-            tx_start  <= 1'b1;
-        end else if (tx_busy) begin
+        end else begin
             tx_start <= 1'b0;
+
+            // 当发送器空闲且FIFO非空时启动发送
+            if (!tx_busy && !tx_fifo_empty && !tx_start) begin
+                tx_buffer <= tx_fifo_data_out;
+                tx_start  <= 1'b1;
+            end
         end
     end
 

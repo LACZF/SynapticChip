@@ -67,6 +67,13 @@ module ip4_uart_top (
     assign data_out_o = data_out;
 
     assign gnt_o = req_i;
+`ifdef DEBUG
+    always @(posedge clk) begin
+        if (req_i && we_i) begin
+            $display("[UART]write : %08h = %08h", addr_i, wr_data_i);
+        end
+    end
+`endif
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
