@@ -1,4 +1,4 @@
-module combinational_multiplier #(
+module ip4_combinational_multiplier #(
     parameter DATA_WIDTH = 32
 ) (
     input  wire [DATA_WIDTH-1:0] a,

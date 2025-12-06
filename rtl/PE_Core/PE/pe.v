@@ -139,7 +139,7 @@ module ip4_pe #(
 
     // 乘法器实例化
     wire [DATA_WIDTH*2-1:0] mul_result;
-    combinational_multiplier #(
+    ip4_combinational_multiplier #(
         .DATA_WIDTH(DATA_WIDTH)
     ) mul_inst (
         .a(src1_reg),
