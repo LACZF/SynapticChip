@@ -112,8 +112,8 @@
 .equ PE_SRC_OPERAND1,  0x5     # 外部操作数1 (3'b101)
 .equ PE_SRC_OPERAND2,  0x6     # 外部操作数2 (3'b110)
 
-# 栈指针初始地址
-.equ STACK_TOP,      RAM_BASE + 0x400
+# 栈指针初始地址 - 调整为512B RAM场景
+.equ STACK_TOP,      RAM_BASE + 0x200
 
 # 中断向量表
 # RISC-V中断向量表索引规则：
@@ -912,29 +912,25 @@ timer_test_end:
     addi sp, sp, 16
     ret
 
-/* 异常和中断总入口 */
+/*
+ * 异常和中断总入口 - 优化栈使用以适应512B RAM
+ * 注意栈空间与.data段的重叠，避免栈溢出
+ */
 trap_entry:
-    addi sp, sp, -32*17
-    sw x1,   0*4(sp)
-    sw x5,   1*4(sp)
-    sw x6,   2*4(sp)
-    sw x7,   3*4(sp)
-    sw x10,  4*4(sp)
-    sw x11,  5*4(sp)
-    sw x12,  6*4(sp)
-    sw x13,  7*4(sp)
-    sw x14,  8*4(sp)
-    sw x15,  9*4(sp)
-    sw x16, 10*4(sp)
-    sw x17, 11*4(sp)
-    sw x28, 12*4(sp)
-    sw x29, 13*4(sp)
-    sw x30, 14*4(sp)
-    sw x31, 15*4(sp)
+    addi sp, sp, -32*9
+    sw x1,   0*4(sp)   # ra
+    sw x5,   1*4(sp)   # t0
+    sw x6,   2*4(sp)   # t1
+    sw x7,   3*4(sp)   # t2
+    sw x10,  4*4(sp)   # a0
+    sw x11,  5*4(sp)   # a1
+    sw x12,  6*4(sp)   # a2
+    sw x28,  7*4(sp)   # t3
+    sw x31,  8*4(sp)   # t6
 
     /* 保存异常(中断)返回地址 */
     csrr x10, mepc
-    sw x10, 16*4(sp)
+    sw x10, 9*4(sp)
 
     /* 使能全局中断 */
     csrsi mstatus, 0x8
@@ -965,25 +961,18 @@ pe_interrupt:
 
 trap_return:
     /* 恢复异常(中断)返回地址 */
-    lw x10,  16*4(sp)
+    lw x10,  9*4(sp)
     csrw mepc, x10
-    lw x1,   0*4(sp)
-    lw x5,   1*4(sp)
-    lw x6,   2*4(sp)
-    lw x7,   3*4(sp)
-    lw x10,  4*4(sp)
-    lw x11,  5*4(sp)
-    lw x12,  6*4(sp)
-    lw x13,  7*4(sp)
-    lw x14,  8*4(sp)
-    lw x15,  9*4(sp)
-    lw x16, 10*4(sp)
-    lw x17, 11*4(sp)
-    lw x28, 12*4(sp)
-    lw x29, 13*4(sp)
-    lw x30, 14*4(sp)
-    lw x31, 15*4(sp)
-    addi sp, sp, 32*17
+    lw x1,   0*4(sp)   # ra
+    lw x5,   1*4(sp)   # t0
+    lw x6,   2*4(sp)   # t1
+    lw x7,   3*4(sp)   # t2
+    lw x10,  4*4(sp)   # a0
+    lw x11,  5*4(sp)   # a1
+    lw x12,  6*4(sp)   # a2
+    lw x28,  7*4(sp)   # t3
+    lw x31,  8*4(sp)   # t6
+    addi sp, sp, 32*9
     mret
 
 # 中断控制器初始化
