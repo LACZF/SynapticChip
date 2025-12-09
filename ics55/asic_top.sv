@@ -1,9 +1,9 @@
-`define ip_0 3'd0 // project_2057
-`define ip_1 3'd1 // project_2017
-`define ip_2 3'd2 // project_2021
-`define ip_3 3'd3 // ysyxSoCASIC
+// `define ip_0 3'd0 // project_2057
+// `define ip_1 3'd1 // project_2017
+// `define ip_2 3'd2 // project_2021
+// `define ip_3 3'd3 // ysyxSoCASIC
 `define ip_4 3'd4 // project_2099
-`define ip_5 3'd5 // project_2005
+// `define ip_5 3'd5 // project_2005
 
 module asic_top (
     input   ip_sel_pad0,
@@ -184,10 +184,10 @@ module asic_top (
     logic           s_ysyx_clock_half;
     logic           s_ysyx_oldIPClock;
     logic           s_ysyx_oldIPReset;
-    logic           s_ysyx_uart0_rx;   
-    logic           s_ysyx_uart0_tx;   
-    logic           s_ysyx_spi_sck; 
-    logic [7:0]     s_ysyx_spi_ss; 
+    logic           s_ysyx_uart0_rx;
+    logic           s_ysyx_uart0_tx;
+    logic           s_ysyx_spi_sck;
+    logic [7:0]     s_ysyx_spi_ss;
     logic           s_ysyx_spi_mosi;
     logic           s_ysyx_spi_miso;
     logic [1:0]     s_ysyx_core_sel;
@@ -214,7 +214,7 @@ module asic_top (
     logic           ip5_halted;
     logic [31:0]    ip5_npu_result_o;
 
-    always_comb begin 
+    always_comb begin
         io_pad_o  = '0;
         io_pad_oe = '0;
         io_pad_pu = '0;
@@ -283,7 +283,7 @@ module asic_top (
                 io_pad_o[65:58]  = ip0_gpios_o;
                 io_pad_pu[7:0]   = ip0_gpios_pu;
                 io_pad_pd[7:0]   = ip0_gpios_pd;
-                
+
                 ip0_jtag_jtrstn  = io_pad_i[66];
                 ip0_jtag_jtck    = io_pad_i[67];
                 ip0_jtag_jtms    = io_pad_i[68];
@@ -390,7 +390,7 @@ module asic_top (
                 io_pad_o[1]    = ip4_uart_tx;
                 io_pad_o[9:6]  = ip4_gpio_out;
                 io_pad_o[13]   = ip4_jtag_tdo_pin;
-            end 
+            end
         `endif
         `ifdef ip_5
             `ip_5: begin
@@ -415,7 +415,7 @@ module asic_top (
         endcase
     end
 
-`ifdef ip_0 
+`ifdef ip_0
 ip0_digi_top u_digi_top (
     .TEST_PIN      (),
     .sys_clk_i     (ip0_clk_100m),
@@ -457,22 +457,22 @@ ip0_digi_top u_digi_top (
 
 `ifdef ip_1
 ip1_SimpleEdgeAiSoC u_SimpleEdgeAiSoC (
-    .clock              (ip1_clk_100m),   
+    .clock              (ip1_clk_100m),
     .reset              (~rst_100m_n),
     .io_uart_tx         (ip1_io_uart_tx),
     .io_uart_rx         (ip1_io_uart_rx),
-    .io_lcd_spi_clk     (ip1_io_lcd_spi_clk),    
-    .io_lcd_spi_mosi    (ip1_io_lcd_spi_mosi),       
-    .io_lcd_spi_cs      (ip1_io_lcd_spi_cs),   
-    .io_lcd_spi_dc      (ip1_io_lcd_spi_dc),   
-    .io_lcd_spi_rst     (ip1_io_lcd_spi_rst),   
-    .io_lcd_backlight   (ip1_io_lcd_backlight),       
-    .io_gpio_out        (ip1_io_gpio_out),    
+    .io_lcd_spi_clk     (ip1_io_lcd_spi_clk),
+    .io_lcd_spi_mosi    (ip1_io_lcd_spi_mosi),
+    .io_lcd_spi_cs      (ip1_io_lcd_spi_cs),
+    .io_lcd_spi_dc      (ip1_io_lcd_spi_dc),
+    .io_lcd_spi_rst     (ip1_io_lcd_spi_rst),
+    .io_lcd_backlight   (ip1_io_lcd_backlight),
+    .io_gpio_out        (ip1_io_gpio_out),
     .io_gpio_in         (ip1_io_gpio_in),
     .io_trap            (ip1_io_trap),
-    .io_compact_irq     (ip1_io_compact_irq),    
-    .io_bitnet_irq      (ip1_io_bitnet_irq),    
-    .io_uart_tx_irq     (ip1_io_uart_tx_irq),    
+    .io_compact_irq     (ip1_io_compact_irq),
+    .io_bitnet_irq      (ip1_io_bitnet_irq),
+    .io_uart_tx_irq     (ip1_io_uart_tx_irq),
     .io_uart_rx_irq     (ip1_io_uart_rx_irq)
 );
 `endif
@@ -496,16 +496,16 @@ ip2_TJUT_TOP u_TJUT_TOP (
 `endif
 
 `ifdef ip_3
-ysyxSoCASIC u_ysyxSoCASIC (     
-    .clock            (s_ysyx_clk_100m   ),   
-    .reset            (~rst_100m_n       ),   
-    .clock_half       (clk_100m          ),  
-    .oldIPClock       (clk_100m          ),  
-    .oldIPReset       (~rst_100m_n       ),  
-    .uart0_rx         (s_ysyx_uart0_rx  ),    
-    .uart0_tx         (s_ysyx_uart0_tx  ),    
-    .spi_sck          (s_ysyx_spi_sck   ),  
-    .spi_ss           (s_ysyx_spi_ss    ),  
+ysyxSoCASIC u_ysyxSoCASIC (
+    .clock            (s_ysyx_clk_100m   ),
+    .reset            (~rst_100m_n       ),
+    .clock_half       (clk_100m          ),
+    .oldIPClock       (clk_100m          ),
+    .oldIPReset       (~rst_100m_n       ),
+    .uart0_rx         (s_ysyx_uart0_rx  ),
+    .uart0_tx         (s_ysyx_uart0_tx  ),
+    .spi_sck          (s_ysyx_spi_sck   ),
+    .spi_ss           (s_ysyx_spi_ss    ),
     .spi_mosi         (s_ysyx_spi_mosi  ),
     .spi_miso         (s_ysyx_spi_miso  ),
     .core_sel         (s_ysyx_core_sel  ),
@@ -540,7 +540,7 @@ ip5_riscv_npu_top u_riscv_npu_top (
     .cfg_addr               (ip5_cfg_addr   ),
     .cfg_wdata              (ip5_cfg_wdata  ),
     .cfg_rdata              (ip5_cfg_rdata  ),
-    .halted                 (ip5_halted     ),        
+    .halted                 (ip5_halted     ),
     .npu_result_o           (ip5_npu_result_o  )
 );
 `endif
@@ -554,14 +554,14 @@ tc_clk_buf u_ip5_clk_buf (.clk_i(clk_100m),       .clk_o(ip5_clk_100m));
 
 rcu u_rcu (
     .sys_clk_i          (sys_clk),
-    .arst_n_i           (rst_n),  
+    .arst_n_i           (rst_n),
 
-    .clk_100m_o         (clk_100m),  
-    .clk_50m_o          (clk_50m),   
-    .clk_25m_o          (clk_25m),   
+    .clk_100m_o         (clk_100m),
+    .clk_50m_o          (clk_50m),
+    .clk_25m_o          (clk_25m),
     .rst_100m_n_o       (rst_100m_n),
-    .rst_50m_n_o        (rst_50m_n), 
-    .rst_25m_n_o        (rst_25m_n)  
+    .rst_50m_n_o        (rst_50m_n),
+    .rst_25m_n_o        (rst_25m_n)
 );
 
 P65_1233_PWE u_sys_clk_pad (.E(1'b1), .XIN(sys_clk_i_pad), .XOUT(sys_clk_o_pad), .XC(sys_clk));
@@ -577,7 +577,7 @@ P65_1233_PBMUX u_io_pad2 (.C(io_pad_i[2]),   .A(), .PAD(io_pad2),  .IE(~io_pad_o
 P65_1233_PBMUX u_io_pad3 (.C(io_pad_i[3]),   .A(), .PAD(io_pad3),  .IE(~io_pad_oe[3]),  .CS(1'b0), .I(io_pad_o[3]),  .OE(io_pad_oe[3]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad4 (.C(io_pad_i[4]),   .A(), .PAD(io_pad4),  .IE(~io_pad_oe[4]),  .CS(1'b0), .I(io_pad_o[4]),  .OE(io_pad_oe[4]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad5 (.C(io_pad_i[5]),   .A(), .PAD(io_pad5),  .IE(~io_pad_oe[5]),  .CS(1'b0), .I(io_pad_o[5]),  .OE(io_pad_oe[5]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1));
-P65_1233_PBMUX u_io_pad6 (.C(io_pad_i[6]),   .A(), .PAD(io_pad6),  .IE(~io_pad_oe[6]),  .CS(1'b0), .I(io_pad_o[6]),  .OE(io_pad_oe[6]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1)); 
+P65_1233_PBMUX u_io_pad6 (.C(io_pad_i[6]),   .A(), .PAD(io_pad6),  .IE(~io_pad_oe[6]),  .CS(1'b0), .I(io_pad_o[6]),  .OE(io_pad_oe[6]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad7 (.C(io_pad_i[7]),   .A(), .PAD(io_pad7),  .IE(~io_pad_oe[7]),  .CS(1'b0), .I(io_pad_o[7]),  .OE(io_pad_oe[7]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad8 (.C(io_pad_i[8]),   .A(), .PAD(io_pad8),  .IE(~io_pad_oe[8]),  .CS(1'b0), .I(io_pad_o[8]),  .OE(io_pad_oe[8]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad9 (.C(io_pad_i[9]),   .A(), .PAD(io_pad9),  .IE(~io_pad_oe[9]),  .CS(1'b0), .I(io_pad_o[9]),  .OE(io_pad_oe[9]),  .OD(1'b0), .PU(1'b0), .PD(1'b0), .DS0(1'b0), .DS1(1'b1));
@@ -632,7 +632,7 @@ P65_1233_PBMUX u_io_pad57 (.C(io_pad_i[57]), .A(), .PAD(io_pad57), .IE(~io_pad_o
 P65_1233_PBMUX u_io_pad58 (.C(io_pad_i[58]), .A(), .PAD(io_pad58), .IE(~io_pad_oe[58]), .CS(1'b0), .I(io_pad_o[58]), .OE(io_pad_oe[58]), .OD(1'b0), .PU(io_pad_pu[0]), .PD(io_pad_pd[0]), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad59 (.C(io_pad_i[59]), .A(), .PAD(io_pad59), .IE(~io_pad_oe[59]), .CS(1'b0), .I(io_pad_o[59]), .OE(io_pad_oe[59]), .OD(1'b0), .PU(io_pad_pu[1]), .PD(io_pad_pd[1]), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad60 (.C(io_pad_i[60]), .A(), .PAD(io_pad60), .IE(~io_pad_oe[60]), .CS(1'b0), .I(io_pad_o[60]), .OE(io_pad_oe[60]), .OD(1'b0), .PU(io_pad_pu[2]), .PD(io_pad_pd[2]), .DS0(1'b0), .DS1(1'b1));
-P65_1233_PBMUX u_io_pad61 (.C(io_pad_i[61]), .A(), .PAD(io_pad61), .IE(~io_pad_oe[61]), .CS(1'b0), .I(io_pad_o[61]), .OE(io_pad_oe[61]), .OD(1'b0), .PU(io_pad_pu[3]), .PD(io_pad_pd[3]), .DS0(1'b0), .DS1(1'b1));  
+P65_1233_PBMUX u_io_pad61 (.C(io_pad_i[61]), .A(), .PAD(io_pad61), .IE(~io_pad_oe[61]), .CS(1'b0), .I(io_pad_o[61]), .OE(io_pad_oe[61]), .OD(1'b0), .PU(io_pad_pu[3]), .PD(io_pad_pd[3]), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad62 (.C(io_pad_i[62]), .A(), .PAD(io_pad62), .IE(~io_pad_oe[62]), .CS(1'b0), .I(io_pad_o[62]), .OE(io_pad_oe[62]), .OD(1'b0), .PU(io_pad_pu[4]), .PD(io_pad_pd[4]), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad63 (.C(io_pad_i[63]), .A(), .PAD(io_pad63), .IE(~io_pad_oe[63]), .CS(1'b0), .I(io_pad_o[63]), .OE(io_pad_oe[63]), .OD(1'b0), .PU(io_pad_pu[5]), .PD(io_pad_pd[5]), .DS0(1'b0), .DS1(1'b1));
 P65_1233_PBMUX u_io_pad64 (.C(io_pad_i[64]), .A(), .PAD(io_pad64), .IE(~io_pad_oe[64]), .CS(1'b0), .I(io_pad_o[64]), .OE(io_pad_oe[64]), .OD(1'b0), .PU(io_pad_pu[6]), .PD(io_pad_pd[6]), .DS0(1'b0), .DS1(1'b1));

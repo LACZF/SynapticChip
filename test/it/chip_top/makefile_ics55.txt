@@ -1,0 +1,61 @@
+
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+SIM_CYCLE    ?= 20000
+ROM_PRG      ?= program.hex
+RAM_PRG      ?= data_bss.hex
+BOOT_TYPE    ?= 0
+ASIC_VERSION ?= 1
+NETLIST_SIMULATION ?= 1
+
+TEST_TARGET := top_system
+TEST_ARGS ?= -g2005-sv -DROM_PRG=\"$(ROM_PRG)\" -DRAM_PRG=\"$(RAM_PRG)\" -DSIM_CYCLE=$(SIM_CYCLE) -DBOOT_TYPE=$(BOOT_TYPE)
+ifeq ($(ASIC_VERSION),1)
+TEST_ARGS += -DASIC_VERSION
+TEST_ARGS += -DEXT_BUAD_SAMPLE_VALID=0
+TEST_ARGS += -DEXT_SAMPLE_REG=16
+TEST_ARGS += -DEXT_BUAD_REG=115200
+else
+TEST_ARGS += -DEXT_BUAD_SAMPLE_VALID=1
+TEST_ARGS += -DEXT_SAMPLE_REG=4
+TEST_ARGS += -DEXT_BUAD_REG=2
+endif
+
+TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
+
+TEST_ARGS += -gno-assertions
+TEST_ARGS += -DPDK_CX55
+TEST_INCLUDE_DIR += -I$(TOP_DIR)/ics55/utils
+TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CL.v
+TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CR.v
+TEST_SRC += $(TOP_DIR)/ics55/lib/icsIOA_N55_3P3.v
+TEST_SRC += $(TOP_DIR)/ics55/lib/tc_clk.sv
+TEST_SRC += $(TOP_DIR)/ics55/rcu/rcu.sv
+TEST_SRC += $(TOP_DIR)//ics55/utils/clk_int_div.sv
+TEST_SRC += $(TOP_DIR)//ics55/utils/config.svh
+TEST_SRC += $(TOP_DIR)//ics55/utils/register.sv
+TEST_SRC += $(TOP_DIR)//ics55/utils/rst_sync.sv
+TEST_SRC += $(TOP_DIR)//ics55/utils/stdcell.sv
+TEST_SRC += $(TOP_DIR)//ics55/utils/xchecker.sv
+
+ifeq ($(NETLIST_SIMULATION),1)
+TEST_SRC += $(TOP_DIR)/rtl/common/clk_gen.v
+TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_ram.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
+TEST_SRC += $(TOP_DIR)/ics55/asic_top_update.syn.v
+else
+TEST_SRC += $(RTL_SRC)
+TEST_SRC += $(TOP_DIR)/ics55/asic_top.sv
+endif
+
+TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
+
+TEST_SRC += $(TOP_DIR)/test/common/apb_ram.v
+TEST_SRC += $(TOP_DIR)/test/common/MX25L6436F.v
+TEST_SRC += $(TOP_DIR)/test/common/w25q128jvxim.sv
+TEST_SRC += $(TOP_DIR)/test/common/rs232.sv
+
+TEST_SRC += $(CUR_DIR)/test_spi_slave.v
+TEST_SRC += $(CUR_DIR)/qspi_flash_model.v
+TEST_SRC += $(CUR_DIR)/tb_SynapticChip_ics55.v
