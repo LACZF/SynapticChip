@@ -270,7 +270,7 @@ module asic_top (
                 io_pad_oe[57:26] = ip0_sram_data_oe;
                 io_pad_oe[65:58] = ip0_gpios_oe;
                 io_pad_oe[73:66] = 8'b0;
-                io_pad_oe[81:74] = 8'b1;
+                io_pad_oe[81:74] = {8{1'b1}};
 
                 ip0_sram_ben_i    = io_pad_i[3:0];
                 ip0_sram_addr_i   = io_pad_i[25:4];
@@ -306,10 +306,10 @@ module asic_top (
         `ifdef ip_1
             `ip_1: begin
                 io_pad_oe[31:0] = 32'b0;
-                io_pad_oe[63:32] = 32'b1;
+                io_pad_oe[63:32] = {32{1'b1}};
                 io_pad_oe[64] = 1'b1;
                 io_pad_oe[65] = 1'b0;
-                io_pad_oe[76:66] = 11'b1;
+                io_pad_oe[76:66] = {11{1'b1}};
 
                 ip1_io_gpio_in = io_pad_i[31:0];
                 io_pad_o[63:32] = ip1_io_gpio_out;
@@ -334,7 +334,7 @@ module asic_top (
                 io_pad_oe[7:0]  = ip2_TJUT_gpio1_dir;
                 io_pad_oe[15:8] = ip2_TJUT_gpio2_dir;
                 io_pad_oe[16] = 1'b0;
-                io_pad_oe[18:17] = 2'b1;
+                io_pad_oe[18:17] = {2{1'b1}};
                 io_pad_oe[19] = 1'b0;
                 io_pad_oe[20] = 1'b1;
 
@@ -355,7 +355,7 @@ module asic_top (
                 io_pad_oe[0]     = 1'b0;
                 io_pad_oe[1]     = 1'b1;
                 io_pad_oe[2]     = 1'b1;
-                io_pad_oe[10:3]  = 8'b1;
+                io_pad_oe[10:3]  = {8{1'b1}};
                 io_pad_oe[11]    = 1'b1;
                 io_pad_oe[12]    = 1'b0;
                 io_pad_oe[14:13] = 2'b0;
@@ -377,7 +377,7 @@ module asic_top (
                 io_pad_oe[0]    = 1'b0;
                 io_pad_oe[1]    = 1'b1;
                 io_pad_oe[5:2]  = 4'b0;
-                io_pad_oe[9:6]  = 4'b1;
+                io_pad_oe[9:6]  = {4{1'b1}};
                 io_pad_oe[12:10]= 3'b0;
                 io_pad_oe[13]   = 1'b1;
 
@@ -396,9 +396,9 @@ module asic_top (
             `ip_5: begin
                 io_pad_oe[15:0]  = 16'b0;
                 io_pad_oe[16]    = 1'b0;
-                io_pad_oe[48:17] = ip5_cfg_wr_en ? 32'b0 : 32'b1;
+                io_pad_oe[48:17] = ip5_cfg_wr_en ? 32'b0 : {32{1'b1}};
                 io_pad_oe[49]    = 1'b1;
-                io_pad_oe[81:50] = 32'b1;
+                io_pad_oe[81:50] = {32{1'b1}};
 
                 ip5_cfg_addr    = io_pad_i[15:0];
                 ip5_cfg_wr_en   = io_pad_i[16];
@@ -411,6 +411,7 @@ module asic_top (
             end
         `endif
             default: begin
+
             end
         endcase
     end
