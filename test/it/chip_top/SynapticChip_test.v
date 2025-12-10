@@ -269,8 +269,14 @@ module SynapticChip_test;
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
 
-        .gpio_in     (chip_gpio_in),
-        .gpio_out    (chip_gpio_out)
+        .gpio_in0     (chip_gpio_in[0]),
+        .gpio_in1     (chip_gpio_in[1]),
+        .gpio_in2     (chip_gpio_in[2]),
+        .gpio_in3     (chip_gpio_in[3]),
+        .gpio_out0    (chip_gpio_out[0]),
+        .gpio_out1    (chip_gpio_out[1]),
+        .gpio_out2    (chip_gpio_out[2]),
+        .gpio_out3    (chip_gpio_out[3])
     );
 
     if (IMPLEMENT_XIP == 1) begin : xip_gen
@@ -481,7 +487,7 @@ module SynapticChip_test;
     initial begin
         integer timeout;
         $readmemh(`ROM_PRG, u_ext_rom.u_gen_ram.ram);
-        $readmemh(`RAM_PRG, u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram);
+        // $readmemh(`RAM_PRG, u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;
         tx_start <= 1'b0;

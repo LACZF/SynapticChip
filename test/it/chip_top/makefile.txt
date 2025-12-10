@@ -6,6 +6,7 @@ ROM_PRG      ?= program.hex
 RAM_PRG      ?= data_bss.hex
 BOOT_TYPE    ?= 0
 ASIC_VERSION ?= 0
+NETLIST_SIMULATION ?= 0
 
 TEST_TARGET := top_system
 TEST_ARGS ?= -g2005-sv -DROM_PRG=\"$(ROM_PRG)\" -DRAM_PRG=\"$(RAM_PRG)\" -DSIM_CYCLE=$(SIM_CYCLE) -DBOOT_TYPE=$(BOOT_TYPE)
@@ -22,7 +23,19 @@ endif
 
 TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
+ifeq ($(NETLIST_SIMULATION),1)
+TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CL.v
+TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CR.v
+TEST_SRC += $(TOP_DIR)/ics55/lib/icsIOA_N55_3P3.v
+
+TEST_SRC += $(TOP_DIR)/rtl/common/clk_gen.v
+TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_ram.sv
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
+TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
+TEST_SRC += $(TOP_DIR)/build/ip4_SynapticChip/result/ip4_SynapticChip_synth.v
+else
 TEST_SRC += $(RTL_SRC)
+endif
 
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/perips/rom.sv
 
