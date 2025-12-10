@@ -349,41 +349,149 @@ test_pe_module:
     sw s5, 4(sp)
     sw s6, 0(sp)
 
-    # 3.1 加载源操作数1数据
-    la s0, pe_operand1_data    # 源操作数1数据地址
+    # 3.1 加载源操作数1数据（直接使用立即数）
     li s1, PE_OPERAND1_BASE    # PE操作数1基地址
-    li s2, 16                  # 16个PE
+    li s2, 0                   # PE计数器
 load_operand1_loop:
-    lw s3, 0(s0)               # 从数据段读取操作数1
+    # 根据PE编号设置操作数1
+    li s3, 0x0000000A          # PE0: 0x0000000A
+    li t0, 0
+    beq s2, t0, store_operand1
+    li s3, 0x0000000B          # PE1: 0x0000000B
+    li t0, 1
+    beq s2, t0, store_operand1
+    li s3, 0x0000000C          # PE2: 0x0000000C
+    li t0, 2
+    beq s2, t0, store_operand1
+    li s3, 0x0000000D          # PE3: 0x0000000D
+    li t0, 3
+    beq s2, t0, store_operand1
+    li s3, 0x0000000E          # PE4: 0x0000000E
+    li t0, 4
+    beq s2, t0, store_operand1
+    li s3, 0x0000000F          # PE5: 0x0000000F
+    li t0, 5
+    beq s2, t0, store_operand1
+    li s3, 0x00000010          # PE6: 0x00000010
+    li t0, 6
+    beq s2, t0, store_operand1
+    li s3, 0x00000011          # PE7: 0x00000011
+    li t0, 7
+    beq s2, t0, store_operand1
+    li s3, 0x00000012          # PE8: 0x00000012
+    li t0, 8
+    beq s2, t0, store_operand1
+    li s3, 0x00000013          # PE9: 0x00000013
+    li t0, 9
+    beq s2, t0, store_operand1
+    li s3, 0x00000014          # PE10: 0x00000014
+    li t0, 10
+    beq s2, t0, store_operand1
+    li s3, 0x00000015          # PE11: 0x00000015
+    li t0, 11
+    beq s2, t0, store_operand1
+    li s3, 0x00000016          # PE12: 0x00000016
+    li t0, 12
+    beq s2, t0, store_operand1
+    li s3, 0x00000017          # PE13: 0x00000017
+    li t0, 13
+    beq s2, t0, store_operand1
+    li s3, 0x00000018          # PE14: 0x00000018
+    li t0, 14
+    beq s2, t0, store_operand1
+    li s3, 0x00000019          # PE15: 0x00000019
+
+store_operand1:
     sw s3, 0(s1)               # 写入PE操作数1内存
-    addi s0, s0, 4             # 下一个数据段地址
     addi s1, s1, 4             # 下一个PE内存地址
-    addi s2, s2, -1            # 计数器减1
-    bnez s2, load_operand1_loop
+    addi s2, s2, 1             # 计数器加1
+    li t0, 16
+    blt s2, t0, load_operand1_loop
 
-    # 3.2 加载源操作数2数据
-    la s0, pe_operand2_data    # 源操作数2数据地址
+    # 3.2 加载源操作数2数据（直接使用立即数）
     li s1, PE_OPERAND2_BASE    # PE操作数2基地址
-    li s2, 16                  # 16个PE
+    li s2, 0                   # PE计数器
 load_operand2_loop:
-    lw s3, 0(s0)               # 从数据段读取操作数2
-    sw s3, 0(s1)               # 写入PE操作数2内存
-    addi s0, s0, 4             # 下一个数据段地址
-    addi s1, s1, 4             # 下一个PE内存地址
-    addi s2, s2, -1            # 计数器减1
-    bnez s2, load_operand2_loop
+    # 根据PE编号设置操作数2
+    li s3, 0x00000005          # PE0: 0x00000005
+    li t0, 0
+    beq s2, t0, store_operand2
+    li s3, 0x00000006          # PE1: 0x00000006
+    li t0, 1
+    beq s2, t0, store_operand2
+    li s3, 0x00000007          # PE2: 0x00000007
+    li t0, 2
+    beq s2, t0, store_operand2
+    li s3, 0x00000008          # PE3: 0x00000008
+    li t0, 3
+    beq s2, t0, store_operand2
+    li s3, 0x00000009          # PE4: 0x00000009
+    li t0, 4
+    beq s2, t0, store_operand2
+    li s3, 0x0000000A          # PE5: 0x0000000A
+    li t0, 5
+    beq s2, t0, store_operand2
+    li s3, 0x0000000B          # PE6: 0x0000000B
+    li t0, 6
+    beq s2, t0, store_operand2
+    li s3, 0x0000000C          # PE7: 0x0000000C
+    li t0, 7
+    beq s2, t0, store_operand2
+    li s3, 0x0000000D          # PE8: 0x0000000D
+    li t0, 8
+    beq s2, t0, store_operand2
+    li s3, 0x0000000E          # PE9: 0x0000000E
+    li t0, 9
+    beq s2, t0, store_operand2
+    li s3, 0x0000000F          # PE10: 0x0000000F
+    li t0, 10
+    beq s2, t0, store_operand2
+    li s3, 0x00000010          # PE11: 0x00000010
+    li t0, 11
+    beq s2, t0, store_operand2
+    li s3, 0x00000011          # PE12: 0x00000011
+    li t0, 12
+    beq s2, t0, store_operand2
+    li s3, 0x00000012          # PE13: 0x00000012
+    li t0, 13
+    beq s2, t0, store_operand2
+    li s3, 0x00000013          # PE14: 0x00000013
+    li t0, 14
+    beq s2, t0, store_operand2
+    li s3, 0x00000014          # PE15: 0x00000014
 
-    # 3.3 加载配置与路由数据
-    la s0, pe_config_data      # 配置数据地址
-    li s1, PE_CONFIG_BASE      # PE配置基地址
-    li s2, 16                  # 16个PE
-load_config_loop:
-    lw s3, 0(s0)               # 从数据段读取配置
-    sw s3, 0(s1)               # 写入PE配置内存
-    addi s0, s0, 4             # 下一个数据段地址
+store_operand2:
+    sw s3, 0(s1)               # 写入PE操作数2内存
     addi s1, s1, 4             # 下一个PE内存地址
-    addi s2, s2, -1            # 计数器减1
-    bnez s2, load_config_loop
+    addi s2, s2, 1             # 计数器加1
+    li t0, 16
+    blt s2, t0, load_operand2_loop
+
+    # 3.3 加载配置与路由数据（直接使用立即数）
+    li s1, PE_CONFIG_BASE      # PE配置基地址
+    li s2, 0                   # PE计数器
+load_config_loop:
+    # 根据PE编号设置配置数据
+    li s3, (PE_OP_ADD << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_NORTH_SHIFT) | (1 << PE_STORE_MEM_SHIFT)  # PE0: ADD运算
+    li t0, 0
+    beq s2, t0, store_config
+    li s3, (PE_OP_SUB << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_SOUTH_SHIFT)  # PE1: SUB运算
+    li t0, 1
+    beq s2, t0, store_config
+    li s3, (PE_OP_MUL << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_EAST_SHIFT)  # PE2: MUL运算
+    li t0, 2
+    beq s2, t0, store_config
+    li s3, (PE_OP_AND << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_WEST_SHIFT)  # PE3: AND运算
+    li t0, 3
+    beq s2, t0, store_config
+    li s3, 0x00000000          # PE4-PE15: 默认配置
+
+store_config:
+    sw s3, 0(s1)               # 写入PE配置内存
+    addi s1, s1, 4             # 下一个PE内存地址
+    addi s2, s2, 1             # 计数器加1
+    li t0, 16
+    blt s2, t0, load_config_loop
 
     li s0, PE_CTRL_ADDR
     li s1, 1 << 0  # 启动PE计算（PE默认使能）
@@ -395,22 +503,36 @@ load_config_loop:
 
     # 检查前4个PE的结果
     li s0, PE_OUTPUT_BASE      # PE0结果地址
-    la s1, pe_expected_results # 期望结果地址
-    li s2, 4                   # 检查前4个PE
+    li s2, 0                   # PE编号计数器（从0开始）
+    li s5, 4                   # 检查前4个PE
 
 check_results_loop:
     lw s3, 0(s0)               # 读取PE实际结果
-    lw s4, 0(s1)               # 读取期望结果
+
+    # 根据PE编号设置期望结果
+    li s4, 0x0000000F          # PE0期望结果: 0x0000000A + 0x00000005 = 0x0000000F
+    li t0, 0
+    beq s2, t0, check_continue
+    li s4, 0x00000005          # PE1期望结果: 0x0000000B - 0x00000006 = 0x00000005
+    li t0, 1
+    beq s2, t0, check_continue
+    li s4, 0x00000054          # PE2期望结果: 0x0000000C * 0x00000007 = 0x00000054
+    li t0, 2
+    beq s2, t0, check_continue
+    li s4, 0x00000008          # PE3期望结果: 0x0000000D & 0x00000008 = 0x00000008
+    li t0, 3
+    beq s2, t0, check_continue
+    li s4, 0x00000000          # PE4-PE15: 默认期望结果
+
+check_continue:
 
     # 打印PE编号和结果
     li a0, 'P'
     call uart_write_byte
     li a0, 'E'
     call uart_write_byte
-    mv a0, s2
-    li a1, 4
-    sub a0, a1, a0             # 计算PE编号
-    addi a0, a0, 1
+    mv a0, s2                   # PE编号（从0开始）
+    addi a0, a0, 1              # 转换为从1开始的PE编号
     call print_dec
     li a0, ':'
     call uart_write_byte
@@ -439,9 +561,9 @@ result_ok:
     call print_newline
 
     addi s0, s0, 4             # 下一个PE结果地址
-    addi s1, s1, 4             # 下一个期望结果地址
-    addi s2, s2, -1            # 计数器减1
-    bnez s2, check_results_loop
+    addi s2, s2, 1             # PE编号加1
+    addi s5, s5, -1            # 循环计数器减1
+    bnez s5, check_results_loop
 
     # 6. 输出最终测试结果
     # beqz s6, test_failed
@@ -1112,47 +1234,3 @@ timer_interrupt_count:
 # 测试结果标志
 pe_test_result:
     .word 0x00000000  # 0=测试中, 1=成功, 2=失败
-
-# PE测试数据 - 源操作数1 (4x4 PE阵列，每个PE一个32位操作数)
-pe_operand1_data:
-    .word 0x0000000A, 0x0000000B, 0x0000000C, 0x0000000D  # PE0-PE3
-    .word 0x0000000E, 0x0000000F, 0x00000010, 0x00000011  # PE4-PE7
-    .word 0x00000012, 0x00000013, 0x00000014, 0x00000015  # PE8-PE11
-    .word 0x00000016, 0x00000017, 0x00000018, 0x00000019  # PE12-PE15
-
-# PE测试数据 - 源操作数2 (4x4 PE阵列，每个PE一个32位操作数)
-pe_operand2_data:
-    .word 0x00000005, 0x00000006, 0x00000007, 0x00000008  # PE0-PE3
-    .word 0x00000009, 0x0000000A, 0x0000000B, 0x0000000C  # PE4-PE7
-    .word 0x0000000D, 0x0000000E, 0x0000000F, 0x00000010  # PE8-PE11
-    .word 0x00000011, 0x00000012, 0x00000013, 0x00000014  # PE12-PE15
-
-# PE测试数据 - 配置与路由 (4x4 PE阵列，每个PE一个32位配置字)
-pe_config_data:
-    # PE0: ADD运算，从外部操作数1和2读取，输出到北向和存储到内存
-    .word (PE_OP_ADD << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_NORTH_SHIFT) | (1 << PE_STORE_MEM_SHIFT)
-    # PE1: SUB运算，从外部操作数1和2读取，输出到南向
-    .word (PE_OP_SUB << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_SOUTH_SHIFT)
-    # PE2: MUL运算，从外部操作数1和2读取，输出到东向
-    .word (PE_OP_MUL << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_EAST_SHIFT)
-    # PE3: AND运算，从外部操作数1和2读取，输出到西向
-    .word (PE_OP_AND << PE_OPCODE_SHIFT) | (PE_SRC_OPERAND1 << PE_SRC1_SEL_SHIFT) | (PE_SRC_OPERAND2 << PE_SRC2_SEL_SHIFT) | (1 << PE_ROUTE_WEST_SHIFT)
-    # PE4-PE15: 使用默认配置
-    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-
-# PE期望结果数据 (4x4 PE阵列，每个PE一个32位期望结果)
-pe_expected_results:
-    # PE0: 0x0000000A + 0x00000005 = 0x0000000F
-    .word 0x0000000F
-    # PE1: 0x0000000B - 0x00000006 = 0x00000005
-    .word 0x00000005
-    # PE2: 0x0000000C * 0x00000007 = 0x00000054
-    .word 0x00000054
-    # PE3: 0x0000000D & 0x00000008 = 0x00000008
-    .word 0x00000008
-    # PE4-PE15: 默认期望结果
-    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-    .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
