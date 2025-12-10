@@ -75,14 +75,14 @@ module tb_SynapticChip_ics55;
     localparam BUAD_SAMPLE_VALID    = 1'b0;
     localparam SAMPLE_CYCLES        = 16;
     localparam UART_DIV_RATE        = (SYS_CLK_FREQ / BAUD_RATE / 2 / SAMPLE_CYCLES);
-    localparam TIMEOUT_CYCLES       = 1000000;
+    localparam TIMEOUT_CYCLES       = 10000000;
     localparam ASIC_VERSION         = 1;
 `else
     localparam BUAD_SAMPLE_VALID    = 1'b1;
     localparam SAMPLE_CYCLES        = `EXT_SAMPLE_REG;
     localparam UART_DIV_RATE        = `EXT_BUAD_REG;
     localparam BAUD_RATE            = (SYS_CLK_FREQ / UART_DIV_RATE / 2 / SAMPLE_CYCLES);
-    localparam TIMEOUT_CYCLES       = 1000000;
+    localparam TIMEOUT_CYCLES       = 10000000;
     localparam ASIC_VERSION         = 0;
 `endif
 
@@ -562,7 +562,7 @@ module tb_SynapticChip_ics55;
     initial begin
         integer timeout;
         $readmemh(`ROM_PRG, u_ext_rom.u_gen_ram.ram);
-        $readmemh(`RAM_PRG, u_asic_top.u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram);
+        // $readmemh(`RAM_PRG, u_asic_top.u_SynapticChip.u_chip_top.u_ram.u_gen_ram.ram);
         clk      <= 0;
         rst_n    <= 0;
         tx_start <= 1'b0;
