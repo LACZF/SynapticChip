@@ -9,22 +9,41 @@ ASIC_VERSION ?= 1
 NETLIST_SIMULATION ?= 1
 
 TEST_TARGET := top_system
-TEST_ARGS ?= -g2005-sv -DROM_PRG=\"$(ROM_PRG)\" -DRAM_PRG=\"$(RAM_PRG)\" -DSIM_CYCLE=$(SIM_CYCLE) -DBOOT_TYPE=$(BOOT_TYPE)
+TEST_ARGS ?= +define+ROM_PRG=\"$(ROM_PRG)\" +define+RAM_PRG=\"$(RAM_PRG)\" +define+SIM_CYCLE=$(SIM_CYCLE) +define+BOOT_TYPE=$(BOOT_TYPE)
 ifeq ($(ASIC_VERSION),1)
-TEST_ARGS += -DASIC_VERSION
-TEST_ARGS += -DEXT_BUAD_SAMPLE_VALID=0
-TEST_ARGS += -DEXT_SAMPLE_REG=16
-TEST_ARGS += -DEXT_BUAD_REG=115200
+TEST_ARGS += +define+ASIC_VERSION
+TEST_ARGS += +define+EXT_BUAD_SAMPLE_VALID=0
+TEST_ARGS += +define+EXT_SAMPLE_REG=16
+TEST_ARGS += +define+EXT_BUAD_REG=115200
 else
-TEST_ARGS += -DEXT_BUAD_SAMPLE_VALID=1
-TEST_ARGS += -DEXT_SAMPLE_REG=4
-TEST_ARGS += -DEXT_BUAD_REG=2
+TEST_ARGS += +define+EXT_BUAD_SAMPLE_VALID=1
+TEST_ARGS += +define+EXT_SAMPLE_REG=4
+TEST_ARGS += +define+EXT_BUAD_REG=2
 endif
+
+TEST_ARGS += -full64  +v2k -sverilog -timescale=1ns/10ps \
+			   ${EXTRA} \
+			   -kdb \
+			   -debug_acc+all \
+			   +error+500 \
+			   +vcs+flush+all \
+			   +lint=TFIPC-L \
+			   +define+no_warning \
+			   +define+S50 \
+			   +define+SVA_OFF \
+			   -work DEFAULT \
+			   +define+RANDOMIZE_REG_INIT \
+			   +define+PDK_BEHAV \
+			   +vcs+initreg+random
+
+TEST_ARGS += +notimingcheck \
+			   +nospecify \
+
+TEST_ARGS += +vcs+initreg+random
 
 TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
-TEST_ARGS += -gno-assertions
-TEST_ARGS += -DPDK_CX55
+TEST_ARGS += +define+PDK_CX55
 TEST_INCLUDE_DIR += $(TOP_DIR)/ics55/utils
 TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CL.v
 TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CR.v

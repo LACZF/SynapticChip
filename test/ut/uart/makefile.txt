@@ -2,8 +2,8 @@ CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 TEST_TARGET := tb_uart16550
 TEST_ARGS ?= -g2005-sv
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
-TEST_INCLUDE_DIR += -I$(TOP_DIR)/rtl/io/uart
+TEST_INCLUDE_DIR += $(TOP_DIR)/rtl/include
+TEST_INCLUDE_DIR += $(TOP_DIR)/rtl/io/uart
 
 TEST_SRC += $(TOP_DIR)/rtl/common/fifo.v
 TEST_SRC += $(TOP_DIR)/rtl/common/cache.v

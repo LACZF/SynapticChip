@@ -1,10 +1,10 @@
 CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-RTL_INCLUDE_DIR += -I$(TOP_DIR)/rtl/include
+RTL_INCLUDE_DIR += $(TOP_DIR)/rtl/include
 
 RTL_SRC_DIR      = $(TOP_DIR)/rtl
-RTL_INCLUDE_DIR += -I$(TOP_DIR)/tinyriscv/rtl/core
-RTL_INCLUDE_DIR += -I$(TOP_DIR)/tinyriscv/rtl/debug
+RTL_INCLUDE_DIR += $(TOP_DIR)/tinyriscv/rtl/core
+RTL_INCLUDE_DIR += $(TOP_DIR)/tinyriscv/rtl/debug
 
 RTL_SRC += $(TOP_DIR)/rtl/include/common.v
 

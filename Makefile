@@ -1,6 +1,7 @@
 
 IVERILOG ?= $(shell which iverilog)
 VVP ?= $(shell which vvp)
+VCS ?= $(shell which vcs)
 TOP_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 SCRIPT_DIR := $(TOP_DIR)/scripts
@@ -11,7 +12,7 @@ else
 QUITE := @
 endif
 
-ifneq (,$(filter test,$(MAKECMDGOALS)))
+ifneq (,$(filter iverilog vcs,$(MAKECMDGOALS)))
 include $(TOP_DIR)/rtl/filelist.txt
 ifeq ($(M),)
 $(error "M is not set.")
@@ -26,10 +27,10 @@ TEST_TARGET := $(shell basename $(M))
 TEST_ARGS ?= -g2012
 ifeq ($(shell test -d $(M) && echo "directory" || echo "not-directory"),directory)
 TEST_SRC += $(wildcard $(ABS_M)/*.v)
-TEST_INCLUDE_DIR += -I$(ABS_M)
+TEST_INCLUDE_DIR += $(ABS_M)
 else
 TEST_SRC += $(ABS_M)
-TEST_INCLUDE_DIR += -I$(shell dirname $(ABS_M))
+TEST_INCLUDE_DIR += $(shell dirname $(ABS_M))
 endif
 endif
 TEST_BUILD_DIR := $(TOP_DIR)/build/$(patsubst %/,%,$(M)).build
@@ -54,7 +55,7 @@ ifeq ($(DEBUG),1)
 TEST_ARGS += -D DEBUG=1
 endif
 
-.PHONY: test $(COMPLETE_TEST_TARGET) yosys_synthesis top_yosys_synthesis
+.PHONY: iverilog $(COMPLETE_TEST_TARGET) $(COMPLETE_TEST_TARGET).vvp vcs $(COMPLETE_TEST_TARGET).simv yosys_synthesis top_yosys_synthesis
 
 default: help
 
@@ -68,35 +69,42 @@ $(COMPLETE_TEST_TARGET):
 		else \
 			cp -rf $(shell dirname $(ABS_M))/* $(TEST_BUILD_DIR); \
 		fi
-	$(QUITE)cd $(TEST_BUILD_DIR) && $(IVERILOG) -o $(COMPLETE_TEST_TARGET) \
-		$(TEST_ARGS) $(TEST_INCLUDE_DIR) $(TEST_SRC)
 
 $(COMPLETE_TEST_TARGET).vvp: $(COMPLETE_TEST_TARGET)
+	$(QUITE)cd $(TEST_BUILD_DIR) && $(IVERILOG) -o $(COMPLETE_TEST_TARGET) \
+		$(TEST_ARGS) $(addprefix -I, $(TEST_INCLUDE_DIR)) $(TEST_SRC)
+
+iverilog: $(COMPLETE_TEST_TARGET).vvp
 	$(QUITE)cd $(TEST_BUILD_DIR) && \
 		$(VVP) $(COMPLETE_TEST_TARGET) -l $(COMPLETE_TEST_TARGET).log
 
-test: $(COMPLETE_TEST_TARGET).vvp
+$(COMPLETE_TEST_TARGET).simv: $(COMPLETE_TEST_TARGET)
+	$(QUITE)cd $(TEST_BUILD_DIR) && ${VCS} -o $(COMPLETE_TEST_TARGET).simv \
+		$(TEST_ARGS) $(addprefix +incdir+, $(TEST_INCLUDE_DIR)) $(TEST_SRC)
+
+vcs: $(COMPLETE_TEST_TARGET).simv
+	$(QUITE)cd $(TEST_BUILD_DIR) && $(COMPLETE_TEST_TARGET).simv -l $(COMPLETE_TEST_TARGET).log # +bus_conflict_off
 
 it_list:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/it | awk -F: '{print $$1}'); do \
-		echo "make test M=$$M"; \
+		echo "make iverilog M=$$M"; \
 	done
 
 all_it:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/it | awk -F: '{print $$1}'); do \
-		make test M=$$M || exit 1; \
+		make iverilog M=$$M || exit 1; \
 	done
 
 ut_list:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/ut | awk -F: '{print $$1}'); do \
-		echo "make test M=$$M"; \
+		echo "make iverilog M=$$M"; \
 	done
 
 test_list: ut_list it_list
 
 all_ut:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/ut | awk -F: '{print $$1}'); do \
-		make test M=$$M || exit 1; \
+		make iverilog M=$$M || exit 1; \
 	done
 
 all_test: all_ut all_it
