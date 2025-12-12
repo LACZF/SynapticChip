@@ -55,14 +55,14 @@ ifeq ($(DEBUG),1)
 TEST_ARGS += -D DEBUG=1
 endif
 
-.PHONY: iverilog $(COMPLETE_TEST_TARGET) $(COMPLETE_TEST_TARGET).vvp vcs $(COMPLETE_TEST_TARGET).simv yosys_synthesis top_yosys_synthesis
+.PHONY: iverilog $(COMPLETE_TEST_TARGET) $(COMPLETE_TEST_TARGET).vvp vcs yosys_synthesis top_yosys_synthesis
 
 default: help
 
 TEST_ARGS += $(APPEND_ARGS)
 $(COMPLETE_TEST_TARGET):
 	$(QUITE)echo "test : $(M)"
-	$(QUITE)rm -rf $(TEST_BUILD_DIR)
+	$(QUITE)# rm -rf $(TEST_BUILD_DIR)
 	$(QUITE)mkdir -p $(TEST_BUILD_DIR)
 	$(QUITE)if [ -d $(ABS_M) ]; then \
 			cp -rf $(ABS_M)/* $(TEST_BUILD_DIR); \
@@ -76,14 +76,15 @@ $(COMPLETE_TEST_TARGET).vvp: $(COMPLETE_TEST_TARGET)
 
 iverilog: $(COMPLETE_TEST_TARGET).vvp
 	$(QUITE)cd $(TEST_BUILD_DIR) && \
-		$(VVP) $(COMPLETE_TEST_TARGET) -l $(COMPLETE_TEST_TARGET).log
+		$(VVP) $(COMPLETE_TEST_TARGET) $(SIM_ARGS) -l $(COMPLETE_TEST_TARGET).log
 
 $(COMPLETE_TEST_TARGET).simv: $(COMPLETE_TEST_TARGET)
 	$(QUITE)cd $(TEST_BUILD_DIR) && ${VCS} -o $(COMPLETE_TEST_TARGET).simv \
-		$(TEST_ARGS) $(addprefix +incdir+, $(TEST_INCLUDE_DIR)) $(TEST_SRC)
+		$(TEST_ARGS) $(addprefix +incdir+, $(TEST_INCLUDE_DIR)) $(TEST_SRC) -l $(COMPLETE_TEST_TARGET).compile.log
 
 vcs: $(COMPLETE_TEST_TARGET).simv
-	$(QUITE)cd $(TEST_BUILD_DIR) && $(COMPLETE_TEST_TARGET).simv -l $(COMPLETE_TEST_TARGET).log # +bus_conflict_off
+	$(QUITE)cd $(TEST_BUILD_DIR) && \
+		$(COMPLETE_TEST_TARGET).simv $(SIM_ARGS) -l $(COMPLETE_TEST_TARGET).log
 
 it_list:
 	$(QUITE)cd $(TOP_DIR) && for M in $(shell grep -r 'TEST_TARGET := ' test/it | awk -F: '{print $$1}'); do \

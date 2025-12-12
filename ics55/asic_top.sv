@@ -522,8 +522,14 @@ ip4_SynapticChip u_SynapticChip(
     .uart_rx            (ip4_uart_rx),
     .uart_tx            (ip4_uart_tx),
 
-    .gpio_in            (ip4_gpio_in),
-    .gpio_out           (ip4_gpio_out),
+    .gpio_in0            (ip4_gpio_in[0]),
+    .gpio_in1            (ip4_gpio_in[1]),
+    .gpio_in2            (ip4_gpio_in[2]),
+    .gpio_in3            (ip4_gpio_in[3]),
+    .gpio_out0           (ip4_gpio_out[0]),
+    .gpio_out1           (ip4_gpio_out[1]),
+    .gpio_out2           (ip4_gpio_out[2]),
+    .gpio_out3           (ip4_gpio_out[3]),
 
     .jtag_tck_pin       (ip4_jtag_tck_pin),
     .jtag_tms_pin       (ip4_jtag_tms_pin),

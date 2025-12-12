@@ -4,12 +4,12 @@ CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SIM_CYCLE    ?= 20000
 ROM_PRG      ?= program.hex
 RAM_PRG      ?= data_bss.hex
-BOOT_TYPE    ?= 0
+BOOT_TYPE    ?= 2
 ASIC_VERSION ?= 1
 NETLIST_SIMULATION ?= 1
 
-TEST_TARGET := top_system
-TEST_ARGS ?= +define+ROM_PRG=\"$(ROM_PRG)\" +define+RAM_PRG=\"$(RAM_PRG)\" +define+SIM_CYCLE=$(SIM_CYCLE) +define+BOOT_TYPE=$(BOOT_TYPE)
+TEST_TARGET := ip4_SynapticChip
+TEST_ARGS += +define+ROM_PRG=\"$(ROM_PRG)\" +define+RAM_PRG=\"$(RAM_PRG)\" +define+SIM_CYCLE=$(SIM_CYCLE) +define+BOOT_TYPE=$(BOOT_TYPE)
 ifeq ($(ASIC_VERSION),1)
 TEST_ARGS += +define+ASIC_VERSION
 TEST_ARGS += +define+EXT_BUAD_SAMPLE_VALID=0
@@ -21,25 +21,23 @@ TEST_ARGS += +define+EXT_SAMPLE_REG=4
 TEST_ARGS += +define+EXT_BUAD_REG=2
 endif
 
-TEST_ARGS += -full64  +v2k -sverilog -timescale=1ns/10ps \
-			   ${EXTRA} \
-			   -kdb \
-			   -debug_acc+all \
-			   +error+500 \
-			   +vcs+flush+all \
-			   +lint=TFIPC-L \
-			   +define+no_warning \
-			   +define+S50 \
-			   +define+SVA_OFF \
-			   -work DEFAULT \
-			   +define+RANDOMIZE_REG_INIT \
-			   +define+PDK_BEHAV \
-			   +vcs+initreg+random
-
-TEST_ARGS += +notimingcheck \
-			   +nospecify \
-
+TEST_ARGS += -full64  +v2k -sverilog -timescale=1ns/10ps
+SIM_ARGS  += +bus_conflict_off
+# TEST_ARGS += -kdb
+TEST_ARGS += -debug_acc+all
+TEST_ARGS += +error+500
+TEST_ARGS += +vcs+flush+all
+# TEST_ARGS += +lint=TFIPC-L
+TEST_ARGS += +define+no_warning
+TEST_ARGS += +define+S50
+TEST_ARGS += +define+SVA_OFF
+TEST_ARGS += -work DEFAULT
+TEST_ARGS += +define+RANDOMIZE_REG_INIT
+TEST_ARGS += +define+PDK_BEHAV
 TEST_ARGS += +vcs+initreg+random
+TEST_ARGS += +notimingcheck +nospecify
+
+TEST_ARGS += -top tb_SynapticChip_ics55
 
 TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
@@ -50,19 +48,20 @@ TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CR.v
 TEST_SRC += $(TOP_DIR)/ics55/lib/icsIOA_N55_3P3.v
 TEST_SRC += $(TOP_DIR)/ics55/lib/tc_clk.sv
 TEST_SRC += $(TOP_DIR)/ics55/rcu/rcu.sv
-TEST_SRC += $(TOP_DIR)//ics55/utils/clk_int_div.sv
-TEST_SRC += $(TOP_DIR)//ics55/utils/config.svh
-TEST_SRC += $(TOP_DIR)//ics55/utils/register.sv
-TEST_SRC += $(TOP_DIR)//ics55/utils/rst_sync.sv
-TEST_SRC += $(TOP_DIR)//ics55/utils/stdcell.sv
-TEST_SRC += $(TOP_DIR)//ics55/utils/xchecker.sv
+TEST_SRC += $(TOP_DIR)/ics55/utils/clk_int_div.sv
+TEST_SRC += $(TOP_DIR)/ics55/utils/config.svh
+TEST_SRC += $(TOP_DIR)/ics55/utils/register.sv
+TEST_SRC += $(TOP_DIR)/ics55/utils/rst_sync.sv
+TEST_SRC += $(TOP_DIR)/ics55/utils/stdcell.sv
+TEST_SRC += $(TOP_DIR)/ics55/utils/xchecker.sv
 
 ifeq ($(NETLIST_SIMULATION),1)
 TEST_SRC += $(TOP_DIR)/rtl/common/clk_gen.v
 TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_ram.sv
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
-TEST_SRC += $(TOP_DIR)/ics55/asic_top_update.syn.v
+NETLIST  ?= $(TOP_DIR)/ics55/asic_top_update.syn.v
+TEST_SRC += $(NETLIST)
 else
 TEST_SRC += $(RTL_SRC)
 TEST_SRC += $(TOP_DIR)/ics55/asic_top.sv

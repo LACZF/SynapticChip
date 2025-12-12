@@ -2873,7 +2873,7 @@ begin :program_to_secsi_page
             default :
             begin
                 $display("Invalid Security Page Program Address (%x)",prog_byte_address);
-                $stop;
+                // $stop;
             end
         endcase
 
