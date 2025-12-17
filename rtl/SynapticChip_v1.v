@@ -19,14 +19,8 @@ module ip4_SynapticChip (
     input  wire                         uart_rx,
     output wire                         uart_tx,
 
-    input  wire                         gpio_in0,
-    input  wire                         gpio_in1,
-    input  wire                         gpio_in2,
-    input  wire                         gpio_in3,
-    output wire                         gpio_out0,
-    output wire                         gpio_out1,
-    output wire                         gpio_out2,
-    output wire                         gpio_out3,
+    input  wire [3:0]                   gpio_in,
+    output wire [3:0]                   gpio_out,
 
     input  wire                         jtag_tck_pin,
     input  wire                         jtag_tms_pin,
@@ -106,18 +100,15 @@ module ip4_SynapticChip (
      * 4. spi_flash_mosi -> gpio_out[1]
      */
     if (BOOT_TYPE == 2) begin
-        assign gpio_out3          = spi_flash_cs_n;
-        assign gpio_out2          = spi_flash_clk;
-        assign gpio_out1          = spi_flash_mosi;
-        assign gpio_out0          = chip_gpio_out[0];
-        assign spi_flash_miso     = gpio_in3;
-        assign chip_gpio_in       = {1'b0, gpio_in2, gpio_in1, gpio_in0};
+        assign gpio_out[3]        = spi_flash_cs_n;
+        assign gpio_out[2]        = spi_flash_clk;
+        assign gpio_out[1]        = spi_flash_mosi;
+        assign gpio_out[0]        = chip_gpio_out[0];
+        assign spi_flash_miso     = gpio_in[3];
+        assign chip_gpio_in       = {1'b0, gpio_in[2:0]};
     end else begin
-        assign chip_gpio_in       = {gpio_in3, gpio_in2, gpio_in1, gpio_in0};
-        assign gpio_out3          = chip_gpio_out[3];
-        assign gpio_out2          = chip_gpio_out[2];
-        assign gpio_out1          = chip_gpio_out[1];
-        assign gpio_out0          = chip_gpio_out[0];
+        assign chip_gpio_in       = gpio_in;
+        assign gpio_out           = chip_gpio_out;
     end
 
     ip4_chip_top #(

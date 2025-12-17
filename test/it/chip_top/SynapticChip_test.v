@@ -269,14 +269,8 @@ module SynapticChip_test;
         .uart_rx     (uart_rx),
         .uart_tx     (uart_tx),
 
-        .gpio_in0     (chip_gpio_in[0]),
-        .gpio_in1     (chip_gpio_in[1]),
-        .gpio_in2     (chip_gpio_in[2]),
-        .gpio_in3     (chip_gpio_in[3]),
-        .gpio_out0    (chip_gpio_out[0]),
-        .gpio_out1    (chip_gpio_out[1]),
-        .gpio_out2    (chip_gpio_out[2]),
-        .gpio_out3    (chip_gpio_out[3])
+        .gpio_in     (chip_gpio_in),
+        .gpio_out    (chip_gpio_out)
     );
 
     if (IMPLEMENT_XIP == 1) begin : xip_gen

@@ -39,6 +39,11 @@ TEST_ARGS += +notimingcheck +nospecify
 
 TEST_ARGS += -top tb_SynapticChip_ics55
 
+GPIO_SPLIT ?= 0
+ifeq ($(GPIO_SPLIT),1)
+TEST_ARGS += +define+GPIO_SPLIT
+endif
+
 TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
 TEST_ARGS += +define+PDK_CX55
@@ -61,6 +66,10 @@ TEST_SRC += $(TOP_DIR)/tinyriscv/rtl/utils/gen_ram.sv
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_rx.v
 TEST_SRC += $(TOP_DIR)/rtl/io/uart/uart_tx.v
 NETLIST  ?= $(TOP_DIR)/ics55/asic_top_update.syn.v
+INCLUDE_ASIC_TOP ?= 1
+ifneq ($(INCLUDE_ASIC_TOP),1)
+TEST_SRC += $(TOP_DIR)/ics55/asic_top.sv
+endif
 TEST_SRC += $(NETLIST)
 else
 TEST_SRC += $(RTL_SRC)
