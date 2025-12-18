@@ -23,6 +23,9 @@ endif
 
 TEST_INCLUDE_DIR += $(RTL_INCLUDE_DIR)
 
+TEST_ARGS += -gstrict-expr-width
+TEST_ARGS += -Wall
+
 ifeq ($(NETLIST_SIMULATION),1)
 TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CL.v
 TEST_SRC += $(TOP_DIR)/ics55/lib/ics55_LLSC_H7CR.v

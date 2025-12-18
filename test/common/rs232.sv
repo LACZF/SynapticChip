@@ -7,6 +7,7 @@
 // EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 // MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 // See the Mulan PSL v2 for more details.
+`timescale 1ns/1ps
 
 module rs232 #(
     parameter int BAUD_RATE    = 115200,

@@ -271,6 +271,10 @@ module SynapticChip_test;
 
         .gpio_in     (chip_gpio_in),
         .gpio_out    (chip_gpio_out)
+
+        .jtag_tck_pin (1'b0),
+        .jtag_tms_pin (1'b0),
+        .jtag_tdi_pin (1'b0)
     );
 
     if (IMPLEMENT_XIP == 1) begin : xip_gen

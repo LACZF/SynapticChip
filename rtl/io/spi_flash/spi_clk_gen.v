@@ -1,4 +1,3 @@
-`timescale 1ns/1ps
 
 module ip4_spi_clk_gen (
     input       clk,
