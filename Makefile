@@ -60,19 +60,23 @@ endif
 default: help
 
 TEST_ARGS += $(APPEND_ARGS)
+TEST_FILES ?= $(TEST_BUILD_DIR)/test_files.f
 $(COMPLETE_TEST_TARGET):
 	$(QUITE)echo "test : $(M)"
-	$(QUITE)# rm -rf $(TEST_BUILD_DIR)
+	$(QUITE)rm -rf $(TEST_BUILD_DIR)/*
 	$(QUITE)mkdir -p $(TEST_BUILD_DIR)
 	$(QUITE)if [ -d $(ABS_M) ]; then \
 			cp -rf $(ABS_M)/* $(TEST_BUILD_DIR); \
 		else \
 			cp -rf $(shell dirname $(ABS_M))/* $(TEST_BUILD_DIR); \
 		fi
+	$(QUITE)rm -rf $(TEST_FILES); for f in $(TEST_SRC); do \
+			echo "$$f" >> $(TEST_FILES); \
+		done
 
 $(COMPLETE_TEST_TARGET).vvp: $(COMPLETE_TEST_TARGET)
 	$(QUITE)cd $(TEST_BUILD_DIR) && $(IVERILOG) -o $(COMPLETE_TEST_TARGET) \
-		$(TEST_ARGS) $(addprefix -I, $(TEST_INCLUDE_DIR)) $(TEST_SRC)
+		$(TEST_ARGS) $(addprefix -I, $(TEST_INCLUDE_DIR)) -f $(TEST_FILES)
 
 iverilog: $(COMPLETE_TEST_TARGET).vvp
 	$(QUITE)cd $(TEST_BUILD_DIR) && \
@@ -80,7 +84,7 @@ iverilog: $(COMPLETE_TEST_TARGET).vvp
 
 $(COMPLETE_TEST_TARGET).simv: $(COMPLETE_TEST_TARGET)
 	$(QUITE)cd $(TEST_BUILD_DIR) && ${VCS} -o $(COMPLETE_TEST_TARGET).simv \
-		$(TEST_ARGS) $(addprefix +incdir+, $(TEST_INCLUDE_DIR)) $(TEST_SRC) -l $(COMPLETE_TEST_TARGET).compile.log
+		$(TEST_ARGS) $(addprefix +incdir+, $(TEST_INCLUDE_DIR)) -f $(TEST_FILES) -l $(COMPLETE_TEST_TARGET).compile.log
 
 vcs: $(COMPLETE_TEST_TARGET).simv
 	$(QUITE)cd $(TEST_BUILD_DIR) && \
