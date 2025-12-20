@@ -381,7 +381,7 @@ function synth_all() {
 	export SYNTH_STAT_JSON="${RESULT_DIR}/synth_stat.json"
 	export SYNTH_CHECK_RPT="${RESULT_DIR}/synth_check.rpt"
 
-	export KEEP_HIERARCHY="false"
+	export KEEP_HIERARCHY="true"
 	export CELL_DONT_USE=""
 	export CELL_TIE_LOW="TIELOH7R"
 	export CELL_TIE_LOW_PORT="Z"
