@@ -1,7 +1,7 @@
 export PLATFORM               = sky130hd
 
 export DESIGN_NICKNAME        = SynapticChip
-export DESIGN_NAME            = ip4_SynapticChip
+export DESIGN_NAME            = SynapticChip
 
 # PROJECT_TOP_DIR is a manually set environment variable.
 export PROJECT_DESIGNS_DIR    = $(PROJECT_TOP_DIR)/OpenRoad_designs/sky130hd/$(DESIGN_NICKNAME)/

@@ -389,7 +389,7 @@ module tb_SynapticChip_ics55;
         );
     end
 
-    ip4_rom #(
+    rom #(
         .DP(ROM_DEPTH)
     ) u_ext_rom (
         .clk_i      (clk),
@@ -413,14 +413,14 @@ module tb_SynapticChip_ics55;
 `ifndef USE_RS232_TEST
     wire                      baud_clk;        // 波特率时钟
 
-    ip4_clk_gen u_uart_clk_gen(
+    clk_gen u_uart_clk_gen(
         .clk              (clk),
         .rst_n            (rst_n),
         .div_i            (16'(UART_DIV_RATE)),
         .clk_o            (baud_clk)
     );
 
-    ip4_uart_rx u_uart_rx (
+    uart_rx u_uart_rx (
         .clk              (clk),
         .rst_n            (rst_n),
         .baud_clk_i       (baud_clk),
@@ -433,7 +433,7 @@ module tb_SynapticChip_ics55;
         .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
     );
 
-    ip4_uart_tx u_uart_tx (
+    uart_tx u_uart_tx (
         .clk              (clk),
         .rst_n            (rst_n),
         .baud_clk_i       (baud_clk),

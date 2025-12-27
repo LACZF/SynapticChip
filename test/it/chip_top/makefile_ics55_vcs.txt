@@ -8,7 +8,7 @@ BOOT_TYPE    ?= 2
 ASIC_VERSION ?= 1
 NETLIST_SIMULATION ?= 1
 
-TEST_TARGET := ip4_SynapticChip
+TEST_TARGET := SynapticChip
 TEST_ARGS += +define+ROM_PRG=\"$(ROM_PRG)\" +define+RAM_PRG=\"$(RAM_PRG)\" +define+SIM_CYCLE=$(SIM_CYCLE) +define+BOOT_TYPE=$(BOOT_TYPE)
 ifeq ($(ASIC_VERSION),1)
 TEST_ARGS += +define+ASIC_VERSION

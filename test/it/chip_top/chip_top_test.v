@@ -231,7 +231,7 @@ module chip_top_test;
     always #5 clk = ~clk;
 
     /********** 实例化chip_top **********/
-    ip4_chip_top #(
+    chip_top #(
         .TRACE_ENABLE(TRACE_ENABLE),
         .CPU_NUM(CPU_NUM),
         .ROM_DEPTH(ROM_DEPTH),
@@ -343,7 +343,7 @@ module chip_top_test;
         );
     end
 
-    ip4_rom #(
+    rom #(
         .DP(ROM_DEPTH)
     ) u_ext_rom (
         .clk_i      (clk),
@@ -366,14 +366,14 @@ module chip_top_test;
 
     wire                      baud_clk;        // 波特率时钟
 
-    ip4_clk_gen u_uart_clk_gen(
+    clk_gen u_uart_clk_gen(
         .clk              (clk),
         .rst_n            (rst_n),
         .div_i            (16'(UART_DIV_RATE)),
         .clk_o            (baud_clk)
     );
 
-    ip4_uart_rx u_uart_rx (
+    uart_rx u_uart_rx (
         .clk              (clk),
         .rst_n            (rst_n),
         .baud_clk_i       (baud_clk),
@@ -386,7 +386,7 @@ module chip_top_test;
         .data_bits_i      (4'h8)  // 5-8 data bits (3-bit port)
     );
 
-    ip4_uart_tx u_uart_tx (
+    uart_tx u_uart_tx (
         .clk              (clk),
         .rst_n            (rst_n),
         .baud_clk_i       (baud_clk),

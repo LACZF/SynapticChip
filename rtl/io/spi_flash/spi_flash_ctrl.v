@@ -1,4 +1,4 @@
-module ip4_spi_flash_ctrl (
+module spi_flash_ctrl (
     // 时钟和复位
     input              clk,
     input              rst_n,

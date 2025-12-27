@@ -1,4 +1,4 @@
-module ip4_pe_top #(
+module pe_top #(
     parameter PE_ARRAY_X = 4,
     parameter PE_ARRAY_Y = 4,
     parameter DATA_WIDTH = 32,
@@ -54,7 +54,7 @@ module ip4_pe_top #(
     wire [0:PE_ARRAY_X*PE_ARRAY_Y-1]                 west_valid_out;
 
     // Instantiate combined control and memory module - 集成版本
-    ip4_pe_control #(
+    pe_control #(
         .PE_ARRAY_X(PE_ARRAY_X),
         .PE_ARRAY_Y(PE_ARRAY_Y),
         .DATA_WIDTH(DATA_WIDTH),
@@ -87,7 +87,7 @@ module ip4_pe_top #(
                 localparam idx = i * PE_ARRAY_Y + j;
 
                 // PE module
-                ip4_pe #(
+                pe #(
                     .DATA_WIDTH(DATA_WIDTH)
                 ) u_pe (
                     .clk(clk),
@@ -110,7 +110,7 @@ module ip4_pe_top #(
                 );
 
                 // Individual routing module for each PE
-                ip4_pe_router #(
+                pe_router #(
                     .DATA_WIDTH(DATA_WIDTH)
                 ) u_pe_route (
                     .clk(clk),

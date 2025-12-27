@@ -1,4 +1,4 @@
-module ip4_spi_flash_top (
+module spi_flash_top (
     // 时钟和复位
     input              clk,
     input              rst_n,
@@ -47,7 +47,7 @@ module ip4_spi_flash_top (
     reg [3:0] dummy_cycle;
 
     // SPI时钟生成器
-    ip4_spi_clk_gen #(
+    spi_clk_gen #(
         .DIV_WIDTH(8),
         .DIV_VALUE(8'd2)  // 分频系数，SPI时钟频率 = clk频率 / 16
     ) u_spi_clk_gen (
@@ -60,7 +60,7 @@ module ip4_spi_flash_top (
     );
 
     // SPI Flash控制器
-    ip4_spi_flash_ctrl u_spi_flash_ctrl (
+    spi_flash_ctrl u_spi_flash_ctrl (
         .clk(clk),
         .rst_n(rst_n),
 

@@ -111,7 +111,7 @@ module ip4_SynapticChip (
         assign gpio_out           = chip_gpio_out;
     end
 
-    ip4_chip_top #(
+    chip_top #(
         .TRACE_ENABLE(TRACE_ENABLE),
         .CPU_NUM(CPU_NUM),
         .ROM_DEPTH(ROM_DEPTH),

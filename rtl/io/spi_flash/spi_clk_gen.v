@@ -1,5 +1,5 @@
 
-module ip4_spi_clk_gen (
+module spi_clk_gen (
     input       clk,
     input       rst_n,
     input       enable,

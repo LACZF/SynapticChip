@@ -48,7 +48,7 @@ $(warning "TOP_MODULE is not set.")
 endif
 endif
 
-TOP_MODULE     ?= ip4_SynapticChip
+TOP_MODULE     ?= SynapticChip
 TOP_MODULE_ARG := TOP_MODULE=$(TOP_MODULE)
 
 ifeq ($(DEBUG),1)

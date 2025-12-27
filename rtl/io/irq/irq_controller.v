@@ -2,7 +2,7 @@
 // 中断控制器模块
 // 负责将各个外设的中断信号转换为CPU可识别的中断请求和中断号
 // 支持OBI总线接口，用于软件配置中断使能、优先级等
-module ip4_irq_controller #(
+module irq_controller #(
     parameter NUM_IRQ_SOURCES = 32  // 支持的最大中断源数量
 ) (
     input  wire                       clk,
